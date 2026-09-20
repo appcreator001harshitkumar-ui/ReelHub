@@ -1,354 +1,469 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReelHub</title>
 
-  <title>ReelHub</title>
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Arial,sans-serif;
+}
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-    }
+body{
+  background:#f5f5f5;
+  color:#111;
+}
 
-    body {
-      background: #f5f5f5;
-      color: #111;
-    }
+#loginPage{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:linear-gradient(135deg,#111827,#4c1d95,#db2777);
+}
 
-    /* LOGIN */
+.login-box{
+  width:100%;
+  max-width:400px;
+  background:white;
+  padding:30px 24px;
+  border-radius:24px;
+  text-align:center;
+  box-shadow:0 20px 50px rgba(0,0,0,.3);
+}
 
-    #loginPage {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: linear-gradient(135deg, #111827, #4c1d95, #db2777);
-    }
+.logo-icon{
+  width:70px;
+  height:70px;
+  margin:auto;
+  border-radius:20px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  color:white;
+  font-size:32px;
+  font-weight:bold;
+}
 
-    .login-box {
-      width: 100%;
-      max-width: 400px;
-      background: white;
-      padding: 30px 24px;
-      border-radius: 24px;
-      text-align: center;
-      box-shadow: 0 20px 50px rgba(0,0,0,.3);
-    }
+.login-box h1{
+  margin-top:15px;
+  font-size:30px;
+}
 
-    .logo-icon {
-      width: 70px;
-      height: 70px;
-      margin: auto;
-      border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg,#7c3aed,#ec4899);
-      color: white;
-      font-size: 32px;
-      font-weight: bold;
-    }
+.login-box p{
+  margin-top:7px;
+  color:#777;
+}
 
-    .login-box h1 {
-      margin-top: 15px;
-      font-size: 30px;
-    }
+.google-btn{
+  width:100%;
+  padding:15px;
+  margin-top:25px;
+  border:1px solid #ddd;
+  border-radius:12px;
+  background:white;
+  font-size:16px;
+  font-weight:bold;
+  cursor:pointer;
+}
 
-    .login-box p {
-      margin-top: 7px;
-      color: #777;
-    }
+#app{
+  display:none;
+  min-height:100vh;
+  padding-bottom:80px;
+}
 
-    .google-btn {
-      width: 100%;
-      padding: 15px;
-      margin-top: 25px;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      background: white;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
+.topbar{
+  height:65px;
+  background:white;
+  border-bottom:1px solid #ddd;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 15px;
+  position:sticky;
+  top:0;
+  z-index:100;
+}
 
-    .google-btn:hover {
-      background: #f5f5f5;
-    }
+.brand{
+  font-size:24px;
+  font-weight:bold;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  -webkit-background-clip:text;
+  color:transparent;
+}
 
-    /* APP */
+.top-user{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
 
-    #app {
-      display: none;
-      min-height: 100vh;
-      padding-bottom: 80px;
-    }
+.top-user img{
+  width:40px;
+  height:40px;
+  border-radius:50%;
+  object-fit:cover;
+}
 
-    /* TOP BAR */
+.search-area{
+  padding:15px;
+  background:white;
+}
 
-    .topbar {
-      height: 65px;
-      background: white;
-      border-bottom: 1px solid #ddd;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 15px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
+.search{
+  width:100%;
+  padding:13px 16px;
+  border:1px solid #ddd;
+  border-radius:25px;
+  outline:none;
+  font-size:15px;
+  background:#f5f5f5;
+}
 
-    .brand {
-      font-size: 24px;
-      font-weight: bold;
-      background: linear-gradient(135deg,#7c3aed,#ec4899);
-      -webkit-background-clip: text;
-      color: transparent;
-    }
+.welcome{
+  margin:15px;
+  padding:20px;
+  border-radius:18px;
+  color:white;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+}
 
-    .top-user {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+.welcome h2{
+  font-size:22px;
+}
 
-    .top-user img {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      object-fit: cover;
-    }
+.welcome p{
+  margin-top:6px;
+  opacity:.9;
+}
 
-    /* SEARCH */
+.feed{
+  max-width:650px;
+  margin:auto;
+}
 
-    .search-area {
-      padding: 15px;
-      background: white;
-    }
+.section-title{
+  padding:10px 15px;
+  font-size:20px;
+  font-weight:bold;
+}
 
-    .search {
-      width: 100%;
-      padding: 13px 16px;
-      border: 1px solid #ddd;
-      border-radius: 25px;
-      outline: none;
-      font-size: 15px;
-      background: #f5f5f5;
-    }
+.video-card{
+  background:white;
+  margin:15px;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 3px 15px rgba(0,0,0,.08);
+}
 
-    /* WELCOME */
+.video-box{
+  height:360px;
+  background:linear-gradient(135deg,#111827,#312e81);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  font-size:55px;
+  overflow:hidden;
+}
 
-    .welcome {
-      margin: 15px;
-      padding: 20px;
-      border-radius: 18px;
-      color: white;
-      background: linear-gradient(135deg,#7c3aed,#ec4899);
-    }
+.video-info{
+  padding:15px;
+}
 
-    .welcome h2 {
-      font-size: 22px;
-    }
+.creator{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
 
-    .welcome p {
-      margin-top: 6px;
-      opacity: .9;
-    }
+.creator img{
+  width:42px;
+  height:42px;
+  border-radius:50%;
+}
 
-    /* FEED */
+.creator-name{
+  font-weight:bold;
+}
 
-    .feed {
-      max-width: 650px;
-      margin: auto;
-    }
+.video-title{
+  margin-top:12px;
+  font-size:17px;
+  font-weight:bold;
+}
 
-    .section-title {
-      padding: 10px 15px;
-      font-size: 20px;
-      font-weight: bold;
-    }
+.video-description{
+  margin-top:6px;
+  color:#777;
+  font-size:14px;
+}
 
-    /* VIDEO CARD */
+.actions{
+  display:flex;
+  gap:10px;
+  margin-top:15px;
+  flex-wrap:wrap;
+}
 
-    .video-card {
-      background: white;
-      margin: 15px;
-      border-radius: 18px;
-      overflow: hidden;
-      box-shadow: 0 3px 15px rgba(0,0,0,.08);
-    }
+.action-btn{
+  border:none;
+  background:#f2f2f2;
+  padding:10px 15px;
+  border-radius:20px;
+  cursor:pointer;
+  font-size:14px;
+}
 
-    .video-box {
-      height: 360px;
-      background: linear-gradient(135deg,#111827,#312e81);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 55px;
-    }
+.liked{
+  color:#e11d48;
+  background:#ffe4e6;
+}
 
-    .video-info {
-      padding: 15px;
-    }
+.panel{
+  display:none;
+  max-width:650px;
+  margin:auto;
+  padding:20px 15px;
+}
 
-    .creator {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+.panel-title{
+  font-size:25px;
+  font-weight:bold;
+  margin-bottom:18px;
+}
 
-    .creator img {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-    }
+.profile-card{
+  background:white;
+  border-radius:20px;
+  padding:25px;
+  text-align:center;
+  box-shadow:0 3px 15px rgba(0,0,0,.08);
+}
 
-    .creator-name {
-      font-weight: bold;
-    }
+.profile-card img{
+  width:100px;
+  height:100px;
+  border-radius:50%;
+  object-fit:cover;
+  border:4px solid #7c3aed;
+}
 
-    .video-title {
-      margin-top: 12px;
-      font-size: 17px;
-      font-weight: bold;
-    }
+.profile-card h2{
+  margin-top:12px;
+}
 
-    .video-description {
-      margin-top: 6px;
-      color: #777;
-      font-size: 14px;
-    }
+.profile-card p{
+  margin-top:5px;
+  color:#777;
+  word-break:break-word;
+}
 
-    .actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-    }
+.settings-open,
+.share-app-btn{
+  width:100%;
+  padding:14px;
+  margin-top:15px;
+  border:none;
+  border-radius:12px;
+  color:white;
+  font-size:15px;
+  cursor:pointer;
+  font-weight:bold;
+}
 
-    .action-btn {
-      border: none;
-      background: #f2f2f2;
-      padding: 10px 15px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 14px;
-    }
+.share-app-btn{
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+}
 
-    .action-btn:hover {
-      background: #e5e5e5;
-    }
+.settings-open{
+  background:#111827;
+}
 
-    .liked {
-      color: #e11d48;
-      background: #ffe4e6;
-    }
+.logout{
+  margin-top:15px;
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:#ef4444;
+  color:white;
+  font-weight:bold;
+  font-size:15px;
+  cursor:pointer;
+}
 
-    /* BOTTOM NAV */
+.search-card{
+  background:white;
+  padding:18px;
+  border-radius:16px;
+  margin-bottom:12px;
+  box-shadow:0 3px 12px rgba(0,0,0,.06);
+}
 
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 65px;
-      background: white;
-      border-top: 1px solid #ddd;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      z-index: 200;
-    }
+.search-card h3{
+  margin-bottom:6px;
+}
 
-    .nav-btn {
-      border: none;
-      background: transparent;
-      font-size: 12px;
-      color: #555;
-      cursor: pointer;
-    }
+.search-card p{
+  color:#777;
+  font-size:14px;
+}
 
-    .nav-btn span {
-      display: block;
-      font-size: 22px;
-      margin-bottom: 2px;
-    }
+.upload-card{
+  background:white;
+  padding:25px;
+  border-radius:20px;
+  box-shadow:0 3px 15px rgba(0,0,0,.08);
+  text-align:center;
+}
 
-    .upload-btn {
-      width: 48px;
-      height: 48px;
-      border-radius: 15px;
-      border: none;
-      background: linear-gradient(135deg,#7c3aed,#ec4899);
-      color: white;
-      font-size: 25px;
-      cursor: pointer;
-    }
+.upload-icon{
+  font-size:60px;
+  margin-bottom:15px;
+}
 
-    /* PROFILE PANEL */
+.file-input{
+  width:100%;
+  padding:14px;
+  border:1px dashed #aaa;
+  border-radius:12px;
+  background:#fafafa;
+  margin-top:15px;
+}
 
-    #profilePanel {
-      display: none;
-      padding: 20px;
-      text-align: center;
-      max-width: 500px;
-      margin: auto;
-    }
+.preview{
+  display:none;
+  width:100%;
+  max-height:400px;
+  margin-top:20px;
+  border-radius:15px;
+  background:#111;
+}
 
-    .profile-card {
-      background: white;
-      border-radius: 20px;
-      padding: 25px;
-      box-shadow: 0 3px 15px rgba(0,0,0,.08);
-    }
+.upload-info{
+  margin-top:12px;
+  color:#777;
+  font-size:14px;
+}
 
-    .profile-card img {
-      width: 100px;
-      height: 100px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 4px solid #7c3aed;
-    }
+.coming-card{
+  background:white;
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:12px;
+  display:flex;
+  align-items:center;
+  gap:15px;
+  box-shadow:0 3px 12px rgba(0,0,0,.07);
+}
 
-    .profile-card h2 {
-      margin-top: 12px;
-    }
+.coming-icon{
+  width:48px;
+  height:48px;
+  border-radius:14px;
+  background:#f3f4f6;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:23px;
+}
 
-    .profile-card p {
-      margin-top: 5px;
-      color: #777;
-      word-break: break-word;
-    }
+.coming-text{
+  flex:1;
+}
 
-    .logout {
-      margin-top: 25px;
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 12px;
-      background: #ef4444;
-      color: white;
-      font-weight: bold;
-      font-size: 15px;
-      cursor: pointer;
-    }
+.coming-text h3{
+  font-size:17px;
+}
 
-    @media (max-width: 500px) {
-      .video-box {
-        height: 300px;
-      }
-    }
-  </style>
+.coming-text p{
+  margin-top:4px;
+  color:#777;
+  font-size:13px;
+}
+
+.badge{
+  background:#ede9fe;
+  color:#6d28d9;
+  padding:7px 10px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:bold;
+}
+
+.bottom-nav{
+  position:fixed;
+  bottom:0;
+  left:0;
+  right:0;
+  height:65px;
+  background:white;
+  border-top:1px solid #ddd;
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  z-index:200;
+}
+
+.nav-btn{
+  border:none;
+  background:transparent;
+  font-size:11px;
+  color:#555;
+  cursor:pointer;
+  min-width:55px;
+}
+
+.nav-btn span{
+  display:block;
+  font-size:21px;
+  margin-bottom:2px;
+}
+
+.upload-btn{
+  width:48px;
+  height:48px;
+  border-radius:15px;
+  border:none;
+  background:linear-gradient(135deg,#7c3aed,#ec4899);
+  color:white;
+  font-size:25px;
+  cursor:pointer;
+}
+
+.active-nav{
+  color:#7c3aed;
+  font-weight:bold;
+}
+
+@media(max-width:500px){
+  .video-box{
+    height:300px;
+  }
+
+  .coming-card{
+    padding:15px;
+  }
+
+  .badge{
+    font-size:10px;
+  }
+}
+</style>
 </head>
 
 <body>
 
-<!-- ================= LOGIN ================= -->
+<!-- LOGIN -->
 
 <div id="loginPage">
 
@@ -369,11 +484,9 @@
 </div>
 
 
-<!-- ================= APP ================= -->
+<!-- APP -->
 
 <div id="app">
-
-  <!-- TOP BAR -->
 
   <div class="topbar">
 
@@ -426,17 +539,17 @@
 
     </div>
 
-
     <div class="feed">
 
       <div class="section-title">
         🔥 Latest Reels
       </div>
 
-
-      <!-- VIDEO 1 -->
-
-      <div class="video-card">
+      <div
+        class="video-card"
+        data-title="Welcome to ReelHub"
+        data-description="यह ReelHub की पहली video है।"
+      >
 
         <div class="video-box">
           ▶️
@@ -458,9 +571,7 @@
                 ReelHub Creator
               </div>
 
-              <small>
-                Just now
-              </small>
+              <small>Just now</small>
 
             </div>
 
@@ -476,22 +587,15 @@
 
           <div class="actions">
 
-            <button
-              class="action-btn likeBtn"
-            >
+            <button class="action-btn likeBtn">
               ❤️ Like <span>0</span>
             </button>
 
-            <button
-              class="action-btn commentBtn"
-            >
+            <button class="action-btn commentBtn">
               💬 Comment
             </button>
 
-            <button
-              class="action-btn"
-              onclick="shareVideo()"
-            >
+            <button class="action-btn shareBtn">
               📤 Share
             </button>
 
@@ -502,9 +606,11 @@
       </div>
 
 
-      <!-- VIDEO 2 -->
-
-      <div class="video-card">
+      <div
+        class="video-card"
+        data-title="Create and Share"
+        data-description="अपनी videos ReelHub पर share करें।"
+      >
 
         <div class="video-box">
           🎬
@@ -525,9 +631,7 @@
                 ReelHub
               </div>
 
-              <small>
-                Today
-              </small>
+              <small>Today</small>
 
             </div>
 
@@ -543,22 +647,15 @@
 
           <div class="actions">
 
-            <button
-              class="action-btn likeBtn"
-            >
+            <button class="action-btn likeBtn">
               ❤️ Like <span>0</span>
             </button>
 
-            <button
-              class="action-btn commentBtn"
-            >
+            <button class="action-btn commentBtn">
               💬 Comment
             </button>
 
-            <button
-              class="action-btn"
-              onclick="shareVideo()"
-            >
+            <button class="action-btn shareBtn">
               📤 Share
             </button>
 
@@ -573,9 +670,91 @@
   </div>
 
 
+  <!-- SEARCH PANEL -->
+
+  <div id="searchPanel" class="panel">
+
+    <div class="panel-title">
+      🔍 Search
+    </div>
+
+    <div id="searchResults"></div>
+
+  </div>
+
+
+  <!-- UPLOAD -->
+
+  <div id="uploadPanel" class="panel">
+
+    <div class="panel-title">
+      🎥 Upload Video
+    </div>
+
+    <div class="upload-card">
+
+      <div class="upload-icon">🎬</div>
+
+      <h2>अपनी Video चुनें</h2>
+
+      <p class="upload-info">
+        अपने phone से video select करके preview देखें।
+      </p>
+
+      <input
+        type="file"
+        id="videoInput"
+        class="file-input"
+        accept="video/*"
+      >
+
+      <video
+        id="videoPreview"
+        class="preview"
+        controls
+      ></video>
+
+      <p id="uploadStatus" class="upload-info"></p>
+
+    </div>
+
+  </div>
+
+
+  <!-- NOTIFICATIONS -->
+
+  <div id="notificationPanel" class="panel">
+
+    <div class="panel-title">
+      🔔 Notifications
+    </div>
+
+    <div class="coming-card">
+
+      <div class="coming-icon">🔔</div>
+
+      <div class="coming-text">
+
+        <h3>Notifications</h3>
+
+        <p>
+          Notification system जल्द उपलब्ध होगा।
+        </p>
+
+      </div>
+
+      <div class="badge">
+        Coming Soon
+      </div>
+
+    </div>
+
+  </div>
+
+
   <!-- PROFILE -->
 
-  <div id="profilePanel">
+  <div id="profilePanel" class="panel">
 
     <div class="profile-card">
 
@@ -589,8 +768,28 @@
         User
       </h2>
 
-      <p id="profileEmail">
-      </p>
+      <p id="profileEmail"></p>
+
+
+      <!-- APP SHARE BUTTON -->
+
+      <button
+        class="share-app-btn"
+        id="shareAppBtn"
+      >
+        📤 Share ReelHub App
+      </button>
+
+
+      <!-- SETTINGS -->
+
+      <button
+        class="settings-open"
+        id="settingsBtn"
+      >
+        ⚙️ Settings
+      </button>
+
 
       <button
         class="logout"
@@ -604,49 +803,133 @@
   </div>
 
 
+  <!-- SETTINGS -->
+
+  <div id="settingsPanel" class="panel">
+
+    <div class="panel-title">
+      ⚙️ Settings
+    </div>
+
+
+    <div class="coming-card">
+
+      <div class="coming-icon">
+        🔒
+      </div>
+
+      <div class="coming-text">
+
+        <h3>Privacy</h3>
+
+        <p>
+          Privacy settings जल्द उपलब्ध होंगे।
+        </p>
+
+      </div>
+
+      <div class="badge">
+        Coming Soon
+      </div>
+
+    </div>
+
+
+    <div class="coming-card">
+
+      <div class="coming-icon">
+        💰
+      </div>
+
+      <div class="coming-text">
+
+        <h3>Monetization</h3>
+
+        <p>
+          Monetization system जल्द उपलब्ध होगा।
+        </p>
+
+      </div>
+
+      <div class="badge">
+        Coming Soon
+      </div>
+
+    </div>
+
+
+    <div class="coming-card">
+
+      <div class="coming-icon">
+        🔔
+      </div>
+
+      <div class="coming-text">
+
+        <h3>Notifications</h3>
+
+        <p>
+          Notification settings जल्द उपलब्ध होंगे।
+        </p>
+
+      </div>
+
+      <div class="badge">
+        Coming Soon
+      </div>
+
+    </div>
+
+
+    <div class="coming-card">
+
+      <div class="coming-icon">
+        ⚙️
+      </div>
+
+      <div class="coming-text">
+
+        <h3>Other Settings</h3>
+
+        <p>
+          और settings जल्द उपलब्ध होंगी।
+        </p>
+
+      </div>
+
+      <div class="badge">
+        Coming Soon
+      </div>
+
+    </div>
+
+  </div>
+
+
   <!-- BOTTOM NAV -->
 
   <div class="bottom-nav">
 
-    <button
-      class="nav-btn"
-      id="homeBtn"
-    >
+    <button class="nav-btn active-nav" id="homeBtn">
       <span>🏠</span>
       Home
     </button>
 
-
-    <button
-      class="nav-btn"
-      onclick="alert('Search feature जल्द आएगा 🔍')"
-    >
+    <button class="nav-btn" id="searchBtn">
       <span>🔍</span>
       Search
     </button>
 
-
-    <button
-      class="upload-btn"
-      onclick="alert('Video Upload feature अगले step में आएगा 🎥')"
-    >
+    <button class="upload-btn" id="uploadBtn">
       +
     </button>
 
-
-    <button
-      class="nav-btn"
-      onclick="alert('Notifications feature जल्द आएगा 🔔')"
-    >
+    <button class="nav-btn" id="notificationBtn">
       <span>🔔</span>
       Alerts
     </button>
 
-
-    <button
-      class="nav-btn"
-      id="profileBtn"
-    >
+    <button class="nav-btn" id="profileBtn">
       <span>👤</span>
       Profile
     </button>
@@ -656,121 +939,142 @@
 </div>
 
 
-<!-- ================= FIREBASE ================= -->
+<!-- FIREBASE -->
 
 <script type="module">
 
-  import { initializeApp } from
-  "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 
-  import {
-    getAuth,
-    GoogleAuthProvider,
-    signInWithPopup,
-    signOut,
-    onAuthStateChanged
-  } from
-  "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-
-
-  /* FIREBASE CONFIG */
-
-  const firebaseConfig = {
-
-    apiKey:
-      "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
-
-    authDomain:
-      "reelhu.firebaseapp.com",
-
-    projectId:
-      "reelhu",
-
-    storageBucket:
-      "reelhu.firebasestorage.app",
-
-    messagingSenderId:
-      "883255506643",
-
-    appId:
-      "1:883255506643:web:600256ed9bb47a4f828626",
-
-    measurementId:
-      "G-FY9N5XNF6Z"
-  };
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged
+}
+from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
 
-  /* INITIALIZE */
+const firebaseConfig = {
 
-  const app = initializeApp(firebaseConfig);
+  apiKey:
+    "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
 
-  const auth = getAuth(app);
+  authDomain:
+    "reelhu.firebaseapp.com",
 
-  const provider = new GoogleAuthProvider();
+  projectId:
+    "reelhu",
 
+  storageBucket:
+    "reelhu.firebasestorage.app",
 
-  /* ELEMENTS */
+  messagingSenderId:
+    "883255506643",
 
-  const loginPage =
-    document.getElementById("loginPage");
+  appId:
+    "1:883255506643:web:600256ed9bb47a4f828626",
 
-  const appPage =
-    document.getElementById("app");
-
-  const googleBtn =
-    document.getElementById("googleBtn");
-
-  const logoutBtn =
-    document.getElementById("logoutBtn");
-
-  const topUserName =
-    document.getElementById("topUserName");
-
-  const topUserPhoto =
-    document.getElementById("topUserPhoto");
-
-  const welcomeName =
-    document.getElementById("welcomeName");
-
-  const profilePhoto =
-    document.getElementById("profilePhoto");
-
-  const profileName =
-    document.getElementById("profileName");
-
-  const profileEmail =
-    document.getElementById("profileEmail");
-
-  const creatorPhoto1 =
-    document.getElementById("creatorPhoto1");
-
-  const homePage =
-    document.getElementById("homePage");
-
-  const profilePanel =
-    document.getElementById("profilePanel");
-
-  const homeBtn =
-    document.getElementById("homeBtn");
-
-  const profileBtn =
-    document.getElementById("profileBtn");
+  measurementId:
+    "G-FY9N5XNF6Z"
+};
 
 
-  /* GOOGLE LOGIN */
+const app =
+  initializeApp(firebaseConfig);
 
-  googleBtn.addEventListener("click", async () => {
+const auth =
+  getAuth(app);
 
-    try {
+const provider =
+  new GoogleAuthProvider();
+
+
+const loginPage =
+  document.getElementById("loginPage");
+
+const appPage =
+  document.getElementById("app");
+
+const googleBtn =
+  document.getElementById("googleBtn");
+
+const logoutBtn =
+  document.getElementById("logoutBtn");
+
+
+onAuthStateChanged(
+  auth,
+  user => {
+
+    if(user){
+
+      loginPage.style.display = "none";
+      appPage.style.display = "block";
+
+      const name =
+        user.displayName || "ReelHub User";
+
+      const photo =
+        user.photoURL ||
+        "https://via.placeholder.com/100";
+
+      document.getElementById(
+        "topUserName"
+      ).textContent = name;
+
+      document.getElementById(
+        "topUserPhoto"
+      ).src = photo;
+
+      document.getElementById(
+        "welcomeName"
+      ).textContent =
+        "Welcome " + name + " 👋";
+
+      document.getElementById(
+        "profileName"
+      ).textContent = name;
+
+      document.getElementById(
+        "profileEmail"
+      ).textContent =
+        user.email || "";
+
+      document.getElementById(
+        "profilePhoto"
+      ).src = photo;
+
+      document.getElementById(
+        "creatorPhoto1"
+      ).src = photo;
+
+    }else{
+
+      loginPage.style.display = "flex";
+      appPage.style.display = "none";
+
+    }
+
+  }
+);
+
+
+/* GOOGLE LOGIN */
+
+googleBtn.addEventListener(
+  "click",
+  async () => {
+
+    try{
 
       await signInWithPopup(
         auth,
         provider
       );
 
-    } catch (error) {
-
-      console.log(error);
+    }catch(error){
 
       alert(
         "Google Login नहीं हो पाया।\n\n" +
@@ -779,256 +1083,469 @@
 
     }
 
-  });
+  }
+);
 
 
-  /* AUTH STATE */
+/* LOGOUT */
 
-  onAuthStateChanged(
-    auth,
-    (user) => {
+logoutBtn.addEventListener(
+  "click",
+  async () => {
 
-      if (user) {
+    await signOut(auth);
 
-        /* SHOW APP */
-
-        loginPage.style.display =
-          "none";
-
-        appPage.style.display =
-          "block";
+  }
+);
 
 
-        /* USER NAME */
+/* PANELS */
 
-        const name =
-          user.displayName ||
-          "ReelHub User";
+const panels = [
+  "homePage",
+  "searchPanel",
+  "uploadPanel",
+  "notificationPanel",
+  "profilePanel",
+  "settingsPanel"
+];
 
+function showPanel(id){
 
-        /* USER PHOTO */
+  panels.forEach(
+    panel => {
 
-        const photo =
-          user.photoURL ||
-          "https://via.placeholder.com/100";
-
-
-        /* TOP */
-
-        topUserName.textContent =
-          name;
-
-        topUserPhoto.src =
-          photo;
-
-
-        /* WELCOME */
-
-        welcomeName.textContent =
-          "Welcome " + name + " 👋";
-
-
-        /* PROFILE */
-
-        profileName.textContent =
-          name;
-
-        profileEmail.textContent =
-          user.email || "";
-
-        profilePhoto.src =
-          photo;
-
-
-        /* CREATOR */
-
-        creatorPhoto1.src =
-          photo;
-
-      } else {
-
-        loginPage.style.display =
-          "flex";
-
-        appPage.style.display =
-          "none";
-
-      }
+      document.getElementById(
+        panel
+      ).style.display = "none";
 
     }
   );
 
+  document.getElementById(
+    id
+  ).style.display = "block";
 
-  /* LOGOUT */
+}
 
-  logoutBtn.addEventListener(
-    "click",
-    async () => {
 
-      try {
+/* HOME */
 
-        await signOut(auth);
+document.getElementById(
+  "homeBtn"
+).addEventListener(
+  "click",
+  () => {
 
-      } catch (error) {
+    showPanel("homePage");
+
+  }
+);
+
+
+/* SEARCH */
+
+document.getElementById(
+  "searchBtn"
+).addEventListener(
+  "click",
+  () => {
+
+    showPanel("searchPanel");
+
+    document.getElementById(
+      "searchInput"
+    ).focus();
+
+  }
+);
+
+
+/* UPLOAD */
+
+document.getElementById(
+  "uploadBtn"
+).addEventListener(
+  "click",
+  () => {
+
+    showPanel("uploadPanel");
+
+  }
+);
+
+
+/* NOTIFICATION */
+
+document.getElementById(
+  "notificationBtn"
+).addEventListener(
+  "click",
+  () => {
+
+    showPanel("notificationPanel");
+
+  }
+);
+
+
+/* PROFILE */
+
+document.getElementById(
+  "profileBtn"
+).addEventListener(
+  "click",
+  () => {
+
+    showPanel("profilePanel");
+
+  }
+);
+
+
+/* SETTINGS */
+
+document.getElementById(
+  "settingsBtn"
+).addEventListener(
+  "click",
+  () => {
+
+    showPanel("settingsPanel");
+
+  }
+);
+
+
+/* ================= SHARE REELHUB APP ================= */
+
+document.getElementById(
+  "shareAppBtn"
+).addEventListener(
+  "click",
+  async () => {
+
+    const shareData = {
+
+      title:
+        "ReelHub 🎬",
+
+      text:
+        "🎬 ReelHub पर videos देखें और share करें!",
+
+      url:
+        window.location.href
+
+    };
+
+
+    try{
+
+      if(
+        navigator.share
+      ){
+
+        await navigator.share(
+          shareData
+        );
+
+      }else{
+
+        await navigator.clipboard.writeText(
+          window.location.href
+        );
 
         alert(
-          "Logout नहीं हो पाया।"
+          "✅ ReelHub app का link copy हो गया!"
         );
 
       }
 
-    }
-  );
+    }catch(error){
 
-
-  /* HOME BUTTON */
-
-  homeBtn.addEventListener(
-    "click",
-    () => {
-
-      homePage.style.display =
-        "block";
-
-      profilePanel.style.display =
-        "none";
-
-    }
-  );
-
-
-  /* PROFILE BUTTON */
-
-  profileBtn.addEventListener(
-    "click",
-    () => {
-
-      homePage.style.display =
-        "none";
-
-      profilePanel.style.display =
-        "block";
-
-    }
-  );
-
-
-  /* LIKE BUTTONS */
-
-  document
-    .querySelectorAll(".likeBtn")
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const count =
-              button.querySelector("span");
-
-            let likes =
-              Number(count.textContent);
-
-            if (
-              button.classList.contains(
-                "liked"
-              )
-            ) {
-
-              likes--;
-
-              button.classList.remove(
-                "liked"
-              );
-
-            } else {
-
-              likes++;
-
-              button.classList.add(
-                "liked"
-              );
-
-            }
-
-            count.textContent =
-              likes;
-
-          }
-        );
-
-      }
-    );
-
-
-  /* COMMENTS */
-
-  document
-    .querySelectorAll(".commentBtn")
-    .forEach(
-      (button) => {
-
-        button.addEventListener(
-          "click",
-          () => {
-
-            const comment =
-              prompt(
-                "अपना comment लिखें:"
-              );
-
-            if (comment) {
-
-              alert(
-                "Comment added: " +
-                comment
-              );
-
-            }
-
-          }
-        );
-
-      }
-    );
-
-</script>
-
-
-<!-- SHARE FUNCTION -->
-
-<script>
-
-  function shareVideo() {
-
-    if (
-      navigator.share
-    ) {
-
-      navigator.share({
-
-        title: "ReelHub",
-
-        text:
-          "इस video को ReelHub पर देखें 🎬",
-
-        url:
-          window.location.href
-
-      });
-
-    } else {
-
-      alert(
-        "Share option आपके device में available नहीं है।"
+      console.log(
+        "Share cancelled"
       );
 
     }
 
   }
+);
+
+
+/* SEARCH */
+
+const searchInput =
+  document.getElementById(
+    "searchInput"
+  );
+
+const searchResults =
+  document.getElementById(
+    "searchResults"
+  );
+
+
+searchInput.addEventListener(
+  "input",
+  () => {
+
+    const query =
+      searchInput.value
+      .toLowerCase()
+      .trim();
+
+
+    const cards =
+      document.querySelectorAll(
+        ".video-card"
+      );
+
+    let html = "";
+    let found = false;
+
+
+    cards.forEach(
+      card => {
+
+        const title =
+          card.dataset.title.toLowerCase();
+
+        const description =
+          card.dataset.description.toLowerCase();
+
+
+        if(
+          query === "" ||
+          title.includes(query) ||
+          description.includes(query)
+        ){
+
+          found = true;
+
+          html += `
+            <div class="search-card">
+              <h3>🎬 ${card.dataset.title}</h3>
+              <p>${card.dataset.description}</p>
+            </div>
+          `;
+
+        }
+
+      }
+    );
+
+
+    if(!found){
+
+      html = `
+        <div class="search-card">
+          <h3>😕 कोई video नहीं मिली</h3>
+          <p>दूसरा search करके देखें।</p>
+        </div>
+      `;
+
+    }
+
+
+    searchResults.innerHTML = html;
+
+  }
+);
+
+
+/* UPLOAD PREVIEW */
+
+const videoInput =
+  document.getElementById(
+    "videoInput"
+  );
+
+const videoPreview =
+  document.getElementById(
+    "videoPreview"
+  );
+
+const uploadStatus =
+  document.getElementById(
+    "uploadStatus"
+  );
+
+
+videoInput.addEventListener(
+  "change",
+  () => {
+
+    const file =
+      videoInput.files[0];
+
+    if(!file) return;
+
+
+    if(
+      !file.type.startsWith("video/")
+    ){
+
+      alert(
+        "कृपया video file select करें।"
+      );
+
+      videoInput.value = "";
+
+      return;
+
+    }
+
+
+    videoPreview.src =
+      URL.createObjectURL(file);
+
+    videoPreview.style.display =
+      "block";
+
+    uploadStatus.textContent =
+      "✅ Video selected: " +
+      file.name +
+      "\n\n⚠️ अभी यह केवल preview है। Online upload के लिए Firebase Storage चाहिए।";
+
+  }
+);
+
+
+/* LIKE */
+
+document
+.querySelectorAll(".likeBtn")
+.forEach(
+  button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        const count =
+          button.querySelector("span");
+
+        let likes =
+          Number(count.textContent);
+
+
+        if(
+          button.classList.contains("liked")
+        ){
+
+          likes--;
+
+          button.classList.remove(
+            "liked"
+          );
+
+        }else{
+
+          likes++;
+
+          button.classList.add(
+            "liked"
+          );
+
+        }
+
+        count.textContent =
+          likes;
+
+      }
+    );
+
+  }
+);
+
+
+/* COMMENT */
+
+document
+.querySelectorAll(".commentBtn")
+.forEach(
+  button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        const comment =
+          prompt(
+            "अपना comment लिखें:"
+          );
+
+        if(
+          comment &&
+          comment.trim()
+        ){
+
+          alert(
+            "✅ Comment added:\n" +
+            comment
+          );
+
+        }
+
+      }
+    );
+
+  }
+);
+
+
+/* VIDEO SHARE */
+
+document
+.querySelectorAll(".shareBtn")
+.forEach(
+  button => {
+
+    button.addEventListener(
+      "click",
+      async () => {
+
+        if(
+          navigator.share
+        ){
+
+          try{
+
+            await navigator.share({
+
+              title:"ReelHub",
+
+              text:
+                "इस video को ReelHub पर देखें 🎬",
+
+              url:
+                window.location.href
+
+            });
+
+          }catch(error){}
+
+        }else{
+
+          alert(
+            "Share option available नहीं है।"
+          );
+
+        }
+
+      }
+    );
+
+  }
+);
+
+
+/* START */
+
+showPanel("homePage");
 
 </script>
 
 </body>
-      </html>
+  </html>
