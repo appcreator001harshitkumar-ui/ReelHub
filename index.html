@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ReelHub - Login</title>
+
+  <title>ReelHub</title>
 
   <style>
     * {
@@ -14,275 +15,557 @@
     }
 
     body {
+      background: #f5f5f5;
+      color: #111;
+    }
+
+    /* LOGIN */
+
+    #loginPage {
       min-height: 100vh;
-      background: linear-gradient(135deg, #111827, #312e81, #7c3aed);
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
       padding: 20px;
+      background: linear-gradient(135deg, #111827, #4c1d95, #db2777);
     }
 
-    .box {
+    .login-box {
       width: 100%;
-      max-width: 410px;
-      background: rgba(255,255,255,0.97);
-      border-radius: 24px;
+      max-width: 400px;
+      background: white;
       padding: 30px 24px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
-    }
-
-    .logo {
+      border-radius: 24px;
       text-align: center;
-      margin-bottom: 25px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.3);
     }
 
     .logo-icon {
-      width: 65px;
-      height: 65px;
+      width: 70px;
+      height: 70px;
       margin: auto;
-      border-radius: 18px;
-      background: linear-gradient(135deg,#7c3aed,#ec4899);
-      color: white;
+      border-radius: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 30px;
-      font-weight: bold;
-      box-shadow: 0 8px 20px rgba(124,58,237,.35);
-    }
-
-    .logo h1 {
-      margin-top: 12px;
-      font-size: 30px;
-      color: #171717;
-    }
-
-    .logo p {
-      margin-top: 5px;
-      color: #777;
-      font-size: 14px;
-    }
-
-    .field {
-      margin-top: 15px;
-    }
-
-    .field label {
-      display: block;
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 7px;
-      color: #333;
-    }
-
-    input {
-      width: 100%;
-      padding: 14px;
-      border: 1px solid #ddd;
-      border-radius: 12px;
-      outline: none;
-      font-size: 15px;
-      background: #fafafa;
-    }
-
-    input:focus {
-      border-color: #7c3aed;
-      background: white;
-    }
-
-    button {
-      width: 100%;
-      border: none;
-      border-radius: 12px;
-      padding: 14px;
-      font-size: 15px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-top: 15px;
-    }
-
-    .login-btn {
       background: linear-gradient(135deg,#7c3aed,#ec4899);
       color: white;
+      font-size: 32px;
+      font-weight: bold;
     }
 
-    .signup-btn {
-      background: #111827;
-      color: white;
+    .login-box h1 {
+      margin-top: 15px;
+      font-size: 30px;
+    }
+
+    .login-box p {
+      margin-top: 7px;
+      color: #777;
     }
 
     .google-btn {
-      background: white;
-      color: #222;
+      width: 100%;
+      padding: 15px;
+      margin-top: 25px;
       border: 1px solid #ddd;
+      border-radius: 12px;
+      background: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .google-btn:hover {
+      background: #f5f5f5;
+    }
+
+    /* APP */
+
+    #app {
+      display: none;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* TOP BAR */
+
+    .topbar {
+      height: 65px;
+      background: white;
+      border-bottom: 1px solid #ddd;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
+      padding: 0 15px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      font-size: 24px;
+      font-weight: bold;
+      background: linear-gradient(135deg,#7c3aed,#ec4899);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+
+    .top-user {
+      display: flex;
+      align-items: center;
       gap: 10px;
     }
 
-    .google-icon {
+    .top-user img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+
+    /* SEARCH */
+
+    .search-area {
+      padding: 15px;
+      background: white;
+    }
+
+    .search {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1px solid #ddd;
+      border-radius: 25px;
+      outline: none;
+      font-size: 15px;
+      background: #f5f5f5;
+    }
+
+    /* WELCOME */
+
+    .welcome {
+      margin: 15px;
+      padding: 20px;
+      border-radius: 18px;
+      color: white;
+      background: linear-gradient(135deg,#7c3aed,#ec4899);
+    }
+
+    .welcome h2 {
+      font-size: 22px;
+    }
+
+    .welcome p {
+      margin-top: 6px;
+      opacity: .9;
+    }
+
+    /* FEED */
+
+    .feed {
+      max-width: 650px;
+      margin: auto;
+    }
+
+    .section-title {
+      padding: 10px 15px;
       font-size: 20px;
       font-weight: bold;
     }
 
-    .divider {
+    /* VIDEO CARD */
+
+    .video-card {
+      background: white;
+      margin: 15px;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 3px 15px rgba(0,0,0,.08);
+    }
+
+    .video-box {
+      height: 360px;
+      background: linear-gradient(135deg,#111827,#312e81);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 55px;
+    }
+
+    .video-info {
+      padding: 15px;
+    }
+
+    .creator {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin: 22px 0;
-      color: #999;
-      font-size: 13px;
     }
 
-    .divider::before,
-    .divider::after {
-      content: "";
-      height: 1px;
-      background: #ddd;
-      flex: 1;
+    .creator img {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
     }
 
-    .message {
-      display: none;
-      margin-top: 15px;
-      padding: 12px;
-      border-radius: 10px;
+    .creator-name {
+      font-weight: bold;
+    }
+
+    .video-title {
+      margin-top: 12px;
+      font-size: 17px;
+      font-weight: bold;
+    }
+
+    .video-description {
+      margin-top: 6px;
+      color: #777;
       font-size: 14px;
-      text-align: center;
     }
 
-    .success {
-      background: #dcfce7;
-      color: #166534;
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
     }
 
-    .error {
-      background: #fee2e2;
-      color: #991b1b;
+    .action-btn {
+      border: none;
+      background: #f2f2f2;
+      padding: 10px 15px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
     }
 
-    #home {
+    .action-btn:hover {
+      background: #e5e5e5;
+    }
+
+    .liked {
+      color: #e11d48;
+      background: #ffe4e6;
+    }
+
+    /* BOTTOM NAV */
+
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 65px;
+      background: white;
+      border-top: 1px solid #ddd;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      z-index: 200;
+    }
+
+    .nav-btn {
+      border: none;
+      background: transparent;
+      font-size: 12px;
+      color: #555;
+      cursor: pointer;
+    }
+
+    .nav-btn span {
+      display: block;
+      font-size: 22px;
+      margin-bottom: 2px;
+    }
+
+    .upload-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 15px;
+      border: none;
+      background: linear-gradient(135deg,#7c3aed,#ec4899);
+      color: white;
+      font-size: 25px;
+      cursor: pointer;
+    }
+
+    /* PROFILE PANEL */
+
+    #profilePanel {
       display: none;
+      padding: 20px;
       text-align: center;
+      max-width: 500px;
+      margin: auto;
     }
 
-    .profile {
-      margin: 20px 0;
+    .profile-card {
+      background: white;
+      border-radius: 20px;
+      padding: 25px;
+      box-shadow: 0 3px 15px rgba(0,0,0,.08);
     }
 
-    .profile img {
-      width: 80px;
-      height: 80px;
+    .profile-card img {
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       object-fit: cover;
       border: 4px solid #7c3aed;
     }
 
-    .profile h2 {
+    .profile-card h2 {
       margin-top: 12px;
     }
 
-    .profile p {
-      color: #777;
+    .profile-card p {
       margin-top: 5px;
+      color: #777;
       word-break: break-word;
     }
 
-    .logout-btn {
+    .logout {
+      margin-top: 25px;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
       background: #ef4444;
       color: white;
+      font-weight: bold;
+      font-size: 15px;
+      cursor: pointer;
     }
 
-    .small {
-      text-align: center;
-      margin-top: 18px;
-      color: #777;
-      font-size: 12px;
-      line-height: 1.5;
+    @media (max-width: 500px) {
+      .video-box {
+        height: 300px;
+      }
     }
   </style>
 </head>
 
 <body>
 
-  <div class="box">
+<!-- ================= LOGIN ================= -->
 
-    <!-- LOGIN -->
-    <div id="loginPage">
+<div id="loginPage">
 
-      <div class="logo">
-        <div class="logo-icon">▶</div>
-        <h1>ReelHub</h1>
-        <p>Watch • Share • Connect</p>
-      </div>
+  <div class="login-box">
 
-      <div class="field">
-        <label>Email</label>
-        <input
-          type="email"
-          id="email"
-          placeholder="अपना email डालें"
-        >
-      </div>
+    <div class="logo-icon">▶</div>
 
-      <div class="field">
-        <label>Password</label>
-        <input
-          type="password"
-          id="password"
-          placeholder="अपना password डालें"
-        >
-      </div>
+    <h1>ReelHub</h1>
 
-      <button class="login-btn" id="loginBtn">
-        Login
-      </button>
+    <p>Watch • Share • Connect</p>
 
-      <button class="signup-btn" id="signupBtn">
-        Create New Account
-      </button>
+    <button class="google-btn" id="googleBtn">
+      🔵 Continue with Google
+    </button>
 
-      <div class="divider">या</div>
+  </div>
 
-      <button class="google-btn" id="googleBtn">
-        <span class="google-icon">G</span>
-        Continue with Google
-      </button>
+</div>
 
-      <div id="message" class="message"></div>
 
-      <div class="small">
-        ReelHub में login करके आप हमारे app का उपयोग कर सकते हैं।
-      </div>
+<!-- ================= APP ================= -->
+
+<div id="app">
+
+  <!-- TOP BAR -->
+
+  <div class="topbar">
+
+    <div class="brand">
+      ReelHub
+    </div>
+
+    <div class="top-user">
+
+      <span id="topUserName">User</span>
+
+      <img
+        id="topUserPhoto"
+        src="https://via.placeholder.com/40"
+        alt="Profile"
+      >
+
+    </div>
+
+  </div>
+
+
+  <!-- SEARCH -->
+
+  <div class="search-area">
+
+    <input
+      class="search"
+      type="text"
+      placeholder="🔍 Search videos..."
+      id="searchInput"
+    >
+
+  </div>
+
+
+  <!-- HOME -->
+
+  <div id="homePage">
+
+    <div class="welcome">
+
+      <h2 id="welcomeName">
+        Welcome 👋
+      </h2>
+
+      <p>
+        ReelHub पर आपका स्वागत है 🎬
+      </p>
 
     </div>
 
 
-    <!-- HOME AFTER LOGIN -->
-    <div id="home">
+    <div class="feed">
 
-      <div class="logo">
-        <div class="logo-icon">▶</div>
-        <h1>ReelHub</h1>
-        <p>Welcome to ReelHub 🎬</p>
+      <div class="section-title">
+        🔥 Latest Reels
       </div>
 
-      <div class="profile">
-        <img id="userPhoto"
-             src="https://via.placeholder.com/80"
-             alt="Profile">
 
-        <h2 id="userName">User</h2>
-        <p id="userEmail"></p>
+      <!-- VIDEO 1 -->
+
+      <div class="video-card">
+
+        <div class="video-box">
+          ▶️
+        </div>
+
+        <div class="video-info">
+
+          <div class="creator">
+
+            <img
+              id="creatorPhoto1"
+              src="https://via.placeholder.com/42"
+              alt="Creator"
+            >
+
+            <div>
+
+              <div class="creator-name">
+                ReelHub Creator
+              </div>
+
+              <small>
+                Just now
+              </small>
+
+            </div>
+
+          </div>
+
+          <div class="video-title">
+            Welcome to ReelHub 🎬
+          </div>
+
+          <div class="video-description">
+            यह ReelHub की पहली video है।
+          </div>
+
+          <div class="actions">
+
+            <button
+              class="action-btn likeBtn"
+            >
+              ❤️ Like <span>0</span>
+            </button>
+
+            <button
+              class="action-btn commentBtn"
+            >
+              💬 Comment
+            </button>
+
+            <button
+              class="action-btn"
+              onclick="shareVideo()"
+            >
+              📤 Share
+            </button>
+
+          </div>
+
+        </div>
+
       </div>
 
-      <button class="logout-btn" id="logoutBtn">
-        Logout
-      </button>
 
-      <div class="small">
-        आपका ReelHub account successfully login हो गया है। ✅
+      <!-- VIDEO 2 -->
+
+      <div class="video-card">
+
+        <div class="video-box">
+          🎬
+        </div>
+
+        <div class="video-info">
+
+          <div class="creator">
+
+            <img
+              src="https://via.placeholder.com/42"
+              alt="Creator"
+            >
+
+            <div>
+
+              <div class="creator-name">
+                ReelHub
+              </div>
+
+              <small>
+                Today
+              </small>
+
+            </div>
+
+          </div>
+
+          <div class="video-title">
+            Create & Share 🚀
+          </div>
+
+          <div class="video-description">
+            अपनी videos ReelHub पर share करें।
+          </div>
+
+          <div class="actions">
+
+            <button
+              class="action-btn likeBtn"
+            >
+              ❤️ Like <span>0</span>
+            </button>
+
+            <button
+              class="action-btn commentBtn"
+            >
+              💬 Comment
+            </button>
+
+            <button
+              class="action-btn"
+              onclick="shareVideo()"
+            >
+              📤 Share
+            </button>
+
+          </div>
+
+        </div>
+
       </div>
 
     </div>
@@ -290,198 +573,297 @@
   </div>
 
 
-  <!-- Firebase -->
-  <script type="module">
+  <!-- PROFILE -->
 
-    import { initializeApp } from
-      "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  <div id="profilePanel">
 
-    import {
-      getAuth,
-      GoogleAuthProvider,
-      signInWithPopup,
-      signInWithEmailAndPassword,
-      createUserWithEmailAndPassword,
-      signOut,
-      onAuthStateChanged
-    } from
-      "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+    <div class="profile-card">
 
+      <img
+        id="profilePhoto"
+        src="https://via.placeholder.com/100"
+        alt="Profile"
+      >
 
-    // ==============================
-    // REELHUB FIREBASE CONFIG
-    // ==============================
+      <h2 id="profileName">
+        User
+      </h2>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
-      authDomain: "reelhu.firebaseapp.com",
-      projectId: "reelhu",
-      storageBucket: "reelhu.firebasestorage.app",
-      messagingSenderId: "883255506643",
-      appId: "1:883255506643:web:600256ed9bb47a4f828626",
-      measurementId: "G-FY9N5XNF6Z"
-    };
+      <p id="profileEmail">
+      </p>
+
+      <button
+        class="logout"
+        id="logoutBtn"
+      >
+        🚪 Logout
+      </button>
+
+    </div>
+
+  </div>
 
 
-    // Firebase start
-    const app = initializeApp(firebaseConfig);
+  <!-- BOTTOM NAV -->
 
-    const auth = getAuth(app);
+  <div class="bottom-nav">
 
-    const provider = new GoogleAuthProvider();
-
-
-    // Elements
-    const loginPage = document.getElementById("loginPage");
-    const home = document.getElementById("home");
-
-    const email = document.getElementById("email");
-    const password = document.getElementById("password");
-
-    const loginBtn = document.getElementById("loginBtn");
-    const signupBtn = document.getElementById("signupBtn");
-    const googleBtn = document.getElementById("googleBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
-
-    const message = document.getElementById("message");
-
-    const userName = document.getElementById("userName");
-    const userEmail = document.getElementById("userEmail");
-    const userPhoto = document.getElementById("userPhoto");
+    <button
+      class="nav-btn"
+      id="homeBtn"
+    >
+      <span>🏠</span>
+      Home
+    </button>
 
 
-    // Message function
-    function showMessage(text, type = "error") {
+    <button
+      class="nav-btn"
+      onclick="alert('Search feature जल्द आएगा 🔍')"
+    >
+      <span>🔍</span>
+      Search
+    </button>
 
-      message.textContent = text;
 
-      message.className = "message " + type;
+    <button
+      class="upload-btn"
+      onclick="alert('Video Upload feature अगले step में आएगा 🎥')"
+    >
+      +
+    </button>
 
-      message.style.display = "block";
 
-      setTimeout(() => {
-        message.style.display = "none";
-      }, 4000);
+    <button
+      class="nav-btn"
+      onclick="alert('Notifications feature जल्द आएगा 🔔')"
+    >
+      <span>🔔</span>
+      Alerts
+    </button>
+
+
+    <button
+      class="nav-btn"
+      id="profileBtn"
+    >
+      <span>👤</span>
+      Profile
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- ================= FIREBASE ================= -->
+
+<script type="module">
+
+  import { initializeApp } from
+  "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+
+  import {
+    getAuth,
+    GoogleAuthProvider,
+    signInWithPopup,
+    signOut,
+    onAuthStateChanged
+  } from
+  "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+
+  /* FIREBASE CONFIG */
+
+  const firebaseConfig = {
+
+    apiKey:
+      "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
+
+    authDomain:
+      "reelhu.firebaseapp.com",
+
+    projectId:
+      "reelhu",
+
+    storageBucket:
+      "reelhu.firebasestorage.app",
+
+    messagingSenderId:
+      "883255506643",
+
+    appId:
+      "1:883255506643:web:600256ed9bb47a4f828626",
+
+    measurementId:
+      "G-FY9N5XNF6Z"
+  };
+
+
+  /* INITIALIZE */
+
+  const app = initializeApp(firebaseConfig);
+
+  const auth = getAuth(app);
+
+  const provider = new GoogleAuthProvider();
+
+
+  /* ELEMENTS */
+
+  const loginPage =
+    document.getElementById("loginPage");
+
+  const appPage =
+    document.getElementById("app");
+
+  const googleBtn =
+    document.getElementById("googleBtn");
+
+  const logoutBtn =
+    document.getElementById("logoutBtn");
+
+  const topUserName =
+    document.getElementById("topUserName");
+
+  const topUserPhoto =
+    document.getElementById("topUserPhoto");
+
+  const welcomeName =
+    document.getElementById("welcomeName");
+
+  const profilePhoto =
+    document.getElementById("profilePhoto");
+
+  const profileName =
+    document.getElementById("profileName");
+
+  const profileEmail =
+    document.getElementById("profileEmail");
+
+  const creatorPhoto1 =
+    document.getElementById("creatorPhoto1");
+
+  const homePage =
+    document.getElementById("homePage");
+
+  const profilePanel =
+    document.getElementById("profilePanel");
+
+  const homeBtn =
+    document.getElementById("homeBtn");
+
+  const profileBtn =
+    document.getElementById("profileBtn");
+
+
+  /* GOOGLE LOGIN */
+
+  googleBtn.addEventListener("click", async () => {
+
+    try {
+
+      await signInWithPopup(
+        auth,
+        provider
+      );
+
+    } catch (error) {
+
+      console.log(error);
+
+      alert(
+        "Google Login नहीं हो पाया।\n\n" +
+        error.message
+      );
+
     }
 
-
-    // ==============================
-    // EMAIL LOGIN
-    // ==============================
-
-    loginBtn.addEventListener("click", async () => {
-
-      const e = email.value.trim();
-      const p = password.value;
-
-      if (!e || !p) {
-        showMessage("Email और Password दोनों डालें।");
-        return;
-      }
-
-      try {
-
-        await signInWithEmailAndPassword(
-          auth,
-          e,
-          p
-        );
-
-      } catch (error) {
-
-        console.log(error);
-
-        if (error.code === "auth/invalid-credential") {
-          showMessage("Email या Password गलत है।");
-        } else {
-          showMessage("Login नहीं हो पाया।");
-        }
-
-      }
-
-    });
+  });
 
 
-    // ==============================
-    // CREATE ACCOUNT
-    // ==============================
+  /* AUTH STATE */
 
-    signupBtn.addEventListener("click", async () => {
+  onAuthStateChanged(
+    auth,
+    (user) => {
 
-      const e = email.value.trim();
-      const p = password.value;
+      if (user) {
 
-      if (!e || !p) {
-        showMessage("पहले Email और Password डालें।");
-        return;
-      }
+        /* SHOW APP */
 
-      if (p.length < 6) {
-        showMessage("Password कम से कम 6 characters का होना चाहिए।");
-        return;
-      }
+        loginPage.style.display =
+          "none";
 
-      try {
+        appPage.style.display =
+          "block";
 
-        await createUserWithEmailAndPassword(
-          auth,
-          e,
-          p
-        );
 
-        showMessage(
-          "Account successfully बन गया! 🎉",
-          "success"
-        );
+        /* USER NAME */
 
-      } catch (error) {
+        const name =
+          user.displayName ||
+          "ReelHub User";
 
-        console.log(error);
 
-        if (error.code === "auth/email-already-in-use") {
-          showMessage("यह Email पहले से registered है।");
-        } else {
-          showMessage("Account नहीं बन पाया।");
-        }
+        /* USER PHOTO */
+
+        const photo =
+          user.photoURL ||
+          "https://via.placeholder.com/100";
+
+
+        /* TOP */
+
+        topUserName.textContent =
+          name;
+
+        topUserPhoto.src =
+          photo;
+
+
+        /* WELCOME */
+
+        welcomeName.textContent =
+          "Welcome " + name + " 👋";
+
+
+        /* PROFILE */
+
+        profileName.textContent =
+          name;
+
+        profileEmail.textContent =
+          user.email || "";
+
+        profilePhoto.src =
+          photo;
+
+
+        /* CREATOR */
+
+        creatorPhoto1.src =
+          photo;
+
+      } else {
+
+        loginPage.style.display =
+          "flex";
+
+        appPage.style.display =
+          "none";
 
       }
 
-    });
+    }
+  );
 
 
-    // ==============================
-    // GOOGLE LOGIN
-    // ==============================
+  /* LOGOUT */
 
-    googleBtn.addEventListener("click", async () => {
-
-      try {
-
-        await signInWithPopup(
-          auth,
-          provider
-        );
-
-      } catch (error) {
-
-        console.log(error);
-
-        if (error.code === "auth/popup-closed-by-user") {
-          showMessage("Google Login बंद कर दिया गया।");
-        } else {
-          showMessage("Google Login नहीं हो पाया।");
-        }
-
-      }
-
-    });
-
-
-    // ==============================
-    // LOGOUT
-    // ==============================
-
-    logoutBtn.addEventListener("click", async () => {
+  logoutBtn.addEventListener(
+    "click",
+    async () => {
 
       try {
 
@@ -489,44 +871,164 @@
 
       } catch (error) {
 
-        console.log(error);
+        alert(
+          "Logout नहीं हो पाया।"
+        );
 
       }
 
-    });
+    }
+  );
 
 
-    // ==============================
-    // AUTH STATE
-    // ==============================
+  /* HOME BUTTON */
 
-    onAuthStateChanged(auth, (user) => {
+  homeBtn.addEventListener(
+    "click",
+    () => {
 
-      if (user) {
+      homePage.style.display =
+        "block";
 
-        loginPage.style.display = "none";
-        home.style.display = "block";
+      profilePanel.style.display =
+        "none";
 
-        userName.textContent =
-          user.displayName || "ReelHub User";
+    }
+  );
 
-        userEmail.textContent =
-          user.email || "";
 
-        if (user.photoURL) {
-          userPhoto.src = user.photoURL;
-        }
+  /* PROFILE BUTTON */
 
-      } else {
+  profileBtn.addEventListener(
+    "click",
+    () => {
 
-        loginPage.style.display = "block";
-        home.style.display = "none";
+      homePage.style.display =
+        "none";
+
+      profilePanel.style.display =
+        "block";
+
+    }
+  );
+
+
+  /* LIKE BUTTONS */
+
+  document
+    .querySelectorAll(".likeBtn")
+    .forEach(
+      (button) => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            const count =
+              button.querySelector("span");
+
+            let likes =
+              Number(count.textContent);
+
+            if (
+              button.classList.contains(
+                "liked"
+              )
+            ) {
+
+              likes--;
+
+              button.classList.remove(
+                "liked"
+              );
+
+            } else {
+
+              likes++;
+
+              button.classList.add(
+                "liked"
+              );
+
+            }
+
+            count.textContent =
+              likes;
+
+          }
+        );
 
       }
+    );
 
-    });
 
-  </script>
+  /* COMMENTS */
+
+  document
+    .querySelectorAll(".commentBtn")
+    .forEach(
+      (button) => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            const comment =
+              prompt(
+                "अपना comment लिखें:"
+              );
+
+            if (comment) {
+
+              alert(
+                "Comment added: " +
+                comment
+              );
+
+            }
+
+          }
+        );
+
+      }
+    );
+
+</script>
+
+
+<!-- SHARE FUNCTION -->
+
+<script>
+
+  function shareVideo() {
+
+    if (
+      navigator.share
+    ) {
+
+      navigator.share({
+
+        title: "ReelHub",
+
+        text:
+          "इस video को ReelHub पर देखें 🎬",
+
+        url:
+          window.location.href
+
+      });
+
+    } else {
+
+      alert(
+        "Share option आपके device में available नहीं है।"
+      );
+
+    }
+
+  }
+
+</script>
 
 </body>
-  </html>
+      </html>
