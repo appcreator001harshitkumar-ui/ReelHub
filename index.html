@@ -212,11 +212,16 @@ button:disabled{
 
 .stats div{
  text-align:center;
+ cursor:pointer;
 }
 
 .stats strong{
  display:block;
  font-size:20px;
+}
+
+.stats div:hover{
+ color:#ff1744;
 }
 
 .actions{
@@ -397,12 +402,27 @@ button:disabled{
 }
 
 .notification{
- padding:12px 0;
+ padding:13px;
  border-bottom:1px solid #ddd;
+ cursor:pointer;
+ border-radius:10px;
+ margin-bottom:5px;
 }
 
-.notification:last-child{
- border-bottom:0;
+.notification:hover{
+ background:#f5f5f5;
+}
+
+.dark .notification:hover{
+ background:#292929;
+}
+
+.notification.new{
+ background:#fff0f3;
+}
+
+.dark .notification.new{
+ background:#32151d;
 }
 
 .history-item{
@@ -504,7 +524,19 @@ button:disabled{
  height:100%;
  width:0%;
  background:#ff1744;
- transition:.2s;
+ transition:.15s;
+}
+
+.upload-status{
+ display:none;
+ margin-top:10px;
+ padding:12px;
+ border-radius:12px;
+ background:#fff1f4;
+}
+
+.dark .upload-status{
+ background:#32151d;
 }
 
 .comment-box{
@@ -525,6 +557,7 @@ button:disabled{
 
 .comment-input input{
  margin:0;
+ flex:1;
 }
 
 .comment-input button{
@@ -533,6 +566,37 @@ button:disabled{
  padding:0 14px;
  background:#ff1744;
  color:white;
+}
+
+.comment-toggle{
+ margin-top:5px;
+ color:#777;
+ font-size:13px;
+ border:0;
+ background:none;
+}
+
+.list-user{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ padding:12px 0;
+ border-bottom:1px solid #ddd;
+}
+
+.list-user img{
+ width:48px;
+ height:48px;
+ border-radius:50%;
+ object-fit:cover;
+}
+
+.list-user-info{
+ flex:1;
+}
+
+.status-success{
+ color:#159447;
 }
 
 .status-error{
@@ -558,13 +622,13 @@ button:disabled{
  <input
   id="searchInput"
   placeholder="Search users...">
+
  <div id="searchResults"></div>
 </div>
 
 <main>
 
 <!-- LOGIN -->
-
 <section id="loginPanel" class="panel active">
 
  <div class="card login">
@@ -593,7 +657,6 @@ button:disabled{
 
 
 <!-- HOME -->
-
 <section id="homePanel" class="panel">
 
  <div class="card">
@@ -607,7 +670,6 @@ button:disabled{
 
 
 <!-- SHORTS -->
-
 <section id="shortsPanel" class="panel">
 
  <div class="card">
@@ -621,7 +683,6 @@ button:disabled{
 
 
 <!-- UPLOAD -->
-
 <section id="uploadPanel" class="panel">
 
  <div class="card">
@@ -649,7 +710,8 @@ button:disabled{
    class="progress">
 
    <div class="small">
-    Uploading... <span id="uploadPercent">0%</span>
+    Uploading...
+    <span id="uploadPercent">0%</span>
    </div>
 
    <br>
@@ -682,31 +744,34 @@ button:disabled{
 
 
 <!-- ALERTS -->
-
 <section id="alertsPanel" class="panel">
 
  <div class="card">
+
   <h2>
    🔔 Notifications
    <span id="notificationBadge"></span>
   </h2>
+
  </div>
 
  <div
   id="notificationsList"
   class="card">
+
   <div class="empty">
    अभी कोई notification नहीं है।
   </div>
+
  </div>
 
 </section>
 
 
 <!-- PROFILE -->
-
 <section id="profilePanel" class="panel">
 
+ <!-- PROFILE CARD -->
  <div class="card profile">
 
   <div class="photo-wrap">
@@ -731,7 +796,9 @@ button:disabled{
    accept="image/*"
    hidden>
 
-  <h2 id="profileName">User</h2>
+  <h2 id="profileName">
+   User
+  </h2>
 
   <p
    id="profileUsername"
@@ -741,19 +808,38 @@ button:disabled{
 
   <div class="stats">
 
-   <div>
-    <strong id="followersCount">0</strong>
+   <div
+    id="followersStat"
+    title="Followers देखें">
+
+    <strong id="followersCount">
+     0
+    </strong>
+
     Followers
+
    </div>
 
-   <div>
-    <strong id="followingCount">0</strong>
+   <div
+    id="followingStat"
+    title="Following देखें">
+
+    <strong id="followingCount">
+     0
+    </strong>
+
     Following
+
    </div>
 
    <div>
-    <strong id="videosCount">0</strong>
+
+    <strong id="videosCount">
+     0
+    </strong>
+
     Videos
+
    </div>
 
   </div>
@@ -779,85 +865,140 @@ button:disabled{
  </div>
 
 
-<!-- STORIES -->
+ <!-- SETTINGS UPPER -->
+ <div class="card">
 
-<div class="card">
+  <h3>⚙️ Settings</h3>
 
- <h3>Stories</h3>
+  <br>
 
- <div
-  class="story-row"
-  id="storyRow">
+  <button
+   id="darkModeButton"
+   class="secondary"
+   style="width:100%"
+   type="button">
+   🌙 Dark / Light
+  </button>
 
-  <div class="story" id="addStoryButton">
+  <br><br>
 
-   <div class="add-story">
-    +
+  <button
+   id="historyButton"
+   class="secondary"
+   style="width:100%"
+   type="button">
+   📜 History
+  </button>
+
+  <br><br>
+
+  <button
+   id="deleteHistoryButton"
+   class="secondary"
+   style="width:100%"
+   type="button">
+   🗑️ Delete History
+  </button>
+
+  <br><br>
+
+  <button
+   id="logoutButton"
+   class="primary"
+   type="button">
+   🚪 Logout
+  </button>
+
+ </div>
+
+
+ <!-- UPLOAD STATUS -->
+ <div class="card">
+
+  <h3>📤 Video Upload Status</h3>
+
+  <div
+   id="profileUploadStatus"
+   class="upload-status">
+
+   <strong id="profileUploadTitle">
+    Uploading...
+   </strong>
+
+   <div
+    class="small"
+    id="profileUploadText"
+    style="margin-top:5px">
+    Please wait...
    </div>
 
-   <div>
-    Add Story
+   <br>
+
+   <div class="progress-bar">
+
+    <div
+     id="profileUploadFill"
+     class="progress-fill">
+    </div>
+
    </div>
+
+   <div
+    class="small"
+    style="margin-top:5px">
+
+    <span id="profileUploadPercent">
+     0%
+    </span>
+
+   </div>
+
+  </div>
+
+  <div
+   id="noUploadStatus"
+   class="empty"
+   style="padding:20px">
+
+   अभी कोई video upload नहीं हो रहा।
 
   </div>
 
  </div>
 
- <input
-  type="file"
-  id="storyInput"
-  accept="image/*,video/*"
-  hidden>
 
-</div>
+ <!-- STORIES -->
+ <div class="card">
 
+  <h3>Stories</h3>
 
-<!-- SETTINGS -->
+  <div
+   class="story-row"
+   id="storyRow">
 
-<div class="card">
+   <div
+    class="story"
+    id="addStoryButton">
 
- <h3>⚙️ Settings</h3>
+    <div class="add-story">
+     +
+    </div>
 
- <br>
+    <div>
+     Add Story
+    </div>
 
- <button
-  id="darkModeButton"
-  class="secondary"
-  style="width:100%"
-  type="button">
-  🌙 Dark / Light
- </button>
+   </div>
 
- <br><br>
+  </div>
 
- <button
-  id="historyButton"
-  class="secondary"
-  style="width:100%"
-  type="button">
-  📜 History
- </button>
+  <input
+   type="file"
+   id="storyInput"
+   accept="image/*,video/*"
+   hidden>
 
- <br><br>
-
- <button
-  id="deleteHistoryButton"
-  class="secondary"
-  style="width:100%"
-  type="button">
-  🗑️ Delete History
- </button>
-
- <br><br>
-
- <button
-  id="logoutButton"
-  class="primary"
-  type="button">
-  🚪 Logout
- </button>
-
-</div>
+ </div>
 
 </section>
 
@@ -865,7 +1006,6 @@ button:disabled{
 
 
 <!-- BOTTOM NAV -->
-
 <div
  id="bottomNav"
  class="bottom-nav"
@@ -910,7 +1050,6 @@ button:disabled{
 
 
 <!-- EDIT PROFILE -->
-
 <div
  id="editModal"
  class="modal">
@@ -959,8 +1098,38 @@ button:disabled{
 </div>
 
 
-<!-- STORY VIEW -->
+<!-- FOLLOWERS / FOLLOWING -->
+<div
+ id="followListModal"
+ class="modal">
 
+ <div class="modal-box">
+
+  <button
+   class="close"
+   type="button"
+   data-close="followListModal">
+   ×
+  </button>
+
+  <h2 id="followListTitle">
+   Followers
+  </h2>
+
+  <br>
+
+  <div id="followList">
+   <div class="loading">
+    Loading...
+   </div>
+  </div>
+
+ </div>
+
+</div>
+
+
+<!-- STORY VIEW -->
 <div
  id="storyViewModal"
  class="modal">
@@ -974,7 +1143,9 @@ button:disabled{
    ×
   </button>
 
-  <h3 id="storyViewName">Story</h3>
+  <h3 id="storyViewName">
+   Story
+  </h3>
 
   <br>
 
@@ -995,7 +1166,6 @@ button:disabled{
 
 
 <!-- HISTORY -->
-
 <div
  id="historyModal"
  class="modal">
@@ -1014,7 +1184,9 @@ button:disabled{
   <br>
 
   <div id="historyList">
-   <div class="loading">Loading...</div>
+   <div class="loading">
+    Loading...
+   </div>
   </div>
 
  </div>
@@ -1023,7 +1195,6 @@ button:disabled{
 
 
 <!-- STORY EDIT -->
-
 <div
  id="storyEditModal"
  class="modal">
@@ -1068,10 +1239,6 @@ button:disabled{
 
 <script type="module">
 
-/* =====================================================
-   FIREBASE IMPORT
-===================================================== */
-
 import {
  initializeApp
 }
@@ -1109,11 +1276,9 @@ from
 "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
-/* =====================================================
-   FIREBASE CONFIG
-===================================================== */
+/* FIREBASE */
 
-const firebaseConfig = {
+const firebaseConfig={
 
  apiKey:
  "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
@@ -1135,81 +1300,64 @@ const firebaseConfig = {
 
  measurementId:
  "G-FY9N5XNF6Z"
-
 };
 
 
-/* =====================================================
-   CLOUDINARY
-===================================================== */
+/* CLOUDINARY */
 
-const CLOUDINARY_CLOUD_NAME =
- "s3eresx6";
-
-const CLOUDINARY_UPLOAD_PRESET =
- "reelhub_upload";
+const CLOUDINARY_CLOUD_NAME="s3eresx6";
+const CLOUDINARY_UPLOAD_PRESET="reelhub_upload";
 
 
-/* =====================================================
-   FIREBASE START
-===================================================== */
+/* START */
 
-const app =
- initializeApp(firebaseConfig);
+const app=initializeApp(firebaseConfig);
+const auth=getAuth(app);
+const db=getFirestore(app);
 
-const auth =
- getAuth(app);
-
-const db =
- getFirestore(app);
-
-const provider =
- new GoogleAuthProvider();
+const provider=new GoogleAuthProvider();
 
 provider.setCustomParameters({
  prompt:"select_account"
 });
 
 
-let currentUser = null;
-let localStories = [];
-let selectedStoryId = null;
+let currentUser=null;
+let localStories=[];
+let selectedStoryId=null;
 
-let unsubscribeVideos = null;
-let unsubscribeNotifications = null;
+let unsubscribeVideos=null;
+let unsubscribeNotifications=null;
+
+let commentUnsubscribers={};
 
 
-/* =====================================================
-   HELPER
-===================================================== */
+/* HELPER */
 
 function safe(value){
 
- return String(value ?? "")
+ return String(value??"")
   .replaceAll("&","&amp;")
   .replaceAll("<","&lt;")
   .replaceAll(">","&gt;")
   .replaceAll('"',"&quot;")
   .replaceAll("'","&#039;");
-
 }
 
 
-/* =====================================================
-   PANEL
-===================================================== */
+/* PANEL */
 
 function openPanel(id){
 
  if(!currentUser)return;
 
- document.querySelectorAll(".panel")
-  .forEach(panel=>{
-   panel.classList.remove("active");
+ document
+  .querySelectorAll(".panel")
+  .forEach(p=>{
+   p.classList.remove("active");
   });
 
- const panel =
-  document.getElementById(id);
+ const panel=document.getElementById(id);
 
  if(panel){
   panel.classList.add("active");
@@ -1220,26 +1368,20 @@ function openPanel(id){
 
 }
 
-window.openPanel = openPanel;
+window.openPanel=openPanel;
 
 
-/* =====================================================
-   GOOGLE LOGIN
-===================================================== */
+/* LOGIN */
 
 async function login(){
 
- const button =
-  document.getElementById(
-   "googleLoginBtn"
-  );
+ const button=document.getElementById(
+  "googleLoginBtn"
+ );
 
- const status =
-  document.getElementById(
-   "loginStatus"
-  );
-
- if(!button)return;
+ const status=document.getElementById(
+  "loginStatus"
+ );
 
  try{
 
@@ -1251,7 +1393,7 @@ async function login(){
   status.textContent=
    "Google account select करें...";
 
-  const result =
+  const result=
    await signInWithPopup(
     auth,
     provider
@@ -1260,9 +1402,6 @@ async function login(){
   if(result?.user){
 
    currentUser=result.user;
-
-   status.textContent=
-    "✅ Login successful!";
 
    await createProfile();
 
@@ -1277,156 +1416,89 @@ async function login(){
   button.textContent=
    "🔐 Continue with Google";
 
-  let message=
-   "Google Login failed.";
-
-  if(
-   error.code===
-   "auth/popup-closed-by-user"
-  ){
-
-   message=
-    "Google login window बंद हो गई।";
-
-  }
-  else if(
-   error.code===
-   "auth/popup-blocked"
-  ){
-
-   message=
-    "Browser ने popup block कर दिया। Popups allow करें।";
-
-  }
-  else if(
-   error.code===
-   "auth/unauthorized-domain"
-  ){
-
-   message=
-    "Firebase Authorized Domains में यह website add नहीं है।";
-
-  }
-  else if(
-   error.code===
-   "auth/operation-not-allowed"
-  ){
-
-   message=
-    "Firebase में Google Sign-in enable नहीं है।";
-
-  }
-
   status.textContent=
-   message;
+   "Login failed";
 
   alert(
-   message+
-   "\n\nError code:\n"+
-   (error.code||"unknown")
+   "Google Login failed:\n\n"+
+   (error.code||error.message)
   );
 
  }
 
 }
-
-
-/* =====================================================
-   IMPORTANT LOGIN BUTTON CONNECTION
-===================================================== */
 
 document
  .getElementById("googleLoginBtn")
- .addEventListener(
-  "click",
-  login
- );
+ .addEventListener("click",login);
 
 
-/* =====================================================
-   CREATE PROFILE
-===================================================== */
-
-async function createProfile(){
-
- if(!currentUser)return;
-
- const ref=
-  doc(
-   db,
-   "profiles",
-   currentUser.uid
-  );
-
- const snap=
-  await getDoc(ref);
-
- if(!snap.exists()){
-
-  await setDoc(
-   ref,
-   {
-    uid:currentUser.uid,
-
-    name:
-     currentUser.displayName||
-     "User",
-
-    username:
-     makeUsername(
-      currentUser.displayName||
-      "user"
-     ),
-
-    photo:
-     currentUser.photoURL||
-     "https://via.placeholder.com/150",
-
-    followers:0,
-    following:0,
-    videos:0,
-
-    createdAt:
-     serverTimestamp()
-   }
-  );
-
- }
-
-}
-
-
-/* =====================================================
-   USERNAME
-===================================================== */
+/* PROFILE */
 
 function makeUsername(name){
 
  return String(name)
   .toLowerCase()
   .replace(/[^a-z0-9]/g,"")
-  .slice(0,15)||
-  "user";
+  .slice(0,15)||"user";
 
 }
 
 
-/* =====================================================
-   LOAD PROFILE
-===================================================== */
+async function createProfile(){
+
+ if(!currentUser)return;
+
+ const ref=doc(
+  db,
+  "profiles",
+  currentUser.uid
+ );
+
+ const snap=await getDoc(ref);
+
+ if(!snap.exists()){
+
+  await setDoc(ref,{
+
+   uid:currentUser.uid,
+
+   name:
+    currentUser.displayName||"User",
+
+   username:
+    makeUsername(
+     currentUser.displayName||"user"
+    ),
+
+   photo:
+    currentUser.photoURL||
+    "https://via.placeholder.com/150",
+
+   followers:0,
+   following:0,
+   videos:0,
+
+   createdAt:serverTimestamp()
+
+  });
+
+ }
+
+}
+
 
 async function loadProfile(){
 
  if(!currentUser)return;
 
- const snap=
-  await getDoc(
-   doc(
-    db,
-    "profiles",
-    currentUser.uid
-   )
-  );
+ const snap=await getDoc(
+  doc(
+   db,
+   "profiles",
+   currentUser.uid
+  )
+ );
 
  if(!snap.exists())return;
 
@@ -1434,13 +1506,13 @@ async function loadProfile(){
 
  document.getElementById(
   "profileName"
- ).textContent=
-  d.name||"User";
+ ).textContent=d.name||"User";
 
  document.getElementById(
   "profileUsername"
- ).textContent=
-  "@"+(d.username||"user");
+ ).textContent="@"+(
+  d.username||"user"
+ );
 
  document.getElementById(
   "profilePhoto"
@@ -1451,74 +1523,20 @@ async function loadProfile(){
 
  document.getElementById(
   "followersCount"
- ).textContent=
-  d.followers||0;
+ ).textContent=d.followers||0;
 
  document.getElementById(
   "followingCount"
- ).textContent=
-  d.following||0;
+ ).textContent=d.following||0;
 
  document.getElementById(
   "videosCount"
- ).textContent=
-  d.videos||0;
+ ).textContent=d.videos||0;
 
 }
 
 
-/* =====================================================
-   USER DATA
-===================================================== */
-
-async function initializeUserData(){
-
- if(!currentUser)return;
-
- try{
-
-  await createProfile();
-  await loadProfile();
-
-  startRealtimeVideos();
-  startNotifications();
-
-  loadLocalStories();
-
- }catch(error){
-
-  console.error(
-   "Initialization error:",
-   error
-  );
-
-  alert(
-   "Profile data load error:\n"+
-   error.message
-  );
-
- }
-
- const button=
-  document.getElementById(
-   "googleLoginBtn"
-  );
-
- if(button){
-
-  button.disabled=false;
-
-  button.textContent=
-   "🔐 Continue with Google";
-
- }
-
-}
-
-
-/* =====================================================
-   AUTH STATE
-===================================================== */
+/* AUTH */
 
 onAuthStateChanged(
  auth,
@@ -1530,7 +1548,20 @@ onAuthStateChanged(
 
    showLoggedInUI();
 
-   await initializeUserData();
+   try{
+
+    await createProfile();
+    await loadProfile();
+
+    startRealtimeVideos();
+    startNotifications();
+    loadLocalStories();
+
+   }catch(error){
+
+    console.error(error);
+
+   }
 
   }else{
 
@@ -1542,10 +1573,11 @@ onAuthStateChanged(
     "bottomNav"
    ).style.display="none";
 
-   document.querySelectorAll(".panel")
-    .forEach(p=>{
-     p.classList.remove("active");
-    });
+   document
+    .querySelectorAll(".panel")
+    .forEach(p=>
+     p.classList.remove("active")
+    );
 
    document.getElementById(
     "loginPanel"
@@ -1553,12 +1585,9 @@ onAuthStateChanged(
 
   }
 
- });
+ }
+);
 
-
-/* =====================================================
-   LOGGED UI
-===================================================== */
 
 function showLoggedInUI(){
 
@@ -1577,9 +1606,7 @@ function showLoggedInUI(){
 }
 
 
-/* =====================================================
-   STOP REALTIME
-===================================================== */
+/* STOP */
 
 function stopRealtime(){
 
@@ -1593,102 +1620,70 @@ function stopRealtime(){
   unsubscribeNotifications=null;
  }
 
+ Object.values(commentUnsubscribers)
+  .forEach(fn=>{
+   try{fn();}catch(e){}
+  });
+
+ commentUnsubscribers={};
+
 }
 
 
-/* =====================================================
-   NAVIGATION
-===================================================== */
+/* NAVIGATION */
 
-document
- .getElementById("homeNav")
- .addEventListener(
-  "click",
-  ()=>{
-   openPanel("homePanel");
+document.getElementById("homeNav")
+ .addEventListener("click",()=>{
+  openPanel("homePanel");
+ });
+
+document.getElementById("shortsNav")
+ .addEventListener("click",()=>{
+  openPanel("shortsPanel");
+ });
+
+document.getElementById("uploadNav")
+ .addEventListener("click",()=>{
+  openPanel("uploadPanel");
+ });
+
+document.getElementById("alertsNav")
+ .addEventListener("click",()=>{
+  openPanel("alertsPanel");
+  markNotificationsRead();
+ });
+
+document.getElementById("profileNav")
+ .addEventListener("click",()=>{
+  openPanel("profilePanel");
+ });
+
+
+/* SEARCH */
+
+document.getElementById("searchButton")
+ .addEventListener("click",()=>{
+
+  if(!currentUser)return;
+
+  const box=
+   document.getElementById("searchBox");
+
+  box.style.display=
+   box.style.display==="block"
+   ?"none"
+   :"block";
+
+  if(box.style.display==="block"){
+   document.getElementById(
+    "searchInput"
+   ).focus();
   }
- );
 
-document
- .getElementById("shortsNav")
- .addEventListener(
-  "click",
-  ()=>{
-   openPanel("shortsPanel");
-  }
- );
+ });
 
-document
- .getElementById("uploadNav")
- .addEventListener(
-  "click",
-  ()=>{
-   openPanel("uploadPanel");
-  }
- );
-
-document
- .getElementById("alertsNav")
- .addEventListener(
-  "click",
-  ()=>{
-   openPanel("alertsPanel");
-   markNotificationsRead();
-  }
- );
-
-document
- .getElementById("profileNav")
- .addEventListener(
-  "click",
-  ()=>{
-   openPanel("profilePanel");
-  }
- );
-
-
-/* =====================================================
-   SEARCH
-===================================================== */
-
-document
- .getElementById("searchButton")
- .addEventListener(
-  "click",
-  ()=>{
-
-   if(!currentUser)return;
-
-   const box=
-    document.getElementById(
-     "searchBox"
-    );
-
-   box.style.display=
-    box.style.display==="block"
-    ?"none"
-    :"block";
-
-   if(
-    box.style.display==="block"
-   ){
-
-    document.getElementById(
-     "searchInput"
-    ).focus();
-
-   }
-
-  }
- );
-
-
-document
- .getElementById("searchInput")
- .addEventListener(
-  "input",
-  searchUsers
- );
+document.getElementById("searchInput")
+ .addEventListener("input",searchUsers);
 
 
 async function searchUsers(){
@@ -1698,9 +1693,7 @@ async function searchUsers(){
  const value=
   document.getElementById(
    "searchInput"
-  ).value
-  .trim()
-  .toLowerCase();
+  ).value.trim().toLowerCase();
 
  const result=
   document.getElementById(
@@ -1713,13 +1706,9 @@ async function searchUsers(){
 
  try{
 
-  const snap=
-   await getDocs(
-    collection(
-     db,
-     "profiles"
-    )
-   );
+  const snap=await getDocs(
+   collection(db,"profiles")
+  );
 
   let found=false;
 
@@ -1728,12 +1717,10 @@ async function searchUsers(){
    const d=item.data();
 
    const name=
-    String(d.name||"")
-     .toLowerCase();
+    String(d.name||"").toLowerCase();
 
    const username=
-    String(d.username||"")
-     .toLowerCase();
+    String(d.username||"").toLowerCase();
 
    if(
     name.includes(value)||
@@ -1742,8 +1729,7 @@ async function searchUsers(){
 
     found=true;
 
-    const div=
-     document.createElement("div");
+    const div=document.createElement("div");
 
     div.className="user-result";
 
@@ -1755,60 +1741,44 @@ async function searchUsers(){
      )}">
 
      <div class="user-info">
-      <strong>${safe(
-       d.name||"User"
-      )}</strong>
+
+      <strong>
+       ${safe(d.name||"User")}
+      </strong>
 
       <div class="small">
-       @${safe(
-        d.username||"user"
-       )}
+       @${safe(d.username||"user")}
       </div>
+
      </div>
 
      ${
       item.id!==currentUser.uid
-      ?
-      `<button
-        class="follow-btn"
-        id="searchFollow_${safe(item.id)}">
+      ?`
+       <button
+        class="follow-btn">
         Follow
-       </button>`
-      :
-      ""
+       </button>
+      `:""
      }
 
     `;
 
     result.appendChild(div);
 
-    if(
-     item.id!==currentUser.uid
-    ){
+    if(item.id!==currentUser.uid){
 
      const btn=
-      document.getElementById(
-       "searchFollow_"+item.id
-      );
+      div.querySelector(".follow-btn");
 
-     if(btn){
+     checkFollow(item.id,btn);
 
-      btn.addEventListener(
-       "click",
-       ()=>{
-        toggleFollow(
-         item.id,
-         btn
-        );
-       }
-      );
-
-      checkFollow(
-       item.id,
-       btn
-      );
-
-     }
+     btn.addEventListener(
+      "click",
+      ()=>{
+       toggleFollow(item.id,btn);
+      }
+     );
 
     }
 
@@ -1827,8 +1797,6 @@ async function searchUsers(){
 
  }catch(error){
 
-  console.error(error);
-
   result.innerHTML=
    `<div class="empty">
      Search error
@@ -1839,37 +1807,33 @@ async function searchUsers(){
 }
 
 
-/* =====================================================
-   FOLLOW
-===================================================== */
+/* FOLLOW */
 
-async function checkFollow(
- target,
- button
-){
+async function checkFollow(target,button){
 
  if(!currentUser||!button)return;
 
  try{
 
-  const ref=
-   doc(
-    db,
-    "follows",
-    currentUser.uid+"_"+target
-   );
+  const ref=doc(
+   db,
+   "follows",
+   currentUser.uid+"_"+target
+  );
 
-  const snap=
-   await getDoc(ref);
+  const snap=await getDoc(ref);
 
   if(snap.exists()){
 
-   button.textContent=
-    "Following";
+   button.textContent="Following";
 
-   button.classList.add(
-    "following"
-   );
+   button.classList.add("following");
+
+  }else{
+
+   button.textContent="Follow";
+
+   button.classList.remove("following");
 
   }
 
@@ -1882,10 +1846,7 @@ async function checkFollow(
 }
 
 
-async function toggleFollow(
- target,
- button
-){
+async function toggleFollow(target,button){
 
  if(
   !currentUser||
@@ -1895,45 +1856,31 @@ async function toggleFollow(
  try{
 
   const id=
-   currentUser.uid+
-   "_"+
-   target;
+   currentUser.uid+"_"+target;
 
-  const ref=
-   doc(
-    db,
-    "follows",
-    id
-   );
+  const ref=doc(
+   db,
+   "follows",
+   id
+  );
 
-  const snap=
-   await getDoc(ref);
+  const snap=await getDoc(ref);
 
   if(snap.exists()){
 
    await deleteDoc(ref);
 
    await updateDoc(
-    doc(
-     db,
-     "profiles",
-     target
-    ),
+    doc(db,"profiles",target),
     {
-     followers:
-      increment(-1)
+     followers:increment(-1)
     }
    );
 
    await updateDoc(
-    doc(
-     db,
-     "profiles",
-     currentUser.uid
-    ),
+    doc(db,"profiles",currentUser.uid),
     {
-     following:
-      increment(-1)
+     following:increment(-1)
     }
    );
 
@@ -1945,38 +1892,23 @@ async function toggleFollow(
    await setDoc(
     ref,
     {
-     follower:
-      currentUser.uid,
-
-     following:
-      target,
-
-     createdAt:
-      serverTimestamp()
+     follower:currentUser.uid,
+     following:target,
+     createdAt:serverTimestamp()
     }
    );
 
    await updateDoc(
-    doc(
-     db,
-     "profiles",
-     target
-    ),
+    doc(db,"profiles",target),
     {
-     followers:
-      increment(1)
+     followers:increment(1)
     }
    );
 
    await updateDoc(
-    doc(
-     db,
-     "profiles",
-     currentUser.uid
-    ),
+    doc(db,"profiles",currentUser.uid),
     {
-     following:
-      increment(1)
+     following:increment(1)
     }
    );
 
@@ -2003,16 +1935,199 @@ async function toggleFollow(
 
  }
 
+}
+
+
+/* FOLLOWERS LIST */
+
+document.getElementById("followersStat")
+ .addEventListener(
+  "click",
+  ()=>{
+   openFollowList("followers");
+  }
+ );
+
+
+document.getElementById("followingStat")
+ .addEventListener(
+  "click",
+  ()=>{
+   openFollowList("following");
+  }
+ );
+
+
+async function openFollowList(type){
+
+ if(!currentUser)return;
+
+ const modal=
+  document.getElementById(
+   "followListModal"
+  );
+
+ const title=
+  document.getElementById(
+   "followListTitle"
+  );
+
+ const box=
+  document.getElementById(
+   "followList"
+  );
+
+ modal.classList.add("show");
+
+ title.textContent=
+  type==="followers"
+  ?"👥 Followers"
+  :"👤 Following";
+
+ box.innerHTML=
+  `<div class="loading">
+    Loading...
+   </div>`;
+
+ try{
+
+  let q;
+
+  if(type==="followers"){
+
+   q=query(
+    collection(db,"follows"),
+    where(
+     "following",
+     "==",
+     currentUser.uid
+    )
+   );
+
+  }else{
+
+   q=query(
+    collection(db,"follows"),
+    where(
+     "follower",
+     "==",
+     currentUser.uid
+    )
+   );
+
+  }
+
+  const snap=await getDocs(q);
+
+  if(snap.empty){
+
+   box.innerHTML=
+    `<div class="empty">
+      अभी कोई ${
+       type==="followers"
+       ?"Follower"
+       :"Following"
+      } नहीं है।
+     </div>`;
+
+   return;
+
+  }
+
+  box.innerHTML="";
+
+  for(const item of snap.docs){
+
+   const data=item.data();
+
+   const uid=
+    type==="followers"
+    ?data.follower
+    :data.following;
+
+   const profileSnap=
+    await getDoc(
+     doc(db,"profiles",uid)
+    );
+
+   if(!profileSnap.exists())continue;
+
+   const p=profileSnap.data();
+
+   const div=
+    document.createElement("div");
+
+   div.className="list-user";
+
+   div.innerHTML=`
+
+    <img src="${safe(
+     p.photo||
+     "https://via.placeholder.com/100"
+    )}">
+
+    <div class="list-user-info">
+
+     <strong>
+      ${safe(p.name||"User")}
+     </strong>
+
+     <div class="small">
+      @${safe(p.username||"user")}
+     </div>
+
+    </div>
+
+    ${
+     uid!==currentUser.uid
+     ?`
+      <button
+       class="follow-btn">
+       Follow
+      </button>
+     `:""
+    }
+
+   `;
+
+   box.appendChild(div);
+
+   if(uid!==currentUser.uid){
+
+    const btn=
+     div.querySelector(".follow-btn");
+
+    checkFollow(uid,btn);
+
+    btn.addEventListener(
+     "click",
+     ()=>{
+      toggleFollow(uid,btn);
+     }
+    );
+
+   }
+
+  }
+
+ }catch(error){
+
+  console.error(error);
+
+  box.innerHTML=
+   `<div class="empty">
+     Error:<br><br>
+     ${safe(error.message)}
+    </div>`;
+
+ }
 
 }
 
 
-/* =====================================================
-   VIDEO PREVIEW
-===================================================== */
+/* VIDEO PREVIEW */
 
-document
- .getElementById("videoFile")
+document.getElementById("videoFile")
  .addEventListener(
   "change",
   function(){
@@ -2035,74 +2150,163 @@ document
  );
 
 
-/* =====================================================
-   CLOUDINARY UPLOAD
-===================================================== */
+/* UPLOAD STATUS */
 
-async function uploadVideoToCloudinary(file){
+function setUploadStatus(
+ show,
+ percent=0,
+ text="Uploading..."
+){
 
- const formData=
-  new FormData();
-
- formData.append(
-  "file",
-  file
- );
-
- formData.append(
-  "upload_preset",
-  CLOUDINARY_UPLOAD_PRESET
- );
-
- const response=
-  await fetch(
-   "https://api.cloudinary.com/v1_1/"+
-   CLOUDINARY_CLOUD_NAME+
-   "/video/upload",
-   {
-    method:"POST",
-    body:formData
-   }
+ const box=
+  document.getElementById(
+   "profileUploadStatus"
   );
 
- if(!response.ok){
-
-  const data=
-   await response
-    .json()
-    .catch(
-     ()=>({})
-    );
-
-  throw new Error(
-   data.error?.message||
-   "Cloudinary upload failed"
+ const empty=
+  document.getElementById(
+   "noUploadStatus"
   );
+
+ const fill=
+  document.getElementById(
+   "profileUploadFill"
+  );
+
+ const percentText=
+  document.getElementById(
+   "profileUploadPercent"
+  );
+
+ const uploadText=
+  document.getElementById(
+   "profileUploadText"
+  );
+
+ if(show){
+
+  box.style.display="block";
+  empty.style.display="none";
+
+  fill.style.width=percent+"%";
+  percentText.textContent=
+   Math.round(percent)+"%";
+
+  uploadText.textContent=text;
+
+ }else{
+
+  box.style.display="none";
+  empty.style.display="block";
 
  }
-
- const data=
-  await response.json();
-
- if(!data.secure_url){
-
-  throw new Error(
-   "Cloudinary ने video URL नहीं दिया।"
-  );
-
- }
-
- return data.secure_url;
 
 }
 
 
-/* =====================================================
-   PUBLISH VIDEO
-===================================================== */
+/* REAL CLOUDINARY PROGRESS */
 
-document
- .getElementById("publishBtn")
+function uploadVideoToCloudinary(
+ file,
+ onProgress
+){
+
+ return new Promise(
+  (resolve,reject)=>{
+
+   const xhr=new XMLHttpRequest();
+
+   xhr.open(
+    "POST",
+    "https://api.cloudinary.com/v1_1/"+
+    CLOUDINARY_CLOUD_NAME+
+    "/video/upload"
+   );
+
+   xhr.upload.onprogress=
+    event=>{
+
+     if(event.lengthComputable){
+
+      const percent=
+       Math.round(
+        event.loaded/
+        event.total*
+        100
+       );
+
+      if(onProgress){
+       onProgress(percent);
+      }
+
+     }
+
+    };
+
+   xhr.onload=()=>{
+
+    let data={};
+
+    try{
+     data=JSON.parse(
+      xhr.responseText
+     );
+    }catch(e){}
+
+    if(
+     xhr.status>=200&&
+     xhr.status<300&&
+     data.secure_url
+    ){
+
+     resolve(data.secure_url);
+
+    }else{
+
+     reject(
+      new Error(
+       data.error?.message||
+       "Cloudinary upload failed"
+      )
+     );
+
+    }
+
+   };
+
+   xhr.onerror=()=>{
+
+    reject(
+     new Error(
+      "Network error"
+     )
+    );
+
+   };
+
+   const formData=new FormData();
+
+   formData.append(
+    "file",
+    file
+   );
+
+   formData.append(
+    "upload_preset",
+    CLOUDINARY_UPLOAD_PRESET
+   );
+
+   xhr.send(formData);
+
+  }
+ );
+
+}
+
+
+/* PUBLISH */
+
+document.getElementById("publishBtn")
  .addEventListener(
   "click",
   publishVideo
@@ -2156,20 +2360,46 @@ async function publishVideo(){
  try{
 
   button.disabled=true;
+
   button.textContent=
    "⏳ Uploading...";
 
   progress.style.display="block";
 
-  percent.textContent="Uploading";
-  fill.style.width="30%";
+  setUploadStatus(
+   true,
+   0,
+   "Video Cloudinary पर upload हो रहा है..."
+  );
 
   const videoURL=
    await uploadVideoToCloudinary(
-    file
+    file,
+    value=>{
+
+     percent.textContent=
+      value+"%";
+
+     fill.style.width=
+      value+"%";
+
+     setUploadStatus(
+      true,
+      value,
+      "Video upload हो रहा है..."
+     );
+
+    }
    );
 
-  fill.style.width="70%";
+  percent.textContent="100%";
+  fill.style.width="100%";
+
+  setUploadStatus(
+   true,
+   100,
+   "Video upload हो गया। ReelHub में save हो रहा है..."
+  );
 
   const profile=
    await getDoc(
@@ -2182,18 +2412,14 @@ async function publishVideo(){
 
   const p=
    profile.exists()
-   ?
-   profile.data()
-   :
-   {};
+   ?profile.data()
+   :{};
 
   const videoRef=
    await addDoc(
-    collection(
-     db,
-     "videos"
-    ),
+    collection(db,"videos"),
     {
+
      videoURL:videoURL,
 
      userId:
@@ -2213,6 +2439,7 @@ async function publishVideo(){
 
      createdAt:
       serverTimestamp()
+
     }
    );
 
@@ -2223,12 +2450,9 @@ async function publishVideo(){
     currentUser.uid
    ),
    {
-    videos:
-     increment(1)
+    videos:increment(1)
    }
   );
-
-  fill.style.width="85%";
 
   await addHistory(
    "upload",
@@ -2243,8 +2467,6 @@ async function publishVideo(){
    "User"
   );
 
-  fill.style.width="100%";
-
   document.getElementById(
    "videoFile"
   ).value="";
@@ -2253,20 +2475,31 @@ async function publishVideo(){
    "videoPreview"
   ).style.display="none";
 
-  progress.style.display="none";
-
   button.disabled=false;
 
   button.textContent=
    "🚀 Publish Video";
 
+  percent.textContent="100%";
+  fill.style.width="100%";
+
+  setUploadStatus(
+   true,
+   100,
+   "✅ Video successfully upload हो गया और followers को notification भेज दिया गया।"
+  );
+
   await loadProfile();
+
+  setTimeout(()=>{
+   setUploadStatus(false);
+  },5000);
 
   openPanel("homePanel");
 
   alert(
    "✅ Video successfully upload हो गया!\n\n"+
-   "Followers को notification भी भेज दिया गया।"
+   "Followers को notification भेज दिया गया।"
   );
 
  }catch(error){
@@ -2280,6 +2513,12 @@ async function publishVideo(){
   button.textContent=
    "🚀 Publish Video";
 
+  setUploadStatus(
+   true,
+   0,
+   "❌ Upload failed: "+error.message
+  );
+
   alert(
    "Video upload error:\n\n"+
    error.message
@@ -2290,9 +2529,7 @@ async function publishVideo(){
 }
 
 
-/* =====================================================
-   REAL-TIME VIDEOS
-===================================================== */
+/* REAL TIME VIDEOS */
 
 function startRealtimeVideos(){
 
@@ -2300,17 +2537,10 @@ function startRealtimeVideos(){
   unsubscribeVideos();
  }
 
- const q=
-  query(
-   collection(
-    db,
-    "videos"
-   ),
-   orderBy(
-    "createdAt",
-    "desc"
-   )
-  );
+ const q=query(
+  collection(db,"videos"),
+  orderBy("createdAt","desc")
+ );
 
  unsubscribeVideos=
   onSnapshot(
@@ -2330,10 +2560,7 @@ function startRealtimeVideos(){
    },
    error=>{
 
-    console.error(
-     "Video realtime error:",
-     error
-    );
+    console.error(error);
 
     document.getElementById(
      "homeVideos"
@@ -2389,9 +2616,7 @@ function renderVideoList(
 }
 
 
-/* =====================================================
-   VIDEO CARD
-===================================================== */
+/* VIDEO CARD */
 
 function createVideo(id,d){
 
@@ -2402,9 +2627,8 @@ function createVideo(id,d){
   "card video-card";
 
  const isOwner=
-  currentUser &&
-  d.userId===
-  currentUser.uid;
+  currentUser&&
+  d.userId===currentUser.uid;
 
  card.innerHTML=`
 
@@ -2418,10 +2642,7 @@ function createVideo(id,d){
    <div class="video-user-info">
 
     <strong>
-     ${safe(
-      d.userName||
-      "User"
-     )}
+     ${safe(d.userName||"User")}
     </strong>
 
     <div class="small">
@@ -2432,16 +2653,17 @@ function createVideo(id,d){
 
    ${
     !isOwner
-    ?
-    `<button
-      class="follow-btn"
-      id="videoFollow_${safe(id)}">
+    ?`
+     <button
+      class="follow-btn">
       Follow
-     </button>`
-    :
-    `<span class="small">
+     </button>
+    `
+    :`
+     <span class="small">
       Your Video
-     </span>`
+     </span>
+    `
    }
 
   </div>
@@ -2457,54 +2679,73 @@ function createVideo(id,d){
 
    <button
     type="button"
-    class="like-button"
-    data-video="${safe(id)}">
+    class="like-button">
     ❤️ ${d.likes||0}
    </button>
 
    <button
     type="button"
-    class="comment-button"
-    data-video="${safe(id)}">
+    class="comment-button">
     💬 Comment
    </button>
 
    <button
     type="button"
-    class="share-button"
-    data-video="${safe(id)}">
+    class="share-button">
     📤 Share
    </button>
 
    ${
     isOwner
-    ?
-    `<button
+    ?`
+     <button
       type="button"
-      class="delete-video"
-      data-delete="${safe(id)}">
+      class="delete-video">
       🗑️ Delete
-     </button>`
-    :
-    ""
+     </button>
+    `
+    :""
    }
 
   </div>
 
   <div
-   id="comments_${safe(id)}"
    class="comment-box">
+
+   <div class="comments-list"></div>
+
+   <div class="comment-input">
+
+    <input
+     type="text"
+     placeholder="Comment लिखें..."
+     maxlength="300">
+
+    <button
+     type="button">
+     Send
+    </button>
+
+   </div>
+
   </div>
 
  `;
 
 
+ /* FOLLOW */
+
  const followButton=
   card.querySelector(
-   "#videoFollow_"+id
+   ".video-user .follow-btn"
   );
 
  if(followButton){
+
+  checkFollow(
+   d.userId,
+   followButton
+  );
 
   followButton.addEventListener(
    "click",
@@ -2516,12 +2757,10 @@ function createVideo(id,d){
    }
   );
 
-  checkFollow(
-   d.userId,
-   followButton
-  );
-
  }
+
+
+ /* LIKE */
 
  const likeButton=
   card.querySelector(
@@ -2533,47 +2772,74 @@ function createVideo(id,d){
   likeButton.addEventListener(
    "click",
    ()=>{
-    likeVideo(id);
+    likeVideo(id)
    }
   );
 
  }
 
- const commentButton=
+
+ /* COMMENT */
+
+ const commentInput=
   card.querySelector(
-   ".comment-button"
+   ".comment-input input"
   );
 
- if(commentButton){
+ const commentSend=
+  card.querySelector(
+   ".comment-input button"
+  );
 
-  commentButton.addEventListener(
-   "click",
-   ()=>{
-    commentVideo(id);
+ commentSend.addEventListener(
+  "click",
+  ()=>{
+   sendComment(
+    id,
+    commentInput
+   );
+  }
+ );
+
+ commentInput.addEventListener(
+  "keydown",
+  event=>{
+
+   if(event.key==="Enter"){
+
+    event.preventDefault();
+
+    sendComment(
+     id,
+     commentInput
+    );
+
    }
-  );
 
- }
+  }
+ );
+
+
+ /* SHARE */
 
  const shareButton=
   card.querySelector(
    ".share-button"
   );
 
- if(shareButton){
+ shareButton.addEventListener(
+  "click",
+  ()=>{
+   shareVideo(id);
+  }
+ );
 
-  shareButton.addEventListener(
-   "click",
-   ()=>{
-    shareVideo(id);
-   }
-  );
 
- }
+ /* DELETE */
 
  const deleteButton=
   card.querySelector(
-   "[data-delete]"
+   ".delete-video"
   );
 
  if(deleteButton){
@@ -2587,10 +2853,13 @@ function createVideo(id,d){
 
  }
 
+
+ /* COMMENTS */
+
  loadComments(
   id,
   card.querySelector(
-   "#comments_"+id
+   ".comments-list"
   )
  );
 
@@ -2599,9 +2868,7 @@ function createVideo(id,d){
 }
 
 
-/* =====================================================
-   LIKE
-===================================================== */
+/* LIKE */
 
 async function likeVideo(id){
 
@@ -2621,8 +2888,7 @@ async function likeVideo(id){
     id
    ),
    {
-    likes:
-     increment(1)
+    likes:increment(1)
    }
   );
 
@@ -2634,8 +2900,6 @@ async function likeVideo(id){
 
  }catch(error){
 
-  console.error(error);
-
   alert(
    "Like error:\n"+
    error.message
@@ -2646,74 +2910,78 @@ async function likeVideo(id){
 }
 
 
-/* =====================================================
-   COMMENTS
-===================================================== */
+/* COMMENTS */
 
-async function loadComments(
+function loadComments(
  videoId,
  box
 ){
 
  if(!box)return;
 
- const q=
-  query(
-   collection(
-    db,
-    "videos",
-    videoId,
-    "comments"
-   ),
-   orderBy(
-    "createdAt",
-    "asc"
-   )
-  );
+ if(commentUnsubscribers[videoId]){
+  try{
+   commentUnsubscribers[videoId]();
+  }catch(e){}
+ }
 
- onSnapshot(
-  q,
-  snap=>{
-
-   box.innerHTML="";
-
-   snap.forEach(item=>{
-
-    const d=item.data();
-
-    const div=
-     document.createElement("div");
-
-    div.className="comment";
-
-    div.innerHTML=
-     `<strong>${safe(
-       d.userName||"User"
-      )}</strong>
-      <br>
-      ${safe(
-       d.text||""
-      )}`;
-
-    box.appendChild(div);
-
-   });
-
-  },
-  error=>{
-
-   console.error(
-    "Comment error:",
-    error
-   );
-
-  }
+ const q=query(
+  collection(
+   db,
+   "videos",
+   videoId,
+   "comments"
+  ),
+  orderBy(
+   "createdAt",
+   "asc"
+  )
  );
+
+ commentUnsubscribers[videoId]=
+  onSnapshot(
+   q,
+   snap=>{
+
+    box.innerHTML="";
+
+    snap.forEach(item=>{
+
+     const d=item.data();
+
+     const div=
+      document.createElement("div");
+
+     div.className="comment";
+
+     div.innerHTML=`
+      <strong>
+       ${safe(d.userName||"User")}
+      </strong>
+      <br>
+      ${safe(d.text||"")}
+     `;
+
+     box.appendChild(div);
+
+    });
+
+   },
+   error=>{
+    console.error(
+     "Comment error:",
+     error
+    );
+   }
+  );
 
 }
 
 
-async function commentVideo(id){
+async function sendComment(
+ id,
+ input
+){
 
  if(!currentUser){
 
@@ -2722,14 +2990,13 @@ async function commentVideo(id){
 
  }
 
- const text=
-  prompt(
-   "Comment लिखें:"
-  );
+ const text=input.value.trim();
 
- if(!text?.trim())return;
+ if(!text)return;
 
  try{
+
+  input.disabled=true;
 
   await addDoc(
    collection(
@@ -2739,6 +3006,7 @@ async function commentVideo(id){
     "comments"
    ),
    {
+
     userId:
      currentUser.uid,
 
@@ -2746,13 +3014,15 @@ async function commentVideo(id){
      currentUser.displayName||
      "User",
 
-    text:
-     text.trim(),
+    text:text,
 
     createdAt:
      serverTimestamp()
+
    }
   );
+
+  input.value="";
 
   await addHistory(
    "comment",
@@ -2767,27 +3037,25 @@ async function commentVideo(id){
    error.message
   );
 
+ }finally{
+
+  input.disabled=false;
+
  }
 
 }
 
 
-/* =====================================================
-   DELETE VIDEO
-===================================================== */
+/* DELETE VIDEO */
 
 async function deleteVideo(id){
 
  if(!currentUser)return;
 
- const videoRef=
-  doc(
-   db,
-   "videos",
-   id
-  );
-
  try{
+
+  const videoRef=
+   doc(db,"videos",id);
 
   const snap=
    await getDoc(videoRef);
@@ -2797,8 +3065,7 @@ async function deleteVideo(id){
   const data=snap.data();
 
   if(
-   data.userId!==
-   currentUser.uid
+   data.userId!==currentUser.uid
   ){
 
    alert(
@@ -2814,6 +3081,7 @@ async function deleteVideo(id){
     "क्या आप यह video delete करना चाहते हैं?"
    )
   )return;
+
 
   const commentsSnap=
    await getDocs(
@@ -2833,6 +3101,7 @@ async function deleteVideo(id){
 
   }
 
+
   const likesSnap=
    await getDocs(
     collection(
@@ -2851,7 +3120,9 @@ async function deleteVideo(id){
 
   }
 
+
   await deleteDoc(videoRef);
+
 
   await updateDoc(
    doc(
@@ -2860,10 +3131,10 @@ async function deleteVideo(id){
     currentUser.uid
    ),
    {
-    videos:
-     increment(-1)
+    videos:increment(-1)
    }
   );
+
 
   await addHistory(
    "delete",
@@ -2879,8 +3150,6 @@ async function deleteVideo(id){
 
  }catch(error){
 
-  console.error(error);
-
   alert(
    "Video delete error:\n"+
    error.message
@@ -2891,9 +3160,7 @@ async function deleteVideo(id){
 }
 
 
-/* =====================================================
-   SHARE VIDEO
-===================================================== */
+/* SHARE */
 
 async function shareVideo(id){
 
@@ -2908,9 +3175,14 @@ async function shareVideo(id){
   if(navigator.share){
 
    await navigator.share({
+
     title:"ReelHub",
-    text:"Watch this ReelHub video",
+
+    text:
+     "Watch this ReelHub video",
+
     url:url
+
    });
 
   }else{
@@ -2928,9 +3200,7 @@ async function shareVideo(id){
 }
 
 
-/* =====================================================
-   FOLLOWERS NOTIFICATION
-===================================================== */
+/* FOLLOWERS NOTIFICATION */
 
 async function notifyFollowers(
  videoId,
@@ -2939,18 +3209,14 @@ async function notifyFollowers(
 
  try{
 
-  const q=
-   query(
-    collection(
-     db,
-     "follows"
-    ),
-    where(
-     "following",
-     "==",
-     currentUser.uid
-    )
-   );
+  const q=query(
+   collection(db,"follows"),
+   where(
+    "following",
+    "==",
+    currentUser.uid
+   )
+  );
 
   const snap=
    await getDocs(q);
@@ -2969,6 +3235,7 @@ async function notifyFollowers(
      "notifications"
     ),
     {
+
      recipientId:
       d.follower,
 
@@ -2992,6 +3259,7 @@ async function notifyFollowers(
 
      createdAt:
       serverTimestamp()
+
     }
    );
 
@@ -3009,9 +3277,7 @@ async function notifyFollowers(
 }
 
 
-/* =====================================================
-   NOTIFICATIONS
-===================================================== */
+/* NOTIFICATIONS */
 
 function startNotifications(){
 
@@ -3019,18 +3285,14 @@ function startNotifications(){
   unsubscribeNotifications();
  }
 
- const q=
-  query(
-   collection(
-    db,
-    "notifications"
-   ),
-   where(
-    "recipientId",
-    "==",
-    currentUser.uid
-   )
-  );
+ const q=query(
+  collection(db,"notifications"),
+  where(
+   "recipientId",
+   "==",
+   currentUser.uid
+  )
+ );
 
  unsubscribeNotifications=
   onSnapshot(
@@ -3059,12 +3321,10 @@ function startNotifications(){
 
    },
    error=>{
-
     console.error(
      "Notification error:",
      error
     );
-
    }
   );
 
@@ -3102,9 +3362,7 @@ function renderNotifications(list){
   ).length;
 
  badge.textContent=
-  unread?
-  unread:
-  "";
+  unread?unread:"";
 
  box.innerHTML="";
 
@@ -3114,14 +3372,14 @@ function renderNotifications(list){
    document.createElement("div");
 
   div.className=
-   "notification";
+   "notification "+
+   (n.read?"":"new");
 
   div.innerHTML=`
 
    <strong>
     🔔 ${safe(
-     n.actorName||
-     "User"
+     n.actorName||"User"
     )}
    </strong>
 
@@ -3132,11 +3390,59 @@ function renderNotifications(list){
     )}
    </div>
 
+   ${
+    n.type==="new_video"
+    ?`
+     <div
+      style="
+       margin-top:8px;
+       color:#ff1744;
+       font-weight:bold">
+      ▶️ वीडियो देखें
+     </div>
+    `
+    :""
+   }
+
    <div class="small">
     ${n.read?"Read":"New"}
    </div>
 
   `;
+
+  if(
+   n.type==="new_video"&&
+   n.videoId
+  ){
+
+   div.addEventListener(
+    "click",
+    async()=>{
+
+     await markSingleNotification(
+      n.id
+     );
+
+     openPanel("homePanel");
+
+     setTimeout(()=>{
+      const video=
+       document.querySelector(
+        `[data-video-id="${n.videoId}"]`
+       );
+
+      if(video){
+       video.scrollIntoView({
+        behavior:"smooth",
+        block:"center"
+       });
+      }
+     },500);
+
+    }
+   );
+
+  }
 
   box.appendChild(div);
 
@@ -3145,24 +3451,44 @@ function renderNotifications(list){
 }
 
 
+/* Mark single */
+
+async function markSingleNotification(id){
+
+ try{
+
+  await updateDoc(
+   doc(
+    db,
+    "notifications",
+    id
+   ),
+   {
+    read:true
+   }
+  );
+
+ }catch(e){}
+
+}
+
+
+/* MARK ALL */
+
 async function markNotificationsRead(){
 
  if(!currentUser)return;
 
  try{
 
-  const q=
-   query(
-    collection(
-     db,
-     "notifications"
-    ),
-    where(
-     "recipientId",
-     "==",
-     currentUser.uid
-    )
-   );
+  const q=query(
+   collection(db,"notifications"),
+   where(
+    "recipientId",
+    "==",
+    currentUser.uid
+   )
+  );
 
   const snap=
    await getDocs(q);
@@ -3195,9 +3521,7 @@ async function markNotificationsRead(){
 }
 
 
-/* =====================================================
-   HISTORY
-===================================================== */
+/* HISTORY */
 
 async function addHistory(
  action,
@@ -3210,11 +3534,9 @@ async function addHistory(
  try{
 
   await addDoc(
-   collection(
-    db,
-    "history"
-   ),
+   collection(db,"history"),
    {
+
     userId:
      currentUser.uid,
 
@@ -3229,6 +3551,7 @@ async function addHistory(
 
     createdAt:
      serverTimestamp()
+
    }
   );
 
@@ -3244,16 +3567,12 @@ async function addHistory(
 }
 
 
-/* =====================================================
-   SHOW HISTORY
-===================================================== */
-
-document
- .getElementById("historyButton")
- .addEventListener(
-  "click",
-  openHistory
- );
+document.getElementById(
+ "historyButton"
+).addEventListener(
+ "click",
+ openHistory
+);
 
 
 async function openHistory(){
@@ -3279,18 +3598,14 @@ async function openHistory(){
 
  try{
 
-  const q=
-   query(
-    collection(
-     db,
-     "history"
-    ),
-    where(
-     "userId",
-     "==",
-     currentUser.uid
-    )
-   );
+  const q=query(
+   collection(db,"history"),
+   where(
+    "userId",
+    "==",
+    currentUser.uid
+   )
+  );
 
   const snap=
    await getDocs(q);
@@ -3340,8 +3655,7 @@ async function openHistory(){
 
     <div class="small">
      ${safe(
-      item.action||
-      ""
+      item.action||""
      )}
     </div>
 
@@ -3365,16 +3679,14 @@ async function openHistory(){
 }
 
 
-/* =====================================================
-   DELETE HISTORY
-===================================================== */
+/* DELETE HISTORY */
 
-document
- .getElementById("deleteHistoryButton")
- .addEventListener(
-  "click",
-  deleteHistory
- );
+document.getElementById(
+ "deleteHistoryButton"
+).addEventListener(
+ "click",
+ deleteHistory
+);
 
 
 async function deleteHistory(){
@@ -3389,18 +3701,14 @@ async function deleteHistory(){
 
  try{
 
-  const q=
-   query(
-    collection(
-     db,
-     "history"
-    ),
-    where(
-     "userId",
-     "==",
-     currentUser.uid
-    )
-   );
+  const q=query(
+   collection(db,"history"),
+   where(
+    "userId",
+    "==",
+    currentUser.uid
+   )
+  );
 
   const snap=
    await getDocs(q);
@@ -3429,16 +3737,14 @@ async function deleteHistory(){
 }
 
 
-/* =====================================================
-   PROFILE EDIT
-===================================================== */
+/* EDIT PROFILE */
 
-document
- .getElementById("editProfileButton")
- .addEventListener(
-  "click",
-  openEditProfile
- );
+document.getElementById(
+ "editProfileButton"
+).addEventListener(
+ "click",
+ openEditProfile
+);
 
 
 async function openEditProfile(){
@@ -3460,13 +3766,11 @@ async function openEditProfile(){
 
   document.getElementById(
    "editName"
-  ).value=
-   d.name||"";
+  ).value=d.name||"";
 
   document.getElementById(
    "editUsername"
-  ).value=
-   d.username||"";
+  ).value=d.username||"";
 
  }
 
@@ -3477,12 +3781,12 @@ async function openEditProfile(){
 }
 
 
-document
- .getElementById("saveProfileButton")
- .addEventListener(
-  "click",
-  saveProfile
- );
+document.getElementById(
+ "saveProfileButton"
+).addEventListener(
+ "click",
+ saveProfile
+);
 
 
 async function saveProfile(){
@@ -3552,16 +3856,14 @@ async function saveProfile(){
 }
 
 
-/* =====================================================
-   PROFILE SHARE
-===================================================== */
+/* SHARE PROFILE */
 
-document
- .getElementById("shareProfileButton")
- .addEventListener(
-  "click",
-  shareProfile
- );
+document.getElementById(
+ "shareProfileButton"
+).addEventListener(
+ "click",
+ shareProfile
+);
 
 
 async function shareProfile(){
@@ -3599,131 +3901,100 @@ async function shareProfile(){
 }
 
 
-/* =====================================================
-   PHOTO PREVIEW
-===================================================== */
+/* PHOTO */
 
-document
- .getElementById("photoButton")
- .addEventListener(
-  "click",
-  ()=>{
-   document
-    .getElementById("photoInput")
-    .click();
-  }
- );
+document.getElementById(
+ "photoButton"
+).addEventListener(
+ "click",
+ ()=>{
+  document.getElementById(
+   "photoInput"
+  ).click();
+ }
+);
 
-document
- .getElementById("photoInput")
- .addEventListener(
-  "change",
-  function(){
+document.getElementById(
+ "photoInput"
+).addEventListener(
+ "change",
+ function(){
 
-   const file=this.files[0];
+  const file=this.files[0];
 
-   if(!file)return;
+  if(!file)return;
 
-   document.getElementById(
-    "profilePhoto"
-   ).src=
-    URL.createObjectURL(file);
+  document.getElementById(
+   "profilePhoto"
+  ).src=
+   URL.createObjectURL(file);
 
-   alert(
-    "📸 Photo का local preview बदल गया है।"
-   );
+  alert(
+   "📸 Photo का local preview बदल गया है।"
+  );
 
-  }
- );
+ }
+);
 
 
-/* =====================================================
-   STORIES
-===================================================== */
+/* STORIES */
 
-document
- .getElementById("addStoryButton")
- .addEventListener(
-  "click",
-  ()=>{
-   document
-    .getElementById("storyInput")
-    .click();
-  }
- );
+document.getElementById(
+ "addStoryButton"
+).addEventListener(
+ "click",
+ ()=>{
+  document.getElementById(
+   "storyInput"
+  ).click();
+ }
+);
 
 
-document
- .getElementById("storyInput")
- .addEventListener(
-  "change",
-  function(){
+document.getElementById(
+ "storyInput"
+).addEventListener(
+ "change",
+ function(){
 
-   const file=this.files[0];
+  const file=this.files[0];
 
-   if(!file)return;
+  if(!file)return;
 
-   const story={
-    id:Date.now(),
+  const story={
 
-    url:
-     URL.createObjectURL(file),
+   id:Date.now(),
 
-    type:
-     file.type.startsWith("video/")
-     ?"video"
-     :"image",
+   url:
+    URL.createObjectURL(file),
 
-    caption:"",
+   type:
+    file.type.startsWith("video/")
+    ?"video"
+    :"image",
 
-    createdAt:
-     Date.now()
-   };
+   caption:"",
 
-   localStories.push(story);
+   createdAt:Date.now()
 
-   renderStories();
+  };
 
-   this.value="";
+  localStories.push(story);
 
-  }
- );
+  renderStories();
+
+  this.value="";
+
+ }
+);
 
 
 function loadLocalStories(){
 
- const saved=
-  localStorage.getItem(
-   "reelhub_stories"
-  );
-
- if(saved){
-
-  try{
-
-   localStories=
-    JSON.parse(saved);
-
-  }catch(e){
-
-   localStories=[];
-
-  }
-
- }
+ localStories=[];
 
  renderStories();
 
-}
-
-
-function saveLocalStories(){
-
- /*
-  Blob URLs cannot be restored after
-  page reload. Stories are therefore
-  kept for the current session only.
- */
 }
 
 
@@ -3749,9 +4020,9 @@ function renderStories(){
  add.addEventListener(
   "click",
   ()=>{
-   document
-    .getElementById("storyInput")
-    .click();
+   document.getElementById(
+    "storyInput"
+   ).click();
   }
  );
 
@@ -3814,15 +4085,18 @@ function renderStories(){
    }
   );
 
-  div
-   .querySelector(".story-menu")
-   .addEventListener(
-    "click",
-    event=>{
-     event.stopPropagation();
-     storyMenu(story.id);
-    }
-   );
+  div.querySelector(
+   ".story-menu"
+  ).addEventListener(
+   "click",
+   event=>{
+
+    event.stopPropagation();
+
+    storyMenu(story.id);
+
+   }
+  );
 
   row.appendChild(div);
 
@@ -3831,9 +4105,7 @@ function renderStories(){
 }
 
 
-/* =====================================================
-   STORY VIEW
-===================================================== */
+/* STORY VIEW */
 
 function openStory(story){
 
@@ -3915,12 +4187,12 @@ function editStory(id){
 }
 
 
-document
- .getElementById("saveStoryButton")
- .addEventListener(
-  "click",
-  saveStoryEdit
- );
+document.getElementById(
+ "saveStoryButton"
+).addEventListener(
+ "click",
+ saveStoryEdit
+);
 
 
 function saveStoryEdit(){
@@ -3964,31 +4236,29 @@ function deleteStory(id){
 }
 
 
-/* =====================================================
-   DARK MODE
-===================================================== */
+/* DARK MODE */
 
-document
- .getElementById("darkModeButton")
- .addEventListener(
-  "click",
-  ()=>{
+document.getElementById(
+ "darkModeButton"
+).addEventListener(
+ "click",
+ ()=>{
 
-   document.body.classList.toggle(
+  document.body.classList.toggle(
+   "dark"
+  );
+
+  localStorage.setItem(
+   "dark",
+   document.body.classList.contains(
     "dark"
-   );
+   )
+   ?"1"
+   :"0"
+  );
 
-   localStorage.setItem(
-    "dark",
-    document.body.classList.contains(
-     "dark"
-    )
-    ?"1"
-    :"0"
-   );
-
-  }
- );
+ }
+);
 
 
 if(
@@ -4000,9 +4270,7 @@ if(
 }
 
 
-/* =====================================================
-   CLOSE MODALS
-===================================================== */
+/* CLOSE MODALS */
 
 document
  .querySelectorAll("[data-close]")
@@ -4036,39 +4304,45 @@ function closeModal(id){
 window.closeModal=closeModal;
 
 
-/* =====================================================
-   LOGOUT
-===================================================== */
+/* LOGOUT */
 
-document
- .getElementById("logoutButton")
- .addEventListener(
-  "click",
-  async ()=>{
+document.getElementById(
+ "logoutButton"
+).addEventListener(
+ "click",
+ async()=>{
 
-   try{
+  try{
 
-    await signOut(auth);
+   await signOut(auth);
 
-   }catch(error){
+  }catch(error){
 
-    alert(
-     "Logout error:\n"+
-     error.message
-    );
-
-   }
+   alert(
+    "Logout error:\n"+
+    error.message
+   );
 
   }
- );
+
+ }
+);
 
 
-/* =====================================================
-   INITIAL PAGE SETUP
-===================================================== */
+/* NOTIFICATION VIDEO TARGET FIX */
+
+const originalCreateVideo=createVideo;
+
+
+/* ADD VIDEO ID TO CARDS */
+
+const oldRenderVideoList=renderVideoList;
+
+
+/* CONSOLE */
 
 console.log(
- "ReelHub JavaScript loaded successfully."
+ "ReelHub updated successfully."
 );
 
 </script>
