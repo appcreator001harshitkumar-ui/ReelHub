@@ -1,404 +1,1090 @@
-<!DOCTYPE html><html lang="hi">
+<!DOCTYPE html>
+<html lang="hi">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ReelHub</title><style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,sans-serif}
-body{background:#f5f5f5;color:#111;padding-bottom:80px}
-body.dark{background:#101010;color:#fff}
+
+<title>ReelHub</title>
+
+<style>
+
+*{
+ box-sizing:border-box;
+ margin:0;
+ padding:0;
+ font-family:Arial,sans-serif;
+}
+
+body{
+ background:#f5f5f5;
+ color:#111;
+ padding-bottom:80px;
+}
+
+body.dark{
+ background:#101010;
+ color:#fff;
+}
 
 header{
- position:sticky;top:0;z-index:100;height:60px;background:#fff;
- border-bottom:1px solid #ddd;display:flex;align-items:center;
- justify-content:space-between;padding:0 15px
+ position:sticky;
+ top:0;
+ z-index:100;
+ height:60px;
+ background:#fff;
+ border-bottom:1px solid #ddd;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ padding:0 15px;
 }
-.dark header{background:#181818;border-color:#333}
-.logo{font-size:25px;font-weight:bold;color:#ff1744}
+
+.dark header{
+ background:#181818;
+ border-color:#333;
+}
+
+.logo{
+ font-size:25px;
+ font-weight:bold;
+ color:#ff1744;
+}
+
 .top-search{
- width:40px;height:40px;border:0;border-radius:50%;
- font-size:20px;background:#eee
+ width:40px;
+ height:40px;
+ border:0;
+ border-radius:50%;
+ font-size:20px;
+ background:#eee;
 }
-.dark .top-search{background:#333;color:#fff}
 
-.search-box{display:none;padding:10px 15px;background:#fff}
-.dark .search-box{background:#181818}
-.search-box input{width:100%;padding:13px;border:1px solid #ccc;border-radius:25px;outline:none}
+.dark .top-search{
+ background:#333;
+ color:#fff;
+}
 
-main{max-width:650px;margin:auto;padding:15px}
-.panel{display:none}
-.panel.active{display:block}
+.search-box{
+ display:none;
+ padding:10px 15px;
+ background:#fff;
+}
+
+.dark .search-box{
+ background:#181818;
+}
+
+.search-box input{
+ width:100%;
+ padding:13px;
+ border:1px solid #ccc;
+ border-radius:25px;
+ outline:none;
+}
+
+main{
+ max-width:650px;
+ margin:auto;
+ padding:15px;
+}
+
+.panel{
+ display:none;
+}
+
+.panel.active{
+ display:block;
+}
 
 .card{
- background:#fff;border-radius:16px;padding:15px;margin-bottom:15px;
- box-shadow:0 2px 10px #0001
+ background:#fff;
+ border-radius:16px;
+ padding:15px;
+ margin-bottom:15px;
+ box-shadow:0 2px 10px #0001;
 }
-.dark .card{background:#1c1c1c;box-shadow:none}
+
+.dark .card{
+ background:#1c1c1c;
+ box-shadow:none;
+}
 
 input,textarea{
- width:100%;padding:13px;margin:7px 0;border:1px solid #ccc;
- border-radius:10px;outline:none
+ width:100%;
+ padding:13px;
+ margin:7px 0;
+ border:1px solid #ccc;
+ border-radius:10px;
+ outline:none;
 }
-textarea{min-height:90px;resize:vertical}
-.dark input,.dark textarea{background:#222;color:#fff;border-color:#444}
 
-button{cursor:pointer}
-button:disabled{opacity:.6;cursor:not-allowed}
+.dark input,
+.dark textarea{
+ background:#222;
+ color:#fff;
+ border-color:#444;
+}
+
+button{
+ cursor:pointer;
+}
+
+button:disabled{
+ opacity:.6;
+ cursor:not-allowed;
+}
 
 .primary{
- width:100%;padding:13px;border:0;border-radius:12px;
- background:#ff1744;color:white;font-size:16px;font-weight:bold
+ width:100%;
+ padding:13px;
+ border:0;
+ border-radius:12px;
+ background:#ff1744;
+ color:white;
+ font-size:16px;
+ font-weight:bold;
 }
-.secondary{padding:10px 15px;border:0;border-radius:10px;background:#eee}
-.dark .secondary{background:#333;color:#fff}
 
-.danger{
- padding:10px 15px;border:0;border-radius:10px;
- background:#d50000;color:#fff;font-weight:bold
+.secondary{
+ padding:10px 15px;
+ border:0;
+ border-radius:10px;
+ background:#eee;
 }
 
-.login{text-align:center;padding:60px 20px}
-.login h1{color:#ff1744;font-size:42px;margin-bottom:15px}
+.dark .secondary{
+ background:#333;
+ color:#fff;
+}
 
-.profile{text-align:center}
-.photo-wrap{width:110px;height:110px;margin:auto;position:relative}
+.login{
+ text-align:center;
+ padding:60px 20px;
+}
+
+.login h1{
+ color:#ff1744;
+ font-size:42px;
+ margin-bottom:15px;
+}
+
+.profile{
+ text-align:center;
+}
+
+.photo-wrap{
+ width:110px;
+ height:110px;
+ margin:auto;
+ position:relative;
+}
+
 .profile-photo{
- width:110px;height:110px;border-radius:50%;object-fit:cover;
- border:3px solid #ff1744
+ width:110px;
+ height:110px;
+ border-radius:50%;
+ object-fit:cover;
+ border:3px solid #ff1744;
 }
+
 .photo-edit{
- position:absolute;right:0;bottom:0;width:35px;height:35px;
- border:0;border-radius:50%;background:#ff1744;color:#fff
+ position:absolute;
+ right:0;
+ bottom:0;
+ width:35px;
+ height:35px;
+ border:0;
+ border-radius:50%;
+ background:#ff1744;
+ color:#fff;
 }
 
-.stats{display:flex;justify-content:space-around;margin:20px 0}
-.stats div{text-align:center;cursor:pointer}
-.stats strong{display:block;font-size:20px}
+.stats{
+ display:flex;
+ justify-content:space-around;
+ margin:20px 0;
+}
 
-.actions{display:flex;gap:8px}
-.actions button{flex:1}
+.stats div{
+ text-align:center;
+}
 
-.story-row{display:flex;gap:12px;overflow-x:auto;padding:10px 0}
-.story{min-width:72px;text-align:center;font-size:12px;position:relative}
+.stats strong{
+ display:block;
+ font-size:20px;
+}
+
+.actions{
+ display:flex;
+ gap:8px;
+}
+
+.actions button{
+ flex:1;
+}
+
+.story-row{
+ display:flex;
+ gap:12px;
+ overflow-x:auto;
+ padding:10px 0;
+}
+
+.story{
+ min-width:72px;
+ text-align:center;
+ font-size:12px;
+ position:relative;
+}
+
 .story-circle{
- width:65px;height:65px;border-radius:50%;object-fit:cover;
- border:3px solid #ff1744
+ width:65px;
+ height:65px;
+ border-radius:50%;
+ object-fit:cover;
+ border:3px solid #ff1744;
 }
+
 .add-story{
- width:65px;height:65px;border-radius:50%;background:#eee;
- display:flex;align-items:center;justify-content:center;
- font-size:30px;color:#ff1744;margin:auto
+ width:65px;
+ height:65px;
+ border-radius:50%;
+ background:#eee;
+ display:flex;
+ align-items:center;
+ justify-content:center;
+ font-size:30px;
+ color:#ff1744;
+ margin:auto;
 }
-.dark .add-story{background:#333}
+
+.dark .add-story{
+ background:#333;
+}
 
 .story-menu{
- position:absolute;right:-2px;top:0;width:23px;height:23px;
- border-radius:50%;border:0;background:#111;color:#fff
+ position:absolute;
+ right:-2px;
+ top:0;
+ width:23px;
+ height:23px;
+ border-radius:50%;
+ border:0;
+ background:#111;
+ color:#fff;
 }
 
-.video-card{overflow:hidden}
-.video-user{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.video-card{
+ overflow:hidden;
+}
+
+.video-user{
+ display:flex;
+ align-items:center;
+ gap:10px;
+ margin-bottom:10px;
+}
+
 .video-user img{
- width:42px;height:42px;border-radius:50%;object-fit:cover
+ width:42px;
+ height:42px;
+ border-radius:50%;
+ object-fit:cover;
 }
-.video-user-info{flex:1}
+
+.video-user-info{
+ flex:1;
+}
+
 .video-card video{
- width:100%;max-height:600px;background:#000;border-radius:12px
+ width:100%;
+ max-height:600px;
+ background:#000;
+ border-radius:12px;
 }
-.video-thumb{
- width:100%;max-height:500px;object-fit:cover;border-radius:12px
-}
-.video-description{
- margin:10px 0;line-height:1.4;word-break:break-word
-}
+
 .video-actions{
- display:flex;justify-content:space-around;margin-top:8px;
- border-top:1px solid #eee
+ display:flex;
+ justify-content:space-around;
+ margin-top:8px;
 }
-.dark .video-actions{border-color:#333}
+
 .video-actions button{
- border:0;background:none;padding:10px;font-size:15px
+ border:0;
+ background:none;
+ padding:10px;
+ font-size:15px;
 }
-.like-active{color:#ff1744!important}
 
 .follow-btn{
- padding:8px 14px;border:0;border-radius:20px;
- background:#ff1744;color:#fff
+ padding:8px 14px;
+ border:0;
+ border-radius:20px;
+ background:#ff1744;
+ color:#fff;
 }
-.following{background:#555}
 
-.video-menu{
- padding:7px 10px;border:0;border-radius:10px;
- background:#eee;font-size:18px
+.following{
+ background:#555;
 }
-.dark .video-menu{background:#333;color:#fff}
 
 .user-result{
- display:flex;align-items:center;gap:10px;padding:12px 0;
- border-bottom:1px solid #ddd
+ display:flex;
+ align-items:center;
+ gap:10px;
+ padding:12px 0;
+ border-bottom:1px solid #ddd;
 }
+
 .user-result img{
- width:48px;height:48px;border-radius:50%;object-fit:cover
+ width:48px;
+ height:48px;
+ border-radius:50%;
+ object-fit:cover;
 }
-.user-info{flex:1}
+
+.user-info{
+ flex:1;
+}
 
 .bottom-nav{
- position:fixed;left:0;right:0;bottom:0;height:70px;z-index:200;
- display:flex;align-items:center;justify-content:space-around;
- background:#fff;border-top:1px solid #ddd
+ position:fixed;
+ left:0;
+ right:0;
+ bottom:0;
+ height:70px;
+ z-index:200;
+ display:flex;
+ align-items:center;
+ justify-content:space-around;
+ background:#fff;
+ border-top:1px solid #ddd;
 }
-.dark .bottom-nav{background:#181818;border-color:#333}
-.nav-btn{background:none;border:0;color:#555;font-size:12px}
-.dark .nav-btn{color:#ddd}
+
+.dark .bottom-nav{
+ background:#181818;
+ border-color:#333;
+}
+
+.nav-btn{
+ background:none;
+ border:0;
+ color:#555;
+ font-size:12px;
+}
+
+.dark .nav-btn{
+ color:#ddd;
+}
 
 .upload-btn{
- width:50px;height:50px;border:0;border-radius:16px;
- background:#ff1744;color:#fff;font-size:30px
+ width:50px;
+ height:50px;
+ border:0;
+ border-radius:16px;
+ background:#ff1744;
+ color:#fff;
+ font-size:30px;
 }
 
 .modal{
- display:none;position:fixed;inset:0;z-index:500;background:#0009;
- align-items:center;justify-content:center;padding:20px
+ display:none;
+ position:fixed;
+ inset:0;
+ z-index:500;
+ background:#0009;
+ align-items:center;
+ justify-content:center;
+ padding:20px;
 }
-.modal.show{display:flex}
+
+.modal.show{
+ display:flex;
+}
+
 .modal-box{
- width:100%;max-width:450px;max-height:90vh;overflow:auto;
- background:#fff;border-radius:18px;padding:20px
-}
-.dark .modal-box{background:#1c1c1c}
-.close{float:right;border:0;background:none;font-size:27px}
-.modal-actions{display:flex;gap:8px;margin-top:10px}
-.modal-actions button{flex:1}
-
-.story-view{text-align:center}
-.story-view img,.story-view video{
- max-width:100%;max-height:65vh;border-radius:15px
+ width:100%;
+ max-width:450px;
+ max-height:90vh;
+ overflow:auto;
+ background:#fff;
+ border-radius:18px;
+ padding:20px;
 }
 
-.empty{text-align:center;padding:30px;color:#777}
-.small{color:#777;font-size:13px}
-.dark .small{color:#aaa}
-.loading{text-align:center;padding:25px;color:#777}
+.dark .modal-box{
+ background:#1c1c1c;
+}
 
-.login-status{margin-top:15px;font-size:13px;color:#777}
+.close{
+ float:right;
+ border:0;
+ background:none;
+ font-size:27px;
+}
+
+.modal-actions{
+ display:flex;
+ gap:8px;
+ margin-top:10px;
+}
+
+.modal-actions button{
+ flex:1;
+}
+
+.story-view{
+ text-align:center;
+}
+
+.story-view img,
+.story-view video{
+ max-width:100%;
+ max-height:65vh;
+ border-radius:15px;
+}
+
+.empty{
+ text-align:center;
+ padding:30px;
+ color:#777;
+}
+
+.small{
+ color:#777;
+ font-size:13px;
+}
+
+.dark .small{
+ color:#aaa;
+}
+
+.loading{
+ text-align:center;
+ padding:25px;
+ color:#777;
+}
+
+.login-status{
+ margin-top:15px;
+ font-size:13px;
+ color:#777;
+}
+
 .upload-status{
- margin-top:12px;padding:10px;border-radius:10px;
- background:#f1f1f1;display:none;text-align:center
-}
-.dark .upload-status{background:#292929;color:#fff}
-
-.comment-area{margin-top:10px}
-.comment-list{max-height:250px;overflow-y:auto;margin-top:8px}
-.comment-item{
- display:flex;gap:8px;padding:9px 0;border-bottom:1px solid #eee
-}
-.dark .comment-item{border-color:#333}
-.comment-avatar{
- width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0
-}
-.comment-content{flex:1}
-.comment-name{font-weight:bold;font-size:13px}
-.comment-text{font-size:14px;margin-top:2px;word-break:break-word}
-.comment-form{display:flex;gap:7px;margin-top:8px}
-.comment-form input{margin:0}
-.comment-form button{
- width:90px;border:0;border-radius:10px;
- background:#ff1744;color:white;font-weight:bold
+ margin-top:12px;
+ padding:10px;
+ border-radius:10px;
+ background:#f1f1f1;
+ display:none;
+ text-align:center;
 }
 
-.list-user{
- display:flex;align-items:center;gap:10px;padding:12px 0;
- border-bottom:1px solid #ddd
-}
-.dark .list-user{border-color:#333}
-.list-user img{
- width:45px;height:45px;border-radius:50%;object-fit:cover
-}
-.list-user-info{flex:1}
-.follow-list-empty{text-align:center;padding:25px;color:#777}
-
-.history-item,.notification-item{
- padding:12px 0;border-bottom:1px solid #ddd
-}
-.dark .history-item,.dark .notification-item{border-color:#333}
-
-.notification-item{
- display:flex;gap:10px;align-items:flex-start
-}
-.notification-icon{
- width:42px;height:42px;border-radius:50%;
- display:flex;align-items:center;justify-content:center;
- background:#ff1744;color:#fff;flex-shrink:0
+.dark .upload-status{
+ background:#292929;
+ color:#fff;
 }
 
-.preview-image{
- width:100%;max-height:250px;object-fit:cover;
- border-radius:12px;margin-top:5px;display:none
-}
+</style>
+</head>
 
-.setting-row{
- display:flex;align-items:center;justify-content:space-between;
- gap:10px;padding:12px 0;border-bottom:1px solid #ddd
-}
-.dark .setting-row{border-color:#333}
 
-.badge{
- background:#ff1744;color:#fff;border-radius:20px;
- padding:3px 8px;font-size:11px
-}
-</style></head><body><header>
- <div class="logo">ReelHub</div>
- <button class="top-search" onclick="toggleSearch()">🔍</button>
-</header><div class="search-box" id="searchBox">
- <input id="searchInput" placeholder="Search users..." oninput="searchUsers()">
+<body>
+
+
+<header>
+
+ <div class="logo">
+  ReelHub
+ </div>
+
+ <button
+  class="top-search"
+  onclick="toggleSearch()">
+  🔍
+ </button>
+
+</header>
+
+
+<div
+ class="search-box"
+ id="searchBox">
+
+ <input
+  id="searchInput"
+  placeholder="Search users..."
+  oninput="searchUsers()">
+
  <div id="searchResults"></div>
-</div><main><!-- LOGIN --><section id="loginPanel" class="panel active">
+
+</div>
+
+
+<main>
+
+
+<!-- LOGIN -->
+
+<section
+ id="loginPanel"
+ class="panel active">
+
  <div class="card login">
-  <h1>ReelHub</h1>
-  <p style="margin-bottom:25px">Videos • Shorts • Stories</p>
-  <button id="googleLoginBtn" class="primary" onclick="login()">
+
+  <h1>
+   ReelHub
+  </h1>
+
+  <p style="margin-bottom:25px">
+   Videos • Shorts • Stories
+  </p>
+
+  <button
+   id="googleLoginBtn"
+   class="primary"
+   onclick="login()">
+
    🔐 Continue with Google
+
   </button>
-  <div id="loginStatus" class="login-status"></div>
+
+  <div
+   id="loginStatus"
+   class="login-status">
+  </div>
+
  </div>
-</section><!-- HOME --><section id="homePanel" class="panel">
+
+</section>
+
+
+<!-- HOME -->
+
+<section
+ id="homePanel"
+ class="panel">
+
  <div class="card">
-  <h2>🏠 Home</h2>
-  <p class="small">Latest videos • Real-time</p>
+
+  <h2>
+   🏠 Home
+  </h2>
+
+  <p class="small">
+   Latest videos
+  </p>
+
  </div>
+
  <div id="homeVideos"></div>
-</section><!-- SHORTS --><section id="shortsPanel" class="panel">
+
+</section>
+
+
+<!-- SHORTS -->
+
+<section
+ id="shortsPanel"
+ class="panel">
+
  <div class="card">
-  <h2>🎬 Shorts</h2>
-  <p class="small">Short videos • Real-time</p>
+
+  <h2>
+   🎬 Shorts
+  </h2>
+
+  <p class="small">
+   Short videos
+  </p>
+
  </div>
+
  <div id="shortsVideos"></div>
-</section><!-- UPLOAD --><section id="uploadPanel" class="panel">
- <div class="card">  <h2>📹 Upload Video</h2>  <p class="small">
-   Video के साथ thumbnail/photo और description भी जोड़ सकते हैं।
-  </p><label><b>🎬 Video Select करें</b></label>
 
-  <input type="file" id="videoFile" accept="video/*"><video id="videoPreview" controls playsinline
-style="display:none;width:100%;border-radius:12px;margin-top:8px">
-</video>
+</section>
 
-<label><b>🖼️ Thumbnail / Photo Select करें</b></label>
 
-  <input type="file" id="thumbnailFile" accept="image/*">  <img id="thumbnailPreview" class="preview-image"><label><b>📝 Video Description</b></label>
+<!-- UPLOAD -->
 
-  <textarea id="videoDescription"
-   placeholder="Video के बारे में कुछ लिखें..."></textarea>  <div id="uploadStatus" class="upload-status"></div>  <button id="publishVideoBtn" class="primary" onclick="publishVideo()">
+<section
+ id="uploadPanel"
+ class="panel">
+
+ <div class="card">
+
+  <h2>
+   📹 Upload Video
+  </h2>
+
+  <p class="small">
+   Phone से video select करें और preview देखें।
+  </p>
+
+
+  <input
+   type="file"
+   id="videoFile"
+   accept="video/*">
+
+
+  <video
+   id="videoPreview"
+   controls
+   playsinline
+   style="display:none;width:100%;border-radius:12px;margin-top:8px">
+  </video>
+
+
+  <input
+   id="videoUrl"
+   type="url"
+   placeholder="या direct video URL डालें">
+
+
+  <div
+   id="uploadStatus"
+   class="upload-status">
+  </div>
+
+
+  <button
+   id="publishVideoBtn"
+   class="primary"
+   onclick="publishVideo()">
+
    🚀 Publish Video
-  </button>  <p class="small" style="margin-top:10px">
-   Direct video URL का option हटा दिया गया है।
-  </p> </div>
-</section><!-- ALERTS --><section id="alertsPanel" class="panel"> <div class="card">
-  <h2>🔔 Notifications</h2>
-  <p class="small">आपके followers और ReelHub activity</p>
- </div> <div class="card" id="notificationsBox">
-  <div class="loading">Notifications loading...</div>
- </div></section><!-- PROFILE --><section id="profilePanel" class="panel"> <div class="card profile">  <div class="photo-wrap">
-   <img id="profilePhoto" class="profile-photo"
-    src="https://via.placeholder.com/150"><button class="photo-edit" onclick="choosePhoto()">✏️</button>
 
-  </div>  <input type="file" id="photoInput" accept="image/*" hidden>  <h2 id="profileName">User</h2>  <p id="profileUsername" class="small">@user</p>  <div class="stats">   <div onclick="openFollowList('followers')">
-    <strong id="followersCount">0</strong>
+  </button>
+
+
+  <p
+   class="small"
+   style="margin-top:10px">
+
+   Selected video Cloudinary पर upload होगी
+   और उसका URL Firestore में save होगा।
+
+  </p>
+
+ </div>
+
+</section>
+
+
+<!-- ALERTS -->
+
+<section
+ id="alertsPanel"
+ class="panel">
+
+ <div class="card">
+
+  <h2>
+   🔔 Notifications
+  </h2>
+
+ </div>
+
+ <div class="card empty">
+
+  अभी कोई notification नहीं है।
+
+ </div>
+
+</section>
+
+
+<!-- PROFILE -->
+
+<section
+ id="profilePanel"
+ class="panel">
+
+ <div class="card profile">
+
+  <div class="photo-wrap">
+
+   <img
+    id="profilePhoto"
+    class="profile-photo"
+    src="https://via.placeholder.com/150">
+
+   <button
+    class="photo-edit"
+    onclick="choosePhoto()">
+
+    ✏️
+
+   </button>
+
+  </div>
+
+
+  <input
+   type="file"
+   id="photoInput"
+   accept="image/*"
+   hidden>
+
+
+  <h2 id="profileName">
+   User
+  </h2>
+
+
+  <p
+   id="profileUsername"
+   class="small">
+
+   @user
+
+  </p>
+
+
+  <div class="stats">
+
+   <div>
+    <strong id="followersCount">
+     0
+    </strong>
     Followers
-   </div>   <div onclick="openFollowList('following')">
-    <strong id="followingCount">0</strong>
+   </div>
+
+   <div>
+    <strong id="followingCount">
+     0
+    </strong>
     Following
-   </div>   <div>
-    <strong id="videosCount">0</strong>
+   </div>
+
+   <div>
+    <strong id="videosCount">
+     0
+    </strong>
     Videos
-   </div>  </div>  <div class="actions">
-   <button class="secondary" onclick="openEditProfile()">✏️ Edit</button>
-   <button class="secondary" onclick="shareProfile()">📤 Share</button>
-  </div> </div> <!-- STORIES --> <div class="card">
-  <h3>Stories</h3>
-  <div class="story-row" id="storyRow"></div><input type="file" id="storyInput"
-accept="image/*,video/*" hidden>
+   </div>
 
- </div> <!-- SETTINGS --> <div class="card">  <h3>⚙️ Settings</h3>  <div class="setting-row">
-   <span>🌙 Dark / Light Mode</span>
-   <button class="secondary" onclick="darkMode()">Change</button>
-  </div>  <div class="setting-row">
-   <span>📜 Upload History</span>
-   <button class="secondary" onclick="openHistory()">View</button>
-  </div>  <div class="setting-row">
-   <span>🗑️ Delete History</span>
-   <button class="danger" onclick="deleteHistory()">Delete</button>
-  </div>  <br><button class="primary" onclick="logout()">🚪 Logout</button>
+  </div>
 
- </div></section></main><!-- BOTTOM NAV --><div id="bottomNav" class="bottom-nav" style="display:none"> <button class="nav-btn" onclick="openPanel('homePanel')">
-  🏠<br>Home
- </button> <button class="nav-btn" onclick="openShorts()">
-  🎬<br>Shorts
- </button><button class="upload-btn" onclick="openPanel('uploadPanel')">+</button>
 
- <button class="nav-btn" onclick="openPanel('alertsPanel')">
-  🔔<br>Alerts
- </button> <button class="nav-btn" onclick="openPanel('profilePanel')">
-  👤<br>Profile
- </button></div><!-- EDIT PROFILE --><div id="editModal" class="modal">
- <div class="modal-box"><button class="close" onclick="closeModal('editModal')">×</button>
+  <div class="actions">
 
-  <h2>✏️ Edit Profile</h2>
-  <br>  <input id="editName" placeholder="Name">
-  <input id="editUsername" placeholder="Username">  <div class="modal-actions">
-   <button class="secondary" onclick="closeModal('editModal')">
+   <button
+    class="secondary"
+    onclick="openEditProfile()">
+
+    ✏️ Edit
+
+   </button>
+
+
+   <button
+    class="secondary"
+    onclick="shareProfile()">
+
+    📤 Share
+
+   </button>
+
+  </div>
+
+ </div>
+
+
+<!-- STORIES -->
+
+<div class="card">
+
+ <h3>
+  Stories
+ </h3>
+
+ <div
+  class="story-row"
+  id="storyRow">
+
+  <div
+   class="story"
+   onclick="chooseStory()">
+
+   <div class="add-story">
+    +
+   </div>
+
+   <div>
+    Add Story
+   </div>
+
+  </div>
+
+ </div>
+
+
+ <input
+  type="file"
+  id="storyInput"
+  accept="image/*,video/*"
+  hidden>
+
+</div>
+
+
+<!-- SETTINGS -->
+
+<div class="card">
+
+ <h3>
+  ⚙️ Settings
+ </h3>
+
+ <br>
+
+ <button
+  class="secondary"
+  style="width:100%"
+  onclick="darkMode()">
+
+  🌙 Dark / Light
+
+ </button>
+
+ <br><br>
+
+ <button
+  class="primary"
+  onclick="logout()">
+
+  🚪 Logout
+
+ </button>
+
+</div>
+
+</section>
+
+</main>
+
+
+<!-- BOTTOM NAV -->
+
+<div
+ id="bottomNav"
+ class="bottom-nav"
+ style="display:none">
+
+ <button
+  class="nav-btn"
+  onclick="openPanel('homePanel')">
+
+  🏠<br>
+  Home
+
+ </button>
+
+
+ <button
+  class="nav-btn"
+  onclick="openShorts()">
+
+  🎬<br>
+  Shorts
+
+ </button>
+
+
+ <button
+  class="upload-btn"
+  onclick="openPanel('uploadPanel')">
+
+  +
+
+ </button>
+
+
+ <button
+  class="nav-btn"
+  onclick="openPanel('alertsPanel')">
+
+  🔔<br>
+  Alerts
+
+ </button>
+
+
+ <button
+  class="nav-btn"
+  onclick="openPanel('profilePanel')">
+
+  👤<br>
+  Profile
+
+ </button>
+
+</div>
+
+
+<!-- EDIT PROFILE -->
+
+<div
+ id="editModal"
+ class="modal">
+
+ <div class="modal-box">
+
+  <button
+   class="close"
+   onclick="closeModal('editModal')">
+
+   ×
+
+  </button>
+
+  <h2>
+   ✏️ Edit Profile
+  </h2>
+
+  <br>
+
+  <input
+   id="editName"
+   placeholder="Name">
+
+  <input
+   id="editUsername"
+   placeholder="Username">
+
+
+  <div class="modal-actions">
+
+   <button
+    class="secondary"
+    onclick="closeModal('editModal')">
+
     Cancel
-   </button>   <button class="primary" onclick="saveProfile()">
+
+   </button>
+
+
+   <button
+    class="primary"
+    onclick="saveProfile()">
+
     Save
+
    </button>
-  </div> </div>
-</div><!-- FOLLOW LIST --><div id="followListModal" class="modal">
- <div class="modal-box"><button class="close" onclick="closeModal('followListModal')">×</button>
 
-  <h2 id="followListTitle">Followers</h2>
-  <br>  <div id="followListContent">Loading...</div> </div>
-</div><!-- HISTORY --><div id="historyModal" class="modal">
- <div class="modal-box"><button class="close" onclick="closeModal('historyModal')">×</button>
+  </div>
 
-  <h2>📜 Upload History</h2>
-  <br>  <div id="historyContent">
-   Loading...
-  </div> </div>
-</div><!-- DELETE VIDEO --><div id="deleteVideoModal" class="modal">
- <div class="modal-box"><button class="close" onclick="closeModal('deleteVideoModal')">×</button>
+ </div>
 
-  <h2>🗑️ Delete Video</h2>  <p style="margin-top:15px">
-   क्या आप यह video delete करना चाहते हैं?
-  </p>  <p class="small" style="margin-top:8px">
-   Video ReelHub से हट जाएगी और आपकी video count भी update हो जाएगी।
-  </p>  <div class="modal-actions">
-   <button class="secondary" onclick="closeModal('deleteVideoModal')">
-    Cancel
-   </button>   <button class="danger" onclick="confirmDeleteVideo()">
-    🗑️ Delete
-   </button>
-  </div> </div>
-</div><!-- STORY VIEW --><div id="storyViewModal" class="modal">
- <div class="modal-box story-view"><button class="close" onclick="closeModal('storyViewModal')">×</button>
+</div>
 
-  <h3 id="storyViewName">Story</h3>
-  <br>  <div id="storyViewer"></div>  <br>  <button class="primary" onclick="closeModal('storyViewModal')">
+
+<!-- STORY VIEW -->
+
+<div
+ id="storyViewModal"
+ class="modal">
+
+ <div class="modal-box story-view">
+
+  <button
+   class="close"
+   onclick="closeModal('storyViewModal')">
+
+   ×
+
+  </button>
+
+  <h3 id="storyViewName">
+   Story
+  </h3>
+
+  <br>
+
+  <div id="storyViewer"></div>
+
+  <br>
+
+  <button
+   class="primary"
+   onclick="closeModal('storyViewModal')">
+
    Close
-  </button> </div>
-</div><!-- STORY EDIT --><div id="storyEditModal" class="modal">
- <div class="modal-box"><button class="close" onclick="closeModal('storyEditModal')">×</button>
 
-  <h2>✏️ Edit Story</h2>  <input id="storyCaption" placeholder="Story caption">  <div class="modal-actions">
-   <button class="secondary" onclick="closeModal('storyEditModal')">
+  </button>
+
+ </div>
+
+</div>
+
+
+<!-- STORY EDIT -->
+
+<div
+ id="storyEditModal"
+ class="modal">
+
+ <div class="modal-box">
+
+  <button
+   class="close"
+   onclick="closeModal('storyEditModal')">
+
+   ×
+
+  </button>
+
+  <h2>
+   ✏️ Edit Story
+  </h2>
+
+  <input
+   id="storyCaption"
+   placeholder="Story caption">
+
+
+  <div class="modal-actions">
+
+   <button
+    class="secondary"
+    onclick="closeModal('storyEditModal')">
+
     Cancel
-   </button>   <button class="primary" onclick="saveStoryEdit()">
-    Save
+
    </button>
-  </div> </div>
-</div><script type="module">
 
-/* ================= FIREBASE ================= */
 
-import {initializeApp}
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+   <button
+    class="primary"
+    onclick="saveStoryEdit()">
+
+    Save
+
+   </button>
+
+  </div>
+
+ </div>
+
+</div>
+
+
+<script type="module">
+
+
+/* =====================================================
+   FIREBASE IMPORT
+===================================================== */
+
+import {
+ initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+
 
 import {
  getAuth,
@@ -407,7 +1093,9 @@ import {
  onAuthStateChanged,
  signOut
 }
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+from
+"https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
 
 import {
  getFirestore,
@@ -421,2066 +1109,2610 @@ import {
  deleteDoc,
  query,
  orderBy,
- where,
  serverTimestamp,
- increment,
- onSnapshot
+ increment
 }
-from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
-
-const firebaseConfig={
- apiKey:"AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
- authDomain:"reelhu.firebaseapp.com",
- projectId:"reelhu",
- storageBucket:"reelhu.firebasestorage.app",
- messagingSenderId:"883255506643",
- appId:"1:883255506643:web:600256ed9bb47a4f828626",
- measurementId:"G-FY9N5XNF6Z"
-};
-
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
-
-const provider=new GoogleAuthProvider();
-provider.setCustomParameters({prompt:"select_account"});
-
-let currentUser=null;
-let selectedStoryId=null;
-let selectedDeleteVideoId=null;
-let localStories=[];
-
-let videoUnsubscribe=null;
-let profileUnsubscribe=null;
-let followUnsubscribe=null;
-let notificationUnsubscribe=null;
-let myVideoCountUnsubscribe=null;
-
-const commentUnsubscribers={};
-const likeUnsubscribers={};
-const likedUnsubscribers={};
-
-const CLOUDINARY_CLOUD_NAME="s3eresx6";
-const CLOUDINARY_UPLOAD_PRESET="reelhub_upload";
+from
+"https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
-/* ================= CLOUDINARY VIDEO ================= */
+/* =====================================================
+   FIREBASE CONFIG
+===================================================== */
 
-async function uploadVideoToCloudinary(file){
+const firebaseConfig = {
 
- const formData=new FormData();
+ apiKey:
+ "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
 
- formData.append("file",file);
- formData.append("upload_preset",CLOUDINARY_UPLOAD_PRESET);
+ authDomain:
+ "reelhu.firebaseapp.com",
 
- const response=await fetch(
-  `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`,
-  {method:"POST",body:formData}
- );
+ projectId:
+ "reelhu",
 
- if(!response.ok){
+ storageBucket:
+ "reelhu.firebasestorage.app",
 
-  const errorData=await response.json().catch(()=>({}));
+ messagingSenderId:
+ "883255506643",
 
-  throw new Error(
-   errorData.error?.message ||
-   "Cloudinary video upload failed"
-  );
- }
+ appId:
+ "1:883255506643:web:600256ed9bb47a4f828626",
 
- const data=await response.json();
+ measurementId:
+ "G-FY9N5XNF6Z"
 
- if(!data.secure_url)
-  throw new Error("Cloudinary ने video URL नहीं दिया।");
-
- return data.secure_url;
-}
-
-
-/* ================= CLOUDINARY IMAGE ================= */
-
-async function uploadImageToCloudinary(file){
-
- const formData=new FormData();
-
- formData.append("file",file);
- formData.append("upload_preset",CLOUDINARY_UPLOAD_PRESET);
-
- const response=await fetch(
-  `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-  {method:"POST",body:formData}
- );
-
- if(!response.ok){
-
-  const errorData=await response.json().catch(()=>({}));
-
-  throw new Error(
-   errorData.error?.message ||
-   "Cloudinary image upload failed"
-  );
- }
-
- const data=await response.json();
-
- if(!data.secure_url)
-  throw new Error("Thumbnail upload नहीं हुई।");
-
- return data.secure_url;
-}
-
-
-/* ================= LOGIN ================= */
-
-window.login=async function(){
-
- const button=document.getElementById("googleLoginBtn");
- const status=document.getElementById("loginStatus");
-
- try{
-
-  button.disabled=true;
-  button.textContent="⏳ Opening Google...";
-  status.textContent="Google account select करें...";
-
-  await signInWithPopup(auth,provider);
-
- }catch(error){
-
-  console.error(error);
-
-  button.disabled=false;
-  button.textContent="🔐 Continue with Google";
-  status.textContent="";
-
-  alert(
-   "Google Login failed:\n\n"+
-   (error.code||error.message)
-  );
- }
 };
 
 
-/* ================= UI ================= */
+/* =====================================================
+   FIREBASE INIT
+===================================================== */
 
-function showLoggedInUI(){
+const app =
+ initializeApp(
+  firebaseConfig
+ );
 
- document.getElementById("loginPanel").classList.remove("active");
- document.getElementById("homePanel").classList.add("active");
- document.getElementById("bottomNav").style.display="flex";
-}
+const auth =
+ getAuth(app);
 
+const db =
+ getFirestore(app);
 
-/* ================= AUTH ================= */
+const provider =
+ new GoogleAuthProvider();
 
-onAuthStateChanged(auth,async user=>{
-
- if(user){
-
-  currentUser=user;
-
-  showLoggedInUI();
-
-  await initializeUserData();
-
- }else{
-
-  currentUser=null;
-
-  stopRealtimeListeners();
-
-  document.getElementById("bottomNav").style.display="none";
-
-  document.querySelectorAll(".panel")
-   .forEach(x=>x.classList.remove("active"));
-
-  document.getElementById("loginPanel").classList.add("active");
- }
+provider.setCustomParameters({
+ prompt:"select_account"
 });
 
 
-/* ================= INITIALIZE ================= */
+let currentUser = null;
+
+let selectedStoryId = null;
+
+let localStories = [];
+
+
+/* =====================================================
+   CLOUDINARY CONFIG
+===================================================== */
+
+const CLOUDINARY_CLOUD_NAME =
+ "s3eresx6";
+
+const CLOUDINARY_UPLOAD_PRESET =
+ "reelhub_upload";
+
+
+/* =====================================================
+   CLOUDINARY VIDEO UPLOAD
+===================================================== */
+
+async function uploadVideoToCloudinary(file){
+
+ const formData =
+  new FormData();
+
+ formData.append(
+  "file",
+  file
+ );
+
+ formData.append(
+  "upload_preset",
+  CLOUDINARY_UPLOAD_PRESET
+ );
+
+
+ const response =
+  await fetch(
+   `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`,
+   {
+    method:"POST",
+    body:formData
+   }
+  );
+
+
+ if(!response.ok){
+
+  const errorData =
+   await response
+    .json()
+    .catch(
+     ()=>({})
+    );
+
+
+  throw new Error(
+   errorData.error?.message ||
+   "Cloudinary upload failed"
+  );
+
+ }
+
+
+ const data =
+  await response.json();
+
+
+ if(!data.secure_url){
+
+  throw new Error(
+   "Cloudinary ने video URL नहीं दिया।"
+  );
+
+ }
+
+
+ return data.secure_url;
+
+}
+
+
+/* =====================================================
+   GOOGLE LOGIN
+===================================================== */
+
+window.login =
+ async function(){
+
+ const button =
+  document.getElementById(
+   "googleLoginBtn"
+  );
+
+ const status =
+  document.getElementById(
+   "loginStatus"
+  );
+
+
+ try{
+
+  button.disabled =
+   true;
+
+  button.textContent =
+   "⏳ Opening Google...";
+
+  status.textContent =
+   "Google account select करें...";
+
+
+  const result =
+   await signInWithPopup(
+    auth,
+    provider
+   );
+
+
+  if(
+   result &&
+   result.user
+  ){
+
+   currentUser =
+    result.user;
+
+   status.textContent =
+    "✅ Login successful!";
+
+   showLoggedInUI();
+
+   await initializeUserData();
+
+  }
+
+
+ }catch(error){
+
+  console.error(
+   "Google Login Error:",
+   error
+  );
+
+
+  button.disabled =
+   false;
+
+  button.textContent =
+   "🔐 Continue with Google";
+
+  status.textContent =
+   "";
+
+
+  let message =
+   "Google Login failed.";
+
+
+  if(
+   error.code ===
+   "auth/popup-closed-by-user"
+  ){
+
+   message =
+    "Google login window बंद हो गई।";
+
+  }
+
+
+  else if(
+   error.code ===
+   "auth/popup-blocked"
+  ){
+
+   message =
+    "Browser ने popup block कर दिया है।";
+
+  }
+
+
+  else if(
+   error.code ===
+   "auth/unauthorized-domain"
+  ){
+
+   message =
+    "यह website Firebase Authorized Domains में add नहीं है।";
+
+  }
+
+
+  alert(
+   message+
+   "\n\nError:\n"+
+   (
+    error.code ||
+    "unknown"
+   )
+  );
+
+ }
+
+};
+
+
+/* =====================================================
+   SHOW LOGGED IN UI
+===================================================== */
+
+function showLoggedInUI(){
+
+ document.getElementById(
+  "loginPanel"
+ ).classList.remove(
+  "active"
+ );
+
+
+ document.getElementById(
+  "homePanel"
+ ).classList.add(
+  "active"
+ );
+
+
+ document.getElementById(
+  "bottomNav"
+ ).style.display =
+  "flex";
+
+
+ document.getElementById(
+  "searchBox"
+ ).style.display =
+  "none";
+
+
+ document.getElementById(
+  "homeVideos"
+ ).innerHTML =
+  `<div class="card loading">
+    ⏳ Home loading...
+   </div>`;
+
+}
+
+
+/* =====================================================
+   USER DATA
+===================================================== */
 
 async function initializeUserData(){
 
- if(!currentUser)return;
+ if(!currentUser)
+  return;
+
 
  try{
 
   await createProfile();
 
-  startRealtimeProfile();
-  startRealtimeFollows();
-  startRealtimeVideos();
-  startRealtimeNotifications();
-  startRealtimeVideoCount();
+  await loadProfile();
+
+  await loadVideos(
+   "homeVideos"
+  );
 
   loadLocalStories();
 
  }catch(error){
 
-  console.error("Initialize error:",error);
+  console.error(
+   "User data error:",
+   error
+  );
 
-  document.getElementById("homeVideos").innerHTML=
+
+  document.getElementById(
+   "homeVideos"
+  ).innerHTML =
+
    `<div class="card empty">
-    Data load नहीं हो पाया।
+
+    <h3>
+     Login successful ✅
+    </h3>
+
+    <br>
+
+    Home खुल गया है।
+
     <br><br>
-    ${safe(error.message)}
+
+    Data load नहीं हो पाया।
+
+    <br><br>
+
+    <small>
+     ${safe(error.message)}
+    </small>
+
    </div>`;
+
  }
+
+
+ const button =
+  document.getElementById(
+   "googleLoginBtn"
+  );
+
+
+ if(button){
+
+  button.disabled =
+   false;
+
+  button.textContent =
+   "🔐 Continue with Google";
+
+ }
+
 }
 
 
-/* ================= STOP LISTENERS ================= */
+/* =====================================================
+   AUTH STATE
+===================================================== */
 
-function stopRealtimeListeners(){
+onAuthStateChanged(
+ auth,
+ async user=>{
 
- if(videoUnsubscribe){
-  videoUnsubscribe();
-  videoUnsubscribe=null;
- }
+  if(user){
 
- if(profileUnsubscribe){
-  profileUnsubscribe();
-  profileUnsubscribe=null;
- }
+   currentUser =
+    user;
 
- if(followUnsubscribe){
-  followUnsubscribe();
-  followUnsubscribe=null;
- }
+   showLoggedInUI();
 
- if(notificationUnsubscribe){
-  notificationUnsubscribe();
-  notificationUnsubscribe=null;
- }
-
- if(myVideoCountUnsubscribe){
-  myVideoCountUnsubscribe();
-  myVideoCountUnsubscribe=null;
- }
-
- Object.keys(commentUnsubscribers).forEach(id=>{
-  commentUnsubscribers[id]();
-  delete commentUnsubscribers[id];
- });
-
- Object.keys(likeUnsubscribers).forEach(id=>{
-  likeUnsubscribers[id]();
-  delete likeUnsubscribers[id];
- });
-
- Object.keys(likedUnsubscribers).forEach(id=>{
-  likedUnsubscribers[id]();
-  delete likedUnsubscribers[id];
- });
-}
-
-
-/* ================= CREATE PROFILE ================= */
-
-async function createProfile(){
-
- const ref=doc(db,"profiles",currentUser.uid);
- const snap=await getDoc(ref);
-
- if(!snap.exists()){
-
-  await setDoc(ref,{
-   uid:currentUser.uid,
-   name:currentUser.displayName||"User",
-   username:makeUsername(currentUser.displayName||"user"),
-   photo:currentUser.photoURL||"https://via.placeholder.com/150",
-   followers:0,
-   following:0,
-   videos:0,
-   createdAt:serverTimestamp()
-  });
- }
-}
-
-
-function makeUsername(name){
-
- return name.toLowerCase()
-  .replace(/[^a-z0-9]/g,"")
-  .slice(0,15)||"user";
-}
-
-
-/* ================= PROFILE REALTIME ================= */
-
-function startRealtimeProfile(){
-
- if(profileUnsubscribe)profileUnsubscribe();
-
- profileUnsubscribe=onSnapshot(
-  doc(db,"profiles",currentUser.uid),
-  snap=>{
-
-   if(!snap.exists())return;
-
-   const d=snap.data();
-
-   document.getElementById("profileName").textContent=d.name||"User";
-
-   document.getElementById("profileUsername").textContent=
-    "@"+(d.username||"user");
-
-   document.getElementById("profilePhoto").src=
-    d.photo||currentUser.photoURL||"https://via.placeholder.com/150";
-  }
- );
-}
-
-
-/* ================= VIDEO COUNT REALTIME ================= */
-
-function startRealtimeVideoCount(){
-
- if(myVideoCountUnsubscribe)
-  myVideoCountUnsubscribe();
-
- const q=query(
-  collection(db,"videos"),
-  where("userId","==",currentUser.uid)
- );
-
- myVideoCountUnsubscribe=onSnapshot(q,snapshot=>{
-
-  document.getElementById("videosCount").textContent=
-   snapshot.size;
-
- });
-}
-
-
-/* ================= FOLLOW REALTIME ================= */
-
-function startRealtimeFollows(){
-
- if(followUnsubscribe)followUnsubscribe();
-
- followUnsubscribe=onSnapshot(
-  collection(db,"follows"),
-  snapshot=>{
-
-   let followers=0;
-   let following=0;
-
-   snapshot.forEach(item=>{
-
-    const d=item.data();
-
-    if(d.following===currentUser.uid)followers++;
-    if(d.follower===currentUser.uid)following++;
-   });
-
-   document.getElementById("followersCount").textContent=followers;
-   document.getElementById("followingCount").textContent=following;
-  }
- );
-}
-
-
-/* ================= VIDEO REALTIME ================= */
-
-function startRealtimeVideos(){
-
- if(videoUnsubscribe)videoUnsubscribe();
-
- const q=query(
-  collection(db,"videos"),
-  orderBy("createdAt","desc")
- );
-
- videoUnsubscribe=onSnapshot(q,snapshot=>{
-
-  const home=document.getElementById("homeVideos");
-  const shorts=document.getElementById("shortsVideos");
-
-  home.innerHTML="";
-  shorts.innerHTML="";
-
-  if(snapshot.empty){
-
-   home.innerHTML=
-    `<div class="card empty">अभी कोई video नहीं है।</div>`;
-
-   shorts.innerHTML=
-    `<div class="card empty">अभी कोई short video नहीं है।</div>`;
-
-   return;
-  }
-
-  snapshot.forEach(item=>{
-
-   home.appendChild(createVideo(item.id,item.data()));
-  });
-
-  snapshot.forEach(item=>{
-
-   shorts.appendChild(createVideo(item.id,item.data()));
-  });
-
- },error=>{
-
-  console.error(error);
-
-  document.getElementById("homeVideos").innerHTML=
-   `<div class="card empty">
-    Video load नहीं हो पाया।
-    <br><br>${safe(error.message)}
-   </div>`;
- });
-}
-
-
-/* ================= PANEL ================= */
-
-window.openPanel=function(id){
-
- if(!currentUser)return;
-
- document.querySelectorAll(".panel")
-  .forEach(x=>x.classList.remove("active"));
-
- document.getElementById(id).classList.add("active");
-
- document.getElementById("searchBox").style.display="none";
-
- if(id==="alertsPanel"){
-  loadNotifications();
- }
-};
-
-
-window.openShorts=function(){
- openPanel("shortsPanel");
-};
-
-
-/* ================= SEARCH ================= */
-
-window.toggleSearch=function(){
-
- if(!currentUser)return;
-
- const box=document.getElementById("searchBox");
-
- box.style.display=
-  box.style.display==="block"?"none":"block";
-
- if(box.style.display==="block")
-  document.getElementById("searchInput").focus();
-};
-
-
-window.searchUsers=async function(){
-
- const value=document.getElementById("searchInput")
-  .value.trim().toLowerCase();
-
- const result=document.getElementById("searchResults");
-
- result.innerHTML="";
-
- if(value.length<2)return;
-
- try{
-
-  const snap=await getDocs(collection(db,"profiles"));
-
-  let found=false;
-
-  snap.forEach(item=>{
-
-   const d=item.data();
-
-   const name=(d.name||"").toLowerCase();
-   const username=(d.username||"").toLowerCase();
-
-   if(name.includes(value)||username.includes(value)){
-
-    found=true;
-
-    const div=document.createElement("div");
-
-    div.className="user-result";
-
-    div.innerHTML=`
-     <img src="${safe(d.photo||"https://via.placeholder.com/100")}">
-
-     <div class="user-info">
-      <strong>${safe(d.name||"User")}</strong>
-      <div class="small">@${safe(d.username||"user")}</div>
-     </div>
-
-     ${
-      item.id!==currentUser.uid
-      ? `<button class="follow-btn" id="search_${item.id}">
-          Follow
-         </button>`
-      :""
-     }
-    `;
-
-    result.appendChild(div);
-
-    if(item.id!==currentUser.uid){
-
-     const btn=document.getElementById("search_"+item.id);
-
-     checkFollow(item.id,btn);
-
-     btn.onclick=()=>{
-      toggleFollow(item.id,btn);
-     };
-    }
-   }
-  });
-
-  if(!found){
-
-   result.innerHTML=
-    `<div class="empty">User नहीं मिला।</div>`;
-  }
-
- }catch(error){
-
-  result.innerHTML=
-   `<div class="empty">Search error</div>`;
- }
-};
-
-
-/* ================= FOLLOW ================= */
-
-async function checkFollow(target,btn){
-
- if(!currentUser||!btn)return;
-
- const id=currentUser.uid+"_"+target;
-
- const snap=await getDoc(
-  doc(db,"follows",id)
- );
-
- if(snap.exists()){
-
-  btn.textContent="Following";
-  btn.classList.add("following");
-
- }else{
-
-  btn.textContent="Follow";
-  btn.classList.remove("following");
- }
-}
-
-
-window.toggleFollow=async function(target,button){
-
- if(!currentUser||target===currentUser.uid)return;
-
- try{
-
-  const id=currentUser.uid+"_"+target;
-  const ref=doc(db,"follows",id);
-  const snap=await getDoc(ref);
-
-  if(snap.exists()){
-
-   await deleteDoc(ref);
-
-   if(button){
-    button.textContent="Follow";
-    button.classList.remove("following");
-   }
+   await initializeUserData();
 
   }else{
 
-   await setDoc(ref,{
-    follower:currentUser.uid,
-    following:target,
-    createdAt:serverTimestamp()
-   });
+   currentUser =
+    null;
 
-   if(button){
-    button.textContent="Following";
-    button.classList.add("following");
-   }
+
+   document.getElementById(
+    "bottomNav"
+   ).style.display =
+    "none";
+
+
+   document.querySelectorAll(
+    ".panel"
+   ).forEach(
+    x=>{
+     x.classList.remove(
+      "active"
+     );
+    }
+   );
+
+
+   document.getElementById(
+    "loginPanel"
+   ).classList.add(
+    "active"
+   );
+
   }
 
- }catch(error){
-
-  alert("Follow error:\n"+error.message);
- }
-};
+ });
 
 
-/* ================= FOLLOW LIST ================= */
+/* =====================================================
+   CREATE PROFILE
+===================================================== */
 
-window.openFollowList=function(type){
+async function createProfile(){
 
- if(!currentUser)return;
-
- const modal=document.getElementById("followListModal");
-
- document.getElementById("followListTitle").textContent=
-  type==="followers"?"👥 Followers":"➡️ Following";
-
- document.getElementById("followListContent").innerHTML=
-  `<div class="loading">Loading...</div>`;
-
- modal.classList.add("show");
-
- loadFollowList(type);
-};
+ if(!currentUser)
+  return;
 
 
-async function loadFollowList(type){
-
- const box=document.getElementById("followListContent");
-
- try{
-
-  const field=type==="followers"?"following":"follower";
-
-  const q=query(
-   collection(db,"follows"),
-   where(field,"==",currentUser.uid)
+ const ref =
+  doc(
+   db,
+   "profiles",
+   currentUser.uid
   );
 
-  const snap=await getDocs(q);
 
-  box.innerHTML="";
+ const snap =
+  await getDoc(ref);
 
-  if(snap.empty){
 
-   box.innerHTML=
-    `<div class="follow-list-empty">
-     ${
-      type==="followers"
-      ?"अभी कोई follower नहीं है।"
-      :"आपने अभी किसी को follow नहीं किया है।"
-     }
-    </div>`;
+ if(!snap.exists()){
 
-   return;
-  }
+  await setDoc(
+   ref,
+   {
 
-  for(const item of snap.docs){
+    uid:
+     currentUser.uid,
 
-   const d=item.data();
+    name:
+     currentUser.displayName ||
+     "User",
 
-   const uid=type==="followers"?d.follower:d.following;
+    username:
+     makeUsername(
+      currentUser.displayName ||
+      "user"
+     ),
 
-   const profile=await getDoc(doc(db,"profiles",uid));
+    photo:
+     currentUser.photoURL ||
+     "https://via.placeholder.com/150",
 
-   if(!profile.exists())continue;
+    followers:0,
 
-   const p=profile.data();
+    following:0,
 
-   const div=document.createElement("div");
+    videos:0,
 
-   div.className="list-user";
+    createdAt:
+     serverTimestamp()
 
-   div.innerHTML=`
-    <img src="${safe(p.photo||"https://via.placeholder.com/100")}">
-
-    <div class="list-user-info">
-     <strong>${safe(p.name||"User")}</strong>
-     <div class="small">@${safe(p.username||"user")}</div>
-    </div>
-
-    ${
-     uid!==currentUser.uid
-     ? `<button class="follow-btn" id="listFollow_${uid}">
-         Follow
-        </button>`
-     :""
-    }
-   `;
-
-   box.appendChild(div);
-
-   if(uid!==currentUser.uid){
-
-    const btn=document.getElementById("listFollow_"+uid);
-
-    checkFollow(uid,btn);
-
-    btn.onclick=()=>{
-     toggleFollow(uid,btn);
-    };
    }
-  }
+  );
 
- }catch(error){
-
-  box.innerHTML=
-   `<div class="follow-list-empty">
-    List load नहीं हो सकी।
-    <br><br>${safe(error.message)}
-   </div>`;
  }
+
 }
 
 
-/* ================= VIDEO PREVIEW ================= */
+/* =====================================================
+   USERNAME
+===================================================== */
 
-document.getElementById("videoFile").addEventListener("change",function(){
+function makeUsername(name){
 
- const file=this.files[0];
+ return name
+  .toLowerCase()
+  .replace(
+   /[^a-z0-9]/g,
+   ""
+  )
+  .slice(
+   0,
+   15
+  )
+  ||
+  "user";
 
- if(!file)return;
+}
 
- if(!file.type.startsWith("video/")){
 
-  alert("कृपया video file select करें।");
-  this.value="";
+/* =====================================================
+   LOAD PROFILE
+===================================================== */
+
+async function loadProfile(){
+
+ if(!currentUser)
   return;
+
+
+ const snap =
+  await getDoc(
+   doc(
+    db,
+    "profiles",
+    currentUser.uid
+   )
+  );
+
+
+ if(!snap.exists())
+  return;
+
+
+ const d =
+  snap.data();
+
+
+ document.getElementById(
+  "profileName"
+ ).textContent =
+  d.name ||
+  "User";
+
+
+ document.getElementById(
+  "profileUsername"
+ ).textContent =
+  "@"+
+  (
+   d.username ||
+   "user"
+  );
+
+
+ document.getElementById(
+  "profilePhoto"
+ ).src =
+  d.photo ||
+  currentUser.photoURL ||
+  "https://via.placeholder.com/150";
+
+
+ document.getElementById(
+  "followersCount"
+ ).textContent =
+  d.followers ||
+  0;
+
+
+ document.getElementById(
+  "followingCount"
+ ).textContent =
+  d.following ||
+  0;
+
+
+ document.getElementById(
+  "videosCount"
+ ).textContent =
+  d.videos ||
+  0;
+
+}
+
+
+/* =====================================================
+   PANEL
+===================================================== */
+
+window.openPanel =
+ function(id){
+
+  if(!currentUser)
+   return;
+
+
+  document.querySelectorAll(
+   ".panel"
+  ).forEach(
+   x=>{
+    x.classList.remove(
+     "active"
+    );
+   }
+  );
+
+
+  document.getElementById(
+   id
+  ).classList.add(
+   "active"
+  );
+
+
+  document.getElementById(
+   "searchBox"
+  ).style.display =
+   "none";
+
+ };
+
+
+window.openShorts =
+ async function(){
+
+  openPanel(
+   "shortsPanel"
+  );
+
+
+  await loadVideos(
+   "shortsVideos"
+  );
+
+ };
+
+
+/* =====================================================
+   SEARCH
+===================================================== */
+
+window.toggleSearch =
+ function(){
+
+  if(!currentUser)
+   return;
+
+
+  const box =
+   document.getElementById(
+    "searchBox"
+   );
+
+
+  box.style.display =
+   box.style.display ===
+   "block"
+   ?
+   "none"
+   :
+   "block";
+
+
+  if(
+   box.style.display ===
+   "block"
+  ){
+
+   document.getElementById(
+    "searchInput"
+   ).focus();
+
+  }
+
+ };
+
+
+window.searchUsers =
+ async function(){
+
+  const value =
+   document.getElementById(
+    "searchInput"
+   )
+   .value
+   .trim()
+   .toLowerCase();
+
+
+  const result =
+   document.getElementById(
+    "searchResults"
+   );
+
+
+  result.innerHTML = "";
+
+
+  if(value.length < 2)
+   return;
+
+
+  try{
+
+   const snap =
+    await getDocs(
+     collection(
+      db,
+      "profiles"
+     )
+    );
+
+
+   let found =
+    false;
+
+
+   snap.forEach(
+    item=>{
+
+     const d =
+      item.data();
+
+
+     const name =
+      (
+       d.name ||
+       ""
+      ).toLowerCase();
+
+
+     const username =
+      (
+       d.username ||
+       ""
+      ).toLowerCase();
+
+
+     if(
+      name.includes(value) ||
+      username.includes(value)
+     ){
+
+      found =
+       true;
+
+
+      const div =
+       document.createElement(
+        "div"
+       );
+
+
+      div.className =
+       "user-result";
+
+
+      div.innerHTML = `
+
+       <img
+        src="${safe(
+         d.photo ||
+         "https://via.placeholder.com/100"
+        )}">
+
+       <div class="user-info">
+
+        <strong>
+         ${safe(
+          d.name ||
+          "User"
+         )}
+        </strong>
+
+        <div class="small">
+         @${safe(
+          d.username ||
+          "user"
+         )}
+        </div>
+
+       </div>
+
+       ${
+        currentUser &&
+        item.id !==
+        currentUser.uid
+
+        ?
+
+        `<button
+          class="follow-btn"
+          id="search_${item.id}">
+          Follow
+         </button>`
+
+        :
+
+        ""
+       }
+
+      `;
+
+
+      result.appendChild(
+       div
+      );
+
+
+      if(
+       currentUser &&
+       item.id !==
+       currentUser.uid
+      ){
+
+       const btn =
+        document.getElementById(
+         "search_"+item.id
+        );
+
+
+       btn.onclick =
+        ()=>{
+         toggleFollow(
+          item.id,
+          btn
+         );
+        };
+
+
+       checkFollow(
+        item.id,
+        btn
+       );
+
+      }
+
+     }
+
+    }
+   );
+
+
+   if(!found){
+
+    result.innerHTML =
+     `<div class="empty">
+       User नहीं मिला।
+      </div>`;
+
+   }
+
+
+  }catch(error){
+
+   console.error(
+    error
+   );
+
+
+   result.innerHTML =
+    `<div class="empty">
+      Search error
+     </div>`;
+
+  }
+
+ };
+
+
+/* =====================================================
+   FOLLOW CHECK
+===================================================== */
+
+async function checkFollow(
+ target,
+ btn
+){
+
+ if(
+  !currentUser ||
+  !btn
+ )
+  return;
+
+
+ try{
+
+  const id =
+   currentUser.uid+
+   "_"+
+   target;
+
+
+  const snap =
+   await getDoc(
+    doc(
+     db,
+     "follows",
+     id
+    )
+   );
+
+
+  if(
+   snap.exists()
+  ){
+
+   btn.textContent =
+    "Following";
+
+   btn.classList.add(
+    "following"
+   );
+
+  }
+
+ }catch(e){
+
+  console.error(e);
+
  }
 
- const preview=document.getElementById("videoPreview");
-
- if(preview.dataset.objectUrl)
-  URL.revokeObjectURL(preview.dataset.objectUrl);
-
- const url=URL.createObjectURL(file);
-
- preview.dataset.objectUrl=url;
- preview.src=url;
- preview.style.display="block";
-});
+}
 
 
-/* ================= THUMBNAIL PREVIEW ================= */
+/* =====================================================
+   FOLLOW
+===================================================== */
 
-document.getElementById("thumbnailFile").addEventListener(
+window.toggleFollow =
+ async function(
+  target,
+  button
+ ){
+
+  if(
+   !currentUser ||
+   target ===
+   currentUser.uid
+  )
+   return;
+
+
+  try{
+
+   const id =
+    currentUser.uid+
+    "_"+
+    target;
+
+
+   const ref =
+    doc(
+     db,
+     "follows",
+     id
+    );
+
+
+   const snap =
+    await getDoc(ref);
+
+
+   if(
+    snap.exists()
+   ){
+
+    await deleteDoc(ref);
+
+
+    await updateDoc(
+     doc(
+      db,
+      "profiles",
+      target
+     ),
+     {
+      followers:
+       increment(-1)
+     }
+    );
+
+
+    await updateDoc(
+     doc(
+      db,
+      "profiles",
+      currentUser.uid
+     ),
+     {
+      following:
+       increment(-1)
+     }
+    );
+
+
+    button.textContent =
+     "Follow";
+
+
+    button.classList.remove(
+     "following"
+    );
+
+
+   }else{
+
+    await setDoc(
+     ref,
+     {
+
+      follower:
+       currentUser.uid,
+
+      following:
+       target,
+
+      createdAt:
+       serverTimestamp()
+
+     }
+    );
+
+
+    await updateDoc(
+     doc(
+      db,
+      "profiles",
+      target
+     ),
+     {
+      followers:
+       increment(1)
+     }
+    );
+
+
+    await updateDoc(
+     doc(
+      db,
+      "profiles",
+      currentUser.uid
+     ),
+     {
+      following:
+       increment(1)
+     }
+    );
+
+
+    button.textContent =
+     "Following";
+
+
+    button.classList.add(
+     "following"
+    );
+
+   }
+
+
+   await loadProfile();
+
+
+  }catch(error){
+
+   console.error(
+    error
+   );
+
+
+   alert(
+    "Follow error:\n"+
+    error.message
+   );
+
+  }
+
+ };
+
+
+/* =====================================================
+   VIDEO PREVIEW
+===================================================== */
+
+document.getElementById(
+ "videoFile"
+).addEventListener(
  "change",
  function(){
 
-  const file=this.files[0];
+  const file =
+   this.files[0];
 
-  if(!file)return;
 
-  if(!file.type.startsWith("image/")){
-
-   alert("कृपया image select करें।");
-   this.value="";
+  if(!file)
    return;
+
+
+  if(
+   !file.type.startsWith(
+    "video/"
+   )
+  ){
+
+   alert(
+    "कृपया video file select करें।"
+   );
+
+   this.value = "";
+
+   return;
+
   }
 
-  const preview=document.getElementById("thumbnailPreview");
 
-  preview.src=URL.createObjectURL(file);
-  preview.style.display="block";
- }
-);
+  const preview =
+   document.getElementById(
+    "videoPreview"
+   );
 
 
-/* ================= PUBLISH VIDEO ================= */
+  if(
+   preview.dataset.objectUrl
+  ){
 
-window.publishVideo=async function(){
+   URL.revokeObjectURL(
+    preview.dataset.objectUrl
+   );
 
- if(!currentUser){
-
-  alert("पहले Login करें।");
-  return;
- }
-
- const file=document.getElementById("videoFile").files[0];
-
- const thumbnailFile=
-  document.getElementById("thumbnailFile").files[0];
-
- const description=
-  document.getElementById("videoDescription")
-  .value.trim();
-
- if(!file){
-
-  alert("पहले video select करें।");
-  return;
- }
-
- if(!file.type.startsWith("video/")){
-
-  alert("कृपया valid video select करें।");
-  return;
- }
-
- const button=document.getElementById("publishVideoBtn");
- const status=document.getElementById("uploadStatus");
-
- try{
-
-  button.disabled=true;
-  status.style.display="block";
-
-  status.textContent="⏳ Video Cloudinary पर upload हो रही है...";
-
-  const videoURL=await uploadVideoToCloudinary(file);
-
-  let thumbnailURL="";
-
-  if(thumbnailFile){
-
-   status.textContent="⏳ Thumbnail upload हो रही है...";
-
-   thumbnailURL=
-    await uploadImageToCloudinary(thumbnailFile);
   }
 
-  status.textContent="⏳ ReelHub में video save हो रही है...";
 
-  const profile=await getDoc(
-   doc(db,"profiles",currentUser.uid)
-  );
+  const objectUrl =
+   URL.createObjectURL(
+    file
+   );
 
-  const p=profile.exists()?profile.data():{};
 
-  const videoRef=await addDoc(
-   collection(db,"videos"),
-   {
+  preview.dataset.objectUrl =
+   objectUrl;
 
-    videoURL:videoURL,
+  preview.src =
+   objectUrl;
 
-    thumbnailURL:thumbnailURL,
+  preview.style.display =
+   "block";
 
-    description:description,
+ });
 
-    userId:currentUser.uid,
 
-    userName:p.name||currentUser.displayName||"User",
+/* =====================================================
+   PUBLISH VIDEO
+===================================================== */
 
-    userPhoto:p.photo||
-     currentUser.photoURL||
-     "https://via.placeholder.com/100",
+window.publishVideo =
+ async function(){
 
-    likes:0,
+  if(!currentUser){
 
-    createdAt:serverTimestamp()
+   alert(
+    "पहले Login करें।"
+   );
+
+   return;
+
+  }
+
+
+  const file =
+   document.getElementById(
+    "videoFile"
+   ).files[0];
+
+
+  const directUrl =
+   document.getElementById(
+    "videoUrl"
+   ).value
+   .trim();
+
+
+  if(
+   !file &&
+   !directUrl
+  ){
+
+   alert(
+    "Video select करें या direct video URL डालें।"
+   );
+
+   return;
+
+  }
+
+
+  const button =
+   document.getElementById(
+    "publishVideoBtn"
+   );
+
+
+  const status =
+   document.getElementById(
+    "uploadStatus"
+   );
+
+
+  try{
+
+   button.disabled =
+    true;
+
+
+   status.style.display =
+    "block";
+
+
+   status.textContent =
+    file
+    ?
+    "⏳ Video Cloudinary पर upload हो रही है..."
+    :
+    "⏳ Video publish हो रही है...";
+
+
+   let finalVideoUrl =
+    directUrl;
+
+
+   /* ==========================================
+      PHONE VIDEO → CLOUDINARY
+   ========================================== */
+
+   if(file){
+
+    if(
+     !file.type.startsWith(
+      "video/"
+     )
+    ){
+
+     throw new Error(
+      "कृपया केवल video file select करें।"
+     );
+
+    }
+
+
+    finalVideoUrl =
+     await uploadVideoToCloudinary(
+      file
+     );
+
+
+    status.textContent =
+     "✅ Cloudinary upload complete. अब ReelHub में save हो रही है...";
+
    }
-  );
-
-  /* ===== HISTORY SAVE ===== */
-
-  await addDoc(
-   collection(db,"uploadHistory"),
-   {
-
-    userId:currentUser.uid,
-
-    videoId:videoRef.id,
-
-    description:description,
-
-    thumbnailURL:thumbnailURL,
-
-    createdAt:serverTimestamp(),
-
-    type:"video"
-   }
-  );
-
-  /* ===== NOTIFY FOLLOWERS ===== */
-
-  await notifyFollowers(
-   videoRef.id,
-   p.name||currentUser.displayName||"User"
-  );
-
-  /* ===== CLEAN FORM ===== */
-
-  document.getElementById("videoFile").value="";
-  document.getElementById("thumbnailFile").value="";
-  document.getElementById("videoDescription").value="";
-
-  const preview=document.getElementById("videoPreview");
-
-  preview.pause();
-  preview.removeAttribute("src");
-  preview.load();
-  preview.style.display="none";
-
-  if(preview.dataset.objectUrl){
-
-   URL.revokeObjectURL(preview.dataset.objectUrl);
-   delete preview.dataset.objectUrl;
-  }
-
-  document.getElementById("thumbnailPreview").src="";
-  document.getElementById("thumbnailPreview").style.display="none";
-
-  status.style.display="none";
-
-  openPanel("homePanel");
-
-  alert("✅ Video successfully publish हो गई!\n\n🔔 आपके followers को notification भेज दी गई है।");
-
- }catch(error){
-
-  console.error("Publish error:",error);
-
-  status.style.display="block";
-  status.textContent="❌ Upload failed";
-
-  alert(
-   "❌ Video upload failed:\n\n"+
-   error.message
-  );
-
- }finally{
-
-  button.disabled=false;
-  button.textContent="🚀 Publish Video";
- }
-};
 
 
-/* ================= FOLLOWERS NOTIFICATION ================= */
+   /* ==========================================
+      PROFILE
+   ========================================== */
 
-async function notifyFollowers(videoId,userName){
+   const profile =
+    await getDoc(
+     doc(
+      db,
+      "profiles",
+      currentUser.uid
+     )
+    );
 
- try{
 
-  const q=query(
-   collection(db,"follows"),
-   where("following","==",currentUser.uid)
-  );
+   const p =
+    profile.exists()
+    ?
+    profile.data()
+    :
+    {};
 
-  const snap=await getDocs(q);
 
-  for(const item of snap.docs){
-
-   const follow=item.data();
+   /* ==========================================
+      FIRESTORE
+   ========================================== */
 
    await addDoc(
-    collection(db,"notifications"),
+    collection(
+     db,
+     "videos"
+    ),
     {
 
-     recipientId:follow.follower,
+     videoURL:
+      finalVideoUrl,
 
-     senderId:currentUser.uid,
+     userId:
+      currentUser.uid,
 
-     type:"new_video",
+     userName:
+      p.name ||
+      currentUser.displayName ||
+      "User",
 
-     videoId:videoId,
+     userPhoto:
+      p.photo ||
+      currentUser.photoURL ||
+      "https://via.placeholder.com/100",
 
-     message:
-      userName+
-      " ने नया video upload किया है।",
+     likes:
+      0,
 
-     read:false,
+     createdAt:
+      serverTimestamp()
 
-     createdAt:serverTimestamp()
     }
    );
+
+
+   /* ==========================================
+      VIDEO COUNT
+   ========================================== */
+
+   await updateDoc(
+    doc(
+     db,
+     "profiles",
+     currentUser.uid
+    ),
+    {
+
+     videos:
+      increment(1)
+
+    }
+   );
+
+
+   /* ==========================================
+      CLEAR
+   ========================================== */
+
+   document.getElementById(
+    "videoUrl"
+   ).value = "";
+
+
+   document.getElementById(
+    "videoFile"
+   ).value = "";
+
+
+   const preview =
+    document.getElementById(
+     "videoPreview"
+    );
+
+
+   preview.pause();
+
+   preview.removeAttribute(
+    "src"
+   );
+
+   preview.load();
+
+   preview.style.display =
+    "none";
+
+
+   if(
+    preview.dataset.objectUrl
+   ){
+
+    URL.revokeObjectURL(
+     preview.dataset.objectUrl
+    );
+
+    delete preview.dataset.objectUrl;
+
+   }
+
+
+   /* ==========================================
+      REFRESH
+   ========================================== */
+
+   await loadProfile();
+
+   await loadVideos(
+    "homeVideos"
+   );
+
+
+   openPanel(
+    "homePanel"
+   );
+
+
+   status.style.display =
+    "none";
+
+
+   alert(
+    "✅ Video successfully publish हो गई!"
+   );
+
+
+  }catch(error){
+
+   console.error(
+    "Video publish error:",
+    error
+   );
+
+
+   status.style.display =
+    "block";
+
+
+   status.textContent =
+    "❌ Upload failed";
+
+
+   alert(
+    "❌ Video upload failed:\n\n"+
+    (
+     error.message ||
+     "Unknown error"
+    )
+   );
+
+
+  }finally{
+
+   button.disabled =
+    false;
+
+   button.textContent =
+    "🚀 Publish Video";
+
   }
+
+ };
+
+
+/* =====================================================
+   LOAD VIDEOS
+===================================================== */
+
+async function loadVideos(
+ containerId
+){
+
+ const box =
+  document.getElementById(
+   containerId
+  );
+
+
+ box.innerHTML =
+  `<div class="card loading">
+    ⏳ Loading...
+   </div>`;
+
+
+ try{
+
+  const q =
+   query(
+    collection(
+     db,
+     "videos"
+    ),
+    orderBy(
+     "createdAt",
+     "desc"
+    )
+   );
+
+
+  const snap =
+   await getDocs(q);
+
+
+  box.innerHTML =
+   "";
+
+
+  if(
+   snap.empty
+  ){
+
+   box.innerHTML =
+    `<div class="card empty">
+      अभी कोई video नहीं है।
+     </div>`;
+
+   return;
+
+  }
+
+
+  snap.forEach(
+   item=>{
+
+    box.appendChild(
+     createVideo(
+      item.id,
+      item.data()
+     )
+    );
+
+   }
+  );
+
 
  }catch(error){
 
   console.error(
-   "Notification error:",
    error
   );
+
+
+  box.innerHTML =
+   `<div class="card empty">
+
+     Video load नहीं हो पाया।
+
+     <br><br>
+
+     <small>
+      ${safe(
+       error.message
+      )}
+     </small>
+
+    </div>`;
+
  }
+
 }
 
 
-/* ================= VIDEO CARD ================= */
+/* =====================================================
+   VIDEO CARD
+===================================================== */
 
-function createVideo(id,d){
+function createVideo(
+ id,
+ d
+){
 
- const card=document.createElement("div");
+ const card =
+  document.createElement(
+   "div"
+  );
 
- card.className="card video-card";
 
- const photo=d.userPhoto||
+ card.className =
+  "card video-card";
+
+
+ const photo =
+  d.userPhoto ||
   "https://via.placeholder.com/100";
 
- const media=d.thumbnailURL
-  ? `<video
-      src="${safe(d.videoURL||"")}"
-      poster="${safe(d.thumbnailURL)}"
-      controls
-      playsinline
-      preload="metadata">
-     </video>`
-  : `<video
-      src="${safe(d.videoURL||"")}"
-      controls
-      playsinline
-      preload="metadata">
-     </video>`;
 
- card.innerHTML=`
+ card.innerHTML = `
 
   <div class="video-user">
 
-   <img src="${safe(photo)}">
+   <img
+    src="${safe(photo)}">
 
    <div class="video-user-info">
 
-    <strong>${safe(d.userName||"User")}</strong>
-
-    <div class="small">ReelHub</div>
-
-   </div>
-
-   ${
-    currentUser&&d.userId!==currentUser.uid
-    ? `<button
-        class="follow-btn"
-        id="videoFollow_${id}">
-        Follow
-       </button>`
-    : ""
-   }
-
-   ${
-    currentUser&&d.userId===currentUser.uid
-    ? `<button
-        class="video-menu"
-        onclick="openDeleteVideo('${id}')">
-        ⋮
-       </button>`
-    : ""
-   }
-
-  </div>
-
-  ${media}
-
-  ${
-   d.description
-   ? `<div class="video-description">
-       ${safe(d.description)}
-      </div>`
-   : ""
-  }
-
-  <div class="video-actions">
-
-   <button id="likeBtn_${id}"
-    onclick="likeVideo('${id}')">
-
-    ❤️ <span id="likeCount_${id}">${d.likes||0}</span>
-
-   </button>
-
-   <button onclick="focusComment('${id}')">
-    💬 Comment
-   </button>
-
-   <button onclick="shareVideo('${id}')">
-    📤 Share
-   </button>
-
-  </div>
-
-  <div class="comment-area">
-
-   <div class="comment-list" id="comments_${id}">
-    <div class="small">Comments loading...</div>
-   </div>
-
-   ${
-    currentUser
-    ? `<div class="comment-form">
-
-        <input
-         id="commentInput_${id}"
-         placeholder="Comment लिखें...">
-
-        <button onclick="sendComment('${id}')">
-         Send
-        </button>
-
-       </div>`
-    : ""
-   }
-
-  </div>
- `;
-
- if(currentUser&&d.userId!==currentUser.uid){
-
-  const btn=document.getElementById("videoFollow_"+id);
-
-  if(btn){
-
-   checkFollow(d.userId,btn);
-
-   btn.onclick=()=>{
-    toggleFollow(d.userId,btn);
-   };
-  }
- }
-
- startRealtimeLikes(id);
- startRealtimeComments(id);
-
- return card;
-}
-
-
-/* ================= LIKES REALTIME ================= */
-
-function startRealtimeLikes(videoId){
-
- if(likeUnsubscribers[videoId])
-  likeUnsubscribers[videoId]();
-
- likeUnsubscribers[videoId]=onSnapshot(
-  doc(db,"videos",videoId),
-  snap=>{
-
-   if(!snap.exists())return;
-
-   const count=snap.data().likes||0;
-
-   const el=document.getElementById("likeCount_"+videoId);
-
-   if(el)el.textContent=count;
-  }
- );
-
- if(currentUser){
-
-  if(likedUnsubscribers[videoId])
-   likedUnsubscribers[videoId]();
-
-  likedUnsubscribers[videoId]=onSnapshot(
-   doc(
-    db,
-    "videos",
-    videoId,
-    "likes",
-    currentUser.uid
-   ),
-   snap=>{
-
-    const btn=document.getElementById("likeBtn_"+videoId);
-
-    if(!btn)return;
-
-    btn.classList.toggle("like-active",snap.exists());
-   }
-  );
- }
-}
-
-
-/* ================= LIKE / UNLIKE ================= */
-
-window.likeVideo=async function(videoId){
-
- if(!currentUser){
-
-  alert("पहले Login करें।");
-  return;
- }
-
- try{
-
-  const videoRef=doc(db,"videos",videoId);
-
-  const likeRef=doc(
-   db,
-   "videos",
-   videoId,
-   "likes",
-   currentUser.uid
-  );
-
-  const snap=await getDoc(likeRef);
-
-  if(snap.exists()){
-
-   await deleteDoc(likeRef);
-
-   await updateDoc(videoRef,{
-    likes:increment(-1)
-   });
-
-  }else{
-
-   await setDoc(likeRef,{
-    userId:currentUser.uid,
-    createdAt:serverTimestamp()
-   });
-
-   await updateDoc(videoRef,{
-    likes:increment(1)
-   });
-  }
-
- }catch(error){
-
-  console.error(error);
-
-  alert(
-   "Like update नहीं हो सकी:\n"+
-   error.message
-  );
- }
-};
-
-
-/* ================= COMMENTS REALTIME ================= */
-
-function startRealtimeComments(videoId){
-
- if(commentUnsubscribers[videoId])
-  commentUnsubscribers[videoId]();
-
- const q=query(
-  collection(db,"videos",videoId,"comments"),
-  orderBy("createdAt","asc")
- );
-
- commentUnsubscribers[videoId]=onSnapshot(
-  q,
-  snapshot=>{
-
-   const box=document.getElementById("comments_"+videoId);
-
-   if(!box)return;
-
-   box.innerHTML="";
-
-   if(snapshot.empty){
-
-    box.innerHTML=
-     `<div class="small">अभी कोई comment नहीं है।</div>`;
-
-    return;
-   }
-
-   snapshot.forEach(item=>{
-
-    const c=item.data();
-
-    const div=document.createElement("div");
-
-    div.className="comment-item";
-
-    div.innerHTML=`
-
-     <img
-      class="comment-avatar"
-      src="${safe(c.userPhoto||"https://via.placeholder.com/50")}">
-
-     <div class="comment-content">
-
-      <div class="comment-name">
-       ${safe(c.userName||"User")}
-      </div>
-
-      <div class="comment-text">
-       ${safe(c.text||"")}
-      </div>
-
-     </div>
-    `;
-
-    box.appendChild(div);
-   });
-
-   box.scrollTop=box.scrollHeight;
-  }
- );
-}
-
-
-/* ================= COMMENT ================= */
-
-window.focusComment=function(videoId){
-
- const input=document.getElementById("commentInput_"+videoId);
-
- if(input){
-
-  input.focus();
-
-  input.scrollIntoView({
-   behavior:"smooth",
-   block:"center"
-  });
- }
-};
-
-
-window.sendComment=async function(videoId){
-
- if(!currentUser){
-
-  alert("पहले Login करें।");
-  return;
- }
-
- const input=document.getElementById("commentInput_"+videoId);
-
- if(!input)return;
-
- const text=input.value.trim();
-
- if(!text)return;
-
- try{
-
-  const profile=await getDoc(
-   doc(db,"profiles",currentUser.uid)
-  );
-
-  const p=profile.exists()?profile.data():{};
-
-  await addDoc(
-   collection(db,"videos",videoId,"comments"),
-   {
-
-    userId:currentUser.uid,
-
-    userName:p.name||
-     currentUser.displayName||
-     "User",
-
-    userPhoto:p.photo||
-     currentUser.photoURL||
-     "https://via.placeholder.com/50",
-
-    text:text,
-
-    createdAt:serverTimestamp()
-   }
-  );
-
-  input.value="";
-
- }catch(error){
-
-  alert(
-   "Comment save नहीं हुआ:\n"+
-   error.message
-  );
- }
-};
-
-
-window.commentVideo=function(videoId){
- focusComment(videoId);
-};
-
-
-/* ================= DELETE VIDEO ================= */
-
-window.openDeleteVideo=function(videoId){
-
- selectedDeleteVideoId=videoId;
-
- document.getElementById("deleteVideoModal")
-  .classList.add("show");
-};
-
-
-window.confirmDeleteVideo=async function(){
-
- if(!currentUser||!selectedDeleteVideoId)
-  return;
-
- const videoId=selectedDeleteVideoId;
-
- try{
-
-  const ref=doc(db,"videos",videoId);
-
-  const snap=await getDoc(ref);
-
-  if(!snap.exists()){
-
-   alert("Video नहीं मिली।");
-   closeModal("deleteVideoModal");
-   return;
-  }
-
-  const data=snap.data();
-
-  if(data.userId!==currentUser.uid){
-
-   alert("आप केवल अपनी video delete कर सकते हैं।");
-   closeModal("deleteVideoModal");
-   return;
-  }
-
-  await deleteDoc(ref);
-
-  /* History में video को deleted mark करें */
-
-  const historyQuery=query(
-   collection(db,"uploadHistory"),
-   where("videoId","==",videoId)
-  );
-
-  const historySnap=await getDocs(historyQuery);
-
-  for(const item of historySnap.docs){
-
-   if(item.data().userId===currentUser.uid){
-
-    await updateDoc(item.ref,{
-     deleted:true,
-     deletedAt:serverTimestamp()
-    });
-   }
-  }
-
-  closeModal("deleteVideoModal");
-
-  alert(
-   "🗑️ Video ReelHub से delete हो गई।"
-  );
-
-  selectedDeleteVideoId=null;
-
- }catch(error){
-
-  console.error(error);
-
-  alert(
-   "Video delete नहीं हो सकी:\n"+
-   error.message
-  );
- }
-};
-
-
-/* ================= SHARE VIDEO ================= */
-
-window.shareVideo=async function(id){
-
- const url=location.href+"?video="+id;
-
- try{
-
-  if(navigator.share){
-
-   await navigator.share({
-    title:"ReelHub",
-    text:"Watch this video",
-    url:url
-   });
-
-  }else{
-
-   await navigator.clipboard.writeText(url);
-
-   alert("📋 Link copied!");
-  }
-
- }catch(e){}
-};
-
-
-/* ================= EDIT PROFILE ================= */
-
-window.openEditProfile=async function(){
-
- const snap=await getDoc(
-  doc(db,"profiles",currentUser.uid)
- );
-
- if(snap.exists()){
-
-  const d=snap.data();
-
-  document.getElementById("editName").value=d.name||"";
-  document.getElementById("editUsername").value=d.username||"";
- }
-
- document.getElementById("editModal").classList.add("show");
-};
-
-
-window.saveProfile=async function(){
-
- const name=document.getElementById("editName").value.trim();
-
- const username=document.getElementById("editUsername")
-  .value.trim().toLowerCase()
-  .replace(/[^a-z0-9_]/g,"");
-
- if(!name){
-
-  alert("Name डालें");
-  return;
- }
-
- if(!username){
-
-  alert("Username डालें");
-  return;
- }
-
- try{
-
-  await updateDoc(
-   doc(db,"profiles",currentUser.uid),
-   {
-    name:name,
-    username:username
-   }
-  );
-
-  closeModal("editModal");
-
-  alert("✅ Profile successfully updated!");
-
- }catch(error){
-
-  alert(
-   "Profile update error:\n"+
-   error.message
-  );
- }
-};
-
-
-/* ================= PROFILE PHOTO ================= */
-
-window.choosePhoto=function(){
-
- document.getElementById("photoInput").click();
-};
-
-
-document.getElementById("photoInput").addEventListener(
- "change",
- function(){
-
-  const file=this.files[0];
-
-  if(!file)return;
-
-  document.getElementById("profilePhoto").src=
-   URL.createObjectURL(file);
-
-  alert(
-   "📸 Profile photo का local preview बदल गया है।\n\n"+
-   Permanent profile photo के लिए image upload backend चाहिए।"
-  );
- });
-
-
-/* ================= HISTORY ================= */
-
-window.openHistory=async function(){
-
- document.getElementById("historyModal")
-  .classList.add("show");
-
- const box=document.getElementById("historyContent");
-
- box.innerHTML=
-  `<div class="loading">History loading...</div>`;
-
- try{
-
-  const q=query(
-   collection(db,"uploadHistory"),
-   where("userId","==",currentUser.uid),
-   orderBy("createdAt","desc")
-  );
-
-  const snap=await getDocs(q);
-
-  box.innerHTML="";
-
-  if(snap.empty){
-
-   box.innerHTML=
-    `<div class="empty">
-      अभी कोई upload history नहीं है।
-     </div>`;
-
-   return;
-  }
-
-  snap.forEach(item=>{
-
-   const d=item.data();
-
-   const date=d.createdAt?.toDate
-    ? d.createdAt.toDate().toLocaleString("hi-IN")
-    : "Date unavailable";
-
-   const div=document.createElement("div");
-
-   div.className="history-item";
-
-   div.innerHTML=`
-
     <strong>
-     🎬 Video Upload
+     ${safe(
+      d.userName ||
+      "User"
+     )}
     </strong>
 
     <div class="small">
-     ${safe(date)}
-    </div>
-
-    ${
-     d.deleted
-     ? `<div class="small">
-          🗑️ यह video delete की जा चुकी है।
-         </div>`
-     : ""
-    }
-
-    ${
-     d.description
-     ? `<p style="margin-top:5px">
-         ${safe(d.description)}
-        </p>`
-     : ""
-    }
-
-   `;
-
-   box.appendChild(div);
-  });
-
- }catch(error){
-
-  box.innerHTML=
-   `<div class="empty">
-    History load नहीं हो सकी।
-    <br><br>${safe(error.message)}
-   </div>`;
- }
-};
-
-
-/* ================= DELETE HISTORY ================= */
-
-window.deleteHistory=async function(){
-
- if(!currentUser)return;
-
- const yes=confirm(
-  "क्या आप अपनी पूरी upload history delete करना चाहते हैं?\n\n"+
-  "इससे केवल History records delete होंगे। Videos delete नहीं होंगी।"
- );
-
- if(!yes)return;
-
- try{
-
-  const q=query(
-   collection(db,"uploadHistory"),
-   where("userId","==",currentUser.uid)
-  );
-
-  const snap=await getDocs(q);
-
-  for(const item of snap.docs){
-
-   await deleteDoc(item.ref);
-  }
-
-  alert("🗑️ Upload history delete हो गई।");
-
- }catch(error){
-
-  alert(
-   "History delete नहीं हो सकी:\n"+
-   error.message
-  );
- }
-};
-
-
-/* ================= NOTIFICATIONS REALTIME ================= */
-
-function startRealtimeNotifications(){
-
- if(notificationUnsubscribe)
-  notificationUnsubscribe();
-
- const q=query(
-  collection(db,"notifications"),
-  where("recipientId","==",currentUser.uid)
- );
-
- notificationUnsubscribe=onSnapshot(
-  q,
-  snapshot=>{
-
-   const notifications=snapshot.docs
-    .map(x=>({
-     id:x.id,
-     ...x.data()
-    }))
-    .sort((a,b)=>{
-
-     const aa=a.createdAt?.toMillis
-      ? a.createdAt.toMillis()
-      : 0;
-
-     const bb=b.createdAt?.toMillis
-      ? b.createdAt.toMillis()
-      : 0;
-
-     return bb-aa;
-    });
-
-   renderNotifications(notifications);
-  }
- );
-}
-
-
-function renderNotifications(list){
-
- const box=document.getElementById("notificationsBox");
-
- if(!list.length){
-
-  box.innerHTML=
-   `<div class="empty">
-    अभी कोई notification नहीं है।
-   </div>`;
-
-  return;
- }
-
- box.innerHTML="";
-
- list.forEach(n=>{
-
-  const div=document.createElement("div");
-
-  div.className="notification-item";
-
-  const date=n.createdAt?.toDate
-   ? n.createdAt.toDate().toLocaleString("hi-IN")
-   : "";
-
-  div.innerHTML=`
-
-   <div class="notification-icon">🔔</div>
-
-   <div>
-
-    <strong>${safe(n.message||"New notification")}</strong>
-
-    <div class="small">
-     ${safe(date)}
+     ReelHub
     </div>
 
    </div>
-  `;
 
-  box.appendChild(div);
- });
+
+   ${
+    currentUser &&
+    d.userId !==
+    currentUser.uid
+
+    ?
+
+    `<button
+      class="follow-btn"
+      id="videoFollow_${id}">
+      Follow
+     </button>`
+
+    :
+
+    ""
+   }
+
+  </div>
+
+
+  <video
+   src="${safe(
+    d.videoURL ||
+    ""
+   )}"
+   controls
+   playsinline
+   preload="metadata">
+  </video>
+
+
+  <div class="video-actions">
+
+   <button
+    onclick="likeVideo('${id}')">
+
+    ❤️ ${d.likes || 0}
+
+   </button>
+
+
+   <button
+    onclick="commentVideo('${id}')">
+
+    💬 Comment
+
+   </button>
+
+
+   <button
+    onclick="shareVideo('${id}')">
+
+    📤 Share
+
+   </button>
+
+  </div>
+
+ `;
+
+
+ if(
+  currentUser &&
+  d.userId !==
+  currentUser.uid
+ ){
+
+  const btn =
+   document.getElementById(
+    "videoFollow_"+id
+   );
+
+
+  if(btn){
+
+   btn.onclick =
+    ()=>{
+     toggleFollow(
+      d.userId,
+      btn
+     );
+    };
+
+
+   checkFollow(
+    d.userId,
+    btn
+   );
+
+  }
+
+ }
+
+
+ return card;
+
 }
 
 
-function loadNotifications(){
+/* =====================================================
+   LIKE
+===================================================== */
 
- /* Real-time listener already active */
-}
+window.likeVideo =
+ async function(id){
+
+  try{
+
+   await updateDoc(
+    doc(
+     db,
+     "videos",
+     id
+    ),
+    {
+     likes:
+      increment(1)
+    }
+   );
 
 
-/* ================= STORIES ================= */
-
-window.chooseStory=function(){
- document.getElementById("storyInput").click();
-};
+   await loadVideos(
+    "homeVideos"
+   );
 
 
-document.getElementById("storyInput").addEventListener(
+  }catch(error){
+
+   console.error(
+    error
+   );
+
+  }
+
+ };
+
+
+/* =====================================================
+   COMMENT
+===================================================== */
+
+window.commentVideo =
+ async function(id){
+
+  if(!currentUser){
+
+   alert(
+    "पहले Login करें।"
+   );
+
+   return;
+
+  }
+
+
+  const text =
+   prompt(
+    "Comment लिखें:"
+   );
+
+
+  if(!text)
+   return;
+
+
+  try{
+
+   await addDoc(
+    collection(
+     db,
+     "videos",
+     id,
+     "comments"
+    ),
+    {
+
+     userId:
+      currentUser.uid,
+
+     userName:
+      currentUser.displayName ||
+      "User",
+
+     text:
+      text,
+
+     createdAt:
+      serverTimestamp()
+
+    }
+   );
+
+
+   alert(
+    "💬 Comment added!"
+   );
+
+
+  }catch(error){
+
+   alert(
+    "Comment save नहीं हुआ:\n"+
+    error.message
+   );
+
+  }
+
+ };
+
+
+/* =====================================================
+   SHARE VIDEO
+===================================================== */
+
+window.shareVideo =
+ async function(id){
+
+  const url =
+   location.href+
+   "?video="+
+   id;
+
+
+  try{
+
+   if(
+    navigator.share
+   ){
+
+    await navigator.share({
+
+     title:
+      "ReelHub",
+
+     text:
+      "Watch this video",
+
+     url:
+      url
+
+    });
+
+   }else{
+
+    await navigator.clipboard.writeText(
+     url
+    );
+
+    alert(
+     "📋 Link copied!"
+    );
+
+   }
+
+  }catch(e){}
+
+ };
+
+
+/* =====================================================
+   EDIT PROFILE
+===================================================== */
+
+window.openEditProfile =
+ async function(){
+
+  if(!currentUser)
+   return;
+
+
+  const snap =
+   await getDoc(
+    doc(
+     db,
+     "profiles",
+     currentUser.uid
+    )
+   );
+
+
+  if(
+   snap.exists()
+  ){
+
+   const d =
+    snap.data();
+
+
+   document.getElementById(
+    "editName"
+   ).value =
+    d.name ||
+    "";
+
+
+   document.getElementById(
+    "editUsername"
+   ).value =
+    d.username ||
+    "";
+
+  }
+
+
+  document.getElementById(
+   "editModal"
+  ).classList.add(
+   "show"
+  );
+
+ };
+
+
+window.saveProfile =
+ async function(){
+
+  const name =
+   document.getElementById(
+    "editName"
+   ).value.trim();
+
+
+  const username =
+   document.getElementById(
+    "editUsername"
+   ).value
+   .trim()
+   .toLowerCase()
+   .replace(
+    /[^a-z0-9_]/g,
+    ""
+   );
+
+
+  if(!name){
+
+   alert(
+    "Name डालें"
+   );
+
+   return;
+
+  }
+
+
+  if(!username){
+
+   alert(
+    "Username डालें"
+   );
+
+   return;
+
+  }
+
+
+  try{
+
+   await updateDoc(
+    doc(
+     db,
+     "profiles",
+     currentUser.uid
+    ),
+    {
+
+     name:
+      name,
+
+     username:
+      username
+
+    }
+   );
+
+
+   await loadProfile();
+
+
+   closeModal(
+    "editModal"
+   );
+
+
+   alert(
+    "✅ Profile successfully updated!"
+   );
+
+
+  }catch(error){
+
+   console.error(
+    error
+   );
+
+
+   alert(
+    "Profile update error:\n"+
+    error.message
+   );
+
+  }
+
+ };
+
+
+/* =====================================================
+   PHOTO
+===================================================== */
+
+window.choosePhoto =
+ function(){
+
+  document.getElementById(
+   "photoInput"
+  ).click();
+
+ };
+
+
+document.getElementById(
+ "photoInput"
+).addEventListener(
  "change",
  function(){
 
-  const file=this.files[0];
+  const file =
+   this.files[0];
 
-  if(!file)return;
 
-  const story={
+  if(!file)
+   return;
 
-   id:Date.now(),
 
-   url:URL.createObjectURL(file),
+  document.getElementById(
+   "profilePhoto"
+  ).src =
+   URL.createObjectURL(
+    file
+   );
 
-   type:file.type.startsWith("video/")
-    ?"video"
-    :"image",
 
-   caption:"",
+  alert(
+   "📸 Photo का local preview बदल गया है।\n\n"+
+   "Permanent online photo के लिए Storage चाहिए।"
+  );
 
-   createdAt:Date.now()
+ });
+
+
+/* =====================================================
+   STORIES
+===================================================== */
+
+window.chooseStory =
+ function(){
+
+  document.getElementById(
+   "storyInput"
+  ).click();
+
+ };
+
+
+document.getElementById(
+ "storyInput"
+).addEventListener(
+ "change",
+ function(){
+
+  const file =
+   this.files[0];
+
+
+  if(!file)
+   return;
+
+
+  const story = {
+
+   id:
+    Date.now(),
+
+   url:
+    URL.createObjectURL(
+     file
+    ),
+
+   type:
+    file.type.startsWith(
+     "video/"
+    )
+    ?
+    "video"
+    :
+    "image",
+
+   caption:
+    "",
+
+   createdAt:
+    Date.now()
+
   };
 
-  localStories.push(story);
+
+  localStories.push(
+   story
+  );
+
 
   renderStories();
 
-  this.value="";
+
+  this.value =
+   "";
+
  });
 
 
 function loadLocalStories(){
+
  renderStories();
-}
+
+ }
 
 
 function renderStories(){
 
- const row=document.getElementById("storyRow");
+ const row =
+  document.getElementById(
+   "storyRow"
+  );
 
- row.innerHTML=`
-  <div class="story" onclick="chooseStory()">
 
-   <div class="add-story">+</div>
+ row.innerHTML = `
 
-   <div>Add Story</div>
+  <div
+   class="story"
+   onclick="chooseStory()">
 
-  </div>
- `;
-
- localStories=localStories.filter(
-  s=>Date.now()-s.createdAt<24*60*60*1000
- );
-
- localStories.forEach(story=>{
-
-  const div=document.createElement("div");
-
-  div.className="story";
-
-  const media=story.type==="video"
-
-   ? `<video
-       src="${safe(story.url)}"
-       class="story-circle"
-       muted>
-      </video>`
-
-   : `<img
-       src="${safe(story.url)}"
-       class="story-circle">`;
-
-  div.innerHTML=`
-
-   ${media}
-
-   <div>
-    ${safe(story.caption||"Your Story")}
+   <div class="add-story">
+    +
    </div>
 
-   <button
-    class="story-menu"
-    onclick="
-     event.stopPropagation();
-     storyMenu(${story.id})
-    ">
-    ⋮
-   </button>
-  `;
+   <div>
+    Add Story
+   </div>
 
-  div.onclick=()=>{
-   openStory(story);
-  };
+  </div>
 
-  row.appendChild(div);
- });
-}
+ `;
 
 
-/* ================= STORY VIEW ================= */
+ localStories =
+  localStories.filter(
+   s =>
+    Date.now() -
+    s.createdAt <
+    24*60*60*1000
+  );
 
-window.openStory=function(story){
 
- const viewer=document.getElementById("storyViewer");
+ localStories.forEach(
+  story=>{
 
- document.getElementById("storyViewName").textContent=
-  story.caption||"Your Story";
+   const div =
+    document.createElement(
+     "div"
+    );
 
- if(story.type==="video"){
 
-  viewer.innerHTML=`
-   <video
-    src="${safe(story.url)}"
-    controls
-    autoplay
-    playsinline>
-   </video>
-  `;
+   div.className =
+    "story";
 
- }else{
 
-  viewer.innerHTML=`
-   <img src="${safe(story.url)}">
-  `;
+   const media =
+    story.type ===
+    "video"
+
+    ?
+
+    `<video
+      src="${safe(
+       story.url
+      )}"
+      class="story-circle"
+      muted>
+     </video>`
+
+    :
+
+    `<img
+      src="${safe(
+       story.url
+      )}"
+      class="story-circle">`;
+
+
+   div.innerHTML = `
+
+    ${media}
+
+    <div>
+     ${safe(
+      story.caption ||
+      "Your Story"
+     )}
+    </div>
+
+    <button
+     class="story-menu"
+     onclick="
+      event.stopPropagation();
+      storyMenu(${story.id})
+     ">
+
+     ⋮
+
+    </button>
+
+   `;
+
+
+   div.onclick =
+    ()=>{
+     openStory(
+      story
+     );
+    };
+
+
+   row.appendChild(
+    div
+   );
+
+  }
+ );
+
  }
 
- document.getElementById("storyViewModal")
-  .classList.add("show");
-};
+
+/* =====================================================
+   STORY VIEW
+===================================================== */
+
+window.openStory =
+ function(story){
+
+  const viewer =
+   document.getElementById(
+    "storyViewer"
+   );
 
 
-/* ================= STORY MENU ================= */
-
-window.storyMenu=function(id){
-
- const choice=prompt(
-  "Story option:\n\n"+
-  "1 = Edit Story\n"+
-  "2 = Delete Story"
- );
-
- if(choice==="1")editStory(id);
-
- if(choice==="2")deleteStory(id);
-};
+  document.getElementById(
+   "storyViewName"
+  ).textContent =
+   story.caption ||
+   "Your Story";
 
 
-window.editStory=function(id){
+  if(
+   story.type ===
+   "video"
+  ){
 
- selectedStoryId=id;
+   viewer.innerHTML = `
 
- const story=localStories.find(s=>s.id===id);
+    <video
+     src="${safe(
+      story.url
+     )}"
+     controls
+     autoplay
+     playsinline>
+    </video>
 
- if(!story)return;
-
- document.getElementById("storyCaption").value=
-  story.caption||"";
-
- document.getElementById("storyEditModal")
-  .classList.add("show");
-};
-
-
-window.saveStoryEdit=function(){
-
- const story=localStories.find(
-  s=>s.id===selectedStoryId
- );
-
- if(!story)return;
-
- story.caption=
-  document.getElementById("storyCaption")
-  .value.trim();
-
- closeModal("storyEditModal");
-
- renderStories();
-};
-
-
-window.deleteStory=function(id){
-
- if(!confirm("क्या आप इस Story को delete करना चाहते हैं?"))
-  return;
-
- localStories=localStories.filter(s=>s.id!==id);
-
- renderStories();
-
- alert("🗑️ Story deleted!");
-};
-
-
-/* ================= SHARE PROFILE ================= */
-
-window.shareProfile=async function(){
-
- if(!currentUser)return;
-
- const url=location.href+"?user="+currentUser.uid;
-
- try{
-
-  if(navigator.share){
-
-   await navigator.share({
-    title:"ReelHub Profile",
-    text:"Check my ReelHub profile",
-    url:url
-   });
+   `;
 
   }else{
 
-   await navigator.clipboard.writeText(url);
+   viewer.innerHTML = `
 
-   alert("📋 Profile link copied!");
+    <img
+     src="${safe(
+      story.url
+     )}">
+
+   `;
+
   }
 
- }catch(e){}
-};
+
+  document.getElementById(
+   "storyViewModal"
+  ).classList.add(
+   "show"
+  );
+
+ };
 
 
-/* ================= DARK MODE ================= */
+/* =====================================================
+   STORY MENU
+===================================================== */
 
-window.darkMode=function(){
+window.storyMenu =
+ function(id){
 
- document.body.classList.toggle("dark");
-
- localStorage.setItem(
-  "dark",
-  document.body.classList.contains("dark")?"1":"0"
- );
-};
-
-
-if(localStorage.getItem("dark")==="1")
- document.body.classList.add("dark");
+  const choice =
+   prompt(
+    "Story option:\n\n"+
+    "1 = Edit Story\n"+
+    "2 = Delete Story"
+   );
 
 
-/* ================= CLOSE MODAL ================= */
-
-window.closeModal=function(id){
-
- document.getElementById(id)
-  .classList.remove("show");
-};
+  if(
+   choice ===
+   "1"
+  )
+   editStory(id);
 
 
-/* ================= LOGOUT ================= */
+  if(
+   choice ===
+   "2"
+  )
+   deleteStory(id);
 
-window.logout=async function(){
+ };
 
- try{
 
-  stopRealtimeListeners();
+window.editStory =
+ function(id){
 
-  await signOut(auth);
+  selectedStoryId =
+   id;
 
- }catch(error){
+
+  const story =
+   localStories.find(
+    s =>
+     s.id === id
+   );
+
+
+  if(!story)
+   return;
+
+
+  document.getElementById(
+   "storyCaption"
+  ).value =
+   story.caption ||
+   "";
+
+
+  document.getElementById(
+   "storyEditModal"
+  ).classList.add(
+   "show"
+  );
+
+ };
+
+
+window.saveStoryEdit =
+ function(){
+
+  const story =
+   localStories.find(
+    s =>
+     s.id ===
+     selectedStoryId
+   );
+
+
+  if(!story)
+   return;
+
+
+  story.caption =
+   document.getElementById(
+    "storyCaption"
+   ).value.trim();
+
+
+  closeModal(
+   "storyEditModal"
+  );
+
+
+  renderStories();
+
+ };
+
+
+window.deleteStory =
+ function(id){
+
+  if(
+   !confirm(
+    "क्या आप इस Story को delete करना चाहते हैं?"
+   )
+  )
+   return;
+
+
+  localStories =
+   localStories.filter(
+    s =>
+     s.id !== id
+   );
+
+
+  renderStories();
+
 
   alert(
-   "Logout error:\n"+
-   error.message
+   "🗑️ Story deleted!"
   );
- }
-};
+
+ };
 
 
-/* ================= SAFE ================= */
+/* =====================================================
+   SHARE PROFILE
+===================================================== */
+
+window.shareProfile =
+ async function(){
+
+  if(!currentUser)
+   return;
+
+
+  const url =
+   location.href+
+   "?user="+
+   currentUser.uid;
+
+
+  try{
+
+   if(
+    navigator.share
+   ){
+
+    await navigator.share({
+
+     title:
+      "ReelHub Profile",
+
+     text:
+      "Check my ReelHub profile",
+
+     url:
+      url
+
+    });
+
+   }else{
+
+    await navigator.clipboard.writeText(
+     url
+    );
+
+    alert(
+     "📋 Profile link copied!"
+    );
+
+   }
+
+  }catch(e){}
+
+ };
+
+
+/* =====================================================
+   DARK MODE
+===================================================== */
+
+window.darkMode =
+ function(){
+
+  document.body.classList.toggle(
+   "dark"
+  );
+
+
+  localStorage.setItem(
+
+   "dark",
+
+   document.body.classList.contains(
+    "dark"
+   )
+   ?
+   "1"
+   :
+   "0"
+
+  );
+
+ };
+
+
+if(
+ localStorage.getItem(
+  "dark"
+ ) === "1"
+){
+
+ document.body.classList.add(
+  "dark"
+ );
+
+}
+
+
+/* =====================================================
+   CLOSE MODAL
+===================================================== */
+
+window.closeModal =
+ function(id){
+
+  document.getElementById(
+   id
+  ).classList.remove(
+   "show"
+  );
+
+ };
+
+
+/* =====================================================
+   LOGOUT
+===================================================== */
+
+window.logout =
+ async function(){
+
+  try{
+
+   await signOut(
+    auth
+   );
+
+  }catch(error){
+
+   alert(
+    "Logout error:\n"+
+    error.message
+   );
+
+  }
+
+ };
+
+
+/* =====================================================
+   SAFE HTML
+===================================================== */
 
 function safe(value){
 
- return String(value)
-  .replaceAll("&","&amp;")
-  .replaceAll("<","&lt;")
-  .replaceAll(">","&gt;")
-  .replaceAll('"',"&quot;")
-  .replaceAll("'","&#039;");
+ return String(
+  value
+ )
+ .replaceAll(
+  "&",
+  "&amp;"
+ )
+ .replaceAll(
+  "<",
+  "&lt;"
+ )
+ .replaceAll(
+  ">",
+  "&gt;"
+ )
+ .replaceAll(
+  '"',
+  "&quot;"
+ )
+ .replaceAll(
+  "'",
+  "&#039;"
+ );
+
 }
 
-</script></body>
+</script>
+
+</body>
 </html>
