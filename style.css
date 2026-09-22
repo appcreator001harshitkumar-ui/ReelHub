@@ -1,6 +1,6 @@
 /* ============================================================
-   ReelHub - style.css
-   Complete styling for all components
+   ReelHub - style.css (Fixed Version)
+   Profile Layout + Chat Input + Messages Fix
 ============================================================ */
 
 * {
@@ -38,27 +38,13 @@ body {
   overscroll-behavior-y: none;
 }
 
-button, input, textarea, select {
-  font: inherit;
-}
-
-button {
-  border: 0;
-  cursor: pointer;
-  background: none;
-  color: inherit;
-}
-
-input, textarea {
-  outline: none;
-}
-
-.hidden {
-  display: none !important;
-}
+button, input, textarea, select { font: inherit; }
+button { border: 0; cursor: pointer; background: none; color: inherit; }
+input, textarea { outline: none; }
+.hidden { display: none !important; }
 
 /* ============================================================
-   LOGIN PAGE
+   LOGIN
 ============================================================ */
 
 #loginPage {
@@ -90,11 +76,7 @@ input, textarea {
   margin-bottom: 8px;
 }
 
-.login-card p {
-  color: #666;
-  margin-bottom: 25px;
-  font-size: 14px;
-}
+.login-card p { color: #666; margin-bottom: 25px; font-size: 14px; }
 
 .google-btn {
   width: 100%;
@@ -117,10 +99,6 @@ input, textarea {
   margin: 0 auto;
   background: var(--card);
 }
-
-/* ============================================================
-   TOP BAR
-============================================================ */
 
 .topbar {
   position: sticky;
@@ -152,10 +130,7 @@ input, textarea {
   font-size: 22px;
 }
 
-.topbar-actions button {
-  padding: 5px;
-  position: relative;
-}
+.topbar-actions button { padding: 5px; position: relative; }
 
 .topbar-actions .badge {
   position: absolute;
@@ -213,19 +188,9 @@ input, textarea {
   height: 26px;
 }
 
-.nav-btn .nav-label {
-  font-size: 9.5px;
-  font-weight: 500;
-}
-
-.nav-btn.active {
-  color: var(--text);
-  font-weight: bold;
-}
-
-.nav-btn:not(.active) {
-  color: var(--muted);
-}
+.nav-btn .nav-label { font-size: 9.5px; font-weight: 500; }
+.nav-btn.active { color: var(--text); font-weight: bold; }
+.nav-btn:not(.active) { color: var(--muted); }
 
 .nav-btn .avatar-mini {
   width: 26px;
@@ -234,14 +199,8 @@ input, textarea {
   object-fit: cover;
 }
 
-.nav-btn.active .avatar-mini {
-  border: 2px solid var(--text);
-}
-
-.nav-btn .plus-icon {
-  font-size: 26px;
-  font-weight: 300;
-}
+.nav-btn.active .avatar-mini { border: 2px solid var(--text); }
+.nav-btn .plus-icon { font-size: 26px; font-weight: 300; }
 
 .nav-btn .nav-badge {
   position: absolute;
@@ -257,20 +216,11 @@ input, textarea {
   text-align: center;
 }
 
-/* ============================================================
-   PANELS
-============================================================ */
-
-.panel {
-  padding-bottom: 60px;
-}
-
-.panel.hidden {
-  display: none;
-}
+.panel { padding-bottom: 60px; }
+.panel.hidden { display: none; }
 
 /* ============================================================
-   INSTAGRAM FEED
+   FEED
 ============================================================ */
 
 .ig-post {
@@ -295,11 +245,7 @@ input, textarea {
   cursor: pointer;
 }
 
-.ig-post-user {
-  flex: 1;
-  cursor: pointer;
-  min-width: 0;
-}
+.ig-post-user { flex: 1; cursor: pointer; min-width: 0; }
 
 .ig-post-user strong {
   font-size: 13.5px;
@@ -319,16 +265,8 @@ input, textarea {
   white-space: nowrap;
 }
 
-.ig-post-head .more-btn {
-  font-size: 20px;
-  color: var(--text);
-  padding: 5px;
-}
-
-.ig-media {
-  background: #000;
-  width: 100%;
-}
+.ig-post-head .more-btn { font-size: 20px; color: var(--text); padding: 5px; }
+.ig-media { background: #000; width: 100%; }
 
 .ig-media video {
   width: 100%;
@@ -355,23 +293,10 @@ input, textarea {
   align-items: center;
 }
 
-.ig-action-btn.liked {
-  color: #ed4956;
-}
-
-.ig-action-btn .icon {
-  font-size: 24px;
-}
-
-.ig-actions .spacer {
-  flex: 1;
-}
-
-.ig-likes {
-  padding: 0 12px 5px;
-  font-size: 13.5px;
-  font-weight: 600;
-}
+.ig-action-btn.liked { color: #ed4956; }
+.ig-action-btn .icon { font-size: 24px; }
+.ig-actions .spacer { flex: 1; }
+.ig-likes { padding: 0 12px 5px; font-size: 13.5px; font-weight: 600; }
 
 .ig-caption {
   padding: 0 12px 6px;
@@ -380,10 +305,7 @@ input, textarea {
   word-wrap: break-word;
 }
 
-.ig-caption strong {
-  font-weight: 600;
-  margin-right: 6px;
-}
+.ig-caption strong { font-weight: 600; margin-right: 6px; }
 
 .ig-time {
   padding: 0 12px 12px;
@@ -392,16 +314,21 @@ input, textarea {
   text-transform: uppercase;
 }
 
+.ig-views {
+  padding: 0 12px 5px;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
 /* ============================================================
-   SHORTS (REELS)
+   SHORTS
 ============================================================ */
 
-#shortsPanel {
-  padding: 0;
-  margin: 0;
-  background: #000;
-  position: relative;
-}
+#shortsPanel { padding: 0; margin: 0; background: #000; position: relative; }
 
 .reels-container {
   height: calc(100vh - 56px);
@@ -411,9 +338,7 @@ input, textarea {
   -webkit-overflow-scrolling: touch;
 }
 
-.reels-container::-webkit-scrollbar {
-  display: none;
-}
+.reels-container::-webkit-scrollbar { display: none; }
 
 .reel-item {
   height: calc(100vh - 56px);
@@ -444,11 +369,7 @@ input, textarea {
   background: linear-gradient(transparent 60%, rgba(0,0,0,0.7));
 }
 
-.reel-info {
-  color: white;
-  pointer-events: auto;
-  max-width: 75%;
-}
+.reel-info { color: white; pointer-events: auto; max-width: 75%; }
 
 .reel-user {
   display: flex;
@@ -467,10 +388,7 @@ input, textarea {
   cursor: pointer;
 }
 
-.reel-user strong {
-  font-size: 14px;
-  color: white;
-}
+.reel-user strong { font-size: 14px; color: white; }
 
 .reel-user .follow-btn-sm {
   font-size: 12px;
@@ -480,10 +398,6 @@ input, textarea {
   border-radius: 6px;
   margin-left: 8px;
   background: rgba(255,255,255,0.15);
-}
-
-.reel-user .follow-btn-sm:active {
-  background: rgba(255,255,255,0.35);
 }
 
 .reel-title {
@@ -527,9 +441,7 @@ input, textarea {
   filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6));
 }
 
-.reel-action.liked .icon {
-  color: #ed4956;
-}
+.reel-action.liked .icon { color: #ed4956; }
 
 .reel-action small {
   font-size: 11px;
@@ -548,27 +460,26 @@ input, textarea {
   background: var(--card);
 }
 
+.reel-views {
+  font-size: 10px;
+  color: rgba(255,255,255,0.75);
+  margin-top: 2px;
+  text-align: center;
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.5);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
 /* ============================================================
-   UPLOAD (YOUTUBE STYLE)
+   UPLOAD
 ============================================================ */
 
-.upload-wrap {
-  padding: 16px;
-  max-width: 640px;
-  margin: 0 auto;
-}
-
-.upload-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.upload-header h2 {
-  font-size: 20px;
-  font-weight: 600;
-}
+.upload-wrap { padding: 16px; max-width: 640px; margin: 0 auto; }
+.upload-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+.upload-header h2 { font-size: 20px; font-weight: 600; }
 
 .yt-card {
   background: var(--card);
@@ -597,27 +508,10 @@ input, textarea {
   background: var(--bg);
 }
 
-.yt-dropzone:hover {
-  border-color: var(--primary);
-  background: rgba(124,58,237,0.03);
-}
-
-.yt-dropzone .icon {
-  font-size: 48px;
-  margin-bottom: 10px;
-  display: block;
-}
-
-.yt-dropzone .main-text {
-  font-size: 15px;
-  font-weight: 500;
-  margin-bottom: 4px;
-}
-
-.yt-dropzone .sub-text {
-  font-size: 12px;
-  color: var(--muted);
-}
+.yt-dropzone:hover { border-color: var(--primary); background: rgba(124,58,237,0.03); }
+.yt-dropzone .icon { font-size: 48px; margin-bottom: 10px; display: block; }
+.yt-dropzone .main-text { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+.yt-dropzone .sub-text { font-size: 12px; color: var(--muted); }
 
 .yt-preview {
   width: 100%;
@@ -638,9 +532,7 @@ input, textarea {
   transition: border .2s;
 }
 
-.yt-input:focus {
-  border-color: var(--primary);
-}
+.yt-input:focus { border-color: var(--primary); }
 
 .yt-textarea {
   width: 100%;
@@ -654,9 +546,7 @@ input, textarea {
   font-size: 14px;
 }
 
-.yt-textarea:focus {
-  border-color: var(--primary);
-}
+.yt-textarea:focus { border-color: var(--primary); }
 
 .yt-label {
   font-size: 13px;
@@ -666,11 +556,7 @@ input, textarea {
   display: block;
 }
 
-.yt-radio-group {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+.yt-radio-group { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .yt-radio {
   flex: 1;
@@ -684,27 +570,10 @@ input, textarea {
   background: var(--card);
 }
 
-.yt-radio.selected {
-  border-color: var(--primary);
-  background: rgba(124,58,237,0.05);
-}
-
-.yt-radio .r-icon {
-  font-size: 22px;
-  display: block;
-  margin-bottom: 4px;
-}
-
-.yt-radio .r-title {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.yt-radio .r-sub {
-  font-size: 11px;
-  color: var(--muted);
-  margin-top: 2px;
-}
+.yt-radio.selected { border-color: var(--primary); background: rgba(124,58,237,0.05); }
+.yt-radio .r-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+.yt-radio .r-title { font-size: 13px; font-weight: 600; }
+.yt-radio .r-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
 .yt-progress {
   height: 6px;
@@ -715,9 +584,7 @@ input, textarea {
   display: none;
 }
 
-.yt-progress.active {
-  display: block;
-}
+.yt-progress.active { display: block; }
 
 .yt-progress-bar {
   height: 100%;
@@ -737,21 +604,21 @@ input, textarea {
   margin-top: 14px;
 }
 
-.yt-publish-btn:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
+.yt-publish-btn:disabled { opacity: .5; cursor: not-allowed; }
 
 /* ============================================================
-   MESSAGES (INSTAGRAM DM) - FIXED
+   MESSAGES - FIXED CHAT LAYOUT
 ============================================================ */
 
 #messagesPanel {
   padding: 0;
   margin: 0;
   height: calc(100vh - 56px);
+  height: calc(100dvh - 56px);
   overflow: hidden;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 #messagesPanel .dm-container {
@@ -776,9 +643,7 @@ input, textarea {
   z-index: 2;
 }
 
-#dmInboxView.hidden {
-  display: none !important;
-}
+#dmInboxView.hidden { display: none !important; }
 
 #dmChatView {
   position: absolute;
@@ -790,9 +655,7 @@ input, textarea {
   z-index: 3;
 }
 
-#dmChatView.hidden {
-  display: none !important;
-}
+#dmChatView.hidden { display: none !important; }
 
 .dm-header {
   display: flex;
@@ -804,16 +667,8 @@ input, textarea {
   flex-shrink: 0;
 }
 
-.dm-header h2 {
-  font-size: 17px;
-  font-weight: 600;
-  flex: 1;
-}
-
-.dm-header .icon-btn {
-  font-size: 22px;
-  padding: 5px;
-}
+.dm-header h2 { font-size: 17px; font-weight: 600; flex: 1; }
+.dm-header .icon-btn { font-size: 22px; padding: 5px; }
 
 .dm-search {
   padding: 10px 16px;
@@ -845,9 +700,7 @@ input, textarea {
   cursor: pointer;
 }
 
-.dm-inbox-item:hover {
-  background: var(--bg);
-}
+.dm-inbox-item:hover { background: var(--bg); }
 
 .dm-inbox-item img {
   width: 56px;
@@ -858,10 +711,7 @@ input, textarea {
   flex-shrink: 0;
 }
 
-.dm-inbox-info {
-  flex: 1;
-  min-width: 0;
-}
+.dm-inbox-info { flex: 1; min-width: 0; }
 
 .dm-inbox-info strong {
   display: block;
@@ -882,11 +732,7 @@ input, textarea {
   text-overflow: ellipsis;
 }
 
-.dm-inbox-time {
-  font-size: 11px;
-  color: var(--muted);
-  flex-shrink: 0;
-}
+.dm-inbox-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
 
 .dm-chat-header {
   display: flex;
@@ -896,6 +742,8 @@ input, textarea {
   border-bottom: 1px solid var(--border);
   background: var(--card);
   flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 
 .dm-chat-header img {
@@ -905,10 +753,7 @@ input, textarea {
   object-fit: cover;
 }
 
-.dm-chat-header .info {
-  flex: 1;
-  min-width: 0;
-}
+.dm-chat-header .info { flex: 1; min-width: 0; }
 
 .dm-chat-header strong {
   display: block;
@@ -919,19 +764,17 @@ input, textarea {
   white-space: nowrap;
 }
 
-.dm-chat-header small {
-  font-size: 11.5px;
-  color: var(--muted);
-}
+.dm-chat-header small { font-size: 11.5px; color: var(--muted); }
 
 .dm-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 12px;
+  padding: 14px 12px 20px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .dm-msg {
@@ -959,18 +802,9 @@ input, textarea {
   border-bottom-right-radius: 4px;
 }
 
-.dm-msg small {
-  display: block;
-  font-size: 10px;
-  margin-top: 3px;
-  opacity: .7;
-}
+.dm-msg small { display: block; font-size: 10px; margin-top: 3px; opacity: .7; }
 
-.dm-msg-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-}
+.dm-msg-actions { display: flex; gap: 8px; margin-top: 4px; }
 
 .dm-msg-actions button {
   font-size: 10px;
@@ -997,19 +831,19 @@ input, textarea {
   pointer-events: none;
 }
 
-.dm-shared-video .info {
-  padding: 8px 10px;
-  font-size: 12px;
-}
+.dm-shared-video .info { padding: 8px 10px; font-size: 12px; }
 
 .dm-input-bar {
   display: flex;
   gap: 8px;
   padding: 10px 12px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--border);
   background: var(--card);
   align-items: center;
   flex-shrink: 0;
+  position: relative;
+  z-index: 10;
 }
 
 .dm-input-bar input {
@@ -1020,47 +854,27 @@ input, textarea {
   background: var(--bg);
   color: var(--text);
   font-size: 14px;
+  min-width: 0;
 }
 
 .dm-input-bar button {
   font-size: 15px;
   font-weight: 600;
   color: var(--blue);
-  padding: 6px 8px;
+  padding: 6px 10px;
+  flex-shrink: 0;
 }
 
-.dm-empty {
-  padding: 60px 30px;
-  text-align: center;
-  color: var(--muted);
-}
-
-.dm-empty .icon {
-  font-size: 56px;
-  display: block;
-  margin-bottom: 14px;
-  opacity: .5;
-}
-
-.dm-empty h3 {
-  font-size: 18px;
-  color: var(--text);
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-
-.dm-empty p {
-  font-size: 14px;
-}
+.dm-empty { padding: 60px 30px; text-align: center; color: var(--muted); }
+.dm-empty .icon { font-size: 56px; display: block; margin-bottom: 14px; opacity: .5; }
+.dm-empty h3 { font-size: 18px; color: var(--text); margin-bottom: 6px; font-weight: 600; }
+.dm-empty p { font-size: 14px; }
 
 /* ============================================================
-   PROFILE (YOUTUBE STYLE) - FIXED
+   PROFILE - FIXED LAYOUT
 ============================================================ */
 
-.yt-profile {
-  max-width: 640px;
-  margin: 0 auto;
-}
+.yt-profile { max-width: 640px; margin: 0 auto; }
 
 .yt-banner {
   height: 120px;
@@ -1134,21 +948,9 @@ input, textarea {
   border-bottom: 1px solid var(--border);
 }
 
-.yt-stat {
-  cursor: pointer;
-  text-align: center;
-}
-
-.yt-stat strong {
-  display: block;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.yt-stat span {
-  font-size: 12px;
-  color: var(--muted);
-}
+.yt-stat { cursor: pointer; text-align: center; }
+.yt-stat strong { display: block; font-size: 16px; font-weight: 700; }
+.yt-stat span { font-size: 12px; color: var(--muted); }
 
 .yt-profile-actions {
   display: flex;
@@ -1186,9 +988,7 @@ input, textarea {
   scrollbar-width: none;
 }
 
-.yt-tabs::-webkit-scrollbar {
-  display: none;
-}
+.yt-tabs::-webkit-scrollbar { display: none; }
 
 .yt-tab {
   padding: 12px 16px;
@@ -1201,14 +1001,8 @@ input, textarea {
   transition: color .2s;
 }
 
-.yt-tab:hover {
-  color: var(--text);
-}
-
-.yt-tab.active {
-  color: var(--text);
-  border-bottom-color: var(--text);
-}
+.yt-tab:hover { color: var(--text); }
+.yt-tab.active { color: var(--text); border-bottom-color: var(--text); }
 
 .yt-tabs .tab-count {
   font-size: 11px;
@@ -1217,9 +1011,7 @@ input, textarea {
   font-weight: 500;
 }
 
-.yt-videos-grid {
-  padding: 12px 0;
-}
+.yt-videos-grid { padding: 12px 0; }
 
 .yt-video-item {
   display: flex;
@@ -1245,10 +1037,7 @@ input, textarea {
   object-fit: cover;
 }
 
-.yt-video-meta {
-  flex: 1;
-  min-width: 0;
-}
+.yt-video-meta { flex: 1; min-width: 0; }
 
 .yt-video-meta h4 {
   font-size: 14px;
@@ -1262,23 +1051,9 @@ input, textarea {
   word-wrap: break-word;
 }
 
-.yt-video-meta .stats {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 6px;
-}
-
-.yt-video-meta .views {
-  font-size: 11.5px;
-  color: var(--muted);
-  margin-bottom: 2px;
-}
-
-.yt-video-meta .btns {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
+.yt-video-meta .stats { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.yt-video-meta .views { font-size: 11.5px; color: var(--muted); margin-bottom: 2px; }
+.yt-video-meta .btns { display: flex; gap: 6px; flex-wrap: wrap; }
 
 .yt-mini-btn {
   padding: 5px 10px;
@@ -1290,48 +1065,22 @@ input, textarea {
   font-weight: 500;
 }
 
-.yt-mini-btn.danger {
-  color: var(--danger);
-  border-color: var(--danger);
-}
+.yt-mini-btn.danger { color: var(--danger); border-color: var(--danger); }
+.yt-mini-btn.primary { color: var(--primary); border-color: var(--primary); }
 
-.yt-mini-btn.primary {
-  color: var(--primary);
-  border-color: var(--primary);
-}
-
-.yt-empty {
-  text-align: center;
-  padding: 50px 20px;
-  color: var(--muted);
-}
+.yt-empty { text-align: center; padding: 50px 20px; color: var(--muted); }
 
 /* ============================================================
-   VIEW COUNT
+   SAVE / BOOKMARK
 ============================================================ */
 
-.ig-views {
-  padding: 0 12px 5px;
-  font-size: 12.5px;
-  color: var(--muted);
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
+.ig-action-btn.saved { color: var(--primary); }
+.save-btn.saved .icon { filter: drop-shadow(0 0 4px var(--primary)); }
 
-.reel-views {
-  font-size: 10px;
-  color: rgba(255,255,255,0.75);
-  margin-top: 2px;
-  text-align: center;
-  position: absolute;
-  bottom: 8px;
-  left: 8px;
-  background: rgba(0,0,0,0.5);
-  padding: 2px 6px;
-  border-radius: 10px;
-}
+.saved-empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+.saved-empty .icon { font-size: 56px; margin-bottom: 14px; display: block; opacity: 0.5; }
+.saved-empty h3 { font-size: 16px; color: var(--text); margin-bottom: 6px; font-weight: 600; }
+.saved-empty p { font-size: 13px; }
 
 .view-badge {
   display: inline-flex;
@@ -1350,48 +1099,10 @@ input, textarea {
 }
 
 /* ============================================================
-   SAVE / BOOKMARK
-============================================================ */
-
-.ig-action-btn.saved {
-  color: var(--primary);
-}
-
-.save-btn.saved .icon {
-  filter: drop-shadow(0 0 4px var(--primary));
-}
-
-.saved-empty {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--muted);
-}
-
-.saved-empty .icon {
-  font-size: 56px;
-  margin-bottom: 14px;
-  display: block;
-  opacity: 0.5;
-}
-
-.saved-empty h3 {
-  font-size: 16px;
-  color: var(--text);
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-
-.saved-empty p {
-  font-size: 13px;
-}
-
-/* ============================================================
    PLAYLIST
 ============================================================ */
 
-.playlist-tab-content {
-  padding: 12px 16px;
-}
+.playlist-tab-content { padding: 12px 16px; }
 
 .playlist-card {
   display: flex;
@@ -1405,9 +1116,7 @@ input, textarea {
   transition: background .2s;
 }
 
-.playlist-card:hover {
-  background: var(--border);
-}
+.playlist-card:hover { background: var(--border); }
 
 .playlist-cover {
   width: 100px;
@@ -1422,11 +1131,7 @@ input, textarea {
   justify-content: center;
 }
 
-.playlist-cover video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+.playlist-cover video { width: 100%; height: 100%; object-fit: cover; }
 
 .playlist-cover .cover-icon {
   font-size: 28px;
@@ -1435,10 +1140,7 @@ input, textarea {
   text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
-.playlist-info {
-  flex: 1;
-  min-width: 0;
-}
+.playlist-info { flex: 1; min-width: 0; }
 
 .playlist-info h4 {
   font-size: 14px;
@@ -1449,10 +1151,7 @@ input, textarea {
   white-space: nowrap;
 }
 
-.playlist-info .meta {
-  font-size: 12px;
-  color: var(--muted);
-}
+.playlist-info .meta { font-size: 12px; color: var(--muted); }
 
 .playlist-info .desc {
   font-size: 12px;
@@ -1463,11 +1162,7 @@ input, textarea {
   white-space: nowrap;
 }
 
-.playlist-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
+.playlist-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
 .playlist-delete-btn {
   padding: 6px 10px;
@@ -1478,30 +1173,10 @@ input, textarea {
   background: transparent;
 }
 
-.playlist-empty {
-  text-align: center;
-  padding: 50px 20px;
-  color: var(--muted);
-}
-
-.playlist-empty .icon {
-  font-size: 56px;
-  margin-bottom: 14px;
-  display: block;
-  opacity: 0.5;
-}
-
-.playlist-empty h3 {
-  font-size: 16px;
-  color: var(--text);
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-
-.playlist-empty p {
-  font-size: 13px;
-  margin-bottom: 16px;
-}
+.playlist-empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+.playlist-empty .icon { font-size: 56px; margin-bottom: 14px; display: block; opacity: 0.5; }
+.playlist-empty h3 { font-size: 16px; color: var(--text); margin-bottom: 6px; font-weight: 600; }
+.playlist-empty p { font-size: 13px; margin-bottom: 16px; }
 
 .playlist-create-btn {
   padding: 10px 20px;
@@ -1527,14 +1202,8 @@ input, textarea {
   transition: background .2s;
 }
 
-.playlist-select-item:hover {
-  background: var(--bg);
-}
-
-.playlist-select-item.checked {
-  border-color: var(--primary);
-  background: rgba(124,58,237,0.05);
-}
+.playlist-select-item:hover { background: var(--bg); }
+.playlist-select-item.checked { border-color: var(--primary); background: rgba(124,58,237,0.05); }
 
 .playlist-select-check {
   width: 24px;
@@ -1578,33 +1247,11 @@ input, textarea {
   font-size: 28px;
 }
 
-.playlist-detail-cover video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.playlist-detail-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.playlist-detail-info h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
-.playlist-detail-info .meta {
-  font-size: 12.5px;
-  color: var(--muted);
-}
-
-.playlist-detail-info .desc {
-  font-size: 12.5px;
-  color: var(--muted);
-  margin-top: 4px;
-}
+.playlist-detail-cover video { width: 100%; height: 100%; object-fit: cover; }
+.playlist-detail-info { flex: 1; min-width: 0; }
+.playlist-detail-info h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+.playlist-detail-info .meta { font-size: 12.5px; color: var(--muted); }
+.playlist-detail-info .desc { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
 
 .playlist-video-item {
   display: flex;
@@ -1614,9 +1261,7 @@ input, textarea {
   align-items: flex-start;
 }
 
-.playlist-video-item:last-child {
-  border-bottom: 0;
-}
+.playlist-video-item:last-child { border-bottom: 0; }
 
 .playlist-video-item .thumb {
   width: 110px;
@@ -1627,16 +1272,8 @@ input, textarea {
   flex-shrink: 0;
 }
 
-.playlist-video-item .thumb video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.playlist-video-item .info {
-  flex: 1;
-  min-width: 0;
-}
+.playlist-video-item .thumb video { width: 100%; height: 100%; object-fit: cover; }
+.playlist-video-item .info { flex: 1; min-width: 0; }
 
 .playlist-video-item .info h4 {
   font-size: 13.5px;
@@ -1649,10 +1286,7 @@ input, textarea {
   -webkit-box-orient: vertical;
 }
 
-.playlist-video-item .info .stats {
-  font-size: 11.5px;
-  color: var(--muted);
-}
+.playlist-video-item .info .stats { font-size: 11.5px; color: var(--muted); }
 
 .playlist-video-item .remove-btn {
   padding: 6px 10px;
@@ -1665,7 +1299,7 @@ input, textarea {
 }
 
 /* ============================================================
-   DEEP LINK BANNER
+   DEEP LINK
 ============================================================ */
 
 .deep-link-banner {
@@ -1681,9 +1315,7 @@ input, textarea {
   gap: 8px;
 }
 
-.deep-link-banner.show {
-  display: flex;
-}
+.deep-link-banner.show { display: flex; }
 
 /* ============================================================
    MODALS
@@ -1700,9 +1332,7 @@ input, textarea {
   padding: 15px;
 }
 
-.modal.show {
-  display: flex;
-}
+.modal.show { display: flex; }
 
 .modal-box {
   width: 100%;
@@ -1717,9 +1347,7 @@ input, textarea {
   scrollbar-width: none;
 }
 
-.modal-box::-webkit-scrollbar {
-  display: none;
-}
+.modal-box::-webkit-scrollbar { display: none; }
 
 .modal-header {
   display: flex;
@@ -1728,10 +1356,7 @@ input, textarea {
   margin-bottom: 16px;
 }
 
-.modal-header h2 {
-  font-size: 18px;
-  font-weight: 600;
-}
+.modal-header h2 { font-size: 18px; font-weight: 600; }
 
 .close {
   width: 32px;
@@ -1744,10 +1369,6 @@ input, textarea {
   align-items: center;
   justify-content: center;
 }
-
-/* ============================================================
-   COMMENTS
-============================================================ */
 
 .comment-item {
   display: flex;
@@ -1764,16 +1385,8 @@ input, textarea {
   flex-shrink: 0;
 }
 
-.comment-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.comment-content .name {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
+.comment-content { flex: 1; min-width: 0; }
+.comment-content .name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
 
 .comment-content .text {
   font-size: 13.5px;
@@ -1819,16 +1432,7 @@ input, textarea {
   padding: 0 6px;
 }
 
-/* ============================================================
-   PEOPLE LIST
-============================================================ */
-
-.person-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-}
+.person-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
 
 .person-item img {
   width: 44px;
@@ -1838,11 +1442,7 @@ input, textarea {
   cursor: pointer;
 }
 
-.person-item .info {
-  flex: 1;
-  min-width: 0;
-  cursor: pointer;
-}
+.person-item .info { flex: 1; min-width: 0; cursor: pointer; }
 
 .person-item .info strong {
   display: block;
@@ -1854,10 +1454,7 @@ input, textarea {
   white-space: nowrap;
 }
 
-.person-item .info small {
-  font-size: 12px;
-  color: var(--muted);
-}
+.person-item .info small { font-size: 12px; color: var(--muted); }
 
 .follow-btn {
   padding: 7px 16px;
@@ -1871,23 +1468,13 @@ input, textarea {
   cursor: pointer;
 }
 
-.follow-btn:active {
-  transform: scale(0.95);
-}
-
 .follow-btn.following {
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
 }
 
-.follow-btn:disabled {
-  opacity: .6;
-}
-
-/* ============================================================
-   SHARE SHEET
-============================================================ */
+.follow-btn:disabled { opacity: .6; }
 
 .share-sheet {
   position: fixed;
@@ -1899,9 +1486,7 @@ input, textarea {
   justify-content: center;
 }
 
-.share-sheet.show {
-  display: flex;
-}
+.share-sheet.show { display: flex; }
 
 .share-sheet-box {
   width: 100%;
@@ -1930,9 +1515,7 @@ input, textarea {
   scrollbar-width: none;
 }
 
-.share-user-list::-webkit-scrollbar {
-  display: none;
-}
+.share-user-list::-webkit-scrollbar { display: none; }
 
 .share-user-chip {
   flex-shrink: 0;
@@ -1957,10 +1540,7 @@ input, textarea {
   white-space: nowrap;
 }
 
-.share-actions {
-  display: flex;
-  gap: 10px;
-}
+.share-actions { display: flex; gap: 10px; }
 
 .share-action-btn {
   flex: 1;
@@ -1978,10 +1558,6 @@ input, textarea {
   display: block;
   margin-bottom: 4px;
 }
-
-/* ============================================================
-   TOAST
-============================================================ */
 
 .toast {
   position: fixed;
@@ -2003,51 +1579,16 @@ input, textarea {
   text-overflow: ellipsis;
 }
 
-.toast.show {
-  opacity: 1;
-}
-
-/* ============================================================
-   RESPONSIVE
-============================================================ */
+.toast.show { opacity: 1; }
 
 @media (max-width: 500px) {
-  .panel {
-    padding: 10px;
-  }
-
-  .stats {
-    gap: 20px;
-  }
-
-  .modal-box {
-    padding: 16px;
-  }
-
-  .yt-video-thumb {
-    width: 120px;
-    height: 68px;
-  }
-
-  .playlist-cover {
-    width: 80px;
-    height: 50px;
-  }
-
-  .yt-profile-avatar {
-    width: 90px;
-    height: 90px;
-  }
-
-  .yt-profile-head {
-    margin-top: -45px;
-  }
-
-  .yt-profile-info {
-    padding-bottom: 8px;
-  }
-
-  .yt-profile-info h1 {
-    font-size: 18px;
-  }
+  .panel { padding: 10px; }
+  .stats { gap: 20px; }
+  .modal-box { padding: 16px; }
+  .yt-video-thumb { width: 120px; height: 68px; }
+  .playlist-cover { width: 80px; height: 50px; }
+  .yt-profile-avatar { width: 90px; height: 90px; }
+  .yt-profile-head { margin-top: -45px; }
+  .yt-profile-info { padding-bottom: 8px; }
+  .yt-profile-info h1 { font-size: 18px; }
 }
