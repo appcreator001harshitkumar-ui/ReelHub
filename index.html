@@ -2,2828 +2,3717 @@
 <html lang="hi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>ReelHub</title>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial,Helvetica,sans-serif}
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Arial,sans-serif;
+}
 
 :root{
- --primary:#7b2cff;
- --secondary:#d52cff;
- --bg:#f5f5f7;
- --card:#fff;
- --text:#151515;
- --muted:#777;
- --line:#e5e5ea;
- --danger:#e53935;
- --green:#20a55a
+  --bg:#f5f5f7;
+  --card:#fff;
+  --text:#171717;
+  --muted:#777;
+  --border:#e5e5e5;
+  --primary:#7c3aed;
+  --primary2:#ec4899;
+  --danger:#ef4444;
 }
 
-body{background:var(--bg);color:var(--text);min-height:100vh}
+body{
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
 body.dark{
- --bg:#101014;
- --card:#19191f;
- --text:#fff;
- --muted:#aaa;
- --line:#303039
+  --bg:#101014;
+  --card:#19191f;
+  --text:#f5f5f5;
+  --muted:#aaa;
+  --border:#30303a;
 }
 
-button,input,textarea,select{font:inherit}
-button{border:0;cursor:pointer}
-.hidden{display:none!important}
+button,input,textarea,select{
+  font:inherit;
+}
+
+button{
+  border:0;
+  cursor:pointer;
+}
+
+.hidden{
+  display:none!important;
+}
+
+/* LOGIN */
 
 #loginPage{
- min-height:100vh;
- display:flex;
- justify-content:center;
- align-items:center;
- padding:20px;
- background:linear-gradient(135deg,#7028ff,#e52cff)
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:20px;
+  background:linear-gradient(135deg,#6d28d9,#ec4899);
 }
 
-.loginBox{
- width:100%;
- max-width:390px;
- background:#fff;
- border-radius:28px;
- padding:38px 25px;
- text-align:center;
- box-shadow:0 20px 70px #0005
+.login-card{
+  width:100%;
+  max-width:400px;
+  background:white;
+  padding:35px 25px;
+  border-radius:25px;
+  text-align:center;
+  box-shadow:0 20px 60px #0004;
 }
 
-.loginLogo{font-size:36px;font-weight:900;color:#792cff;margin-bottom:8px}
-.loginText{color:#777;margin-bottom:30px}
-
-.googleBtn{
- width:100%;
- padding:15px;
- border-radius:14px;
- background:#111;
- color:#fff;
- font-weight:bold
+.logo{
+  font-size:34px;
+  font-weight:900;
+  background:linear-gradient(90deg,#7c3aed,#ec4899);
+  color:transparent;
+  background-clip:text;
+  -webkit-background-clip:text;
+  margin-bottom:10px;
 }
 
-#app{min-height:100vh;padding-bottom:75px}
+.login-card p{
+  color:#666;
+  margin-bottom:25px;
+}
+
+.google-btn{
+  width:100%;
+  padding:14px;
+  border-radius:12px;
+  background:#111;
+  color:white;
+  font-weight:bold;
+}
+
+/* APP */
+
+#app{
+  min-height:100vh;
+  padding-bottom:75px;
+}
 
 .topbar{
- position:sticky;
- top:0;
- z-index:50;
- height:65px;
- display:flex;
- align-items:center;
- gap:12px;
- padding:10px 15px;
- background:var(--card);
- border-bottom:1px solid var(--line)
+  position:sticky;
+  top:0;
+  z-index:20;
+  background:var(--card);
+  border-bottom:1px solid var(--border);
+  padding:12px 15px;
 }
 
-.brand{font-size:23px;font-weight:900;color:var(--primary);white-space:nowrap}
-
-.searchBox{flex:1;position:relative}
-.searchBox input{
- width:100%;
- border:1px solid var(--line);
- background:var(--bg);
- color:var(--text);
- border-radius:25px;
- padding:11px 15px 11px 40px;
- outline:none
+.topbar-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
 }
 
-.searchIcon{position:absolute;left:14px;top:10px}
-.topProfile{
- width:38px;height:38px;border-radius:50%;
- object-fit:cover;cursor:pointer
+.brand{
+  font-size:24px;
+  font-weight:900;
+  background:linear-gradient(90deg,#7c3aed,#ec4899);
+  color:transparent;
+  background-clip:text;
+  -webkit-background-clip:text;
 }
 
-.panel{display:none;padding:15px}
-.panel.active{display:block}
-
-.feed{max-width:700px;margin:auto}
-
-.videoCard{
- background:var(--card);
- border:1px solid var(--line);
- border-radius:18px;
- margin-bottom:18px;
- overflow:hidden
+.search-box{
+  margin-top:10px;
 }
 
-.videoHeader{
- display:flex;
- align-items:center;
- gap:10px;
- padding:12px
+.search-box input{
+  width:100%;
+  padding:12px 15px;
+  border:1px solid var(--border);
+  border-radius:25px;
+  outline:none;
+  background:var(--bg);
+  color:var(--text);
+}
+
+.panel{
+  max-width:700px;
+  margin:auto;
+  padding:15px;
+}
+
+.section-title{
+  font-size:21px;
+  font-weight:bold;
+  margin:8px 0 15px;
+}
+
+/* BOTTOM NAV */
+
+.bottom-nav{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  height:65px;
+  background:var(--card);
+  border-top:1px solid var(--border);
+  display:flex;
+  justify-content:space-around;
+  align-items:center;
+  z-index:100;
+}
+
+.nav-btn{
+  background:none;
+  color:var(--muted);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+  font-size:11px;
+}
+
+.nav-btn span:first-child{
+  font-size:21px;
+}
+
+.nav-btn.active{
+  color:var(--primary);
+}
+
+/* CARD */
+
+.video-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  margin-bottom:18px;
+  overflow:hidden;
+}
+
+.video-head{
+  display:flex;
+  align-items:center;
+  padding:12px;
+  gap:10px;
 }
 
 .avatar{
- width:42px;
- height:42px;
- border-radius:50%;
- object-fit:cover;
- cursor:pointer
+  width:43px;
+  height:43px;
+  border-radius:50%;
+  object-fit:cover;
+  background:#ddd;
 }
 
-.userInfo{flex:1;cursor:pointer}
-.userName{font-weight:bold}
-.userHandle{font-size:12px;color:var(--muted);margin-top:3px}
-
-.videoWrap{
- width:100%;
- background:#000;
- position:relative
+.user-info{
+  flex:1;
 }
 
-.videoWrap.short{
- aspect-ratio:9/16;
- max-height:75vh
+.user-name{
+  font-weight:bold;
 }
 
-.videoWrap.long{height:auto}
-
-.videoWrap video{
- width:100%;
- display:block;
- background:#000
+.username{
+  color:var(--muted);
+  font-size:12px;
 }
 
-.videoWrap.short video{
- width:100%;
- height:100%;
- object-fit:cover
+.small-btn{
+  padding:7px 11px;
+  border-radius:20px;
+  background:var(--primary);
+  color:white;
+  font-size:12px;
 }
 
-.videoWrap.long video{
- height:auto;
- max-height:75vh;
- object-fit:contain
+.outline-btn{
+  padding:7px 11px;
+  border-radius:20px;
+  background:transparent;
+  border:1px solid var(--primary);
+  color:var(--primary);
+  font-size:12px;
 }
 
-.videoBody{padding:12px}
-.videoTitle{font-size:17px;font-weight:bold;margin-bottom:6px}
-.videoDescription{color:var(--muted);line-height:1.4}
-
-.actions{
- display:flex;
- flex-wrap:wrap;
- gap:8px;
- padding-top:12px
+.video-wrap{
+  width:100%;
+  background:#000;
 }
 
-.actionBtn{
- background:var(--bg);
- color:var(--text);
- padding:9px 12px;
- border-radius:20px
+.video-wrap video{
+  width:100%;
+  display:block;
+  background:#000;
 }
 
-.actionBtn.liked{color:#e91e63}
-
-.followSmall{
- background:var(--primary);
- color:white;
- padding:8px 12px;
- border-radius:18px;
- font-size:12px
+.short-video{
+  aspect-ratio:9/16;
+  object-fit:cover;
+  max-height:75vh;
 }
 
-.followSmall.following{
- background:var(--bg);
- color:var(--text);
- border:1px solid var(--line)
+.long-video{
+  height:auto;
+  max-height:75vh;
+  object-fit:contain;
 }
 
-.ownerActions{
- display:flex;
- gap:7px;
- margin-top:10px
+.video-body{
+  padding:12px;
 }
 
-.ownerActions button{
- padding:7px 10px;
- border-radius:10px;
- background:var(--bg);
- color:var(--text)
+.video-title{
+  font-weight:bold;
+  margin-bottom:5px;
 }
 
-.ownerActions .delete{
- color:var(--danger)
+.video-description{
+  color:var(--muted);
+  font-size:14px;
+  white-space:pre-wrap;
 }
 
-/* UPLOAD */
-
-.uploadCard{
- max-width:650px;
- margin:auto;
- background:var(--card);
- border:1px solid var(--line);
- border-radius:22px;
- padding:20px
+.video-actions{
+  display:flex;
+  gap:5px;
+  flex-wrap:wrap;
+  padding:10px 12px;
+  border-top:1px solid var(--border);
 }
 
-.uploadTitle{font-size:25px;font-weight:900;margin-bottom:5px}
-.uploadSub{color:var(--muted);margin-bottom:20px}
-
-.dropArea{
- border:2px dashed #aaa;
- border-radius:18px;
- min-height:230px;
- display:flex;
- justify-content:center;
- align-items:center;
- text-align:center;
- padding:20px;
- cursor:pointer
+.action-btn{
+  background:none;
+  color:var(--text);
+  padding:7px 9px;
+  border-radius:8px;
 }
 
-.dropIcon{font-size:50px;margin-bottom:10px}
-.dropText{font-weight:bold}
-
-.previewBox{
- margin-top:15px;
- background:#000;
- border-radius:15px;
- overflow:hidden
+.action-btn:hover{
+  background:var(--bg);
 }
 
-.previewBox video{
- width:100%;
- max-height:400px;
- display:block;
- object-fit:contain
+.delete-btn{
+  color:var(--danger);
 }
 
-.formGroup{margin-top:15px}
-.formGroup label{display:block;font-weight:bold;margin-bottom:7px}
-
-.formGroup input,
-.formGroup textarea,
-.formGroup select{
- width:100%;
- border:1px solid var(--line);
- border-radius:12px;
- padding:12px;
- background:var(--bg);
- color:var(--text);
- outline:none
-}
-
-.formGroup textarea{min-height:100px;resize:vertical}
-
-.typeButtons{display:flex;gap:10px}
-
-.typeBtn{
- flex:1;
- padding:13px;
- border-radius:12px;
- background:var(--bg);
- color:var(--text);
- border:1px solid var(--line)
-}
-
-.typeBtn.active{background:var(--primary);color:#fff}
-
-.publishBtn{
- width:100%;
- margin-top:18px;
- padding:14px;
- border-radius:14px;
- background:linear-gradient(90deg,var(--primary),var(--secondary));
- color:#fff;
- font-weight:bold
-}
-
-.progress{
- height:8px;
- background:var(--line);
- border-radius:10px;
- overflow:hidden;
- margin-top:15px
-}
-
-.progressBar{
- height:100%;
- width:0;
- background:linear-gradient(90deg,var(--primary),var(--secondary))
+.edit-btn{
+  color:var(--primary);
 }
 
 /* PROFILE */
 
-.profileCard{
- max-width:700px;
- margin:auto;
- background:var(--card);
- border-radius:22px;
- padding:20px;
- border:1px solid var(--line)
+.profile-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:20px;
+  text-align:center;
 }
 
-.profileTop{display:flex;align-items:center;gap:18px}
-
-.profilePhoto{
- width:90px;
- height:90px;
- border-radius:50%;
- object-fit:cover;
- cursor:pointer
+.profile-photo{
+  width:95px;
+  height:95px;
+  border-radius:50%;
+  object-fit:cover;
+  border:3px solid var(--primary);
+  cursor:pointer;
 }
 
-.profileName{font-size:22px;font-weight:bold}
-.profileHandle{color:var(--muted);margin-top:3px}
+.profile-name{
+  font-size:21px;
+  font-weight:bold;
+  margin-top:10px;
+}
 
-.profileGender{
- color:var(--muted);
- margin-top:4px;
- font-size:13px
+.profile-id{
+  color:var(--muted);
+  margin-top:3px;
 }
 
 .stats{
- display:flex;
- justify-content:space-around;
- text-align:center;
- margin:25px 0
+  display:flex;
+  justify-content:center;
+  gap:30px;
+  margin:20px 0;
 }
 
-.stat{cursor:pointer}
-.stat strong{display:block;font-size:20px}
-.stat span{color:var(--muted);font-size:13px}
-
-.profileButtons{
- display:grid;
- grid-template-columns:1fr 1fr;
- gap:10px
+.stat{
+  cursor:pointer;
 }
 
-.profileBtn{
- padding:12px;
- border-radius:12px;
- background:var(--bg);
- color:var(--text)
+.stat strong{
+  display:block;
+  font-size:19px;
 }
 
-.profileBtn.primary{background:var(--primary);color:#fff}
-
-.menuList{margin-top:20px}
-
-.menuItem{
- padding:16px 5px;
- border-bottom:1px solid var(--line);
- display:flex;
- justify-content:space-between;
- align-items:center;
- cursor:pointer
+.stat span{
+  color:var(--muted);
+  font-size:12px;
 }
 
-.menuItem span:last-child{color:var(--muted);font-size:13px}
-
-/* SEARCH */
-
-.searchResults{max-width:700px;margin:auto}
-
-.userResult{
- background:var(--card);
- border:1px solid var(--line);
- border-radius:15px;
- padding:12px;
- display:flex;
- align-items:center;
- gap:12px;
- margin-bottom:10px
+.profile-buttons{
+  display:flex;
+  gap:8px;
+  justify-content:center;
+  flex-wrap:wrap;
 }
 
-.userResultInfo{flex:1}
-
-/* LIST */
-
-.listBox{max-width:650px;margin:auto}
-
-.listUser{
- display:flex;
- align-items:center;
- gap:12px;
- padding:13px;
- background:var(--card);
- border-bottom:1px solid var(--line)
+.primary-btn{
+  padding:11px 17px;
+  border-radius:12px;
+  background:linear-gradient(90deg,#7c3aed,#ec4899);
+  color:white;
+  font-weight:bold;
 }
 
-.listUserInfo{flex:1}
-
-/* CHAT */
-
-.chatList{max-width:700px;margin:auto}
-
-.chatUser{
- display:flex;
- align-items:center;
- gap:12px;
- padding:13px;
- background:var(--card);
- border-bottom:1px solid var(--line);
- cursor:pointer
+.gray-btn{
+  padding:11px 17px;
+  border-radius:12px;
+  background:var(--bg);
+  color:var(--text);
+  border:1px solid var(--border);
 }
 
-.chatUserInfo{flex:1}
-.chatPreview{color:var(--muted);font-size:13px;margin-top:4px}
+/* SETTINGS */
 
-.chatWindow{
- position:fixed;
- inset:0;
- z-index:100;
- background:var(--bg);
- display:flex;
- flex-direction:column
+.setting-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:15px;
+  margin-top:10px;
+  overflow:hidden;
 }
 
-.chatHeader{
- height:65px;
- background:var(--card);
- border-bottom:1px solid var(--line);
- display:flex;
- align-items:center;
- gap:10px;
- padding:10px 15px
+.setting-item{
+  width:100%;
+  background:none;
+  color:var(--text);
+  padding:16px;
+  text-align:left;
+  border-bottom:1px solid var(--border);
 }
 
-.backBtn{background:none;color:var(--text);font-size:24px}
-
-.chatMessages{
- flex:1;
- overflow-y:auto;
- padding:15px
+.setting-item:last-child{
+  border-bottom:0;
 }
 
-.messageRow{display:flex;margin-bottom:10px}
-.messageRow.mine{justify-content:flex-end}
-
-.message{
- max-width:78%;
- padding:10px 12px;
- border-radius:16px;
- background:var(--card);
- border:1px solid var(--line);
- position:relative
+.setting-item small{
+  display:block;
+  color:var(--muted);
+  margin-top:4px;
 }
 
-.messageRow.mine .message{background:var(--primary);color:#fff}
+/* UPLOAD */
 
-.messageTime{font-size:10px;opacity:.65;margin-top:4px}
-
-.messageMenu{display:flex;gap:8px;margin-top:6px}
-
-.messageMenu button{
- font-size:11px;
- padding:4px 7px;
- border-radius:7px;
- background:#0002;
- color:inherit
+.form-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:18px;
+  padding:18px;
 }
 
-.chatInput{
- background:var(--card);
- border-top:1px solid var(--line);
- padding:10px;
- display:flex;
- gap:8px
+.form-group{
+  margin-bottom:15px;
 }
 
-.chatInput input{
- flex:1;
- padding:12px;
- border:1px solid var(--line);
- border-radius:22px;
- background:var(--bg);
- color:var(--text);
- outline:none
+.form-group label{
+  display:block;
+  margin-bottom:7px;
+  font-weight:bold;
 }
 
-.sendBtn{
- width:45px;
- border-radius:50%;
- background:var(--primary);
- color:#fff
+.form-group input,
+.form-group textarea,
+.form-group select{
+  width:100%;
+  padding:12px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--bg);
+  color:var(--text);
+  outline:none;
+}
+
+.form-group textarea{
+  min-height:100px;
+  resize:vertical;
+}
+
+.progress{
+  height:8px;
+  background:var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  margin:10px 0;
+}
+
+.progress-bar{
+  height:100%;
+  width:0;
+  background:linear-gradient(90deg,#7c3aed,#ec4899);
 }
 
 /* MODAL */
 
 .modal{
- position:fixed;
- inset:0;
- z-index:90;
- background:#0008;
- display:flex;
- align-items:center;
- justify-content:center;
- padding:15px
+  position:fixed;
+  inset:0;
+  background:#0009;
+  z-index:200;
+  display:none;
+  justify-content:center;
+  align-items:center;
+  padding:15px;
 }
 
-.modalBox{
- width:100%;
- max-width:480px;
- max-height:90vh;
- overflow:auto;
- background:var(--card);
- border-radius:20px;
- padding:20px
+.modal.show{
+  display:flex;
 }
 
-.modalHead{
- display:flex;
- justify-content:space-between;
- align-items:center;
- margin-bottom:15px
+.modal-box{
+  width:100%;
+  max-width:550px;
+  max-height:90vh;
+  overflow:auto;
+  background:var(--card);
+  color:var(--text);
+  border-radius:20px;
+  padding:20px;
+  position:relative;
 }
 
-.closeBtn{
- background:var(--bg);
- color:var(--text);
- width:35px;
- height:35px;
- border-radius:50%
+.close{
+  position:absolute;
+  right:12px;
+  top:10px;
+  width:35px;
+  height:35px;
+  border-radius:50%;
+  background:var(--bg);
+  color:var(--text);
+  font-size:22px;
+}
+
+/* PEOPLE */
+
+.person{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 0;
+  border-bottom:1px solid var(--border);
+}
+
+.person-info{
+  flex:1;
 }
 
 /* COMMENTS */
 
 .comment{
- padding:10px 0;
- border-bottom:1px solid var(--line)
+  padding:10px 0;
+  border-bottom:1px solid var(--border);
 }
 
-.commentTop{display:flex;gap:8px;align-items:center}
-
-.commentText{margin:5px 0 0 35px}
-
-.commentActions{
- margin-left:35px;
- display:flex;
- gap:8px;
- margin-top:5px
+.comment-name{
+  font-weight:bold;
+  font-size:13px;
 }
 
-.commentActions button{
- background:none;
- color:var(--primary);
- font-size:12px
+.comment-text{
+  margin-top:4px;
 }
 
-.commentInput{display:flex;gap:8px;margin-top:15px}
-
-.commentInput input{
- flex:1;
- padding:11px;
- border:1px solid var(--line);
- border-radius:20px;
- background:var(--bg);
- color:var(--text)
+.comment-actions{
+  margin-top:5px;
 }
 
-.commentInput button{
- padding:10px 15px;
- border-radius:20px;
- background:var(--primary);
- color:#fff
+.comment-actions button{
+  background:none;
+  color:var(--primary);
+  font-size:12px;
+  margin-right:8px;
 }
 
-/* PUBLIC PROFILE */
-
-.publicProfile{text-align:center}
-
-.publicProfile .bigPhoto{
- width:100px;
- height:100px;
- border-radius:50%;
- object-fit:cover;
- cursor:pointer
+.comment-form{
+  display:flex;
+  gap:7px;
+  margin-top:15px;
 }
 
-.publicProfile h2{margin-top:10px}
-
-.publicStats{
- display:flex;
- justify-content:space-around;
- margin:20px 0
+.comment-form input{
+  flex:1;
+  padding:11px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:var(--bg);
+  color:var(--text);
 }
 
-.publicStat strong{display:block;font-size:19px}
-.publicStat small{color:var(--muted)}
+/* CHAT */
 
-.followBtn{
- padding:12px 20px;
- border-radius:12px;
- background:var(--primary);
- color:#fff
+.chat-messages{
+  max-height:400px;
+  overflow:auto;
+  padding:10px 0;
 }
 
-.followBtn.secondary{
- background:var(--bg);
- color:var(--text);
- border:1px solid var(--line)
+.message{
+  max-width:80%;
+  padding:9px 12px;
+  border-radius:15px;
+  margin:7px 0;
+  background:var(--bg);
 }
 
-/* PHOTO VIEWER */
-
-.photoViewer{
- position:fixed;
- inset:0;
- z-index:300;
- background:#000e;
- display:flex;
- align-items:center;
- justify-content:center;
- padding:20px
+.message.mine{
+  margin-left:auto;
+  background:#7c3aed;
+  color:white;
 }
 
-.photoViewer img{
- max-width:95%;
- max-height:85vh;
- border-radius:15px;
- object-fit:contain
+.message small{
+  display:block;
+  opacity:.7;
+  font-size:10px;
+  margin-top:3px;
 }
 
-.photoClose{
- position:absolute;
- top:20px;
- right:20px;
- width:42px;
- height:42px;
- border-radius:50%;
- background:#fff2;
- color:#fff;
- font-size:25px
+.chat-form{
+  display:flex;
+  gap:7px;
 }
 
-/* NAV */
-
-.bottomNav{
- position:fixed;
- left:0;
- right:0;
- bottom:0;
- height:68px;
- background:var(--card);
- border-top:1px solid var(--line);
- display:flex;
- justify-content:space-around;
- align-items:center;
- z-index:70
+.chat-form input{
+  flex:1;
+  padding:11px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:var(--bg);
+  color:var(--text);
 }
 
-.navBtn{
- background:none;
- color:var(--muted);
- display:flex;
- flex-direction:column;
- align-items:center;
- gap:3px;
- font-size:11px
+/* SEARCH */
+
+.search-result{
+  background:var(--card);
+  border:1px solid var(--border);
+  padding:12px;
+  border-radius:15px;
+  margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:10px;
 }
 
-.navBtn span:first-child{font-size:21px}
-.navBtn.active{color:var(--primary)}
+/* EMPTY */
 
-#toast{
- position:fixed;
- left:50%;
- bottom:85px;
- transform:translateX(-50%);
- background:#111;
- color:#fff;
- padding:12px 18px;
- border-radius:25px;
- z-index:400;
- display:none;
- max-width:90%;
- text-align:center
+.empty{
+  text-align:center;
+  padding:40px 20px;
+  color:var(--muted);
 }
 
-.empty{text-align:center;color:var(--muted);padding:50px 15px}
+/* PROFILE VIDEO GRID */
 
-@media(max-width:600px){
- .brand{font-size:19px}
- .topbar{gap:7px}
- .profilePhoto{width:75px;height:75px}
- .videoCard{border-radius:12px}
- .videoWrap.short{max-height:70vh}
- .profileButtons{grid-template-columns:1fr}
+.profile-video{
+  margin-top:15px;
+}
+
+.profile-video video{
+  width:100%;
+  border-radius:12px;
+  max-height:300px;
+  object-fit:contain;
+  background:#000;
+}
+
+/* RESPONSIVE */
+
+@media(max-width:500px){
+  .panel{
+    padding:10px;
+  }
+
+  .stats{
+    gap:20px;
+  }
+
+  .modal-box{
+    padding:16px;
+  }
 }
 </style>
 </head>
 
 <body>
 
-<section id="loginPage">
- <div class="loginBox">
-  <div class="loginLogo">ReelHub</div>
-  <p class="loginText">Watch • Create • Connect</p>
-  <button class="googleBtn" id="googleLogin">🔵 Continue with Google</button>
- </div>
-</section>
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="logo">ReelHub 🎬</div>
+    <p>Watch, upload and share videos</p>
+    <button class="google-btn" id="googleLogin">
+      Continue with Google
+    </button>
+    <p id="loginStatus" style="margin-top:15px"></p>
+  </div>
+</div>
 
+<!-- APP -->
 <div id="app" class="hidden">
 
-<header class="topbar">
- <div class="brand">ReelHub</div>
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand">ReelHub</div>
+      <button class="gray-btn" id="headerProfileBtn">👤</button>
+    </div>
 
- <div class="searchBox">
-  <span class="searchIcon">🔎</span>
-  <input id="searchInput" placeholder="Search users..." autocomplete="off">
- </div>
+    <div class="search-box">
+      <input
+        id="topSearch"
+        type="search"
+        placeholder="Search users..."
+      >
+    </div>
+  </header>
 
- <img id="topProfile" class="topProfile"
-      src="https://i.pravatar.cc/100"
-      onclick="openMyProfile()">
-</header>
+  <!-- HOME -->
+  <section id="homePanel" class="panel">
+    <div class="section-title">Home</div>
+    <div id="feed"></div>
+  </section>
 
-<section id="homePanel" class="panel active">
- <div id="feed" class="feed">
-  <div class="empty">Loading ReelHub...</div>
- </div>
-</section>
+  <!-- SHORTS -->
+  <section id="shortsPanel" class="panel hidden">
+    <div class="section-title">Shorts</div>
+    <div id="shortsFeed"></div>
+  </section>
 
-<section id="shortPanel" class="panel">
- <div id="shortFeed" class="feed">
-  <div class="empty">Loading Shorts...</div>
- </div>
-</section>
+  <!-- SEARCH -->
+  <section id="searchPanel" class="panel hidden">
+    <div class="section-title">Search</div>
+    <div id="searchResults"></div>
+  </section>
 
-<section id="searchPanel" class="panel">
- <div class="searchResults" id="searchResults">
-  <div class="empty">🔎 Search users from the top search box</div>
- </div>
-</section>
+  <!-- UPLOAD -->
+  <section id="uploadPanel" class="panel hidden">
+    <div class="section-title">Upload Video</div>
 
-<section id="uploadPanel" class="panel">
- <div class="uploadCard">
-  <div class="uploadTitle">Create & Upload</div>
-  <div class="uploadSub">Share your video with ReelHub</div>
+    <div class="form-card">
 
-  <label class="dropArea" for="videoFile">
-   <div>
-    <div class="dropIcon">🎬</div>
-    <div class="dropText">Select a video</div>
-    <small>MP4, MOV, WEBM</small>
-   </div>
-  </label>
+      <div class="form-group">
+        <label>Video</label>
+        <input id="videoFile" type="file" accept="video/*">
+      </div>
 
-  <input id="videoFile" type="file" accept="video/*" hidden>
+      <div class="form-group">
+        <label>Title</label>
+        <input id="videoTitle" maxlength="100"
+               placeholder="Video title">
+      </div>
 
-  <div id="previewBox" class="previewBox hidden">
-   <video id="previewVideo" controls></video>
-  </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="videoDescription"
+                  placeholder="Write video description..."></textarea>
+      </div>
 
-  <div class="formGroup">
-   <label>Video Type</label>
-   <div class="typeButtons">
-    <button id="shortType" class="typeBtn active"
-            onclick="selectVideoType('short')">
-     🎞️ Short<br><small>9:16</small>
+      <div class="form-group">
+        <label>Visibility</label>
+        <select id="videoVisibility">
+          <option value="public">Public</option>
+          <option value="private">Private</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Video Type</label>
+        <select id="videoType">
+          <option value="long">Long Video</option>
+          <option value="short">Shorts 9:16</option>
+        </select>
+      </div>
+
+      <div class="progress">
+        <div id="uploadProgress" class="progress-bar"></div>
+      </div>
+
+      <p id="uploadStatus"
+         style="font-size:13px;color:var(--muted);margin:8px 0">
+      </p>
+
+      <button class="primary-btn" id="publishBtn">
+        🚀 Publish Video
+      </button>
+
+    </div>
+  </section>
+
+  <!-- ALERTS -->
+  <section id="alertsPanel" class="panel hidden">
+    <div class="section-title">Alerts</div>
+    <div id="notifications"></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section id="profilePanel" class="panel hidden">
+
+    <div class="profile-card">
+
+      <img id="profilePhoto"
+           class="profile-photo"
+           src=""
+           alt="Profile">
+
+      <div id="profileName" class="profile-name">User</div>
+      <div id="profileUsername" class="profile-id">@user</div>
+      <div id="profileExtra"
+           style="color:var(--muted);font-size:13px;margin-top:6px">
+      </div>
+
+      <div class="stats">
+
+        <div class="stat" id="myFollowersBtn">
+          <strong id="followersCount">0</strong>
+          <span>Followers</span>
+        </div>
+
+        <div class="stat" id="myFollowingBtn">
+          <strong id="followingCount">0</strong>
+          <span>Following</span>
+        </div>
+
+        <div class="stat">
+          <strong id="videosCount">0</strong>
+          <span>Videos</span>
+        </div>
+
+      </div>
+
+      <div class="profile-buttons">
+        <button class="primary-btn" id="editProfileBtn">
+          ✏️ Edit Profile
+        </button>
+
+        <button class="gray-btn" id="shareAppBtn">
+          📤 Share App
+        </button>
+
+        <button class="gray-btn" id="settingsBtn">
+          ⚙️ Settings
+        </button>
+      </div>
+
+    </div>
+
+    <div class="section-title" style="margin-top:20px">
+      My Videos
+    </div>
+
+    <div id="myVideos"></div>
+
+  </section>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+
+    <button class="nav-btn active" data-panel="homePanel">
+      <span>🏠</span>
+      <span>Home</span>
     </button>
-    <button id="longType" class="typeBtn"
-            onclick="selectVideoType('long')">
-     ▶️ Long Video<br><small>Original Ratio</small>
+
+    <button class="nav-btn" data-panel="shortsPanel">
+      <span>🎞️</span>
+      <span>Shorts</span>
     </button>
-   </div>
-  </div>
 
-  <div class="formGroup">
-   <label>Title</label>
-   <input id="videoTitle" maxlength="100" placeholder="Video title">
-  </div>
+    <button class="nav-btn" data-panel="uploadPanel">
+      <span>➕</span>
+      <span>Upload</span>
+    </button>
 
-  <div class="formGroup">
-   <label>Description</label>
-   <textarea id="videoDescription" maxlength="1000"
-             placeholder="Tell viewers about your video..."></textarea>
-  </div>
+    <button class="nav-btn" data-panel="alertsPanel">
+      <span>🔔</span>
+      <span>Alerts</span>
+    </button>
 
-  <div class="formGroup">
-   <label>Visibility</label>
-   <select id="visibility">
-    <option value="public">Public</option>
-    <option value="private">Private</option>
-   </select>
-  </div>
+    <button class="nav-btn" data-panel="profilePanel">
+      <span>👤</span>
+      <span>Profile</span>
+    </button>
 
-  <div class="progress hidden" id="uploadProgress">
-   <div class="progressBar" id="progressBar"></div>
-  </div>
-
-  <button class="publishBtn" id="publishBtn" onclick="uploadVideo()">
-   Publish Video
-  </button>
- </div>
-</section>
-
-<section id="alertsPanel" class="panel">
- <div class="profileCard">
-  <h2>🔔 Notifications</h2>
-  <div id="notifications" style="margin-top:20px">
-   <div class="empty">No notifications yet</div>
-  </div>
- </div>
-</section>
-
-<section id="profilePanel" class="panel">
- <div class="profileCard">
-
-  <div class="profileTop">
-   <img id="profilePhoto" class="profilePhoto"
-        src="https://i.pravatar.cc/200"
-        onclick="viewPhoto(this.src)">
-
-   <div>
-    <div id="profileName" class="profileName">User</div>
-    <div id="profileHandle" class="profileHandle">@user</div>
-    <div id="profileAge" class="profileHandle">Age: -</div>
-    <div id="profileGender" class="profileGender">Gender: -</div>
-   </div>
-  </div>
-
-  <div class="stats">
-   <div class="stat" onclick="openFollowList('followers')">
-    <strong id="followersCount">0</strong>
-    <span>Followers</span>
-   </div>
-
-   <div class="stat" onclick="openFollowList('following')">
-    <strong id="followingCount">0</strong>
-    <span>Following</span>
-   </div>
-
-   <div class="stat">
-    <strong id="videosCount">0</strong>
-    <span>Videos</span>
-   </div>
-  </div>
-
-  <div class="profileButtons">
-   <button class="profileBtn primary" onclick="openEditProfile()">✏️ Edit Profile</button>
-   <button class="profileBtn" onclick="shareApp()">📤 Share App</button>
-  </div>
-
-  <div class="profileButtons" style="margin-top:10px">
-   <button class="profileBtn" onclick="openFollowList('followers')">👥 Followers List</button>
-   <button class="profileBtn" onclick="openFollowList('following')">👤 Following List</button>
-  </div>
-
-  <div class="menuList">
-   <div class="menuItem" onclick="comingSoon('Privacy')">
-    <span>🔒 Privacy</span><span>Coming Soon ›</span>
-   </div>
-
-   <div class="menuItem" onclick="comingSoon('Monetization')">
-    <span>💰 Monetization</span><span>Coming Soon ›</span>
-   </div>
-
-   <div class="menuItem" onclick="comingSoon('Notifications')">
-    <span>🔔 Notifications</span><span>Coming Soon ›</span>
-   </div>
-
-   <div class="menuItem" onclick="comingSoon('History')">
-    <span>🕘 History</span><span>Coming Soon ›</span>
-   </div>
-
-   <div class="menuItem" onclick="comingSoon('Playlist')">
-    <span>📁 Playlist</span><span>Coming Soon ›</span>
-   </div>
-
-   <div class="menuItem" onclick="comingSoon('Other Settings')">
-    <span>⚙️ Other Settings</span><span>Coming Soon ›</span>
-   </div>
-
-   <div class="menuItem" onclick="toggleDarkMode()">
-    <span>🌙 Dark Mode</span><span>Toggle ›</span>
-   </div>
-
-   <div class="menuItem" onclick="logout()" style="color:#e53935">
-    <span>🚪 Logout</span><span>›</span>
-   </div>
-  </div>
- </div>
-</section>
-
-<section id="chatPanel" class="panel">
- <div class="chatList">
-  <h2 style="margin-bottom:15px">💬 Messages</h2>
-  <div id="chatList">
-   <div class="empty">No chats yet</div>
-  </div>
- </div>
-</section>
-
-<section id="followPanel" class="panel">
- <div class="listBox">
-  <h2 id="followListTitle" style="margin-bottom:15px">Users</h2>
-  <div id="followList"></div>
- </div>
-</section>
-
-<nav class="bottomNav">
- <button class="navBtn active" onclick="showPanel('homePanel',this)">
-  <span>🏠</span><span>Home</span>
- </button>
-
- <button class="navBtn" onclick="showPanel('shortPanel',this)">
-  <span>🎞️</span><span>Short</span>
- </button>
-
- <button class="navBtn" onclick="showPanel('uploadPanel',this)">
-  <span>➕</span><span>Upload</span>
- </button>
-
- <button class="navBtn" onclick="showPanel('alertsPanel',this)">
-  <span>🔔</span><span>Alerts</span>
- </button>
-
- <button class="navBtn" onclick="showPanel('profilePanel',this)">
-  <span>👤</span><span>Profile</span>
- </button>
-</nav>
+  </nav>
 
 </div>
 
-<div id="chatWindow" class="chatWindow hidden">
- <div class="chatHeader">
-  <button class="backBtn" onclick="closeChat()">←</button>
-  <img id="chatPhoto" class="avatar">
-  <div>
-   <strong id="chatName">User</strong>
-   <div style="font-size:11px;color:#20a55a">Messages</div>
+<!-- EDIT PROFILE MODAL -->
+<div id="editProfileModal" class="modal">
+  <div class="modal-box">
+
+    <button class="close" data-close="editProfileModal">×</button>
+
+    <h2>Edit Profile</h2>
+
+    <div style="text-align:center;margin:20px 0">
+      <img id="editPhotoPreview"
+           class="profile-photo"
+           src=""
+           alt="Preview">
+
+      <div style="margin-top:10px">
+        <input id="profilePhotoFile"
+               type="file"
+               accept="image/*">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Name</label>
+      <input id="editName">
+    </div>
+
+    <div class="form-group">
+      <label>User ID</label>
+      <input id="editUsername"
+             placeholder="example: harshit">
+      <small style="color:var(--muted)">
+        @ automatically added
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label>Age</label>
+      <input id="editAge" type="number" min="1" max="120">
+    </div>
+
+    <div class="form-group">
+      <label>Gender</label>
+      <select id="editGender">
+        <option value="">Prefer not to say</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+
+    <button class="primary-btn" id="saveProfileBtn">
+      💾 Save Profile
+    </button>
+
+    <p id="profileSaveStatus"
+       style="margin-top:10px;color:var(--muted)">
+    </p>
+
   </div>
- </div>
-
- <div id="chatMessages" class="chatMessages"></div>
-
- <div class="chatInput">
-  <input id="messageInput" placeholder="Message..." maxlength="2000"
-         onkeydown="if(event.key==='Enter')sendMessage()">
-  <button class="sendBtn" onclick="sendMessage()">➤</button>
- </div>
 </div>
 
-<div id="commentsModal" class="modal hidden">
- <div class="modalBox">
-  <div class="modalHead">
-   <h2>💬 Comments</h2>
-   <button class="closeBtn" onclick="closeComments()">×</button>
-  </div>
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="modal">
+  <div class="modal-box">
 
-  <div id="commentsList"></div>
+    <button class="close" data-close="settingsModal">×</button>
 
-  <div class="commentInput">
-   <input id="commentInput" placeholder="Enter comment..." maxlength="500">
-   <button onclick="sendComment()">Send</button>
+    <h2>Settings</h2>
+
+    <div class="setting-card">
+
+      <button class="setting-item">
+        🔒 Privacy
+        <small>Coming Soon</small>
+      </button>
+
+      <button class="setting-item">
+        💰 Monetization
+        <small>Coming Soon</small>
+      </button>
+
+      <button class="setting-item">
+        🔔 Notifications
+        <small>Coming Soon</small>
+      </button>
+
+      <button class="setting-item" id="historyBtn">
+        🕘 History
+        <small>Watch history</small>
+      </button>
+
+      <button class="setting-item">
+        📂 Playlist
+        <small>Coming Soon</small>
+      </button>
+
+      <button class="setting-item">
+        ⚙️ Other Settings
+        <small>Coming Soon</small>
+      </button>
+
+      <button class="setting-item" id="darkModeBtn">
+        🌙 Dark Mode
+        <small>Change appearance</small>
+      </button>
+
+      <button class="setting-item" id="logoutBtn"
+              style="color:#ef4444">
+        🚪 Logout
+      </button>
+
+    </div>
+
   </div>
- </div>
 </div>
 
-<div id="publicProfileModal" class="modal hidden">
- <div class="modalBox">
-  <div class="modalHead">
-   <h2>Profile</h2>
-   <button class="closeBtn" onclick="closePublicProfile()">×</button>
+<!-- PUBLIC PROFILE MODAL -->
+<div id="publicProfileModal" class="modal">
+  <div class="modal-box">
+
+    <button class="close" data-close="publicProfileModal">×</button>
+
+    <div style="text-align:center">
+
+      <img id="publicPhoto"
+           class="profile-photo"
+           src=""
+           alt="Profile">
+
+      <div id="publicName"
+           class="profile-name"></div>
+
+      <div id="publicUsername"
+           class="profile-id"></div>
+
+      <div id="publicExtra"
+           style="color:var(--muted);margin-top:6px">
+      </div>
+
+      <div class="stats">
+
+        <div class="stat" id="publicFollowersBtn">
+          <strong id="publicFollowers">0</strong>
+          <span>Followers</span>
+        </div>
+
+        <div class="stat" id="publicFollowingBtn">
+          <strong id="publicFollowing">0</strong>
+          <span>Following</span>
+        </div>
+
+        <div class="stat">
+          <strong id="publicVideos">0</strong>
+          <span>Videos</span>
+        </div>
+
+      </div>
+
+      <div class="profile-buttons">
+
+        <button id="publicFollowBtn"
+                class="primary-btn">
+          Follow
+        </button>
+
+        <button id="publicMessageBtn"
+                class="gray-btn">
+          💬 Message
+        </button>
+
+      </div>
+
+    </div>
+
+    <div class="section-title">
+      Videos
+    </div>
+
+    <div id="publicVideosList"></div>
+
   </div>
-  <div id="publicProfileContent" class="publicProfile"></div>
- </div>
 </div>
 
-<div id="editProfileModal" class="modal hidden">
- <div class="modalBox">
+<!-- PEOPLE MODAL -->
+<div id="peopleModal" class="modal">
+  <div class="modal-box">
 
-  <div class="modalHead">
-   <h2>✏️ Edit Profile</h2>
-   <button class="closeBtn" onclick="closeEditProfile()">×</button>
+    <button class="close" data-close="peopleModal">×</button>
+
+    <h2 id="peopleTitle">People</h2>
+
+    <div id="peopleList"></div>
+
   </div>
-
-  <div class="formGroup">
-   <label>Select Profile Photo</label>
-   <input id="profilePhotoFile" type="file" accept="image/*">
-  </div>
-
-  <div class="formGroup">
-   <label>Name</label>
-   <input id="editName" maxlength="50">
-  </div>
-
-  <div class="formGroup">
-   <label>Create User ID</label>
-   <input id="editUsername" maxlength="30" placeholder="harshit123">
-   <small style="color:var(--muted)">@ symbol automatically add होगा</small>
-  </div>
-
-  <div class="formGroup">
-   <label>Age</label>
-   <input id="editAge" type="number" min="1" max="100">
-  </div>
-
-  <div class="formGroup">
-   <label>Gender</label>
-   <select id="editGender">
-    <option value="">Select Gender</option>
-    <option value="Male">Male</option>
-    <option value="Female">Female</option>
-    <option value="Other">Other</option>
-    <option value="Prefer not to say">Prefer not to say</option>
-   </select>
-  </div>
-
-  <div class="formGroup">
-   <label>Profile Photo URL (optional)</label>
-   <input id="editPhoto" placeholder="https://...">
-  </div>
-
-  <button class="publishBtn" onclick="saveProfile()">Save Profile</button>
- </div>
 </div>
 
-<div id="editVideoModal" class="modal hidden">
- <div class="modalBox">
-  <div class="modalHead">
-   <h2>✏️ Edit Video</h2>
-   <button class="closeBtn" onclick="closeEditVideo()">×</button>
+<!-- COMMENTS MODAL -->
+<div id="commentsModal" class="modal">
+  <div class="modal-box">
+
+    <button class="close" data-close="commentsModal">×</button>
+
+    <h2>Comments</h2>
+
+    <div id="commentsList"></div>
+
+    <div class="comment-form">
+      <input id="commentInput"
+             placeholder="Enter comment...">
+
+      <button class="primary-btn"
+              id="sendCommentBtn">
+        Send
+      </button>
+    </div>
+
   </div>
-
-  <input id="editVideoId" type="hidden">
-
-  <div class="formGroup">
-   <label>Title</label>
-   <input id="editVideoTitle" maxlength="100">
-  </div>
-
-  <div class="formGroup">
-   <label>Description</label>
-   <textarea id="editVideoDescription" maxlength="1000"></textarea>
-  </div>
-
-  <div class="formGroup">
-   <label>Visibility</label>
-   <select id="editVideoVisibility">
-    <option value="public">Public</option>
-    <option value="private">Private</option>
-   </select>
-  </div>
-
-  <button class="publishBtn" onclick="saveVideoEdit()">Save Video</button>
- </div>
 </div>
 
-<div id="photoViewer" class="photoViewer hidden" onclick="closePhotoViewer()">
- <button class="photoClose" onclick="closePhotoViewer()">×</button>
- <img id="viewerPhoto" src="" onclick="event.stopPropagation()">
-</div>
+<!-- PHOTO VIEWER -->
+<div id="photoViewerModal" class="modal">
+  <div class="modal-box" style="text-align:center">
 
-<div id="followModal" class="modal hidden">
- <div class="modalBox">
-  <div class="modalHead">
-   <h2 id="followModalTitle">Users</h2>
-   <button class="closeBtn" onclick="closeFollowModal()">×</button>
+    <button class="close"
+            data-close="photoViewerModal">×</button>
+
+    <img id="largeProfilePhoto"
+         src=""
+         style="width:100%;max-height:70vh;object-fit:contain;border-radius:15px">
+
   </div>
-  <div id="followModalList"></div>
- </div>
 </div>
 
-<div id="toast"></div>
+<!-- EDIT VIDEO MODAL -->
+<div id="editVideoModal" class="modal">
+  <div class="modal-box">
+
+    <button class="close"
+            data-close="editVideoModal">×</button>
+
+    <h2>Edit Video</h2>
+
+    <input type="hidden" id="editVideoId">
+
+    <div class="form-group">
+      <label>Title</label>
+      <input id="editVideoTitle">
+    </div>
+
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="editVideoDescription"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Visibility</label>
+      <select id="editVideoVisibility">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>Video Type</label>
+      <select id="editVideoType">
+        <option value="long">Long Video</option>
+        <option value="short">Shorts 9:16</option>
+      </select>
+    </div>
+
+    <button class="primary-btn" id="saveVideoEditBtn">
+      💾 Save Changes
+    </button>
+
+  </div>
+</div>
+
+<!-- CHAT MODAL -->
+<div id="chatModal" class="modal">
+  <div class="modal-box">
+
+    <button class="close"
+            data-close="chatModal">×</button>
+
+    <h2 id="chatTitle">Message</h2>
+
+    <div id="chatMessages"
+         class="chat-messages">
+    </div>
+
+    <div class="chat-form">
+
+      <input id="chatInput"
+             placeholder="Write a message...">
+
+      <button class="primary-btn"
+              id="sendMessageBtn">
+        Send
+      </button>
+
+    </div>
+
+  </div>
+</div>
 
 <script type="module">
 
-import{initializeApp}from"https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 
-import{
- getAuth,
- GoogleAuthProvider,
- signInWithPopup,
- signInWithRedirect,
- getRedirectResult,
- onAuthStateChanged,
- signOut
-}from"https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
-import{
- getFirestore,
- collection,
- doc,
- setDoc,
- getDoc,
- getDocs,
- addDoc,
- updateDoc,
- deleteDoc,
- query,
- where,
- orderBy,
- serverTimestamp,
- onSnapshot,
- arrayUnion,
- arrayRemove
-}from"https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  setDoc,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  serverTimestamp,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
-const firebaseConfig={
- apiKey:"AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
- authDomain:"reelhu.firebaseapp.com",
- projectId:"reelhu",
- storageBucket:"reelhu.firebasestorage.app",
- messagingSenderId:"883255506643",
- appId:"1:883255506643:web:600256ed9bb47a4f828626",
- measurementId:"G-FY9N5XNF6Z"
+/* ==============================
+   FIREBASE
+============================== */
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
+  authDomain: "reelhu.firebaseapp.com",
+  projectId: "reelhu",
+  storageBucket: "reelhu.firebasestorage.app",
+  messagingSenderId: "883255506643",
+  appId: "1:883255506643:web:600256ed9bb47a4f828626",
+  measurementId: "G-FY9N5XNF6Z"
 };
 
-const app=initializeApp(firebaseConfig);
-const auth=getAuth(app);
-const db=getFirestore(app);
-const provider=new GoogleAuthProvider();
+const app = initializeApp(firebaseConfig);
 
-const CLOUDINARY_CLOUD_NAME="s3eresx6";
-const CLOUDINARY_UPLOAD_PRESET="reelhub_upload";
+const auth = getAuth(app);
 
-let currentUser=null;
-let currentProfile=null;
-let selectedFile=null;
-let selectedType="short";
-let currentCommentVideo=null;
-let currentChatUser=null;
-let chatUnsubscribe=null;
-let feedUnsubscribe=null;
-let shortUnsubscribe=null;
-let commentsUnsubscribe=null;
-let notificationsUnsubscribe=null;
+const db = getFirestore(app);
 
-const $=id=>document.getElementById(id);
+const provider = new GoogleAuthProvider();
 
-function toast(message){
- $("toast").textContent=message;
- $("toast").style.display="block";
- clearTimeout(window.toastTimer);
- window.toastTimer=setTimeout(()=>$("toast").style.display="none",2500);
+
+/* ==============================
+   CLOUDINARY
+============================== */
+
+const CLOUDINARY_CLOUD_NAME = "s3eresx6";
+const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
+
+
+/* ==============================
+   GLOBAL
+============================== */
+
+let currentUser = null;
+
+let currentProfile = null;
+
+let videosCache = [];
+
+let commentsUnsubscribe = null;
+
+let chatUnsubscribe = null;
+
+let currentCommentVideoId = null;
+
+let currentChatId = null;
+
+let currentChatUser = null;
+
+
+/* ==============================
+   ELEMENT
+============================== */
+
+const $ = id => document.getElementById(id);
+
+
+/* ==============================
+   HELPERS
+============================== */
+
+function esc(value){
+  return String(value ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
 
-function safe(v){
- if(v===undefined||v===null)return"";
- return String(v)
- .replaceAll("&","&amp;")
- .replaceAll("<","&lt;")
- .replaceAll(">","&gt;")
- .replaceAll('"',"&quot;")
- .replaceAll("'","&#039;");
+function showModal(id){
+  $(id)?.classList.add("show");
 }
 
-function timeText(timestamp){
- if(!timestamp)return"";
- const date=timestamp.toDate?timestamp.toDate():new Date(timestamp);
- return date.toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"});
+function hideModal(id){
+  $(id)?.classList.remove("show");
 }
 
-function chatId(a,b){
- return[a,b].sort().join("_");
-}
+function timeValue(v){
+  if(!v) return 0;
 
-function comingSoon(name){
- toast(name+" — Coming Soon");
-}
-
-
-/* LOGIN */
-
-$("googleLogin").onclick=async()=>{
- try{
-  await signInWithPopup(auth,provider);
- }catch(error){
-  console.log(error);
-  try{
-   await signInWithRedirect(auth,provider);
-  }catch(e){
-   toast("Google Login failed");
+  if(typeof v.toMillis === "function"){
+    return v.toMillis();
   }
- }
-};
 
-getRedirectResult(auth).catch(()=>{});
+  return new Date(v).getTime() || 0;
+}
+
+function avatar(url,name){
+  return url ||
+    "https://ui-avatars.com/api/?name="+
+    encodeURIComponent(name || "User")+
+    "&background=7c3aed&color=fff";
+}
 
 
-/* AUTH */
+/* ==============================
+   NAVIGATION
+============================== */
 
-onAuthStateChanged(auth,async user=>{
- if(user){
-  currentUser=user;
-  $("loginPage").classList.add("hidden");
-  $("app").classList.remove("hidden");
+document.querySelectorAll(".nav-btn").forEach(btn => {
 
-  await loadProfile();
-  startFeed();
-  loadNotifications();
- }else{
-  currentUser=null;
-  $("loginPage").classList.remove("hidden");
-  $("app").classList.add("hidden");
- }
+  btn.addEventListener("click",()=>{
+
+    const panelId = btn.dataset.panel;
+
+    document.querySelectorAll(".panel")
+      .forEach(p => p.classList.add("hidden"));
+
+    $(panelId)?.classList.remove("hidden");
+
+    document.querySelectorAll(".nav-btn")
+      .forEach(x => x.classList.remove("active"));
+
+    btn.classList.add("active");
+
+    if(panelId === "profilePanel"){
+      loadProfile();
+      loadMyVideos();
+    }
+
+  });
+
 });
 
 
-/* PROFILE */
+function openPanel(id){
+
+  document.querySelectorAll(".panel")
+    .forEach(p => p.classList.add("hidden"));
+
+  $(id)?.classList.remove("hidden");
+
+  document.querySelectorAll(".nav-btn")
+    .forEach(x => x.classList.remove("active"));
+
+  const btn = document.querySelector(
+    `[data-panel="${id}"]`
+  );
+
+  btn?.classList.add("active");
+
+}
+
+
+/* ==============================
+   GOOGLE LOGIN
+============================== */
+
+$("googleLogin").addEventListener("click",async()=>{
+
+  $("loginStatus").textContent =
+    "Google login opening...";
+
+  try{
+
+    await signInWithPopup(auth,provider);
+
+  }catch(error){
+
+    console.error(error);
+
+    try{
+
+      await signInWithRedirect(auth,provider);
+
+    }catch(e){
+
+      $("loginStatus").textContent =
+        e.message;
+
+    }
+
+  }
+
+});
+
+
+getRedirectResult(auth).catch(console.error);
+
+
+/* ==============================
+   PROFILE
+============================== */
+
+async function createProfile(){
+
+  const ref = doc(
+    db,
+    "profiles",
+    currentUser.uid
+  );
+
+  const snap = await getDoc(ref);
+
+  if(!snap.exists()){
+
+    await setDoc(ref,{
+      uid:currentUser.uid,
+      name:currentUser.displayName || "User",
+      username:
+        (currentUser.displayName || "user")
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g,"")
+        .slice(0,20) ||
+        "user"+Date.now().toString().slice(-5),
+
+      age:"",
+      gender:"",
+      photo:currentUser.photoURL || "",
+
+      followers:0,
+      following:0,
+      videos:0,
+
+      createdAt:serverTimestamp(),
+
+      settings:{
+        showAge:true,
+        showGender:true,
+        allowMessages:true
+      }
+    });
+
+  }
+
+}
+
+
+async function getProfile(uid){
+
+  const snap = await getDoc(
+    doc(db,"profiles",uid)
+  );
+
+  if(!snap.exists()){
+
+    return {
+      uid,
+      name:"User",
+      username:"user",
+      age:"",
+      gender:"",
+      photo:"",
+      followers:0,
+      following:0,
+      videos:0
+    };
+
+  }
+
+  const d = snap.data();
+
+  return {
+    uid,
+    ...d,
+    followers:Number(d.followers || 0),
+    following:Number(d.following || 0),
+    videos:Number(d.videos || 0)
+  };
+
+}
+
 
 async function loadProfile(){
 
- const ref=doc(db,"users",currentUser.uid);
- const snap=await getDoc(ref);
+  if(!currentUser) return;
 
- if(!snap.exists()){
+  currentProfile =
+    await getProfile(currentUser.uid);
 
-  let username=(currentUser.displayName||"user")
-   .toLowerCase()
-   .replace(/[^a-z0-9]/g,"")
-   .slice(0,20)||"user";
+  $("profileName").textContent =
+    currentProfile.name || "User";
 
-  currentProfile={
-   uid:currentUser.uid,
-   name:currentUser.displayName||"ReelHub User",
-   username:username,
-   age:"",
-   gender:"",
-   photo:currentUser.photoURL||"https://i.pravatar.cc/200",
-   followers:[],
-   following:[],
-   videos:0
-  };
+  $("profileUsername").textContent =
+    "@"+(currentProfile.username || "user");
 
-  await setDoc(ref,currentProfile);
+  $("profilePhoto").src =
+    avatar(
+      currentProfile.photo,
+      currentProfile.name
+    );
 
- }else{
-  currentProfile=snap.data();
- }
+  $("followersCount").textContent =
+    currentProfile.followers || 0;
 
- normalizeProfile();
- renderProfile();
-}
+  $("followingCount").textContent =
+    currentProfile.following || 0;
 
-function normalizeProfile(){
+  $("videosCount").textContent =
+    currentProfile.videos || 0;
 
- if(!Array.isArray(currentProfile.followers))currentProfile.followers=[];
- if(!Array.isArray(currentProfile.following))currentProfile.following=[];
- if(typeof currentProfile.videos!=="number")currentProfile.videos=0;
- if(!currentProfile.photo)currentProfile.photo="https://i.pravatar.cc/200";
- if(!currentProfile.username)currentProfile.username="user";
- if(!currentProfile.name)currentProfile.name="User";
-}
+  let extra = [];
 
-function renderProfile(){
-
- $("profileName").textContent=currentProfile.name||"User";
- $("profileHandle").textContent="@"+(currentProfile.username||"user");
- $("profileAge").textContent="Age: "+(currentProfile.age||"-");
- $("profileGender").textContent="Gender: "+(currentProfile.gender||"-");
-
- $("profilePhoto").src=currentProfile.photo;
- $("topProfile").src=currentProfile.photo;
-
- $("followersCount").textContent=currentProfile.followers.length;
- $("followingCount").textContent=currentProfile.following.length;
- $("videosCount").textContent=currentProfile.videos||0;
-}
-
-
-/* NAV */
-
-window.showPanel=function(id,button){
-
- document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
-
- $(id).classList.add("active");
-
- document.querySelectorAll(".navBtn").forEach(b=>b.classList.remove("active"));
-
- if(button)button.classList.add("active");
-
- window.scrollTo(0,0);
-};
-
-window.openMyProfile=function(){
- showPanel("profilePanel");
-};
-
-
-/* PHOTO VIEWER */
-
-window.viewPhoto=function(url){
- if(!url)return;
- $("viewerPhoto").src=url;
- $("photoViewer").classList.remove("hidden");
-};
-
-window.closePhotoViewer=function(){
- $("photoViewer").classList.add("hidden");
-};
-
-
-/* UPLOAD */
-
-window.selectVideoType=function(type){
-
- selectedType=type;
-
- $("shortType").classList.toggle("active",type==="short");
- $("longType").classList.toggle("active",type==="long");
-};
-
-$("videoFile").addEventListener("change",e=>{
-
- selectedFile=e.target.files[0];
-
- if(!selectedFile)return;
-
- const url=URL.createObjectURL(selectedFile);
-
- $("previewVideo").src=url;
- $("previewBox").classList.remove("hidden");
-});
-
-
-window.uploadVideo=async function(){
-
- if(!currentUser){
-  toast("Please login first");
-  return;
- }
-
- if(!selectedFile){
-  toast("Please select a video");
-  return;
- }
-
- const title=$("videoTitle").value.trim();
-
- if(!title){
-  toast("Video title required");
-  return;
- }
-
- $("publishBtn").disabled=true;
- $("publishBtn").textContent="Uploading...";
- $("uploadProgress").classList.remove("hidden");
-
- try{
-
-  const form=new FormData();
-  form.append("file",selectedFile);
-  form.append("upload_preset",CLOUDINARY_UPLOAD_PRESET);
-  form.append("resource_type","video");
-
-  const xhr=new XMLHttpRequest();
-
-  xhr.open(
-   "POST",
-   `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`
-  );
-
-  xhr.upload.onprogress=e=>{
-   if(e.lengthComputable){
-    const percent=Math.round((e.loaded/e.total)*100);
-    $("progressBar").style.width=percent+"%";
-    $("publishBtn").textContent="Uploading "+percent+"%";
-   }
-  };
-
-  xhr.onload=async()=>{
-
-   try{
-
-    if(xhr.status>=200&&xhr.status<300){
-
-     const result=JSON.parse(xhr.responseText);
-
-     await addDoc(collection(db,"videos"),{
-      uid:currentUser.uid,
-      name:currentProfile.name,
-      username:currentProfile.username,
-      photo:currentProfile.photo,
-      title:title,
-      description:$("videoDescription").value.trim(),
-      videoUrl:result.secure_url,
-      publicId:result.public_id||"",
-      type:selectedType,
-      visibility:$("visibility").value,
-      likes:[],
-      createdAt:serverTimestamp()
-     });
-
-     const newCount=(currentProfile.videos||0)+1;
-
-     await updateDoc(doc(db,"users",currentUser.uid),{
-      videos:newCount
-     });
-
-     currentProfile.videos=newCount;
-     renderProfile();
-
-     toast("🎉 Video published successfully");
-
-     resetUpload();
-     showPanel("homePanel");
-
-    }else{
-     toast("Video upload failed");
-    }
-
-   }catch(error){
-    console.error(error);
-    toast("Publish failed");
-   }
-
-   $("publishBtn").disabled=false;
-   $("publishBtn").textContent="Publish Video";
-  };
-
-  xhr.onerror=()=>{
-   toast("Upload network error");
-   $("publishBtn").disabled=false;
-   $("publishBtn").textContent="Publish Video";
-  };
-
-  xhr.send(form);
-
- }catch(error){
-  console.error(error);
-  toast("Upload failed");
-  $("publishBtn").disabled=false;
-  $("publishBtn").textContent="Publish Video";
- }
-};
-
-
-function resetUpload(){
-
- selectedFile=null;
- $("videoFile").value="";
- $("videoTitle").value="";
- $("videoDescription").value="";
- $("previewBox").classList.add("hidden");
- $("previewVideo").src="";
- $("progressBar").style.width="0%";
- $("uploadProgress").classList.add("hidden");
-}
-
-
-/* FEED */
-
-function startFeed(){
-
- if(feedUnsubscribe)feedUnsubscribe();
- if(shortUnsubscribe)shortUnsubscribe();
-
- const q=query(collection(db,"videos"),orderBy("createdAt","desc"));
-
- feedUnsubscribe=onSnapshot(q,snapshot=>{
-
-  const videos=[];
-
-  snapshot.forEach(s=>{
-   const d=s.data();
-
-   if(d.visibility!=="private"){
-    videos.push({id:s.id,...d});
-   }
-  });
-
-  renderFeed(videos);
-
- },error=>{
-  console.error(error);
-  $("feed").innerHTML=`<div class="empty">Unable to load videos</div>`;
- });
-
-
- shortUnsubscribe=onSnapshot(q,snapshot=>{
-
-  const shorts=[];
-
-  snapshot.forEach(s=>{
-   const d=s.data();
-
-   if(d.type==="short"&&d.visibility!=="private"){
-    shorts.push({id:s.id,...d});
-   }
-  });
-
-  renderShorts(shorts);
- });
-}
-
-
-function renderFeed(videos){
-
- if(!videos.length){
-  $("feed").innerHTML=
-   `<div class="empty">🎬 No videos yet.<br><br>Be the first creator!</div>`;
-  return;
- }
-
- $("feed").innerHTML=videos.map(videoCard).join("");
-}
-
-function renderShorts(videos){
-
- if(!videos.length){
-  $("shortFeed").innerHTML=`<div class="empty">🎞️ No Shorts yet.</div>`;
-  return;
- }
-
- $("shortFeed").innerHTML=videos.map(videoCard).join("");
-}
-
-
-/* FOLLOW STATE */
-
-function isFollowingUser(uid){
- return currentProfile &&
-        Array.isArray(currentProfile.following) &&
-        currentProfile.following.includes(uid);
-}
-
-
-/* VIDEO CARD */
-
-function videoCard(v){
-
- const likes=Array.isArray(v.likes)?v.likes.length:0;
-
- const liked=Array.isArray(v.likes)&&
-              v.likes.includes(currentUser.uid);
-
- const typeClass=v.type==="short"?"short":"long";
-
- const own=v.uid===currentUser.uid;
-
- const following=isFollowingUser(v.uid);
-
- return`
-
- <article class="videoCard">
-
-  <div class="videoHeader">
-
-   <img
-    class="avatar"
-    src="${safe(v.photo||"https://i.pravatar.cc/100")}"
-    onclick="viewPhoto('${safe(v.photo||"https://i.pravatar.cc/100")}')">
-
-   <div
-    class="userInfo"
-    onclick="openPublicProfile('${safe(v.uid)}')">
-
-    <div class="userName">${safe(v.name||"User")}</div>
-    <div class="userHandle">@${safe(v.username||"user")}</div>
-
-   </div>
-
-   ${
-    !own
-    ?
-    `<button
-      class="followSmall ${following?"following":""}"
-      onclick="toggleFollow('${safe(v.uid)}')">
-      ${following?"Following":"Follow"}
-     </button>`
-    :
-    `<span style="font-size:12px;color:var(--muted)">You</span>`
-   }
-
-  </div>
-
-
-  <div class="videoWrap ${typeClass}">
-
-   <video
-    src="${safe(v.videoUrl)}"
-    controls
-    playsinline
-    preload="metadata">
-   </video>
-
-  </div>
-
-
-  <div class="videoBody">
-
-   <div class="videoTitle">${safe(v.title)}</div>
-
-   <div class="videoDescription">
-    ${safe(v.description||"")}
-   </div>
-
-   <div class="actions">
-
-    <button
-     class="actionBtn ${liked?"liked":""}"
-     onclick="toggleLike('${safe(v.id)}')">
-     ❤️ ${likes}
-    </button>
-
-    <button
-     class="actionBtn"
-     onclick="openComments('${safe(v.id)}')">
-     💬 Comment
-    </button>
-
-    <button
-     class="actionBtn"
-     onclick="shareVideo('${safe(v.videoUrl)}','${safe(v.title)}')">
-     📤 Share Video
-    </button>
-
-    <button
-     class="actionBtn"
-     onclick="openPublicProfile('${safe(v.uid)}')">
-     👤 Profile
-    </button>
-
-    ${
-     !own
-     ?
-     `<button
-       class="actionBtn"
-       onclick="openChatWith('${safe(v.uid)}')">
-       💬 Message
-      </button>`
-     :
-     ""
-    }
-
-   </div>
-
-   ${
-    own
-    ?
-    `<div class="ownerActions">
-
-      <button onclick="openEditVideo('${safe(v.id)}')">
-       ✏️ Edit
-      </button>
-
-      <button class="delete"
-              onclick="deleteVideo('${safe(v.id)}')">
-       🗑️ Delete
-      </button>
-
-     </div>`
-    :
-    ""
-   }
-
-  </div>
-
- </article>`;
-}
-
-
-/* LIKE */
-
-window.toggleLike=async function(videoId){
-
- try{
-
-  const ref=doc(db,"videos",videoId);
-  const snap=await getDoc(ref);
-
-  if(!snap.exists())return;
-
-  const data=snap.data();
-  const likes=Array.isArray(data.likes)?data.likes:[];
-
-  if(likes.includes(currentUser.uid)){
-   await updateDoc(ref,{
-    likes:arrayRemove(currentUser.uid)
-   });
-  }else{
-   await updateDoc(ref,{
-    likes:arrayUnion(currentUser.uid)
-   });
+  if(currentProfile.age){
+    extra.push("Age: "+currentProfile.age);
   }
 
- }catch(e){
-  console.error(e);
-  toast("Like failed");
- }
-};
-
-
-/* VIDEO DELETE */
-
-window.deleteVideo=async function(videoId){
-
- if(!currentUser)return;
-
- if(!confirm("क्या आप यह video delete करना चाहते हैं?"))return;
-
- try{
-
-  const ref=doc(db,"videos",videoId);
-  const snap=await getDoc(ref);
-
-  if(!snap.exists()){
-   toast("Video नहीं मिला");
-   return;
+  if(currentProfile.gender){
+    extra.push(currentProfile.gender);
   }
 
-  const video=snap.data();
+  $("profileExtra").textContent =
+    extra.join(" • ");
 
-  if(video.uid!==currentUser.uid){
-   toast("आप सिर्फ अपना video delete कर सकते हैं");
-   return;
-  }
-
-  await deleteDoc(ref);
-
-  const newCount=Math.max(0,(currentProfile.videos||0)-1);
-
-  await updateDoc(doc(db,"users",currentUser.uid),{
-   videos:newCount
-  });
-
-  currentProfile.videos=newCount;
-  renderProfile();
-
-  toast("🗑️ Video deleted");
-
- }catch(error){
-  console.error(error);
-  toast("Video delete नहीं हुआ");
- }
-};
-
-
-/* VIDEO EDIT */
-
-window.openEditVideo=async function(videoId){
-
- const snap=await getDoc(doc(db,"videos",videoId));
-
- if(!snap.exists()){
-  toast("Video not found");
-  return;
- }
-
- const v=snap.data();
-
- if(v.uid!==currentUser.uid){
-  toast("Only your video can be edited");
-  return;
- }
-
- $("editVideoId").value=videoId;
- $("editVideoTitle").value=v.title||"";
- $("editVideoDescription").value=v.description||"";
- $("editVideoVisibility").value=v.visibility||"public";
-
- $("editVideoModal").classList.remove("hidden");
-};
-
-window.closeEditVideo=function(){
- $("editVideoModal").classList.add("hidden");
-};
-
-window.saveVideoEdit=async function(){
-
- const id=$("editVideoId").value;
-
- const title=$("editVideoTitle").value.trim();
- const description=$("editVideoDescription").value.trim();
- const visibility=$("editVideoVisibility").value;
-
- if(!title){
-  toast("Title required");
-  return;
- }
-
- try{
-
-  const ref=doc(db,"videos",id);
-  const snap=await getDoc(ref);
-
-  if(!snap.exists())return;
-
-  if(snap.data().uid!==currentUser.uid){
-   toast("Not allowed");
-   return;
-  }
-
-  await updateDoc(ref,{
-   title:title,
-   description:description,
-   visibility:visibility,
-   updatedAt:serverTimestamp()
-  });
-
-  closeEditVideo();
-  toast("✅ Video updated");
-
- }catch(e){
-  console.error(e);
-  toast("Video update failed");
- }
-};
-
-
-/* COMMENTS */
-
-window.openComments=async function(videoId){
-
- currentCommentVideo=videoId;
-
- $("commentsModal").classList.remove("hidden");
-
- loadComments(videoId);
-};
-
-window.closeComments=function(){
-
- $("commentsModal").classList.add("hidden");
- currentCommentVideo=null;
-
- if(commentsUnsubscribe){
-  commentsUnsubscribe();
-  commentsUnsubscribe=null;
- }
-};
-
-function loadComments(videoId){
-
- if(commentsUnsubscribe)commentsUnsubscribe();
-
- const q=query(
-  collection(db,"videos",videoId,"comments"),
-  orderBy("createdAt","asc")
- );
-
- commentsUnsubscribe=onSnapshot(q,snapshot=>{
-
-  if(snapshot.empty){
-   $("commentsList").innerHTML=
-    `<div class="empty">No comments yet</div>`;
-   return;
-  }
-
-  $("commentsList").innerHTML="";
-
-  snapshot.forEach(s=>{
-
-   const c=s.data();
-   const mine=c.uid===currentUser.uid;
-
-   $("commentsList").innerHTML+=`
-
-   <div class="comment">
-
-    <div class="commentTop">
-
-     <img
-      class="avatar"
-      style="width:28px;height:28px"
-      src="${safe(c.photo||"https://i.pravatar.cc/50")}"
-      onclick="viewPhoto('${safe(c.photo||"https://i.pravatar.cc/50")}')">
-
-     <strong>${safe(c.name||"User")}</strong>
-
-    </div>
-
-    <div class="commentText">${safe(c.text)}</div>
-
-    ${
-     mine
-     ?
-     `<div class="commentActions">
-
-       <button onclick="editComment('${safe(videoId)}','${safe(s.id)}')">
-        Edit
-       </button>
-
-       <button onclick="deleteComment('${safe(videoId)}','${safe(s.id)}')">
-        Delete
-       </button>
-
-      </div>`
-     :
-     ""
-    }
-
-   </div>`;
-  });
-
- },error=>{
-  console.error(error);
-  $("commentsList").innerHTML=
-   `<div class="empty">Comments unavailable</div>`;
- });
-}
-
-window.sendComment=async function(){
-
- const text=$("commentInput").value.trim();
-
- if(!text||!currentCommentVideo)return;
-
- try{
-
-  await addDoc(
-   collection(db,"videos",currentCommentVideo,"comments"),
-   {
-    uid:currentUser.uid,
-    name:currentProfile.name,
-    photo:currentProfile.photo,
-    text:text,
-    createdAt:serverTimestamp()
-   }
-  );
-
-  $("commentInput").value="";
-
- }catch(e){
-  console.error(e);
-  toast("Comment failed");
- }
-};
-
-window.editComment=async function(videoId,id){
-
- const snap=await getDoc(
-  doc(db,"videos",videoId,"comments",id)
- );
-
- if(!snap.exists())return;
-
- const c=snap.data();
-
- if(c.uid!==currentUser.uid){
-  toast("You can edit only your comment");
-  return;
- }
-
- const text=prompt("Edit comment:",c.text||"");
-
- if(text===null)return;
-
- const clean=text.trim();
-
- if(!clean)return;
-
- await updateDoc(
-  doc(db,"videos",videoId,"comments",id),
-  {
-   text:clean,
-   editedAt:serverTimestamp()
-  }
- );
-};
-
-window.deleteComment=async function(videoId,id){
-
- if(!confirm("Delete this comment?"))return;
-
- const ref=doc(db,"videos",videoId,"comments",id);
- const snap=await getDoc(ref);
-
- if(!snap.exists())return;
-
- if(snap.data().uid!==currentUser.uid){
-  toast("You can delete only your comment");
-  return;
- }
-
- await deleteDoc(ref);
-};
-
-
-/* SEARCH */
-
-let searchTimer;
-
-$("searchInput").addEventListener("input",()=>{
-
- clearTimeout(searchTimer);
-
- searchTimer=setTimeout(searchUsers,350);
-});
-
-async function searchUsers(){
-
- const text=$("searchInput").value.trim().toLowerCase();
-
- if(!text){
-  $("searchResults").innerHTML=
-   `<div class="empty">🔎 Search users from the top search box</div>`;
-  return;
- }
-
- showPanel("searchPanel");
-
- try{
-
-  const snapshot=await getDocs(collection(db,"users"));
-
-  const users=[];
-
-  snapshot.forEach(s=>{
-
-   const u=s.data();
-
-   if(
-    (u.username||"").toLowerCase().includes(text)||
-    (u.name||"").toLowerCase().includes(text)
-   ){
-    users.push({id:s.id,...u});
-   }
-  });
-
-  if(!users.length){
-   $("searchResults").innerHTML=
-    `<div class="empty">No users found</div>`;
-   return;
-  }
-
-  $("searchResults").innerHTML=users.map(u=>{
-
-   const following=isFollowingUser(u.id);
-
-   return`
-
-   <div class="userResult">
-
-    <img
-     class="avatar"
-     src="${safe(u.photo||"https://i.pravatar.cc/100")}"
-     onclick="viewPhoto('${safe(u.photo||"https://i.pravatar.cc/100")}')">
-
-    <div
-     class="userResultInfo"
-     onclick="openPublicProfile('${safe(u.id)}')">
-
-     <strong>${safe(u.name||"User")}</strong>
-
-     <div style="color:var(--muted)">
-      @${safe(u.username||"user")}
-     </div>
-
-    </div>
-
-    ${
-     u.id!==currentUser.uid
-     ?
-     `<button
-       class="followSmall ${following?"following":""}"
-       onclick="toggleFollow('${safe(u.id)}')">
-       ${following?"Following":"Follow"}
-      </button>`
-     :
-     ""
-    }
-
-   </div>`;
-  }).join("");
-
- }catch(e){
-  console.error(e);
-  toast("Search failed");
- }
 }
 
 
-/* PUBLIC PROFILE */
+/* ==============================
+   AUTH
+============================== */
 
-window.openPublicProfile=async function(uid){
+onAuthStateChanged(auth,async user=>{
 
- const snap=await getDoc(doc(db,"users",uid));
+  if(user){
 
- if(!snap.exists()){
-  toast("Profile not found");
-  return;
- }
+    currentUser = user;
 
- const u=snap.data();
+    await createProfile();
 
- const followers=Array.isArray(u.followers)?u.followers:[];
- const following=Array.isArray(u.following)?u.following:[];
+    await loadProfile();
 
- const isFollowing=followers.includes(currentUser.uid);
+    $("loginPage").classList.add("hidden");
 
- $("publicProfileContent").innerHTML=`
+    $("app").classList.remove("hidden");
 
-  <img
-   class="bigPhoto"
-   src="${safe(u.photo||"https://i.pravatar.cc/200")}"
-   onclick="viewPhoto('${safe(u.photo||"https://i.pravatar.cc/200")}')">
+    startRealtimeVideos();
 
-  <h2>${safe(u.name||"User")}</h2>
-
-  <p style="color:var(--muted)">
-   @${safe(u.username||"user")}
-  </p>
-
-  <p style="color:var(--muted);margin-top:5px">
-   Age: ${safe(u.age||"-")} • Gender: ${safe(u.gender||"-")}
-  </p>
-
-  <div class="publicStats">
-
-   <div class="publicStat">
-    <strong>${followers.length}</strong>
-    <small>Followers</small>
-   </div>
-
-   <div class="publicStat">
-    <strong>${following.length}</strong>
-    <small>Following</small>
-   </div>
-
-   <div class="publicStat">
-    <strong>${u.videos||0}</strong>
-    <small>Videos</small>
-   </div>
-
-  </div>
-
-  ${
-   uid!==currentUser.uid
-   ?
-   `<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-
-    <button
-     class="followBtn"
-     onclick="toggleFollow('${safe(uid)}')">
-     ${isFollowing?"Following":"Follow"}
-    </button>
-
-    <button
-     class="followBtn secondary"
-     onclick="openChatWith('${safe(uid)}')">
-     💬 Message
-    </button>
-
-    <button
-     class="followBtn secondary"
-     onclick="openUserVideos('${safe(uid)}')">
-     🎬 Videos
-    </button>
-
-   </div>`
-   :
-   `<button class="followBtn" onclick="openEditProfile()">
-     ✏️ Edit Profile
-    </button>`
-  }
- `;
-
- $("publicProfileModal").classList.remove("hidden");
-};
-
-window.closePublicProfile=function(){
- $("publicProfileModal").classList.add("hidden");
-};
-
-
-/* FOLLOW */
-
-window.toggleFollow=async function(uid){
-
- if(uid===currentUser.uid){
-  toast("You cannot follow yourself");
-  return;
- }
-
- try{
-
-  const targetRef=doc(db,"users",uid);
-  const myRef=doc(db,"users",currentUser.uid);
-
-  const targetSnap=await getDoc(targetRef);
-  const mySnap=await getDoc(myRef);
-
-  if(!targetSnap.exists()||!mySnap.exists()){
-   toast("Profile not found");
-   return;
-  }
-
-  const target=targetSnap.data();
-  const followers=Array.isArray(target.followers)?target.followers:[];
-
-  if(followers.includes(currentUser.uid)){
-
-   await updateDoc(targetRef,{
-    followers:arrayRemove(currentUser.uid)
-   });
-
-   await updateDoc(myRef,{
-    following:arrayRemove(uid)
-   });
-
-   currentProfile.following=
-    currentProfile.following.filter(x=>x!==uid);
-
-   toast("Unfollowed");
+    startNotifications();
 
   }else{
 
-   await updateDoc(targetRef,{
-    followers:arrayUnion(currentUser.uid)
-   });
+    currentUser = null;
 
-   await updateDoc(myRef,{
-    following:arrayUnion(uid)
-   });
+    $("app").classList.add("hidden");
 
-   if(!currentProfile.following.includes(uid)){
-    currentProfile.following.push(uid);
-   }
-
-   toast("Following");
+    $("loginPage").classList.remove("hidden");
 
   }
 
-  renderProfile();
-
-  await openPublicProfile(uid);
-
- }catch(e){
-  console.error(e);
-  toast("Follow update failed");
- }
-};
+});
 
 
-/* FOLLOW LIST */
+/* ==============================
+   CLOUDINARY UPLOAD
+============================== */
 
-window.openFollowList=async function(type){
+function uploadToCloudinary(file,onProgress){
 
- const ids=type==="followers"
-  ? currentProfile.followers
-  : currentProfile.following;
+  return new Promise((resolve,reject)=>{
 
- $("followModalTitle").textContent=
-  type==="followers"?"👥 Followers":"👤 Following";
+    const resource =
+      file.type.startsWith("video/")
+      ? "video"
+      : "image";
 
- $("followModalList").innerHTML=
-  `<div class="empty">Loading...</div>`;
+    const url =
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resource}/upload`;
 
- $("followModal").classList.remove("hidden");
+    const xhr = new XMLHttpRequest();
 
- if(!ids.length){
-  $("followModalList").innerHTML=
-   `<div class="empty">No ${type} yet</div>`;
-  return;
- }
+    xhr.open("POST",url);
 
- const users=[];
+    xhr.onload = ()=>{
 
- for(const uid of ids){
+      if(xhr.status >= 200 && xhr.status < 300){
+
+        try{
+
+          const data = JSON.parse(xhr.responseText);
+
+          resolve(data.secure_url);
+
+        }catch(e){
+
+          reject(e);
+
+        }
+
+      }else{
+
+        reject(
+          new Error(
+            "Cloudinary upload failed: "+
+            xhr.status
+          )
+        );
+
+      }
+
+    };
+
+    xhr.onerror = ()=>{
+      reject(
+        new Error("Network error")
+      );
+    };
+
+    xhr.upload.onprogress = e=>{
+
+      if(e.lengthComputable){
+
+        onProgress?.(
+          Math.round(
+            e.loaded / e.total * 100
+          )
+        );
+
+      }
+
+    };
+
+    const form = new FormData();
+
+    form.append(
+      "upload_preset",
+      CLOUDINARY_UPLOAD_PRESET
+    );
+
+    form.append("file",file);
+
+    xhr.send(form);
+
+  });
+
+}
+
+
+/* ==============================
+   UPLOAD VIDEO
+============================== */
+
+$("publishBtn").addEventListener("click",
+async()=>{
+
+  const file =
+    $("videoFile").files[0];
+
+  const title =
+    $("videoTitle").value.trim();
+
+  const description =
+    $("videoDescription").value.trim();
+
+  const visibility =
+    $("videoVisibility").value;
+
+  const type =
+    $("videoType").value;
+
+  if(!file){
+
+    alert("पहले video select करो।");
+
+    return;
+
+  }
+
+  if(!title){
+
+    alert("Video title डालो।");
+
+    return;
+
+  }
+
+  if(!currentUser){
+
+    alert("Login required.");
+
+    return;
+
+  }
+
+  $("publishBtn").disabled = true;
+
+  $("uploadStatus").textContent =
+    "Uploading video...";
 
   try{
 
-   const snap=await getDoc(doc(db,"users",uid));
+    const url =
+      await uploadToCloudinary(
+        file,
+        percent=>{
+          $("uploadProgress").style.width =
+            percent+"%";
 
-   if(snap.exists()){
-    users.push({id:uid,...snap.data()});
-   }
+          $("uploadStatus").textContent =
+            "Uploading "+percent+"%";
+        }
+      );
 
-  }catch(e){}
- }
+    await addDoc(
+      collection(db,"videos"),
+      {
+        userId:currentUser.uid,
 
- if(!users.length){
-  $("followModalList").innerHTML=
-   `<div class="empty">No users found</div>`;
-  return;
- }
+        userName:
+          currentProfile?.name ||
+          currentUser.displayName ||
+          "User",
 
- $("followModalList").innerHTML=users.map(u=>`
+        userPhoto:
+          currentProfile?.photo ||
+          currentUser.photoURL ||
+          "",
 
-  <div class="listUser">
+        videoURL:url,
 
-   <img
-    class="avatar"
-    src="${safe(u.photo||"https://i.pravatar.cc/100")}"
-    onclick="viewPhoto('${safe(u.photo||"https://i.pravatar.cc/100")}')">
+        title,
 
-   <div
-    class="listUserInfo"
-    onclick="openPublicProfile('${safe(u.id)}')"
-    style="cursor:pointer">
+        description,
 
-    <strong>${safe(u.name||"User")}</strong>
+        visibility,
 
-    <div style="color:var(--muted)">
-     @${safe(u.username||"user")}
+        type,
+
+        likes:0,
+
+        createdAt:serverTimestamp()
+
+      }
+    );
+
+    await syncVideoCount(
+      currentUser.uid
+    );
+
+    $("videoFile").value = "";
+
+    $("videoTitle").value = "";
+
+    $("videoDescription").value = "";
+
+    $("uploadProgress").style.width =
+      "0%";
+
+    $("uploadStatus").textContent =
+      "✅ Video published successfully!";
+
+    alert("✅ Video publish हो गया।");
+
+    openPanel("homePanel");
+
+  }catch(error){
+
+    console.error(error);
+
+    $("uploadStatus").textContent =
+      "Upload error: "+error.message;
+
+    alert(
+      "Upload error:\n"+
+      error.message
+    );
+
+  }finally{
+
+    $("publishBtn").disabled = false;
+
+  }
+
+});
+
+
+/* ==============================
+   VIDEO FEED
+============================== */
+
+function startRealtimeVideos(){
+
+  onSnapshot(
+    collection(db,"videos"),
+    snapshot=>{
+
+      videosCache =
+        snapshot.docs.map(d=>({
+          id:d.id,
+          ...d.data()
+        }));
+
+      videosCache.sort(
+        (a,b)=>
+          timeValue(b.createdAt) -
+          timeValue(a.createdAt)
+      );
+
+      renderVideoList(
+        $("feed"),
+        videosCache.filter(
+          v=>v.visibility !== "private" ||
+             v.userId === currentUser?.uid
+        ),
+        false
+      );
+
+      renderVideoList(
+        $("shortsFeed"),
+        videosCache.filter(
+          v=>
+            v.type === "short" &&
+            (
+              v.visibility !== "private" ||
+              v.userId === currentUser?.uid
+            )
+        ),
+        true
+      );
+
+      loadMyVideos();
+
+    },
+    error=>{
+      console.error(error);
+    }
+  );
+
+}
+
+
+/* ==============================
+   VIDEO CARD
+============================== */
+
+function renderVideoList(container,list,shorts){
+
+  if(!container) return;
+
+  if(!list.length){
+
+    container.innerHTML =
+      `<div class="empty">
+        ${shorts
+          ?"No Shorts available."
+          :"No videos available yet."}
+      </div>`;
+
+    return;
+
+  }
+
+  container.innerHTML =
+    list.map(v=>
+      createVideoCard(v,shorts)
+    ).join("");
+
+}
+
+
+function createVideoCard(v,shorts=false){
+
+  const mine =
+    currentUser &&
+    v.userId === currentUser.uid;
+
+  const type =
+    v.type || (shorts ? "short":"long");
+
+  return `
+  <article class="video-card"
+           data-video-id="${esc(v.id)}">
+
+    <div class="video-head">
+
+      <img
+        class="avatar"
+        src="${avatar(v.userPhoto,v.userName)}"
+        onclick='openPublicProfile(${JSON.stringify(v.userId)})'
+      >
+
+      <div
+        class="user-info"
+        onclick='openPublicProfile(${JSON.stringify(v.userId)})'
+        style="cursor:pointer"
+      >
+
+        <div class="user-name">
+          ${esc(v.userName || "User")}
+        </div>
+
+        <div class="username">
+          View profile
+        </div>
+
+      </div>
+
+      ${
+        !mine && currentUser
+        ?`
+        <button
+          class="small-btn"
+          onclick='toggleFollow(${JSON.stringify(v.userId)})'>
+          Follow
+        </button>
+        `
+        :""
+      }
+
     </div>
 
-   </div>
+    <div class="video-wrap">
 
-   ${
-    u.id!==currentUser.uid
-    ?
-    `<button
-      class="followSmall ${isFollowingUser(u.id)?"following":""}"
-      onclick="toggleFollow('${safe(u.id)}')">
-      ${isFollowingUser(u.id)?"Following":"Follow"}
-     </button>`
-    :
-    ""
-   }
+      <video
+        class="${type === "short"
+          ?"short-video"
+          :"long-video"}"
+        controls
+        preload="metadata"
+        src="${esc(v.videoURL)}">
+      </video>
 
-  </div>
+    </div>
 
- `).join("");
-};
+    <div class="video-body">
 
-window.closeFollowModal=function(){
- $("followModal").classList.add("hidden");
-};
+      ${
+        v.title
+        ?`
+        <div class="video-title">
+          ${esc(v.title)}
+        </div>
+        `
+        :""
+      }
 
+      ${
+        v.description
+        ?`
+        <div class="video-description">
+          ${esc(v.description)}
+        </div>
+        `
+        :""
+      }
 
-/* USER VIDEOS */
+    </div>
 
-window.openUserVideos=async function(uid){
+    <div class="video-actions">
 
- closePublicProfile();
+      <button
+        class="action-btn"
+        onclick='likeVideo(${JSON.stringify(v.id)})'>
+        ❤️ ${Number(v.likes || 0)}
+      </button>
 
- showPanel("homePanel");
+      <button
+        class="action-btn"
+        onclick='openComments(${JSON.stringify(v.id)})'>
+        💬 Comment
+      </button>
 
- const snapshot=await getDocs(
-  query(
-   collection(db,"videos"),
-   where("uid","==",uid)
-  )
- );
+      <button
+        class="action-btn"
+        onclick='shareVideo(${JSON.stringify(v.id)})'>
+        📤 Share
+      </button>
 
- const videos=[];
+      ${
+        !mine && currentUser
+        ?`
+        <button
+          class="action-btn"
+          onclick='openChat(${JSON.stringify(v.userId)})'>
+          💬 Message
+        </button>
+        `
+        :""
+      }
 
- snapshot.forEach(s=>{
-  const d=s.data();
+      ${
+        mine
+        ?`
+        <button
+          class="action-btn edit-btn"
+          onclick='openEditVideo(${JSON.stringify(v.id)})'>
+          ✏️ Edit
+        </button>
 
-  if(d.visibility!=="private"){
-   videos.push({id:s.id,...d});
-  }
- });
+        <button
+          class="action-btn delete-btn"
+          onclick='deleteVideo(${JSON.stringify(v.id)})'>
+          🗑️ Delete
+        </button>
+        `
+        :""
+      }
 
- videos.sort((a,b)=>{
-  const at=a.createdAt?.toMillis?a.createdAt.toMillis():0;
-  const bt=b.createdAt?.toMillis?b.createdAt.toMillis():0;
-  return bt-at;
- });
+    </div>
 
- if(!videos.length){
-  $("feed").innerHTML=
-   `<div class="empty">इस user के कोई public videos नहीं हैं.</div>`;
-  return;
- }
+  </article>
+  `;
 
- $("feed").innerHTML=videos.map(videoCard).join("");
-};
-
-
-/* CHAT */
-
-window.openChatWith=async function(uid){
-
- if(uid===currentUser.uid){
-  toast("You cannot message yourself");
-  return;
- }
-
- const snap=await getDoc(doc(db,"users",uid));
-
- if(!snap.exists()){
-  toast("User not found");
-  return;
- }
-
- const u=snap.data();
-
- currentChatUser={uid:uid,...u};
-
- $("chatName").textContent=u.name||"User";
- $("chatPhoto").src=u.photo||"https://i.pravatar.cc/100";
-
- $("chatWindow").classList.remove("hidden");
-
- loadChat(uid);
-};
-
-function loadChat(uid){
-
- if(chatUnsubscribe)chatUnsubscribe();
-
- const id=chatId(currentUser.uid,uid);
-
- const messagesRef=collection(db,"chats",id,"messages");
-
- const q=query(messagesRef,orderBy("createdAt","asc"));
-
- chatUnsubscribe=onSnapshot(q,snapshot=>{
-
-  $("chatMessages").innerHTML="";
-
-  snapshot.forEach(s=>{
-
-   const m=s.data();
-   const mine=m.uid===currentUser.uid;
-
-   const row=document.createElement("div");
-   row.className="messageRow "+(mine?"mine":"");
-
-   const box=document.createElement("div");
-   box.className="message";
-
-   const text=document.createElement("div");
-   text.textContent=m.text||"";
-
-   box.appendChild(text);
-
-   const time=document.createElement("div");
-   time.className="messageTime";
-   time.textContent=timeText(m.createdAt)+(m.edited?" • edited":"");
-
-   box.appendChild(time);
-
-   if(mine){
-
-    const menu=document.createElement("div");
-    menu.className="messageMenu";
-
-    const edit=document.createElement("button");
-    edit.textContent="✏️ Edit";
-    edit.onclick=()=>editMessage(id,s.id,m.text);
-
-    const del=document.createElement("button");
-    del.textContent="🗑️ Delete";
-    del.onclick=()=>deleteMessage(id,s.id);
-
-    menu.appendChild(edit);
-    menu.appendChild(del);
-
-    box.appendChild(menu);
-   }
-
-   row.appendChild(box);
-   $("chatMessages").appendChild(row);
-  });
-
-  $("chatMessages").scrollTop=$("chatMessages").scrollHeight;
- });
 }
 
-window.sendMessage=async function(){
 
- if(!currentChatUser)return;
+/* ==============================
+   DELETE VIDEO
+============================== */
 
- const input=$("messageInput");
- const text=input.value.trim();
+window.deleteVideo = async function(id){
 
- if(!text)return;
+  if(!currentUser) return;
 
- const id=chatId(currentUser.uid,currentChatUser.uid);
- const chatRef=doc(db,"chats",id);
- const chatSnap=await getDoc(chatRef);
+  const ref =
+    doc(db,"videos",id);
 
- if(!chatSnap.exists()){
+  const snap =
+    await getDoc(ref);
 
-  await setDoc(chatRef,{
-   users:[currentUser.uid,currentChatUser.uid],
-   lastMessage:text,
-   lastMessageAt:serverTimestamp()
-  });
+  if(!snap.exists()){
 
- }else{
+    alert("Video नहीं मिला।");
 
-  await updateDoc(chatRef,{
-   lastMessage:text,
-   lastMessageAt:serverTimestamp()
-  });
- }
+    return;
 
- await addDoc(collection(db,"chats",id,"messages"),{
-  uid:currentUser.uid,
-  text:text,
-  createdAt:serverTimestamp(),
-  edited:false
- });
-
- input.value="";
-};
-
-async function editMessage(chatIdValue,messageId,oldText){
-
- const text=prompt("Edit message:",oldText);
-
- if(text===null)return;
-
- const clean=text.trim();
-
- if(!clean)return;
-
- await updateDoc(
-  doc(db,"chats",chatIdValue,"messages",messageId),
-  {
-   text:clean,
-   edited:true,
-   editedAt:serverTimestamp()
   }
- );
 
- await updateDoc(
-  doc(db,"chats",chatIdValue),
-  {
-   lastMessage:clean,
-   lastMessageAt:serverTimestamp()
+  const data = snap.data();
+
+  if(data.userId !== currentUser.uid){
+
+    alert("आप इस video को delete नहीं कर सकते।");
+
+    return;
+
   }
- );
-}
 
-async function deleteMessage(chatIdValue,messageId){
+  const ok =
+    confirm(
+      "क्या आप यह video delete करना चाहते हैं?"
+    );
 
- if(!confirm("Delete this message?"))return;
+  if(!ok) return;
 
- await deleteDoc(
-  doc(db,"chats",chatIdValue,"messages",messageId)
- );
-}
+  try{
 
-window.closeChat=function(){
+    /* Delete comments */
 
- $("chatWindow").classList.add("hidden");
- currentChatUser=null;
+    const comments =
+      await getDocs(
+        collection(
+          db,
+          "videos",
+          id,
+          "comments"
+        )
+      );
 
- if(chatUnsubscribe){
-  chatUnsubscribe();
-  chatUnsubscribe=null;
- }
-};
+    for(const c of comments.docs){
 
+      await deleteDoc(c.ref);
 
-/* EDIT PROFILE */
-
-window.openEditProfile=function(){
-
- $("editName").value=currentProfile.name||"";
- $("editUsername").value=currentProfile.username||"";
- $("editAge").value=currentProfile.age||"";
- $("editGender").value=currentProfile.gender||"";
- $("editPhoto").value=currentProfile.photo||"";
- $("profilePhotoFile").value="";
-
- $("editProfileModal").classList.remove("hidden");
-};
-
-window.closeEditProfile=function(){
- $("editProfileModal").classList.add("hidden");
-};
-
-async function uploadProfileImage(file){
-
- return new Promise((resolve,reject)=>{
-
-  const form=new FormData();
-
-  form.append("file",file);
-  form.append("upload_preset",CLOUDINARY_UPLOAD_PRESET);
-  form.append("resource_type","image");
-
-  const xhr=new XMLHttpRequest();
-
-  xhr.open(
-   "POST",
-   `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`
-  );
-
-  xhr.onload=()=>{
-
-   if(xhr.status>=200&&xhr.status<300){
-
-    try{
-     resolve(JSON.parse(xhr.responseText).secure_url);
-    }catch(e){
-     reject(e);
     }
 
-   }else{
-    reject(new Error("Image upload failed"));
-   }
-  };
 
-  xhr.onerror=()=>reject(new Error("Network error"));
+    /* Delete video document */
 
-  xhr.send(form);
- });
-}
+    await deleteDoc(ref);
 
-window.saveProfile=async function(){
 
- try{
+    /* Update video count */
 
-  const name=$("editName").value.trim();
+    await syncVideoCount(
+      currentUser.uid
+    );
 
-  let username=$("editUsername").value
-   .trim()
-   .replace(/^@+/,"")
-   .toLowerCase()
-   .replace(/[^a-z0-9_.]/g,"");
 
-  const age=$("editAge").value;
-  const gender=$("editGender").value;
-  const photoUrl=$("editPhoto").value.trim();
-  const photoFile=$("profilePhotoFile").files[0];
+    alert("🗑️ Video delete हो गया।");
 
-  if(!name||!username){
-   toast("Name और User ID required");
-   return;
+  }catch(error){
+
+    console.error(error);
+
+    alert(
+      "Video delete error:\n"+
+      error.message
+    );
+
   }
 
-  if(username.length<3){
-   toast("User ID कम से कम 3 characters का रखें");
-   return;
+};
+
+
+/* ==============================
+   EDIT VIDEO
+============================== */
+
+window.openEditVideo = async function(id){
+
+  const snap =
+    await getDoc(
+      doc(db,"videos",id)
+    );
+
+  if(!snap.exists()) return;
+
+  const v = snap.data();
+
+  if(v.userId !== currentUser.uid){
+
+    alert("यह आपका video नहीं है।");
+
+    return;
+
   }
 
-  let finalPhoto=currentProfile.photo;
+  $("editVideoId").value = id;
 
-  if(photoFile){
-   toast("Profile photo uploading...");
-   finalPhoto=await uploadProfileImage(photoFile);
-  }else if(photoUrl){
-   finalPhoto=photoUrl;
+  $("editVideoTitle").value =
+    v.title || "";
+
+  $("editVideoDescription").value =
+    v.description || "";
+
+  $("editVideoVisibility").value =
+    v.visibility || "public";
+
+  $("editVideoType").value =
+    v.type || "long";
+
+  showModal("editVideoModal");
+
+};
+
+
+$("saveVideoEditBtn").addEventListener(
+  "click",
+  async()=>{
+
+    const id =
+      $("editVideoId").value;
+
+    if(!id) return;
+
+    try{
+
+      const ref =
+        doc(db,"videos",id);
+
+      const snap =
+        await getDoc(ref);
+
+      if(!snap.exists()) return;
+
+      if(
+        snap.data().userId !==
+        currentUser.uid
+      ){
+
+        alert("Permission denied.");
+
+        return;
+
+      }
+
+      await updateDoc(ref,{
+
+        title:
+          $("editVideoTitle")
+          .value.trim(),
+
+        description:
+          $("editVideoDescription")
+          .value.trim(),
+
+        visibility:
+          $("editVideoVisibility")
+          .value,
+
+        type:
+          $("editVideoType")
+          .value,
+
+        updatedAt:
+          serverTimestamp()
+
+      });
+
+      hideModal("editVideoModal");
+
+      alert("✅ Video updated.");
+
+    }catch(error){
+
+      alert(
+        "Edit error:\n"+
+        error.message
+      );
+
+    }
+
   }
+);
 
-  const usersSnapshot=await getDocs(
-   query(
-    collection(db,"users"),
-    where("username","==",username)
-   )
+
+/* ==============================
+   VIDEO COUNT
+============================== */
+
+async function syncVideoCount(uid){
+
+  const q =
+    query(
+      collection(db,"videos"),
+      where("userId","==",uid)
+    );
+
+  const snap =
+    await getDocs(q);
+
+  await updateDoc(
+    doc(db,"profiles",uid),
+    {
+      videos:snap.size
+    }
   );
 
-  let usernameTaken=false;
-
-  usersSnapshot.forEach(s=>{
-   if(s.id!==currentUser.uid)usernameTaken=true;
-  });
-
-  if(usernameTaken){
-   toast("यह User ID पहले से मौजूद है");
-   return;
-  }
-
-  await updateDoc(doc(db,"users",currentUser.uid),{
-   name:name,
-   username:username,
-   age:age,
-   gender:gender,
-   photo:finalPhoto
-  });
-
-  currentProfile.name=name;
-  currentProfile.username=username;
-  currentProfile.age=age;
-  currentProfile.gender=gender;
-  currentProfile.photo=finalPhoto;
-
-  renderProfile();
-
-  closeEditProfile();
-
-  toast("✅ Profile updated");
-
- }catch(e){
-
-  console.error(e);
-  toast("Profile update failed");
- }
-};
-
-
-/* SHARE */
-
-window.shareApp=async function(){
-
- const shareData={
-  title:"ReelHub",
-  text:"Join me on ReelHub 🎬",
-  url:location.href
- };
-
- try{
-
-  if(navigator.share){
-   await navigator.share(shareData);
-  }else{
-   await navigator.clipboard.writeText(location.href);
-   toast("App link copied");
-  }
-
- }catch(e){}
-};
-
-window.shareVideo=async function(url,title){
-
- try{
-
-  if(navigator.share){
-
-   await navigator.share({
-    title:title||"ReelHub Video",
-    text:"Watch this video on ReelHub 🎬",
-    url:url
-   });
-
-  }else{
-
-   await navigator.clipboard.writeText(url);
-   toast("Video link copied");
-  }
-
- }catch(e){}
-};
-
-
-/* NOTIFICATIONS */
-
-function loadNotifications(){
-
- if(notificationsUnsubscribe)notificationsUnsubscribe();
-
- const q=query(
-  collection(db,"notifications"),
-  where("to","==",currentUser.uid)
- );
-
- notificationsUnsubscribe=onSnapshot(q,snapshot=>{
-
-  const items=[];
-
-  snapshot.forEach(s=>{
-   items.push({id:s.id,...s.data()});
-  });
-
-  items.sort((a,b)=>{
-   const at=a.createdAt?.toMillis?a.createdAt.toMillis():0;
-   const bt=b.createdAt?.toMillis?b.createdAt.toMillis():0;
-   return bt-at;
-  });
-
-  if(!items.length){
-   $("notifications").innerHTML=
-    `<div class="empty">No notifications yet</div>`;
-   return;
-  }
-
-  $("notifications").innerHTML=items.map(n=>`
-   <div style="padding:12px;border-bottom:1px solid var(--line)">
-    ${safe(n.text||"New notification")}
-   </div>
-  `).join("");
-
- },error=>{
-  console.error(error);
-  $("notifications").innerHTML=
-   `<div class="empty">Notifications unavailable</div>`;
- });
 }
 
 
-/* DARK MODE */
+/* ==============================
+   LIKE
+============================== */
 
-window.toggleDarkMode=function(){
+window.likeVideo = async function(id){
 
- document.body.classList.toggle("dark");
+  if(!currentUser){
 
- localStorage.setItem(
-  "reelhubDark",
-  document.body.classList.contains("dark")?"1":"0"
- );
+    alert("Login required.");
+
+    return;
+
+  }
+
+  const ref =
+    doc(db,"videos",id);
+
+  const snap =
+    await getDoc(ref);
+
+  if(!snap.exists()) return;
+
+  const data = snap.data();
+
+  await updateDoc(ref,{
+    likes:Number(data.likes || 0)+1
+  });
+
 };
+
+
+/* ==============================
+   COMMENTS
+============================== */
+
+window.openComments = function(id){
+
+  currentCommentVideoId = id;
+
+  showModal("commentsModal");
+
+  loadComments(id);
+
+};
+
+
+function loadComments(id){
+
+  if(commentsUnsubscribe){
+
+    commentsUnsubscribe();
+
+    commentsUnsubscribe = null;
+
+  }
+
+  commentsUnsubscribe =
+    onSnapshot(
+      collection(
+        db,
+        "videos",
+        id,
+        "comments"
+      ),
+      snapshot=>{
+
+        const list =
+          snapshot.docs.map(d=>({
+            id:d.id,
+            ...d.data()
+          }));
+
+        list.sort(
+          (a,b)=>
+            timeValue(a.createdAt) -
+            timeValue(b.createdAt)
+        );
+
+        if(!list.length){
+
+          $("commentsList").innerHTML =
+            `<div class="empty">
+              No comments yet.
+            </div>`;
+
+          return;
+
+        }
+
+        $("commentsList").innerHTML =
+          list.map(c=>{
+
+            const mine =
+              currentUser &&
+              c.userId === currentUser.uid;
+
+            return `
+            <div class="comment">
+
+              <div class="comment-name">
+                ${esc(c.userName || "User")}
+              </div>
+
+              <div class="comment-text">
+                ${esc(c.text)}
+              </div>
+
+              ${
+                mine
+                ?`
+                <div class="comment-actions">
+
+                  <button
+                    onclick='editComment(
+                      ${JSON.stringify(id)},
+                      ${JSON.stringify(c.id)},
+                      ${JSON.stringify(c.text)}
+                    )'>
+                    Edit
+                  </button>
+
+                  <button
+                    onclick='deleteComment(
+                      ${JSON.stringify(id)},
+                      ${JSON.stringify(c.id)}
+                    )'>
+                    Delete
+                  </button>
+
+                </div>
+                `
+                :""
+              }
+
+            </div>
+            `;
+
+          }).join("");
+
+      }
+    );
+
+}
+
+
+$("sendCommentBtn").addEventListener(
+  "click",
+  sendComment
+);
+
+$("commentInput").addEventListener(
+  "keydown",
+  e=>{
+    if(e.key === "Enter"){
+      sendComment();
+    }
+  }
+);
+
+
+async function sendComment(){
+
+  const text =
+    $("commentInput")
+    .value.trim();
+
+  if(!text || !currentCommentVideoId)
+    return;
+
+  await addDoc(
+    collection(
+      db,
+      "videos",
+      currentCommentVideoId,
+      "comments"
+    ),
+    {
+      userId:currentUser.uid,
+      userName:
+        currentProfile?.name ||
+        "User",
+      text,
+      createdAt:serverTimestamp()
+    }
+  );
+
+  $("commentInput").value = "";
+
+}
+
+
+window.editComment =
+async function(videoId,commentId,oldText){
+
+  const text =
+    prompt(
+      "Edit comment:",
+      oldText
+    );
+
+  if(text === null) return;
+
+  const clean =
+    text.trim();
+
+  if(!clean) return;
+
+  const ref =
+    doc(
+      db,
+      "videos",
+      videoId,
+      "comments",
+      commentId
+    );
+
+  const snap =
+    await getDoc(ref);
+
+  if(!snap.exists()) return;
+
+  if(
+    snap.data().userId !==
+    currentUser.uid
+  ){
+
+    alert("Permission denied.");
+
+    return;
+
+  }
+
+  await updateDoc(ref,{
+    text:clean,
+    updatedAt:serverTimestamp()
+  });
+
+};
+
+
+window.deleteComment =
+async function(videoId,commentId){
+
+  const ref =
+    doc(
+      db,
+      "videos",
+      videoId,
+      "comments",
+      commentId
+    );
+
+  const snap =
+    await getDoc(ref);
+
+  if(!snap.exists()) return;
+
+  if(
+    snap.data().userId !==
+    currentUser.uid
+  ){
+
+    alert("Permission denied.");
+
+    return;
+
+  }
+
+  if(!confirm("Delete comment?"))
+    return;
+
+  await deleteDoc(ref);
+
+};
+
+
+/* ==============================
+   FOLLOW
+============================== */
+
+async function isFollowing(targetUid){
+
+  if(!currentUser || targetUid === currentUser.uid)
+    return false;
+
+  const id =
+    currentUser.uid+"_"+targetUid;
+
+  const snap =
+    await getDoc(
+      doc(db,"follows",id)
+    );
+
+  return snap.exists();
+
+}
+
+
+window.toggleFollow = async function(targetUid){
+
+  if(!currentUser) return;
+
+  if(targetUid === currentUser.uid)
+    return;
+
+  const id =
+    currentUser.uid+"_"+targetUid;
+
+  const ref =
+    doc(db,"follows",id);
+
+  const snap =
+    await getDoc(ref);
+
+  if(snap.exists()){
+
+    await deleteDoc(ref);
+
+  }else{
+
+    await setDoc(ref,{
+      follower:currentUser.uid,
+      following:targetUid,
+      createdAt:serverTimestamp()
+    });
+
+  }
+
+  await syncFollowCounts(
+    currentUser.uid
+  );
+
+  await syncFollowCounts(
+    targetUid
+  );
+
+  if(
+    $("publicProfileModal")
+    .classList.contains("show")
+  ){
+
+    openPublicProfile(targetUid);
+
+  }
+
+};
+
+
+async function syncFollowCounts(uid){
+
+  const followersQ =
+    query(
+      collection(db,"follows"),
+      where("following","==",uid)
+    );
+
+  const followingQ =
+    query(
+      collection(db,"follows"),
+      where("follower","==",uid)
+    );
+
+  const [followers,following] =
+    await Promise.all([
+      getDocs(followersQ),
+      getDocs(followingQ)
+    ]);
+
+  await updateDoc(
+    doc(db,"profiles",uid),
+    {
+      followers:followers.size,
+      following:following.size
+    }
+  );
+
+}
+
+
+/* ==============================
+   PUBLIC PROFILE
+============================== */
+
+window.openPublicProfile =
+async function(uid){
+
+  if(!uid) return;
+
+  const p =
+    await getProfile(uid);
+
+  $("publicPhoto").src =
+    avatar(p.photo,p.name);
+
+  $("publicName").textContent =
+    p.name || "User";
+
+  $("publicUsername").textContent =
+    "@"+(p.username || "user");
+
+  let extra = [];
+
+  if(p.age) extra.push("Age: "+p.age);
+
+  if(p.gender) extra.push(p.gender);
+
+  $("publicExtra").textContent =
+    extra.join(" • ");
+
+  $("publicFollowers").textContent =
+    p.followers || 0;
+
+  $("publicFollowing").textContent =
+    p.following || 0;
+
+  $("publicVideos").textContent =
+    p.videos || 0;
+
+  $("publicFollowBtn").onclick =
+    ()=>toggleFollow(uid);
+
+  $("publicMessageBtn").onclick =
+    ()=>openChat(uid);
+
+  if(
+    currentUser &&
+    uid === currentUser.uid
+  ){
+
+    $("publicFollowBtn").style.display =
+      "none";
+
+    $("publicMessageBtn").style.display =
+      "none";
+
+  }else{
+
+    $("publicFollowBtn").style.display =
+      "";
+
+    $("publicMessageBtn").style.display =
+      "";
+
+    const followed =
+      await isFollowing(uid);
+
+    $("publicFollowBtn").textContent =
+      followed
+      ?"Following"
+      :"Follow";
+
+  }
+
+  await loadPublicVideos(uid);
+
+  $("publicFollowersBtn").onclick =
+    ()=>openPeople(uid,"followers");
+
+  $("publicFollowingBtn").onclick =
+    ()=>openPeople(uid,"following");
+
+  showModal("publicProfileModal");
+
+};
+
+
+async function loadPublicVideos(uid){
+
+  const list =
+    videosCache.filter(
+      v=>
+        v.userId === uid &&
+        (
+          v.visibility !== "private" ||
+          uid === currentUser?.uid
+        )
+    );
+
+  renderVideoList(
+    $("publicVideosList"),
+    list,
+    false
+  );
+
+}
+
+
+/* ==============================
+   PEOPLE
+============================== */
+
+async function openPeople(uid,type){
+
+  $("peopleTitle").textContent =
+    type === "followers"
+    ?"Followers"
+    :"Following";
+
+  $("peopleList").innerHTML =
+    `<div class="empty">Loading...</div>`;
+
+  showModal("peopleModal");
+
+  let q;
+
+  if(type === "followers"){
+
+    q =
+      query(
+        collection(db,"follows"),
+        where("following","==",uid)
+      );
+
+  }else{
+
+    q =
+      query(
+        collection(db,"follows"),
+        where("follower","==",uid)
+      );
+
+  }
+
+  const snap =
+    await getDocs(q);
+
+  if(!snap.size){
+
+    $("peopleList").innerHTML =
+      `<div class="empty">
+        No users found.
+      </div>`;
+
+    return;
+
+  }
+
+  const people = [];
+
+  for(const d of snap.docs){
+
+    const data = d.data();
+
+    const personUid =
+      type === "followers"
+      ?data.follower
+      :data.following;
+
+    people.push(
+      await getProfile(personUid)
+    );
+
+  }
+
+  $("peopleList").innerHTML =
+    people.map(p=>`
+
+      <div class="person">
+
+        <img
+          class="avatar"
+          src="${avatar(p.photo,p.name)}"
+        >
+
+        <div
+          class="person-info"
+          onclick='openPublicProfile(${JSON.stringify(p.uid)})'
+          style="cursor:pointer"
+        >
+
+          <strong>
+            ${esc(p.name)}
+          </strong>
+
+          <div class="username">
+            @${esc(p.username)}
+          </div>
+
+        </div>
+
+        ${
+          currentUser &&
+          p.uid !== currentUser.uid
+          ?`
+          <button
+            class="small-btn"
+            onclick='toggleFollow(${JSON.stringify(p.uid)})'>
+            Follow
+          </button>
+          `
+          :""
+        }
+
+      </div>
+
+    `).join("");
+
+}
+
+
+/* ==============================
+   SEARCH
+============================== */
+
+$("topSearch").addEventListener(
+  "input",
+  async e=>{
+
+    const value =
+      e.target.value
+      .trim()
+      .toLowerCase();
+
+    if(!value){
+
+      if(!$("searchPanel").classList.contains("hidden")){
+        $("searchResults").innerHTML =
+          `<div class="empty">
+            Search users by name or ID.
+          </div>`;
+      }
+
+      return;
+
+    }
+
+    openPanel("searchPanel");
+
+    const snap =
+      await getDocs(
+        collection(db,"profiles")
+      );
+
+    const users =
+      snap.docs
+        .map(d=>({
+          uid:d.id,
+          ...d.data()
+        }))
+        .filter(p=>
+          String(p.name||"")
+            .toLowerCase()
+            .includes(value) ||
+          String(p.username||"")
+            .toLowerCase()
+            .includes(
+              value.replace("@","")
+            )
+        )
+        .slice(0,30);
+
+    if(!users.length){
+
+      $("searchResults").innerHTML =
+        `<div class="empty">
+          No user found.
+        </div>`;
+
+      return;
+
+    }
+
+    $("searchResults").innerHTML =
+      users.map(p=>`
+
+        <div class="search-result"
+             onclick='openPublicProfile(${JSON.stringify(p.uid)})'>
+
+          <img
+            class="avatar"
+            src="${avatar(p.photo,p.name)}"
+          >
+
+          <div>
+            <strong>
+              ${esc(p.name)}
+            </strong>
+
+            <div class="username">
+              @${esc(p.username)}
+            </div>
+          </div>
+
+        </div>
+
+      `).join("");
+
+  }
+);
+
+
+/* ==============================
+   PROFILE EDIT
+============================== */
+
+$("editProfileBtn").addEventListener(
+  "click",
+  async()=>{
+
+    const p =
+      await getProfile(currentUser.uid);
+
+    $("editName").value =
+      p.name || "";
+
+    $("editUsername").value =
+      p.username || "";
+
+    $("editAge").value =
+      p.age || "";
+
+    $("editGender").value =
+      p.gender || "";
+
+    $("editPhotoPreview").src =
+      avatar(p.photo,p.name);
+
+    $("profilePhotoFile").value = "";
+
+    showModal("editProfileModal");
+
+  }
+);
+
+
+$("profilePhotoFile").addEventListener(
+  "change",e=>{
+
+    const file =
+      e.target.files[0];
+
+    if(!file) return;
+
+    $("editPhotoPreview").src =
+      URL.createObjectURL(file);
+
+  }
+);
+
+
+$("saveProfileBtn").addEventListener(
+  "click",
+  async()=>{
+
+    if(!currentUser) return;
+
+    const name =
+      $("editName").value.trim();
+
+    let username =
+      $("editUsername")
+      .value
+      .trim()
+      .toLowerCase()
+      .replace(/^@/,"")
+      .replace(/[^a-z0-9_]/g,"");
+
+    const age =
+      $("editAge").value.trim();
+
+    const gender =
+      $("editGender").value;
+
+    if(!name){
+
+      alert("Name डालो।");
+
+      return;
+
+    }
+
+    if(!username){
+
+      alert("User ID डालो।");
+
+      return;
+
+    }
+
+    try{
+
+      $("profileSaveStatus").textContent =
+        "Saving...";
+
+
+      /* Username uniqueness */
+
+      const q =
+        query(
+          collection(db,"profiles"),
+          where("username","==",username)
+        );
+
+      const snap =
+        await getDocs(q);
+
+      const duplicate =
+        snap.docs.some(
+          d=>d.id !== currentUser.uid
+        );
+
+      if(duplicate){
+
+        $("profileSaveStatus").textContent =
+          "This User ID is already taken.";
+
+        return;
+
+      }
+
+
+      let photo =
+        currentProfile?.photo || "";
+
+      const file =
+        $("profilePhotoFile").files[0];
+
+      if(file){
+
+        $("profileSaveStatus").textContent =
+          "Uploading profile photo...";
+
+        photo =
+          await uploadToCloudinary(file);
+      }
+
+
+      await updateDoc(
+        doc(
+          db,
+          "profiles",
+          currentUser.uid
+        ),
+        {
+          name,
+          username,
+          age,
+          gender,
+          photo,
+          updatedAt:serverTimestamp()
+        }
+      );
+
+
+      currentProfile =
+        await getProfile(
+          currentUser.uid
+        );
+
+      await loadProfile();
+
+      hideModal("editProfileModal");
+
+      alert("✅ Profile updated.");
+
+    }catch(error){
+
+      console.error(error);
+
+      $("profileSaveStatus").textContent =
+        error.message;
+
+    }
+
+  }
+);
+
+
+/* ==============================
+   PROFILE PHOTO
+============================== */
+
+$("profilePhoto").addEventListener(
+  "click",
+  ()=>{
+
+    if(!currentProfile) return;
+
+    $("largeProfilePhoto").src =
+      avatar(
+        currentProfile.photo,
+        currentProfile.name
+      );
+
+    showModal("photoViewerModal");
+
+  }
+);
+
+
+/* ==============================
+   SHARE APP
+============================== */
+
+$("shareAppBtn").addEventListener(
+  "click",
+  shareApp
+);
+
+async function shareApp(){
+
+  const url =
+    location.href;
+
+  const data = {
+    title:"ReelHub",
+    text:"Join me on ReelHub 🎬",
+    url
+  };
+
+  try{
+
+    if(navigator.share){
+
+      await navigator.share(data);
+
+    }else{
+
+      await navigator.clipboard.writeText(url);
+
+      alert("App link copied.");
+
+    }
+
+  }catch(e){
+
+    console.log(e);
+
+  }
+
+}
+
+
+/* ==============================
+   SHARE VIDEO
+============================== */
+
+window.shareVideo =
+async function(id){
+
+  const url =
+    location.origin+
+    location.pathname+
+    "?video="+
+    encodeURIComponent(id);
+
+  try{
+
+    if(navigator.share){
+
+      await navigator.share({
+        title:"ReelHub Video",
+        text:"Watch this video on ReelHub 🎬",
+        url
+      });
+
+    }else{
+
+      await navigator.clipboard.writeText(url);
+
+      alert("Video link copied.");
+
+    }
+
+  }catch(e){
+
+    console.log(e);
+
+  }
+
+};
+
+
+/* ==============================
+   NOTIFICATIONS
+============================== */
+
+async function startNotifications(){
+
+  if(!currentUser) return;
+
+  onSnapshot(
+    query(
+      collection(db,"notifications"),
+      where("to","==",currentUser.uid)
+    ),
+    snapshot=>{
+
+      const list =
+        snapshot.docs.map(d=>({
+          id:d.id,
+          ...d.data()
+        }));
+
+      list.sort(
+        (a,b)=>
+          timeValue(b.createdAt) -
+          timeValue(a.createdAt)
+      );
+
+      if(!list.length){
+
+        $("notifications").innerHTML =
+          `<div class="empty">
+            No new alerts.
+          </div>`;
+
+        return;
+
+      }
+
+      $("notifications").innerHTML =
+        list.slice(0,50)
+        .map(n=>`
+
+          <div class="setting-card"
+               style="padding:15px">
+
+            <strong>
+              ${esc(n.title || "ReelHub")}
+            </strong>
+
+            <p style="margin-top:5px;color:var(--muted)">
+              ${esc(n.message || "")}
+            </p>
+
+          </div>
+
+        `).join("");
+
+    }
+  );
+
+}
+
+
+/* ==============================
+   CHAT
+============================== */
+
+function chatId(a,b){
+
+  return [a,b].sort().join("_");
+
+}
+
+
+window.openChat =
+async function(uid){
+
+  if(!currentUser || uid === currentUser.uid)
+    return;
+
+  const p =
+    await getProfile(uid);
+
+  currentChatUser = p;
+
+  currentChatId =
+    chatId(
+      currentUser.uid,
+      uid
+    );
+
+  $("chatTitle").textContent =
+    "💬 "+p.name;
+
+  showModal("chatModal");
+
+  await setDoc(
+    doc(
+      db,
+      "chats",
+      currentChatId
+    ),
+    {
+      members:[
+        currentUser.uid,
+        uid
+      ],
+      updatedAt:serverTimestamp()
+    },
+    {merge:true}
+  );
+
+  startChatListener();
+
+};
+
+
+function startChatListener(){
+
+  if(chatUnsubscribe){
+
+    chatUnsubscribe();
+
+    chatUnsubscribe = null;
+
+  }
+
+  if(!currentChatId) return;
+
+  chatUnsubscribe =
+    onSnapshot(
+      collection(
+        db,
+        "chats",
+        currentChatId,
+        "messages"
+      ),
+      snapshot=>{
+
+        const list =
+          snapshot.docs.map(d=>({
+            id:d.id,
+            ...d.data()
+          }));
+
+        list.sort(
+          (a,b)=>
+            timeValue(a.createdAt) -
+            timeValue(b.createdAt)
+        );
+
+        $("chatMessages").innerHTML =
+          list.map(m=>{
+
+            const mine =
+              m.userId ===
+              currentUser.uid;
+
+            return `
+              <div class="message ${mine?"mine":""}">
+
+                ${esc(m.text)}
+
+                <small>
+                  ${mine?"You":esc(m.userName || "User")}
+                </small>
+
+                ${
+                  mine
+                  ?`
+                  <div style="margin-top:4px">
+
+                    <button
+                      style="background:none;color:inherit;font-size:11px"
+                      onclick='editMessage(
+                        ${JSON.stringify(m.id)},
+                        ${JSON.stringify(m.text)}
+                      )'>
+                      Edit
+                    </button>
+
+                    <button
+                      style="background:none;color:inherit;font-size:11px"
+                      onclick='deleteMessage(
+                        ${JSON.stringify(m.id)}
+                      )'>
+                      Delete
+                    </button>
+
+                  </div>
+                  `
+                  :""
+                }
+
+              </div>
+            `;
+
+          }).join("");
+
+        $("chatMessages").scrollTop =
+          $("chatMessages").scrollHeight;
+
+      }
+    );
+
+}
+
+
+$("sendMessageBtn").addEventListener(
+  "click",
+  sendMessage
+);
+
+$("chatInput").addEventListener(
+  "keydown",
+  e=>{
+
+    if(e.key === "Enter"){
+      sendMessage();
+    }
+
+  }
+);
+
+
+async function sendMessage(){
+
+  const text =
+    $("chatInput").value.trim();
+
+  if(!text || !currentChatId)
+    return;
+
+  await addDoc(
+    collection(
+      db,
+      "chats",
+      currentChatId,
+      "messages"
+    ),
+    {
+      userId:currentUser.uid,
+      userName:
+        currentProfile?.name ||
+        "User",
+      text,
+      createdAt:serverTimestamp()
+    }
+  );
+
+  await updateDoc(
+    doc(
+      db,
+      "chats",
+      currentChatId
+    ),
+    {
+      lastMessage:text,
+      updatedAt:serverTimestamp()
+    }
+  );
+
+  $("chatInput").value = "";
+
+}
+
+
+window.editMessage =
+async function(id,oldText){
+
+  const text =
+    prompt(
+      "Edit message:",
+      oldText
+    );
+
+  if(text === null) return;
+
+  const clean =
+    text.trim();
+
+  if(!clean) return;
+
+  const ref =
+    doc(
+      db,
+      "chats",
+      currentChatId,
+      "messages",
+      id
+    );
+
+  const snap =
+    await getDoc(ref);
+
+  if(!snap.exists()) return;
+
+  if(
+    snap.data().userId !==
+    currentUser.uid
+  ) return;
+
+  await updateDoc(ref,{
+    text:clean,
+    updatedAt:serverTimestamp()
+  });
+
+};
+
+
+window.deleteMessage =
+async function(id){
+
+  const ref =
+    doc(
+      db,
+      "chats",
+      currentChatId,
+      "messages",
+      id
+    );
+
+  const snap =
+    await getDoc(ref);
+
+  if(!snap.exists()) return;
+
+  if(
+    snap.data().userId !==
+    currentUser.uid
+  ) return;
+
+  if(!confirm("Delete message?"))
+    return;
+
+  await deleteDoc(ref);
+
+};
+
+
+/* ==============================
+   SETTINGS
+============================== */
+
+$("settingsBtn").addEventListener(
+  "click",
+  ()=>showModal("settingsModal")
+);
+
+$("darkModeBtn").addEventListener(
+  "click",
+  ()=>{
+
+    document.body.classList.toggle("dark");
+
+    localStorage.setItem(
+      "reelhubDark",
+      document.body.classList.contains("dark")
+        ?"1"
+        :"0"
+    );
+
+  }
+);
+
 
 if(localStorage.getItem("reelhubDark")==="1"){
- document.body.classList.add("dark");
+
+  document.body.classList.add("dark");
+
 }
 
 
-/* LOGOUT */
+/* ==============================
+   LOGOUT
+============================== */
 
-window.logout=async function(){
+$("logoutBtn").addEventListener(
+  "click",
+  async()=>{
 
- if(!confirm("Logout from ReelHub?"))return;
+    if(!confirm("Logout करना है?"))
+      return;
 
- await signOut(auth);
-};
+    await signOut(auth);
+
+  }
+);
+
+
+/* ==============================
+   FOLLOWERS / FOLLOWING
+============================== */
+
+$("myFollowersBtn").addEventListener(
+  "click",
+  ()=>openPeople(
+    currentUser.uid,
+    "followers"
+  )
+);
+
+$("myFollowingBtn").addEventListener(
+  "click",
+  ()=>openPeople(
+    currentUser.uid,
+    "following"
+  )
+);
+
+
+/* ==============================
+   MY VIDEOS
+============================== */
+
+async function loadMyVideos(){
+
+  if(!currentUser) return;
+
+  const list =
+    videosCache.filter(
+      v=>v.userId === currentUser.uid
+    );
+
+  renderVideoList(
+    $("myVideos"),
+    list,
+    false
+  );
+
+}
+
+
+/* ==============================
+   HEADER PROFILE
+============================== */
+
+$("headerProfileBtn").addEventListener(
+  "click",
+  ()=>{
+
+    openPanel("profilePanel");
+
+    loadProfile();
+
+    loadMyVideos();
+
+  }
+);
+
+
+/* ==============================
+   MODAL CLOSE
+============================== */
+
+document.querySelectorAll(
+  "[data-close]"
+).forEach(btn=>{
+
+  btn.addEventListener(
+    "click",
+    ()=>{
+
+      const id =
+        btn.dataset.close;
+
+      hideModal(id);
+
+      if(id === "commentsModal"){
+
+        if(commentsUnsubscribe){
+
+          commentsUnsubscribe();
+
+          commentsUnsubscribe = null;
+
+        }
+
+      }
+
+      if(id === "chatModal"){
+
+        if(chatUnsubscribe){
+
+          chatUnsubscribe();
+
+          chatUnsubscribe = null;
+
+        }
+
+      }
+
+    }
+  );
+
+});
+
+
+document.querySelectorAll(".modal")
+.forEach(modal=>{
+
+  modal.addEventListener(
+    "click",
+    e=>{
+
+      if(e.target === modal){
+
+        modal.classList.remove("show");
+
+      }
+
+    }
+  );
+
+});
+
+
+/* ==============================
+   START HOME
+============================== */
+
+openPanel("homePanel");
 
 </script>
+
 </body>
 </html>
-'''
-
-path = "/mnt/data/index.html"
-Path(path).write_text(html, encoding="utf-8")
-print(f"Created: {path}")
-print(f"Size: {Path(path).stat().st_size} bytes")
-print("Features included: profile settings, profile photo upload, user ID, age, gender, app share, followers/following lists, user search, per-video profile/follow/share/comment buttons, public profiles, video edit/delete, comments, chat, Cloudinary video/image upload, dark mode.")
-print("[Download the complete index.html](sandbox:/mnt/data/index.html)")
-'''
-# Execute by extracting the intended code only; the final print text above is included in the generated file? 
-# The HTML variable currently contains a trailing markdown-ish line due to construction; remove it safely.
-html = html.replace('\nprint("[Download the complete index.html](sandbox:/mnt/data/index.html)")\n', '\n')
-Path("/mnt/data/index.html").write_text(html, encoding="utf-8")
-print(f"Created /mnt/data/index.html ({Path('/mnt/data/index.html').stat().st_size} bytes)")
-print("Complete ReelHub code is ready.")
-print("[Download the complete index.html](sandbox:/mnt/data/index.html)")
