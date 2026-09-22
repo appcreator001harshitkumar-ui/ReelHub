@@ -1,7 +1,5 @@
 /* ============================================================
-   ReelHub - app.js
-   Complete JavaScript logic for ReelHub app
-   Firebase + Cloudinary + All Features
+   ReelHub - app.js (Final Fixed Version)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -32,11 +30,6 @@ import {
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-
-/* ============================================================
-   FIREBASE CONFIG
-============================================================ */
-
 const firebaseConfig = {
   apiKey: "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
   authDomain: "reelhu.firebaseapp.com",
@@ -54,11 +47,6 @@ const provider = new GoogleAuthProvider();
 
 const CLOUDINARY_CLOUD_NAME = "s3eresx6";
 const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
-
-
-/* ============================================================
-   GLOBAL STATE
-============================================================ */
 
 let currentUser = null;
 let currentProfile = null;
@@ -87,13 +75,7 @@ let selectedPlaylists = new Set();
 let currentPlaylistView = null;
 let deepLinkChecked = false;
 
-
 const $ = id => document.getElementById(id);
-
-
-/* ============================================================
-   HELPER FUNCTIONS
-============================================================ */
 
 function esc(v){
   return String(v ?? "")
@@ -161,11 +143,7 @@ function formatViewsShort(num){
   return (num/1000000000).toFixed(1) + "B";
 }
 
-
-/* ============================================================
-   NAVIGATION
-============================================================ */
-
+/* NAVIGATION */
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", ()=>{
     const panelId = btn.dataset.panel;
@@ -189,6 +167,14 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
     }
 
     if(panelId === "messagesPanel"){
+      // हमेशा inbox से शुरू करें
+      const inbox = $("dmInboxView");
+      const chat = $("dmChatView");
+      if(inbox){ inbox.classList.remove("hidden"); inbox.style.display = "flex"; }
+      if(chat){ chat.classList.add("hidden"); chat.style.display = "none"; }
+      if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
+      currentChatId = null;
+      currentChatUser = null;
       showDMInbox();
     }
 
@@ -212,14 +198,16 @@ function openPanel(id){
     $("mainTopbar")?.classList.remove("hidden");
   }
 
-  if(id === "messagesPanel") showDMInbox();
+  if(id === "messagesPanel"){
+    const inbox = $("dmInboxView");
+    const chat = $("dmChatView");
+    if(inbox){ inbox.classList.remove("hidden"); inbox.style.display = "flex"; }
+    if(chat){ chat.classList.add("hidden"); chat.style.display = "none"; }
+    showDMInbox();
+  }
 }
 
-
-/* ============================================================
-   GOOGLE LOGIN
-============================================================ */
-
+/* LOGIN */
 $("googleLogin")?.addEventListener("click", async()=>{
   $("loginStatus").textContent = "Opening Google...";
   try{
@@ -236,11 +224,7 @@ $("googleLogin")?.addEventListener("click", async()=>{
 
 getRedirectResult(auth).catch(console.error);
 
-
-/* ============================================================
-   PROFILE MANAGEMENT
-============================================================ */
-
+/* PROFILE */
 async function createProfile(){
   const ref = doc(db, "profiles", currentUser.uid);
   const snap = await getDoc(ref);
@@ -322,11 +306,7 @@ async function loadMySaves(){
   }catch(e){ console.error(e); }
 }
 
-
-/* ============================================================
-   AUTH STATE
-============================================================ */
-
+/* AUTH */
 onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
@@ -343,9 +323,7 @@ onAuthStateChanged(auth, async user => {
     startChatsListListener();
     startPlaylistsListener();
 
-    // Deep link check
     setTimeout(checkDeepLink, 1500);
-
   }else{
     currentUser = null;
     currentProfile = null;
@@ -363,11 +341,7 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-
-/* ============================================================
-   CLOUDINARY UPLOAD
-============================================================ */
-
+/* CLOUDINARY */
 function uploadToCloudinary(file, onProgress){
   return new Promise((resolve,reject)=>{
     const resource = file.type.startsWith("video/") ? "video" : "image";
@@ -396,11 +370,7 @@ function uploadToCloudinary(file, onProgress){
   });
 }
 
-
-/* ============================================================
-   UPLOAD UI
-============================================================ */
-
+/* UPLOAD */
 $("dropzone")?.addEventListener("click", ()=> $("videoFile").click());
 
 $("videoFile")?.addEventListener("change", e=>{
@@ -427,11 +397,6 @@ $("typeGroup")?.addEventListener("click", e=>{
   el.classList.add("selected");
   uploadType = el.dataset.value;
 });
-
-
-/* ============================================================
-   UPLOAD VIDEO
-============================================================ */
 
 $("publishBtn")?.addEventListener("click", async()=>{
   const file = $("videoFile").files[0];
@@ -480,7 +445,6 @@ $("publishBtn")?.addEventListener("click", async()=>{
 
     toast("✅ Video published!");
     openPanel("homePanel");
-
   }catch(error){
     console.error(error);
     $("uploadStatus").textContent = "Error: " + error.message;
@@ -490,11 +454,7 @@ $("publishBtn")?.addEventListener("click", async()=>{
   }
 });
 
-
-/* ============================================================
-   REALTIME VIDEOS
-============================================================ */
-
+/* VIDEOS */
 function startRealtimeVideos(){
   if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
 
@@ -517,11 +477,6 @@ function startRealtimeVideos(){
     }
   });
 }
-
-
-/* ============================================================
-   HOME FEED
-============================================================ */
 
 function renderFeed(){
   const feed = $("feed");
@@ -626,11 +581,6 @@ async function updateLikeUI(videoId){
     }
   }catch(e){ console.error(e); }
 }
-
-
-/* ============================================================
-   SHORTS
-============================================================ */
 
 function renderShorts(){
   const container = $("reelsContainer");
@@ -751,15 +701,10 @@ function setupReelsObserver(){
   videos.forEach(v => reelObserver.observe(v));
 }
 
-
-/* ============================================================
-   GLOBAL CLICK HANDLER
-============================================================ */
-
+/* GLOBAL CLICK HANDLER */
 document.addEventListener("click", async (e)=>{
   const t = e.target;
 
-  // Open profile
   const openUser = t.closest(".post-open-user");
   if(openUser){
     e.preventDefault();
@@ -769,7 +714,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Follow
   const followBtn = t.closest('[data-action="follow"]');
   if(followBtn){
     e.preventDefault();
@@ -779,7 +723,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Like
   const likeBtn = t.closest("[data-like-video]");
   if(likeBtn){
     e.preventDefault();
@@ -790,7 +733,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Comment
   const commentBtn = t.closest("[data-comment-video]");
   if(commentBtn){
     e.preventDefault();
@@ -800,7 +742,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Share
   const shareBtn = t.closest("[data-share-video]");
   if(shareBtn){
     e.preventDefault();
@@ -810,7 +751,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Save
   const saveBtn = t.closest("[data-save-video]");
   if(saveBtn){
     e.preventDefault();
@@ -820,7 +760,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Delete video
   const deleteBtn = t.closest("[data-delete-video]");
   if(deleteBtn){
     e.preventDefault();
@@ -830,7 +769,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Edit video
   const editBtn = t.closest("[data-edit-video]");
   if(editBtn){
     e.preventDefault();
@@ -840,7 +778,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Search result open
   const searchOpen = t.closest(".search-open-btn");
   if(searchOpen){
     e.preventDefault();
@@ -853,7 +790,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // People list open
   const peopleOpen = t.closest(".people-open-btn");
   if(peopleOpen){
     e.preventDefault();
@@ -866,7 +802,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Comment edit
   const editC = t.closest("[data-edit-comment]");
   if(editC){
     e.preventDefault();
@@ -879,7 +814,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Comment delete
   const delC = t.closest("[data-delete-comment]");
   if(delC){
     e.preventDefault();
@@ -889,7 +823,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // DM chat open
   const chatItem = t.closest("[data-open-chat]");
   if(chatItem){
     e.preventDefault();
@@ -899,7 +832,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Message edit
   const editM = t.closest("[data-edit-msg]");
   if(editM){
     e.preventDefault();
@@ -908,7 +840,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Message delete
   const delM = t.closest("[data-delete-msg]");
   if(delM){
     e.preventDefault();
@@ -917,7 +848,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Shared video open
   const sharedVid = t.closest("[data-open-shared]");
   if(sharedVid){
     e.preventDefault();
@@ -928,7 +858,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Playlist open
   const openP = t.closest("[data-open-playlist]");
   if(openP){
     e.preventDefault();
@@ -938,7 +867,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Playlist delete
   const delP = t.closest("[data-delete-playlist]");
   if(delP){
     e.preventDefault();
@@ -959,7 +887,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Toggle playlist selection
   const toggleP = t.closest("[data-toggle-playlist]");
   if(toggleP){
     e.preventDefault();
@@ -979,7 +906,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Remove from playlist
   const rmFromP = t.closest("[data-remove-from-playlist]");
   if(rmFromP){
     e.preventDefault();
@@ -996,7 +922,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Open video from playlist
   const openPV = t.closest("[data-playlist-video]");
   if(openPV){
     e.preventDefault();
@@ -1009,7 +934,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Share user chip
   const chip = t.closest("[data-share-user]");
   if(chip){
     e.preventDefault();
@@ -1019,11 +943,7 @@ document.addEventListener("click", async (e)=>{
   }
 });
 
-
-/* ============================================================
-   VIEW COUNT
-============================================================ */
-
+/* VIEW COUNT */
 async function trackView(videoId){
   if(!currentUser || !videoId) return;
 
@@ -1054,11 +974,7 @@ document.addEventListener("play", (e)=>{
   }
 }, true);
 
-
-/* ============================================================
-   LIKE
-============================================================ */
-
+/* LIKE */
 async function toggleLike(videoId, btnEl, isReel=false){
   if(!currentUser){ toast("Login required"); return; }
 
@@ -1089,7 +1005,6 @@ async function toggleLike(videoId, btnEl, isReel=false){
       }
       const likesEl = $("likes-" + videoId);
       if(likesEl) likesEl.textContent = Math.max(0, currentLikes - 1) + " likes";
-
     }else{
       await setDoc(likeRef, {
         userId: currentUser.uid,
@@ -1123,11 +1038,7 @@ async function toggleLike(videoId, btnEl, isReel=false){
   }
 }
 
-
-/* ============================================================
-   SAVE / BOOKMARK
-============================================================ */
-
+/* SAVE */
 async function toggleSave(videoId, btnEl){
   if(!currentUser){ toast("Login required"); return; }
   if(!videoId) return;
@@ -1135,10 +1046,7 @@ async function toggleSave(videoId, btnEl){
   const saveId = currentUser.uid + "_" + videoId;
   const saveRef = doc(db, "saves", saveId);
 
-  if(btnEl){
-    btnEl.disabled = true;
-    btnEl.style.opacity = "0.6";
-  }
+  if(btnEl){ btnEl.disabled = true; btnEl.style.opacity = "0.6"; }
 
   try{
     const snap = await getDoc(saveRef);
@@ -1165,10 +1073,7 @@ async function toggleSave(videoId, btnEl){
     console.error(e);
     toast("Save failed");
   }finally{
-    if(btnEl){
-      btnEl.disabled = false;
-      btnEl.style.opacity = "1";
-    }
+    if(btnEl){ btnEl.disabled = false; btnEl.style.opacity = "1"; }
   }
 }
 
@@ -1180,11 +1085,7 @@ function updateAllSaveButtons(videoId, isSaved){
   });
 }
 
-
-/* ============================================================
-   PROFILE TABS
-============================================================ */
-
+/* PROFILE TABS */
 function updateProfileTabCounts(){
   const vc = $("tabVideosCount");
   const sc = $("tabSavedCount");
@@ -1252,11 +1153,6 @@ function renderAboutTab(){
   container.innerHTML = rows.join("");
 }
 
-
-/* ============================================================
-   SAVED VIDEOS
-============================================================ */
-
 function renderSavedVideos(){
   const container = $("savedVideos");
   if(!container) return;
@@ -1284,24 +1180,14 @@ function renderSavedVideos(){
   container.innerHTML = savedList.map(v => createYTVideoItem(v, v.userId === currentUser?.uid)).join("");
 }
 
-
-/* ============================================================
-   PLAYLIST MANAGEMENT
-============================================================ */
-
+/* PLAYLIST */
 async function loadMyPlaylists(){
   if(!currentUser) return;
-
   try{
-    const q = query(
-      collection(db, "playlists"),
-      where("userId", "==", currentUser.uid)
-    );
-
+    const q = query(collection(db, "playlists"), where("userId", "==", currentUser.uid));
     const snap = await getDocs(q);
     myPlaylistsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     myPlaylistsCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
-
     updateProfileTabCounts();
     renderPlaylistsTab();
   }catch(e){ console.error("loadMyPlaylists:", e); }
@@ -1316,10 +1202,8 @@ function startPlaylistsListener(){
     snapshot=>{
       myPlaylistsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       myPlaylistsCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
-
       updateProfileTabCounts();
       renderPlaylistsTab();
-
       if(currentPlaylistView) renderPlaylistDetail(currentPlaylistView);
     }
   );
@@ -1455,18 +1339,14 @@ async function renderPlaylistDetail(playlistId){
   }
 }
 
-// Create playlist button
 $("createPlaylistBtn")?.addEventListener("click", async()=>{
   if(!currentUser) return;
-
   const name = $("playlistName").value.trim();
   const description = $("playlistDesc").value.trim();
-
   if(!name){ toast("Playlist name डालो"); return; }
 
   try{
     $("createPlaylistBtn").disabled = true;
-
     await addDoc(collection(db, "playlists"), {
       userId: currentUser.uid,
       userName: currentProfile?.name || "User",
@@ -1476,7 +1356,6 @@ $("createPlaylistBtn")?.addEventListener("click", async()=>{
       coverVideoURL: "",
       createdAt: serverTimestamp()
     });
-
     hideModal("createPlaylistModal");
     toast("✅ Playlist created");
   }catch(e){
@@ -1487,7 +1366,6 @@ $("createPlaylistBtn")?.addEventListener("click", async()=>{
   }
 });
 
-// Add to playlist open
 async function openAddToPlaylist(videoId){
   currentPlaylistVideoId = videoId;
   selectedPlaylists = new Set();
@@ -1528,13 +1406,10 @@ async function openAddToPlaylist(videoId){
   }).join("");
 }
 
-// Save to playlists
 $("saveToPlaylistBtn")?.addEventListener("click", async()=>{
   if(!currentPlaylistVideoId) return;
-
   try{
     $("saveToPlaylistBtn").disabled = true;
-
     for(const p of myPlaylistsCache){
       const itemId = p.id + "_" + currentPlaylistVideoId;
       const itemRef = doc(db, "playlists", p.id, "items", itemId);
@@ -1551,7 +1426,6 @@ $("saveToPlaylistBtn")?.addEventListener("click", async()=>{
         if(snap.exists()) await deleteDoc(itemRef);
       }
     }
-
     await syncAllPlaylistCounts();
     hideModal("addToPlaylistModal");
     toast("✅ Playlists updated");
@@ -1573,7 +1447,6 @@ async function syncAllPlaylistCounts(){
         const v = videosCache.find(x => x.id === firstItem.videoId);
         if(v) coverVideoURL = v.videoURL;
       }
-
       await updateDoc(doc(db, "playlists", p.id), {
         videoCount: items.size,
         coverVideoURL: coverVideoURL
@@ -1589,11 +1462,7 @@ $("newPlaylistFromAddBtn")?.addEventListener("click", ()=>{
   showModal("createPlaylistModal");
 });
 
-
-/* ============================================================
-   DEEP LINK
-============================================================ */
-
+/* DEEP LINK */
 function getVideoIdFromURL(){
   const params = new URLSearchParams(location.search);
   return params.get("video");
@@ -1642,11 +1511,7 @@ async function checkDeepLink(){
   await openVideoByDeepLink(vid);
 }
 
-
-/* ============================================================
-   SHARE
-============================================================ */
-
+/* SHARE */
 async function openShareSheet(videoId){
   shareVideoId = videoId;
   showModal("shareSheet");
@@ -1751,11 +1616,7 @@ $("shareNative")?.addEventListener("click", async()=>{
   }catch(e){}
 });
 
-
-/* ============================================================
-   COMMENTS
-============================================================ */
-
+/* COMMENTS */
 function openComments(videoId){
   currentCommentVideoId = videoId;
   showModal("commentsModal");
@@ -1854,11 +1715,7 @@ async function deleteComment(videoId, commentId){
   await deleteDoc(ref);
 }
 
-
-/* ============================================================
-   DELETE / EDIT VIDEO
-============================================================ */
-
+/* DELETE / EDIT VIDEO */
 async function deleteVideo(videoId){
   if(!currentUser) return;
   const ref = doc(db,"videos",videoId);
@@ -1918,11 +1775,7 @@ $("saveVideoEditBtn")?.addEventListener("click", async()=>{
   }catch(e){ toast("Update failed"); }
 });
 
-
-/* ============================================================
-   VIDEO COUNT
-============================================================ */
-
+/* VIDEO COUNT */
 async function syncVideoCount(uid){
   try{
     const q = query(collection(db,"videos"), where("userId","==",uid));
@@ -1936,18 +1789,11 @@ async function syncVideoCount(uid){
   }catch(e){ console.error(e); }
 }
 
-
-/* ============================================================
-   FOLLOW
-============================================================ */
-
+/* FOLLOW */
 async function toggleFollow(targetUid, btnEl){
   if(!currentUser || targetUid === currentUser.uid) return;
 
-  if(btnEl){
-    btnEl.disabled = true;
-    btnEl.style.opacity = "0.6";
-  }
+  if(btnEl){ btnEl.disabled = true; btnEl.style.opacity = "0.6"; }
 
   const id = currentUser.uid + "_" + targetUid;
   const ref = doc(db,"follows",id);
@@ -1996,10 +1842,7 @@ async function toggleFollow(targetUid, btnEl){
     console.error(e);
     toast("Follow failed");
   }finally{
-    if(btnEl){
-      btnEl.disabled = false;
-      btnEl.style.opacity = "1";
-    }
+    if(btnEl){ btnEl.disabled = false; btnEl.style.opacity = "1"; }
   }
 }
 
@@ -2031,11 +1874,7 @@ async function syncFollowCounts(uid){
   }catch(e){ console.error(e); }
 }
 
-
-/* ============================================================
-   PUBLIC PROFILE
-============================================================ */
-
+/* PUBLIC PROFILE */
 async function openPublicProfile(uid){
   if(!uid){ toast("Invalid user"); return; }
 
@@ -2155,11 +1994,7 @@ function createYTVideoItem(v, isMine){
   `;
 }
 
-
-/* ============================================================
-   MY VIDEOS
-============================================================ */
-
+/* MY VIDEOS */
 async function loadMyVideos(){
   if(!currentUser) return;
 
@@ -2180,11 +2015,7 @@ async function loadMyVideos(){
   updateProfileTabCounts();
 }
 
-
-/* ============================================================
-   PEOPLE
-============================================================ */
-
+/* PEOPLE */
 async function openPeople(uid, type){
   if(!uid) return;
 
@@ -2246,11 +2077,7 @@ $("myFollowingBtn")?.addEventListener("click", ()=>{
   if(currentUser) openPeople(currentUser.uid, "following");
 });
 
-
-/* ============================================================
-   SEARCH
-============================================================ */
-
+/* SEARCH */
 $("topSearchBtn")?.addEventListener("click", ()=>{
   showModal("searchModal");
   setTimeout(()=> $("searchInput").focus(), 100);
@@ -2266,10 +2093,7 @@ async function doSearch(value){
   value = value.trim().toLowerCase();
   const container = $("searchResults");
 
-  if(!value){
-    container.innerHTML = "";
-    return;
-  }
+  if(!value){ container.innerHTML = ""; return; }
 
   container.innerHTML = `<div class="yt-empty" style="padding:20px">Searching...</div>`;
 
@@ -2315,11 +2139,7 @@ async function doSearch(value){
   }
 }
 
-
-/* ============================================================
-   EDIT PROFILE
-============================================================ */
-
+/* EDIT PROFILE */
 $("editProfileBtn")?.addEventListener("click", async()=>{
   const p = await getProfile(currentUser.uid);
   $("editName").value = p.name || "";
@@ -2385,11 +2205,7 @@ $("saveProfileBtn")?.addEventListener("click", async()=>{
   }
 });
 
-
-/* ============================================================
-   SETTINGS
-============================================================ */
-
+/* SETTINGS */
 $("settingsBtn")?.addEventListener("click", ()=> showModal("settingsModal"));
 
 $("darkModeBtn")?.addEventListener("click", ()=>{
@@ -2418,11 +2234,7 @@ $("shareAppBtn")?.addEventListener("click", async()=>{
   }catch(e){}
 });
 
-
-/* ============================================================
-   NOTIFICATIONS
-============================================================ */
-
+/* NOTIFICATIONS */
 function startNotifications(){
   if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
   if(!currentUser) return;
@@ -2462,11 +2274,7 @@ function startNotifications(){
 
 $("topAlertsBtn")?.addEventListener("click", ()=> showModal("alertsModal"));
 
-
-/* ============================================================
-   MESSAGES (DM)
-============================================================ */
-
+/* MESSAGES */
 function startChatsListListener(){
   if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
   if(!currentUser) return;
@@ -2485,7 +2293,9 @@ function startChatsListListener(){
         badge.classList.add("hidden");
       }
 
-      if(!$("messagesPanel").classList.contains("hidden")){
+      // हमेशा inbox में update करें
+      const inbox = $("dmInboxView");
+      if(inbox && !inbox.classList.contains("hidden")){
         renderDMInbox();
       }
     }
@@ -2493,10 +2303,22 @@ function startChatsListListener(){
 }
 
 function showDMInbox(){
-  $("dmInboxView")?.classList.remove("hidden");
-  $("dmChatView")?.classList.add("hidden");
+  const inbox = $("dmInboxView");
+  const chat = $("dmChatView");
+  
+  if(inbox){
+    inbox.classList.remove("hidden");
+    inbox.style.display = "flex";
+  }
+  if(chat){
+    chat.classList.add("hidden");
+    chat.style.display = "none";
+  }
 
-  if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
+  if(chatUnsubscribe){ 
+    chatUnsubscribe(); 
+    chatUnsubscribe = null; 
+  }
   currentChatId = null;
   currentChatUser = null;
 
@@ -2549,25 +2371,37 @@ async function openChat(uid){
   currentChatUser = p;
   currentChatId = [currentUser.uid, uid].sort().join("_");
 
-  $("dmChatAvatar").src = avatar(p.photo, p.name);
-  $("dmChatName").textContent = p.name;
+  const avatarEl = $("dmChatAvatar");
+  const nameEl = $("dmChatName");
+  const inbox = $("dmInboxView");
+  const chat = $("dmChatView");
 
-  $("dmInboxView").classList.add("hidden");
-  $("dmChatView").classList.remove("hidden");
+  if(avatarEl) avatarEl.src = avatar(p.photo, p.name);
+  if(nameEl) nameEl.textContent = p.name || "User";
 
-  $("dmChatProfileBtn").onclick = (e)=>{
-    e.preventDefault();
-    e.stopPropagation();
-    openPublicProfile(uid);
-  };
+  if(inbox){ inbox.classList.add("hidden"); inbox.style.display = "none"; }
+  if(chat){ chat.classList.remove("hidden"); chat.style.display = "flex"; }
+
+  const profileBtn = $("dmChatProfileBtn");
+  if(profileBtn){
+    profileBtn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      openPublicProfile(uid);
+    };
+  }
 
   hideModal("publicProfileModal");
   hideModal("searchModal");
 
-  await setDoc(doc(db,"chats",currentChatId), {
-    members: [currentUser.uid, uid],
-    updatedAt: serverTimestamp()
-  }, { merge: true });
+  try{
+    await setDoc(doc(db,"chats",currentChatId), {
+      members: [currentUser.uid, uid],
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  }catch(e){
+    console.error("Chat create error:", e);
+  }
 
   startChatListener();
 }
@@ -2600,6 +2434,7 @@ function startChatListener(){
       list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
 
       const container = $("dmMessages");
+      if(!container) return;
 
       if(!list.length){
         container.innerHTML = `<div class="yt-empty" style="padding:40px 20px;color:var(--muted)">
@@ -2644,6 +2479,9 @@ function startChatListener(){
       }).join("");
 
       container.scrollTop = container.scrollHeight;
+    },
+    error=>{
+      console.error("Chat listener error:", error);
     }
   );
 }
@@ -2695,18 +2533,18 @@ async function deleteMessage(id){
   await deleteDoc(ref);
 }
 
-$("dmBackBtn")?.addEventListener("click", ()=> showDMInbox());
+$("dmBackBtn")?.addEventListener("click", (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  showDMInbox();
+});
 
 $("newMsgBtn")?.addEventListener("click", ()=>{
   showModal("searchModal");
   setTimeout(()=> $("searchInput").focus(), 100);
 });
 
-
-/* ============================================================
-   MODAL CLOSE
-============================================================ */
-
+/* MODAL CLOSE */
 document.querySelectorAll("[data-close]").forEach(btn=>{
   btn.addEventListener("click", (e)=>{
     e.stopPropagation();
@@ -2755,11 +2593,7 @@ $("shareSheet")?.addEventListener("click", e=>{
   }
 });
 
-
-/* ============================================================
-   DM SEARCH FILTER
-============================================================ */
-
+/* DM SEARCH */
 $("dmSearchInput")?.addEventListener("input", e=>{
   const val = e.target.value.toLowerCase().trim();
   document.querySelectorAll("#dmInboxList .dm-inbox-item").forEach(item=>{
@@ -2768,11 +2602,7 @@ $("dmSearchInput")?.addEventListener("input", e=>{
   });
 });
 
-
-/* ============================================================
-   START APP
-============================================================ */
-
+/* START */
 openPanel("homePanel");
 
-console.log("✅ ReelHub loaded successfully!");
+console.log("✅ ReelHub loaded!");
