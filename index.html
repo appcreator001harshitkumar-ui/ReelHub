@@ -459,6 +459,7 @@ button{
   height:100%;
   width:0;
   background:linear-gradient(90deg,#7c3aed,#ec4899);
+  transition:width .2s;
 }
 
 /* MODAL */
@@ -612,6 +613,11 @@ button{
   display:flex;
   align-items:center;
   gap:10px;
+  cursor:pointer;
+}
+
+.search-result:hover{
+  background:var(--bg);
 }
 
 /* EMPTY */
@@ -622,18 +628,26 @@ button{
   color:var(--muted);
 }
 
-/* PROFILE VIDEO GRID */
+/* TOAST */
 
-.profile-video{
-  margin-top:15px;
+.toast{
+  position:fixed;
+  bottom:80px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#111;
+  color:#fff;
+  padding:12px 20px;
+  border-radius:25px;
+  z-index:999;
+  font-size:14px;
+  opacity:0;
+  transition:opacity .3s;
+  pointer-events:none;
 }
 
-.profile-video video{
-  width:100%;
-  border-radius:12px;
-  max-height:300px;
-  object-fit:contain;
-  background:#000;
+.toast.show{
+  opacity:1;
 }
 
 /* RESPONSIVE */
@@ -686,25 +700,21 @@ button{
     </div>
   </header>
 
-  <!-- HOME -->
   <section id="homePanel" class="panel">
     <div class="section-title">Home</div>
     <div id="feed"></div>
   </section>
 
-  <!-- SHORTS -->
   <section id="shortsPanel" class="panel hidden">
     <div class="section-title">Shorts</div>
     <div id="shortsFeed"></div>
   </section>
 
-  <!-- SEARCH -->
   <section id="searchPanel" class="panel hidden">
     <div class="section-title">Search</div>
     <div id="searchResults"></div>
   </section>
 
-  <!-- UPLOAD -->
   <section id="uploadPanel" class="panel hidden">
     <div class="section-title">Upload Video</div>
 
@@ -758,13 +768,11 @@ button{
     </div>
   </section>
 
-  <!-- ALERTS -->
   <section id="alertsPanel" class="panel hidden">
     <div class="section-title">Alerts</div>
     <div id="notifications"></div>
   </section>
 
-  <!-- PROFILE -->
   <section id="profilePanel" class="panel hidden">
 
     <div class="profile-card">
@@ -823,7 +831,6 @@ button{
 
   </section>
 
-  <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
 
     <button class="nav-btn active" data-panel="homePanel">
@@ -855,24 +862,16 @@ button{
 
 </div>
 
-<!-- EDIT PROFILE MODAL -->
+<!-- MODALS -->
 <div id="editProfileModal" class="modal">
   <div class="modal-box">
-
     <button class="close" data-close="editProfileModal">×</button>
-
     <h2>Edit Profile</h2>
 
     <div style="text-align:center;margin:20px 0">
-      <img id="editPhotoPreview"
-           class="profile-photo"
-           src=""
-           alt="Preview">
-
+      <img id="editPhotoPreview" class="profile-photo" src="" alt="Preview">
       <div style="margin-top:10px">
-        <input id="profilePhotoFile"
-               type="file"
-               accept="image/*">
+        <input id="profilePhotoFile" type="file" accept="image/*">
       </div>
     </div>
 
@@ -883,11 +882,8 @@ button{
 
     <div class="form-group">
       <label>User ID</label>
-      <input id="editUsername"
-             placeholder="example: harshit">
-      <small style="color:var(--muted)">
-        @ automatically added
-      </small>
+      <input id="editUsername" placeholder="example: harshit">
+      <small style="color:var(--muted)">@ automatically added</small>
     </div>
 
     <div class="form-group">
@@ -905,196 +901,121 @@ button{
       </select>
     </div>
 
-    <button class="primary-btn" id="saveProfileBtn">
-      💾 Save Profile
-    </button>
+    <button class="primary-btn" id="saveProfileBtn">💾 Save Profile</button>
 
-    <p id="profileSaveStatus"
-       style="margin-top:10px;color:var(--muted)">
-    </p>
-
+    <p id="profileSaveStatus" style="margin-top:10px;color:var(--muted)"></p>
   </div>
 </div>
 
-<!-- SETTINGS MODAL -->
 <div id="settingsModal" class="modal">
   <div class="modal-box">
-
     <button class="close" data-close="settingsModal">×</button>
-
     <h2>Settings</h2>
 
     <div class="setting-card">
-
       <button class="setting-item">
         🔒 Privacy
         <small>Coming Soon</small>
       </button>
-
       <button class="setting-item">
         💰 Monetization
         <small>Coming Soon</small>
       </button>
-
       <button class="setting-item">
         🔔 Notifications
         <small>Coming Soon</small>
       </button>
-
       <button class="setting-item" id="historyBtn">
         🕘 History
         <small>Watch history</small>
       </button>
-
       <button class="setting-item">
         📂 Playlist
         <small>Coming Soon</small>
       </button>
-
       <button class="setting-item">
         ⚙️ Other Settings
         <small>Coming Soon</small>
       </button>
-
       <button class="setting-item" id="darkModeBtn">
         🌙 Dark Mode
         <small>Change appearance</small>
       </button>
-
-      <button class="setting-item" id="logoutBtn"
-              style="color:#ef4444">
+      <button class="setting-item" id="logoutBtn" style="color:#ef4444">
         🚪 Logout
       </button>
-
     </div>
-
   </div>
 </div>
 
-<!-- PUBLIC PROFILE MODAL -->
 <div id="publicProfileModal" class="modal">
   <div class="modal-box">
-
     <button class="close" data-close="publicProfileModal">×</button>
 
     <div style="text-align:center">
-
-      <img id="publicPhoto"
-           class="profile-photo"
-           src=""
-           alt="Profile">
-
-      <div id="publicName"
-           class="profile-name"></div>
-
-      <div id="publicUsername"
-           class="profile-id"></div>
-
-      <div id="publicExtra"
-           style="color:var(--muted);margin-top:6px">
-      </div>
+      <img id="publicPhoto" class="profile-photo" src="" alt="Profile">
+      <div id="publicName" class="profile-name"></div>
+      <div id="publicUsername" class="profile-id"></div>
+      <div id="publicExtra" style="color:var(--muted);margin-top:6px"></div>
 
       <div class="stats">
-
         <div class="stat" id="publicFollowersBtn">
           <strong id="publicFollowers">0</strong>
           <span>Followers</span>
         </div>
-
         <div class="stat" id="publicFollowingBtn">
           <strong id="publicFollowing">0</strong>
           <span>Following</span>
         </div>
-
         <div class="stat">
           <strong id="publicVideos">0</strong>
           <span>Videos</span>
         </div>
-
       </div>
 
       <div class="profile-buttons">
-
-        <button id="publicFollowBtn"
-                class="primary-btn">
-          Follow
-        </button>
-
-        <button id="publicMessageBtn"
-                class="gray-btn">
-          💬 Message
-        </button>
-
+        <button id="publicFollowBtn" class="primary-btn">Follow</button>
+        <button id="publicMessageBtn" class="gray-btn">💬 Message</button>
       </div>
-
     </div>
 
-    <div class="section-title">
-      Videos
-    </div>
-
+    <div class="section-title">Videos</div>
     <div id="publicVideosList"></div>
-
   </div>
 </div>
 
-<!-- PEOPLE MODAL -->
 <div id="peopleModal" class="modal">
   <div class="modal-box">
-
     <button class="close" data-close="peopleModal">×</button>
-
     <h2 id="peopleTitle">People</h2>
-
     <div id="peopleList"></div>
-
   </div>
 </div>
 
-<!-- COMMENTS MODAL -->
 <div id="commentsModal" class="modal">
   <div class="modal-box">
-
     <button class="close" data-close="commentsModal">×</button>
-
     <h2>Comments</h2>
-
     <div id="commentsList"></div>
 
     <div class="comment-form">
-      <input id="commentInput"
-             placeholder="Enter comment...">
-
-      <button class="primary-btn"
-              id="sendCommentBtn">
-        Send
-      </button>
+      <input id="commentInput" placeholder="Enter comment...">
+      <button class="primary-btn" id="sendCommentBtn">Send</button>
     </div>
-
   </div>
 </div>
 
-<!-- PHOTO VIEWER -->
 <div id="photoViewerModal" class="modal">
   <div class="modal-box" style="text-align:center">
-
-    <button class="close"
-            data-close="photoViewerModal">×</button>
-
-    <img id="largeProfilePhoto"
-         src=""
+    <button class="close" data-close="photoViewerModal">×</button>
+    <img id="largeProfilePhoto" src=""
          style="width:100%;max-height:70vh;object-fit:contain;border-radius:15px">
-
   </div>
 </div>
 
-<!-- EDIT VIDEO MODAL -->
 <div id="editVideoModal" class="modal">
   <div class="modal-box">
-
-    <button class="close"
-            data-close="editVideoModal">×</button>
-
+    <button class="close" data-close="editVideoModal">×</button>
     <h2>Edit Video</h2>
 
     <input type="hidden" id="editVideoId">
@@ -1125,40 +1046,25 @@ button{
       </select>
     </div>
 
-    <button class="primary-btn" id="saveVideoEditBtn">
-      💾 Save Changes
-    </button>
-
+    <button class="primary-btn" id="saveVideoEditBtn">💾 Save Changes</button>
   </div>
 </div>
 
-<!-- CHAT MODAL -->
 <div id="chatModal" class="modal">
   <div class="modal-box">
-
-    <button class="close"
-            data-close="chatModal">×</button>
-
+    <button class="close" data-close="chatModal">×</button>
     <h2 id="chatTitle">Message</h2>
-
-    <div id="chatMessages"
-         class="chat-messages">
-    </div>
+    <div id="chatMessages" class="chat-messages"></div>
 
     <div class="chat-form">
-
-      <input id="chatInput"
-             placeholder="Write a message...">
-
-      <button class="primary-btn"
-              id="sendMessageBtn">
-        Send
-      </button>
-
+      <input id="chatInput" placeholder="Write a message...">
+      <button class="primary-btn" id="sendMessageBtn">Send</button>
     </div>
-
   </div>
 </div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
 
 <script type="module">
 
@@ -1208,11 +1114,8 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
 const auth = getAuth(app);
-
 const db = getFirestore(app);
-
 const provider = new GoogleAuthProvider();
 
 
@@ -1225,28 +1128,27 @@ const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
 
 
 /* ==============================
-   GLOBAL
+   GLOBAL STATE
 ============================== */
 
 let currentUser = null;
-
 let currentProfile = null;
-
 let videosCache = [];
+let myLikesCache = new Set();
+let myFollowsCache = new Set();
 
 let commentsUnsubscribe = null;
-
 let chatUnsubscribe = null;
+let videosUnsubscribe = null;
+let notificationsUnsubscribe = null;
 
 let currentCommentVideoId = null;
-
 let currentChatId = null;
-
 let currentChatUser = null;
 
 
 /* ==============================
-   ELEMENT
+   ELEMENT HELPER
 ============================== */
 
 const $ = id => document.getElementById(id);
@@ -1275,11 +1177,9 @@ function hideModal(id){
 
 function timeValue(v){
   if(!v) return 0;
-
   if(typeof v.toMillis === "function"){
     return v.toMillis();
   }
-
   return new Date(v).getTime() || 0;
 }
 
@@ -1290,15 +1190,23 @@ function avatar(url,name){
     "&background=7c3aed&color=fff";
 }
 
+function toast(message){
+  const el = $("toast");
+  el.textContent = message;
+  el.classList.add("show");
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(()=>{
+    el.classList.remove("show");
+  }, 2500);
+}
+
 
 /* ==============================
    NAVIGATION
 ============================== */
 
 document.querySelectorAll(".nav-btn").forEach(btn => {
-
   btn.addEventListener("click",()=>{
-
     const panelId = btn.dataset.panel;
 
     document.querySelectorAll(".panel")
@@ -1315,14 +1223,11 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
       loadProfile();
       loadMyVideos();
     }
-
   });
-
 });
 
 
 function openPanel(id){
-
   document.querySelectorAll(".panel")
     .forEach(p => p.classList.add("hidden"));
 
@@ -1331,12 +1236,8 @@ function openPanel(id){
   document.querySelectorAll(".nav-btn")
     .forEach(x => x.classList.remove("active"));
 
-  const btn = document.querySelector(
-    `[data-panel="${id}"]`
-  );
-
+  const btn = document.querySelector(`[data-panel="${id}"]`);
   btn?.classList.add("active");
-
 }
 
 
@@ -1345,31 +1246,24 @@ function openPanel(id){
 ============================== */
 
 $("googleLogin").addEventListener("click",async()=>{
-
-  $("loginStatus").textContent =
-    "Google login opening...";
+  $("loginStatus").textContent = "Google login opening...";
 
   try{
-
     await signInWithPopup(auth,provider);
-
   }catch(error){
-
     console.error(error);
 
-    try{
-
-      await signInWithRedirect(auth,provider);
-
-    }catch(e){
-
-      $("loginStatus").textContent =
-        e.message;
-
+    if(error.code === "auth/popup-blocked" ||
+       error.code === "auth/popup-closed-by-user"){
+      try{
+        await signInWithRedirect(auth,provider);
+      }catch(e){
+        $("loginStatus").textContent = e.message;
+      }
+    }else{
+      $("loginStatus").textContent = error.message;
     }
-
   }
-
 });
 
 
@@ -1381,17 +1275,10 @@ getRedirectResult(auth).catch(console.error);
 ============================== */
 
 async function createProfile(){
-
-  const ref = doc(
-    db,
-    "profiles",
-    currentUser.uid
-  );
-
+  const ref = doc(db,"profiles",currentUser.uid);
   const snap = await getDoc(ref);
 
   if(!snap.exists()){
-
     await setDoc(ref,{
       uid:currentUser.uid,
       name:currentUser.displayName || "User",
@@ -1401,37 +1288,27 @@ async function createProfile(){
         .replace(/[^a-z0-9]/g,"")
         .slice(0,20) ||
         "user"+Date.now().toString().slice(-5),
-
       age:"",
       gender:"",
       photo:currentUser.photoURL || "",
-
       followers:0,
       following:0,
       videos:0,
-
       createdAt:serverTimestamp(),
-
       settings:{
         showAge:true,
         showGender:true,
         allowMessages:true
       }
     });
-
   }
-
 }
 
 
 async function getProfile(uid){
-
-  const snap = await getDoc(
-    doc(db,"profiles",uid)
-  );
+  const snap = await getDoc(doc(db,"profiles",uid));
 
   if(!snap.exists()){
-
     return {
       uid,
       name:"User",
@@ -1443,7 +1320,6 @@ async function getProfile(uid){
       following:0,
       videos:0
     };
-
   }
 
   const d = snap.data();
@@ -1455,51 +1331,59 @@ async function getProfile(uid){
     following:Number(d.following || 0),
     videos:Number(d.videos || 0)
   };
-
 }
 
 
 async function loadProfile(){
-
   if(!currentUser) return;
 
-  currentProfile =
-    await getProfile(currentUser.uid);
+  currentProfile = await getProfile(currentUser.uid);
 
-  $("profileName").textContent =
-    currentProfile.name || "User";
+  $("profileName").textContent = currentProfile.name || "User";
+  $("profileUsername").textContent = "@"+(currentProfile.username || "user");
+  $("profilePhoto").src = avatar(currentProfile.photo, currentProfile.name);
 
-  $("profileUsername").textContent =
-    "@"+(currentProfile.username || "user");
-
-  $("profilePhoto").src =
-    avatar(
-      currentProfile.photo,
-      currentProfile.name
-    );
-
-  $("followersCount").textContent =
-    currentProfile.followers || 0;
-
-  $("followingCount").textContent =
-    currentProfile.following || 0;
-
-  $("videosCount").textContent =
-    currentProfile.videos || 0;
+  $("followersCount").textContent = currentProfile.followers || 0;
+  $("followingCount").textContent = currentProfile.following || 0;
+  $("videosCount").textContent = currentProfile.videos || 0;
 
   let extra = [];
+  if(currentProfile.age) extra.push("Age: "+currentProfile.age);
+  if(currentProfile.gender) extra.push(currentProfile.gender);
 
-  if(currentProfile.age){
-    extra.push("Age: "+currentProfile.age);
+  $("profileExtra").textContent = extra.join(" • ");
+}
+
+
+/* ==============================
+   LOAD MY LIKES & FOLLOWS
+============================== */
+
+async function loadMyLikes(){
+  if(!currentUser) return;
+  myLikesCache = new Set();
+  // Not loading all likes, we'll check per video on demand
+}
+
+async function loadMyFollows(){
+  if(!currentUser) return;
+
+  myFollowsCache = new Set();
+
+  try{
+    const q = query(
+      collection(db,"follows"),
+      where("follower","==",currentUser.uid)
+    );
+
+    const snap = await getDocs(q);
+
+    snap.forEach(d=>{
+      myFollowsCache.add(d.data().following);
+    });
+  }catch(e){
+    console.error("loadMyFollows error", e);
   }
-
-  if(currentProfile.gender){
-    extra.push(currentProfile.gender);
-  }
-
-  $("profileExtra").textContent =
-    extra.join(" • ");
-
 }
 
 
@@ -1508,33 +1392,30 @@ async function loadProfile(){
 ============================== */
 
 onAuthStateChanged(auth,async user=>{
-
   if(user){
-
     currentUser = user;
 
     await createProfile();
-
     await loadProfile();
+    await loadMyFollows();
 
     $("loginPage").classList.add("hidden");
-
     $("app").classList.remove("hidden");
 
     startRealtimeVideos();
-
     startNotifications();
 
   }else{
-
     currentUser = null;
+    currentProfile = null;
+    myFollowsCache.clear();
+
+    if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
+    if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
 
     $("app").classList.add("hidden");
-
     $("loginPage").classList.remove("hidden");
-
   }
-
 });
 
 
@@ -1543,83 +1424,43 @@ onAuthStateChanged(auth,async user=>{
 ============================== */
 
 function uploadToCloudinary(file,onProgress){
-
   return new Promise((resolve,reject)=>{
 
-    const resource =
-      file.type.startsWith("video/")
-      ? "video"
-      : "image";
+    const resource = file.type.startsWith("video/") ? "video" : "image";
 
     const url =
       `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resource}/upload`;
 
     const xhr = new XMLHttpRequest();
-
     xhr.open("POST",url);
 
     xhr.onload = ()=>{
-
       if(xhr.status >= 200 && xhr.status < 300){
-
         try{
-
           const data = JSON.parse(xhr.responseText);
-
           resolve(data.secure_url);
-
         }catch(e){
-
           reject(e);
-
         }
-
       }else{
-
-        reject(
-          new Error(
-            "Cloudinary upload failed: "+
-            xhr.status
-          )
-        );
-
+        reject(new Error("Cloudinary upload failed: "+xhr.status));
       }
-
     };
 
-    xhr.onerror = ()=>{
-      reject(
-        new Error("Network error")
-      );
-    };
+    xhr.onerror = ()=>reject(new Error("Network error"));
 
     xhr.upload.onprogress = e=>{
-
       if(e.lengthComputable){
-
-        onProgress?.(
-          Math.round(
-            e.loaded / e.total * 100
-          )
-        );
-
+        onProgress?.(Math.round(e.loaded / e.total * 100));
       }
-
     };
 
     const form = new FormData();
-
-    form.append(
-      "upload_preset",
-      CLOUDINARY_UPLOAD_PRESET
-    );
-
+    form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
     form.append("file",file);
 
     xhr.send(form);
-
   });
-
 }
 
 
@@ -1627,243 +1468,165 @@ function uploadToCloudinary(file,onProgress){
    UPLOAD VIDEO
 ============================== */
 
-$("publishBtn").addEventListener("click",
-async()=>{
+$("publishBtn").addEventListener("click", async()=>{
 
-  const file =
-    $("videoFile").files[0];
-
-  const title =
-    $("videoTitle").value.trim();
-
-  const description =
-    $("videoDescription").value.trim();
-
-  const visibility =
-    $("videoVisibility").value;
-
-  const type =
-    $("videoType").value;
+  const file = $("videoFile").files[0];
+  const title = $("videoTitle").value.trim();
+  const description = $("videoDescription").value.trim();
+  const visibility = $("videoVisibility").value;
+  const type = $("videoType").value;
 
   if(!file){
-
-    alert("पहले video select करो।");
-
+    toast("पहले video select करो।");
     return;
-
   }
 
   if(!title){
-
-    alert("Video title डालो।");
-
+    toast("Video title डालो।");
     return;
-
   }
 
   if(!currentUser){
-
-    alert("Login required.");
-
+    toast("Login required.");
     return;
-
   }
 
   $("publishBtn").disabled = true;
-
-  $("uploadStatus").textContent =
-    "Uploading video...";
+  $("uploadStatus").textContent = "Uploading video...";
 
   try{
+    const url = await uploadToCloudinary(file, percent=>{
+      $("uploadProgress").style.width = percent+"%";
+      $("uploadStatus").textContent = "Uploading "+percent+"%";
+    });
 
-    const url =
-      await uploadToCloudinary(
-        file,
-        percent=>{
-          $("uploadProgress").style.width =
-            percent+"%";
+    await addDoc(collection(db,"videos"), {
+      userId:currentUser.uid,
+      userName: currentProfile?.name || currentUser.displayName || "User",
+      userPhoto: currentProfile?.photo || currentUser.photoURL || "",
+      videoURL:url,
+      title,
+      description,
+      visibility,
+      type,
+      likes:0,
+      createdAt:serverTimestamp()
+    });
 
-          $("uploadStatus").textContent =
-            "Uploading "+percent+"%";
-        }
-      );
-
-    await addDoc(
-      collection(db,"videos"),
-      {
-        userId:currentUser.uid,
-
-        userName:
-          currentProfile?.name ||
-          currentUser.displayName ||
-          "User",
-
-        userPhoto:
-          currentProfile?.photo ||
-          currentUser.photoURL ||
-          "",
-
-        videoURL:url,
-
-        title,
-
-        description,
-
-        visibility,
-
-        type,
-
-        likes:0,
-
-        createdAt:serverTimestamp()
-
-      }
-    );
-
-    await syncVideoCount(
-      currentUser.uid
-    );
+    await syncVideoCount(currentUser.uid);
 
     $("videoFile").value = "";
-
     $("videoTitle").value = "";
-
     $("videoDescription").value = "";
+    $("uploadProgress").style.width = "0%";
+    $("uploadStatus").textContent = "✅ Video published successfully!";
 
-    $("uploadProgress").style.width =
-      "0%";
-
-    $("uploadStatus").textContent =
-      "✅ Video published successfully!";
-
-    alert("✅ Video publish हो गया।");
-
+    toast("✅ Video publish हो गया।");
     openPanel("homePanel");
 
   }catch(error){
-
     console.error(error);
-
-    $("uploadStatus").textContent =
-      "Upload error: "+error.message;
-
-    alert(
-      "Upload error:\n"+
-      error.message
-    );
-
+    $("uploadStatus").textContent = "Upload error: "+error.message;
+    toast("Upload error: "+error.message);
   }finally{
-
     $("publishBtn").disabled = false;
-
   }
-
 });
 
 
 /* ==============================
-   VIDEO FEED
+   VIDEO FEED (REALTIME)
 ============================== */
 
 function startRealtimeVideos(){
 
-  onSnapshot(
+  if(videosUnsubscribe){
+    videosUnsubscribe();
+    videosUnsubscribe = null;
+  }
+
+  videosUnsubscribe = onSnapshot(
     collection(db,"videos"),
     snapshot=>{
 
-      videosCache =
-        snapshot.docs.map(d=>({
-          id:d.id,
-          ...d.data()
-        }));
+      videosCache = snapshot.docs.map(d=>({
+        id:d.id,
+        ...d.data()
+      }));
 
       videosCache.sort(
-        (a,b)=>
-          timeValue(b.createdAt) -
-          timeValue(a.createdAt)
+        (a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt)
       );
 
       renderVideoList(
         $("feed"),
-        videosCache.filter(
-          v=>v.visibility !== "private" ||
-             v.userId === currentUser?.uid
+        videosCache.filter(v=>
+          v.visibility !== "private" ||
+          v.userId === currentUser?.uid
         ),
         false
       );
 
       renderVideoList(
         $("shortsFeed"),
-        videosCache.filter(
-          v=>
-            v.type === "short" &&
-            (
-              v.visibility !== "private" ||
-              v.userId === currentUser?.uid
-            )
+        videosCache.filter(v=>
+          v.type === "short" &&
+          (v.visibility !== "private" || v.userId === currentUser?.uid)
         ),
         true
       );
 
       loadMyVideos();
 
+      // Refresh public profile if open
+      if($("publicProfileModal")?.classList.contains("show")){
+        const uid = $("publicProfileModal").dataset.uid;
+        if(uid) loadPublicVideos(uid);
+      }
     },
     error=>{
-      console.error(error);
+      console.error("Videos listener error:", error);
     }
   );
-
 }
 
 
 /* ==============================
-   VIDEO CARD
+   VIDEO CARD RENDER
 ============================== */
 
 function renderVideoList(container,list,shorts){
-
   if(!container) return;
 
   if(!list.length){
-
     container.innerHTML =
       `<div class="empty">
-        ${shorts
-          ?"No Shorts available."
-          :"No videos available yet."}
+        ${shorts ? "No Shorts available." : "No videos available yet."}
       </div>`;
-
     return;
-
   }
 
-  container.innerHTML =
-    list.map(v=>
-      createVideoCard(v,shorts)
-    ).join("");
-
+  container.innerHTML = list.map(v=> createVideoCard(v,shorts)).join("");
 }
 
 
 function createVideoCard(v,shorts=false){
 
-  const mine =
-    currentUser &&
-    v.userId === currentUser.uid;
+  const mine = currentUser && v.userId === currentUser.uid;
 
-  const type =
-    v.type || (shorts ? "short":"long");
+  const type = v.type || (shorts ? "short":"long");
+
+  const isFollowing = myFollowsCache.has(v.userId);
 
   return `
-  <article class="video-card"
-           data-video-id="${esc(v.id)}">
+  <article class="video-card" data-video-id="${esc(v.id)}">
 
     <div class="video-head">
-
       <img
         class="avatar"
         src="${avatar(v.userPhoto,v.userName)}"
         onclick='openPublicProfile(${JSON.stringify(v.userId)})'
+        style="cursor:pointer"
       >
 
       <div
@@ -1871,74 +1634,42 @@ function createVideoCard(v,shorts=false){
         onclick='openPublicProfile(${JSON.stringify(v.userId)})'
         style="cursor:pointer"
       >
-
-        <div class="user-name">
-          ${esc(v.userName || "User")}
-        </div>
-
-        <div class="username">
-          View profile
-        </div>
-
+        <div class="user-name">${esc(v.userName || "User")}</div>
+        <div class="username">View profile</div>
       </div>
 
       ${
         !mine && currentUser
-        ?`
-        <button
-          class="small-btn"
-          onclick='toggleFollow(${JSON.stringify(v.userId)})'>
-          Follow
-        </button>
-        `
-        :""
+        ? `<button
+             class="small-btn"
+             onclick='toggleFollow(${JSON.stringify(v.userId)}, this)'>
+             ${isFollowing ? "Following" : "Follow"}
+           </button>`
+        : ""
       }
-
     </div>
 
     <div class="video-wrap">
-
       <video
-        class="${type === "short"
-          ?"short-video"
-          :"long-video"}"
+        class="${type === "short" ? "short-video" : "long-video"}"
         controls
         preload="metadata"
         src="${esc(v.videoURL)}">
       </video>
-
     </div>
 
     <div class="video-body">
-
-      ${
-        v.title
-        ?`
-        <div class="video-title">
-          ${esc(v.title)}
-        </div>
-        `
-        :""
-      }
-
-      ${
-        v.description
-        ?`
-        <div class="video-description">
-          ${esc(v.description)}
-        </div>
-        `
-        :""
-      }
-
+      ${v.title ? `<div class="video-title">${esc(v.title)}</div>` : ""}
+      ${v.description ? `<div class="video-description">${esc(v.description)}</div>` : ""}
     </div>
 
     <div class="video-actions">
 
       <button
         class="action-btn"
-        onclick='likeVideo(${JSON.stringify(v.id)})'>
-        ❤️ ${Number(v.likes || 0)}
+        id="likeBtn-${esc(v.id)}"
+        onclick='likeVideo(${JSON.stringify(v.id)}, this)'>
+        ❤️ <span class="likeCount">${Number(v.likes || 0)}</span>
       </button>
 
       <button
@@ -1955,39 +1686,47 @@ function createVideoCard(v,shorts=false){
 
       ${
         !mine && currentUser
-        ?`
-        <button
-          class="action-btn"
-          onclick='openChat(${JSON.stringify(v.userId)})'>
-          💬 Message
-        </button>
-        `
-        :""
+        ? `<button
+             class="action-btn"
+             onclick='openChat(${JSON.stringify(v.userId)})'>
+             💬 Message
+           </button>`
+        : ""
       }
 
       ${
         mine
-        ?`
-        <button
-          class="action-btn edit-btn"
-          onclick='openEditVideo(${JSON.stringify(v.id)})'>
-          ✏️ Edit
-        </button>
+        ? `<button
+             class="action-btn edit-btn"
+             onclick='openEditVideo(${JSON.stringify(v.id)})'>
+             ✏️ Edit
+           </button>
 
-        <button
-          class="action-btn delete-btn"
-          onclick='deleteVideo(${JSON.stringify(v.id)})'>
-          🗑️ Delete
-        </button>
-        `
-        :""
+           <button
+             class="action-btn delete-btn"
+             onclick='deleteVideo(${JSON.stringify(v.id)})'>
+             🗑️ Delete
+           </button>`
+        : ""
       }
 
     </div>
 
   </article>
   `;
+}
 
+
+/* ==============================
+   CHECK IF VIDEO LIKED
+============================== */
+
+async function checkIfLiked(videoId){
+  if(!currentUser) return false;
+
+  const ref = doc(db,"videos",videoId,"likes",currentUser.uid);
+  const snap = await getDoc(ref);
+  return snap.exists();
 }
 
 
@@ -1996,86 +1735,49 @@ function createVideoCard(v,shorts=false){
 ============================== */
 
 window.deleteVideo = async function(id){
-
   if(!currentUser) return;
 
-  const ref =
-    doc(db,"videos",id);
-
-  const snap =
-    await getDoc(ref);
+  const ref = doc(db,"videos",id);
+  const snap = await getDoc(ref);
 
   if(!snap.exists()){
-
-    alert("Video नहीं मिला।");
-
+    toast("Video नहीं मिला।");
     return;
-
   }
 
-  const data = snap.data();
-
-  if(data.userId !== currentUser.uid){
-
-    alert("आप इस video को delete नहीं कर सकते।");
-
+  if(snap.data().userId !== currentUser.uid){
+    toast("आप इस video को delete नहीं कर सकते।");
     return;
-
   }
 
-  const ok =
-    confirm(
-      "क्या आप यह video delete करना चाहते हैं?"
-    );
-
-  if(!ok) return;
+  if(!confirm("क्या आप यह video delete करना चाहते हैं?")) return;
 
   try{
-
-    /* Delete comments */
-
-    const comments =
-      await getDocs(
-        collection(
-          db,
-          "videos",
-          id,
-          "comments"
-        )
-      );
+    const comments = await getDocs(
+      collection(db,"videos",id,"comments")
+    );
 
     for(const c of comments.docs){
-
       await deleteDoc(c.ref);
-
     }
 
+    const likes = await getDocs(
+      collection(db,"videos",id,"likes")
+    );
 
-    /* Delete video document */
+    for(const l of likes.docs){
+      await deleteDoc(l.ref);
+    }
 
     await deleteDoc(ref);
+    await syncVideoCount(currentUser.uid);
 
-
-    /* Update video count */
-
-    await syncVideoCount(
-      currentUser.uid
-    );
-
-
-    alert("🗑️ Video delete हो गया।");
+    toast("🗑️ Video delete हो गया।");
 
   }catch(error){
-
     console.error(error);
-
-    alert(
-      "Video delete error:\n"+
-      error.message
-    );
-
+    toast("Video delete error: "+error.message);
   }
-
 };
 
 
@@ -2084,111 +1786,57 @@ window.deleteVideo = async function(id){
 ============================== */
 
 window.openEditVideo = async function(id){
-
-  const snap =
-    await getDoc(
-      doc(db,"videos",id)
-    );
-
+  const snap = await getDoc(doc(db,"videos",id));
   if(!snap.exists()) return;
 
   const v = snap.data();
 
   if(v.userId !== currentUser.uid){
-
-    alert("यह आपका video नहीं है।");
-
+    toast("यह आपका video नहीं है।");
     return;
-
   }
 
   $("editVideoId").value = id;
-
-  $("editVideoTitle").value =
-    v.title || "";
-
-  $("editVideoDescription").value =
-    v.description || "";
-
-  $("editVideoVisibility").value =
-    v.visibility || "public";
-
-  $("editVideoType").value =
-    v.type || "long";
+  $("editVideoTitle").value = v.title || "";
+  $("editVideoDescription").value = v.description || "";
+  $("editVideoVisibility").value = v.visibility || "public";
+  $("editVideoType").value = v.type || "long";
 
   showModal("editVideoModal");
-
 };
 
 
-$("saveVideoEditBtn").addEventListener(
-  "click",
-  async()=>{
+$("saveVideoEditBtn").addEventListener("click", async()=>{
 
-    const id =
-      $("editVideoId").value;
+  const id = $("editVideoId").value;
+  if(!id) return;
 
-    if(!id) return;
+  try{
+    const ref = doc(db,"videos",id);
+    const snap = await getDoc(ref);
 
-    try{
+    if(!snap.exists()) return;
 
-      const ref =
-        doc(db,"videos",id);
-
-      const snap =
-        await getDoc(ref);
-
-      if(!snap.exists()) return;
-
-      if(
-        snap.data().userId !==
-        currentUser.uid
-      ){
-
-        alert("Permission denied.");
-
-        return;
-
-      }
-
-      await updateDoc(ref,{
-
-        title:
-          $("editVideoTitle")
-          .value.trim(),
-
-        description:
-          $("editVideoDescription")
-          .value.trim(),
-
-        visibility:
-          $("editVideoVisibility")
-          .value,
-
-        type:
-          $("editVideoType")
-          .value,
-
-        updatedAt:
-          serverTimestamp()
-
-      });
-
-      hideModal("editVideoModal");
-
-      alert("✅ Video updated.");
-
-    }catch(error){
-
-      alert(
-        "Edit error:\n"+
-        error.message
-      );
-
+    if(snap.data().userId !== currentUser.uid){
+      toast("Permission denied.");
+      return;
     }
 
+    await updateDoc(ref,{
+      title: $("editVideoTitle").value.trim(),
+      description: $("editVideoDescription").value.trim(),
+      visibility: $("editVideoVisibility").value,
+      type: $("editVideoType").value,
+      updatedAt: serverTimestamp()
+    });
+
+    hideModal("editVideoModal");
+    toast("✅ Video updated.");
+
+  }catch(error){
+    toast("Edit error: "+error.message);
   }
-);
+});
 
 
 /* ==============================
@@ -2196,54 +1844,92 @@ $("saveVideoEditBtn").addEventListener(
 ============================== */
 
 async function syncVideoCount(uid){
-
-  const q =
-    query(
+  try{
+    const q = query(
       collection(db,"videos"),
       where("userId","==",uid)
     );
 
-  const snap =
-    await getDocs(q);
+    const snap = await getDocs(q);
 
-  await updateDoc(
-    doc(db,"profiles",uid),
-    {
+    await updateDoc(doc(db,"profiles",uid),{
       videos:snap.size
-    }
-  );
+    });
 
+    if(currentProfile && currentProfile.uid === uid){
+      currentProfile.videos = snap.size;
+      $("videosCount").textContent = snap.size;
+    }
+  }catch(e){
+    console.error("syncVideoCount error", e);
+  }
 }
 
 
 /* ==============================
-   LIKE
+   LIKE / UNLIKE
 ============================== */
 
-window.likeVideo = async function(id){
-
+window.likeVideo = async function(id, btnEl){
   if(!currentUser){
-
-    alert("Login required.");
-
+    toast("Login required.");
     return;
-
   }
 
-  const ref =
-    doc(db,"videos",id);
+  try{
+    const likeRef = doc(db,"videos",id,"likes",currentUser.uid);
+    const videoRef = doc(db,"videos",id);
 
-  const snap =
-    await getDoc(ref);
+    const [likeSnap, videoSnap] = await Promise.all([
+      getDoc(likeRef),
+      getDoc(videoRef)
+    ]);
 
-  if(!snap.exists()) return;
+    if(!videoSnap.exists()) return;
 
-  const data = snap.data();
+    const currentLikes = Number(videoSnap.data().likes || 0);
 
-  await updateDoc(ref,{
-    likes:Number(data.likes || 0)+1
-  });
+    if(likeSnap.exists()){
+      // Unlike
+      await deleteDoc(likeRef);
+      const newCount = Math.max(0, currentLikes - 1);
+      await updateDoc(videoRef, { likes: newCount });
 
+      if(btnEl){
+        btnEl.style.color = "";
+        btnEl.querySelector(".likeCount").textContent = newCount;
+      }
+    }else{
+      // Like
+      await setDoc(likeRef,{
+        userId: currentUser.uid,
+        createdAt: serverTimestamp()
+      });
+
+      const newCount = currentLikes + 1;
+      await updateDoc(videoRef, { likes: newCount });
+
+      if(btnEl){
+        btnEl.style.color = "#ef4444";
+        btnEl.querySelector(".likeCount").textContent = newCount;
+      }
+
+      // Notification to video owner
+      const ownerId = videoSnap.data().userId;
+      if(ownerId !== currentUser.uid){
+        await addDoc(collection(db,"notifications"),{
+          to: ownerId,
+          from: currentUser.uid,
+          title: "❤️ New Like",
+          message: (currentProfile?.name || "Someone") + " liked your video",
+          createdAt: serverTimestamp()
+        });
+      }
+    }
+  }catch(e){
+    console.error(e);
+    toast("Like error: "+e.message);
+  }
 };
 
 
@@ -2252,243 +1938,158 @@ window.likeVideo = async function(id){
 ============================== */
 
 window.openComments = function(id){
-
   currentCommentVideoId = id;
-
   showModal("commentsModal");
-
   loadComments(id);
-
 };
 
 
 function loadComments(id){
 
   if(commentsUnsubscribe){
-
     commentsUnsubscribe();
-
     commentsUnsubscribe = null;
-
   }
 
-  commentsUnsubscribe =
-    onSnapshot(
-      collection(
-        db,
-        "videos",
-        id,
-        "comments"
-      ),
-      snapshot=>{
+  commentsUnsubscribe = onSnapshot(
+    collection(db,"videos",id,"comments"),
+    snapshot=>{
 
-        const list =
-          snapshot.docs.map(d=>({
-            id:d.id,
-            ...d.data()
-          }));
+      const list = snapshot.docs.map(d=>({
+        id:d.id,
+        ...d.data()
+      }));
 
-        list.sort(
-          (a,b)=>
-            timeValue(a.createdAt) -
-            timeValue(b.createdAt)
-        );
+      list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
 
-        if(!list.length){
-
-          $("commentsList").innerHTML =
-            `<div class="empty">
-              No comments yet.
-            </div>`;
-
-          return;
-
-        }
-
+      if(!list.length){
         $("commentsList").innerHTML =
-          list.map(c=>{
-
-            const mine =
-              currentUser &&
-              c.userId === currentUser.uid;
-
-            return `
-            <div class="comment">
-
-              <div class="comment-name">
-                ${esc(c.userName || "User")}
-              </div>
-
-              <div class="comment-text">
-                ${esc(c.text)}
-              </div>
-
-              ${
-                mine
-                ?`
-                <div class="comment-actions">
-
-                  <button
-                    onclick='editComment(
-                      ${JSON.stringify(id)},
-                      ${JSON.stringify(c.id)},
-                      ${JSON.stringify(c.text)}
-                    )'>
-                    Edit
-                  </button>
-
-                  <button
-                    onclick='deleteComment(
-                      ${JSON.stringify(id)},
-                      ${JSON.stringify(c.id)}
-                    )'>
-                    Delete
-                  </button>
-
-                </div>
-                `
-                :""
-              }
-
-            </div>
-            `;
-
-          }).join("");
-
+          `<div class="empty">No comments yet.</div>`;
+        return;
       }
-    );
 
+      $("commentsList").innerHTML = list.map(c=>{
+
+        const mine = currentUser && c.userId === currentUser.uid;
+
+        return `
+        <div class="comment">
+          <div class="comment-name">${esc(c.userName || "User")}</div>
+          <div class="comment-text">${esc(c.text)}</div>
+          ${
+            mine
+            ? `<div class="comment-actions">
+                 <button onclick='editComment(
+                   ${JSON.stringify(id)},
+                   ${JSON.stringify(c.id)},
+                   ${JSON.stringify(c.text)}
+                 )'>Edit</button>
+                 <button onclick='deleteComment(
+                   ${JSON.stringify(id)},
+                   ${JSON.stringify(c.id)}
+                 )'>Delete</button>
+               </div>`
+            : ""
+          }
+        </div>
+        `;
+      }).join("");
+    }
+  );
 }
 
 
-$("sendCommentBtn").addEventListener(
-  "click",
-  sendComment
-);
+$("sendCommentBtn").addEventListener("click", sendComment);
 
-$("commentInput").addEventListener(
-  "keydown",
-  e=>{
-    if(e.key === "Enter"){
-      sendComment();
-    }
-  }
-);
+$("commentInput").addEventListener("keydown", e=>{
+  if(e.key === "Enter") sendComment();
+});
 
 
 async function sendComment(){
+  const text = $("commentInput").value.trim();
 
-  const text =
-    $("commentInput")
-    .value.trim();
+  if(!text || !currentCommentVideoId) return;
 
-  if(!text || !currentCommentVideoId)
+  if(!currentUser){
+    toast("Login required.");
     return;
+  }
 
-  await addDoc(
-    collection(
-      db,
-      "videos",
-      currentCommentVideoId,
-      "comments"
-    ),
-    {
-      userId:currentUser.uid,
-      userName:
-        currentProfile?.name ||
-        "User",
-      text,
-      createdAt:serverTimestamp()
+  try{
+    await addDoc(
+      collection(db,"videos",currentCommentVideoId,"comments"),
+      {
+        userId: currentUser.uid,
+        userName: currentProfile?.name || "User",
+        text,
+        createdAt: serverTimestamp()
+      }
+    );
+
+    // Notification
+    const videoSnap = await getDoc(doc(db,"videos",currentCommentVideoId));
+    if(videoSnap.exists()){
+      const ownerId = videoSnap.data().userId;
+      if(ownerId !== currentUser.uid){
+        await addDoc(collection(db,"notifications"),{
+          to: ownerId,
+          from: currentUser.uid,
+          title: "💬 New Comment",
+          message: (currentProfile?.name || "Someone") + ": " + text.slice(0,50),
+          createdAt: serverTimestamp()
+        });
+      }
     }
-  );
 
-  $("commentInput").value = "";
+    $("commentInput").value = "";
 
+  }catch(e){
+    toast("Comment error: "+e.message);
+  }
 }
 
 
-window.editComment =
-async function(videoId,commentId,oldText){
+window.editComment = async function(videoId,commentId,oldText){
 
-  const text =
-    prompt(
-      "Edit comment:",
-      oldText
-    );
-
+  const text = prompt("Edit comment:", oldText);
   if(text === null) return;
 
-  const clean =
-    text.trim();
-
+  const clean = text.trim();
   if(!clean) return;
 
-  const ref =
-    doc(
-      db,
-      "videos",
-      videoId,
-      "comments",
-      commentId
-    );
-
-  const snap =
-    await getDoc(ref);
+  const ref = doc(db,"videos",videoId,"comments",commentId);
+  const snap = await getDoc(ref);
 
   if(!snap.exists()) return;
 
-  if(
-    snap.data().userId !==
-    currentUser.uid
-  ){
-
-    alert("Permission denied.");
-
+  if(snap.data().userId !== currentUser.uid){
+    toast("Permission denied.");
     return;
-
   }
 
   await updateDoc(ref,{
-    text:clean,
-    updatedAt:serverTimestamp()
+    text: clean,
+    updatedAt: serverTimestamp()
   });
-
 };
 
 
-window.deleteComment =
-async function(videoId,commentId){
+window.deleteComment = async function(videoId,commentId){
 
-  const ref =
-    doc(
-      db,
-      "videos",
-      videoId,
-      "comments",
-      commentId
-    );
-
-  const snap =
-    await getDoc(ref);
+  const ref = doc(db,"videos",videoId,"comments",commentId);
+  const snap = await getDoc(ref);
 
   if(!snap.exists()) return;
 
-  if(
-    snap.data().userId !==
-    currentUser.uid
-  ){
-
-    alert("Permission denied.");
-
+  if(snap.data().userId !== currentUser.uid){
+    toast("Permission denied.");
     return;
-
   }
 
-  if(!confirm("Delete comment?"))
-    return;
+  if(!confirm("Delete comment?")) return;
 
   await deleteDoc(ref);
-
 };
 
 
@@ -2497,101 +2098,99 @@ async function(videoId,commentId){
 ============================== */
 
 async function isFollowing(targetUid){
+  if(!currentUser || targetUid === currentUser.uid) return false;
 
-  if(!currentUser || targetUid === currentUser.uid)
-    return false;
-
-  const id =
-    currentUser.uid+"_"+targetUid;
-
-  const snap =
-    await getDoc(
-      doc(db,"follows",id)
-    );
-
-  return snap.exists();
-
+  return myFollowsCache.has(targetUid);
 }
 
 
-window.toggleFollow = async function(targetUid){
+window.toggleFollow = async function(targetUid, btnEl){
 
   if(!currentUser) return;
+  if(targetUid === currentUser.uid) return;
 
-  if(targetUid === currentUser.uid)
-    return;
+  const id = currentUser.uid+"_"+targetUid;
+  const ref = doc(db,"follows",id);
+  const snap = await getDoc(ref);
 
-  const id =
-    currentUser.uid+"_"+targetUid;
+  try{
+    if(snap.exists()){
+      await deleteDoc(ref);
+      myFollowsCache.delete(targetUid);
 
-  const ref =
-    doc(db,"follows",id);
+      if(btnEl) btnEl.textContent = "Follow";
 
-  const snap =
-    await getDoc(ref);
+    }else{
+      await setDoc(ref,{
+        follower: currentUser.uid,
+        following: targetUid,
+        createdAt: serverTimestamp()
+      });
 
-  if(snap.exists()){
+      myFollowsCache.add(targetUid);
 
-    await deleteDoc(ref);
+      if(btnEl) btnEl.textContent = "Following";
 
-  }else{
+      // Notification
+      await addDoc(collection(db,"notifications"),{
+        to: targetUid,
+        from: currentUser.uid,
+        title: "👤 New Follower",
+        message: (currentProfile?.name || "Someone") + " started following you",
+        createdAt: serverTimestamp()
+      });
+    }
 
-    await setDoc(ref,{
-      follower:currentUser.uid,
-      following:targetUid,
-      createdAt:serverTimestamp()
-    });
+    await syncFollowCounts(currentUser.uid);
+    await syncFollowCounts(targetUid);
 
+    // Update public profile button if open
+    if($("publicProfileModal").classList.contains("show")){
+      const uid = $("publicProfileModal").dataset.uid;
+      if(uid === targetUid){
+        const followed = myFollowsCache.has(targetUid);
+        $("publicFollowBtn").textContent = followed ? "Following" : "Follow";
+      }
+    }
+  }catch(e){
+    console.error(e);
+    toast("Follow error: "+e.message);
   }
-
-  await syncFollowCounts(
-    currentUser.uid
-  );
-
-  await syncFollowCounts(
-    targetUid
-  );
-
-  if(
-    $("publicProfileModal")
-    .classList.contains("show")
-  ){
-
-    openPublicProfile(targetUid);
-
-  }
-
 };
 
 
 async function syncFollowCounts(uid){
-
-  const followersQ =
-    query(
+  try{
+    const followersQ = query(
       collection(db,"follows"),
       where("following","==",uid)
     );
 
-  const followingQ =
-    query(
+    const followingQ = query(
       collection(db,"follows"),
       where("follower","==",uid)
     );
 
-  const [followers,following] =
-    await Promise.all([
+    const [followers, following] = await Promise.all([
       getDocs(followersQ),
       getDocs(followingQ)
     ]);
 
-  await updateDoc(
-    doc(db,"profiles",uid),
-    {
-      followers:followers.size,
-      following:following.size
-    }
-  );
+    await updateDoc(doc(db,"profiles",uid),{
+      followers: followers.size,
+      following: following.size
+    });
 
+    // Update my profile counts
+    if(currentProfile && currentProfile.uid === uid){
+      currentProfile.followers = followers.size;
+      currentProfile.following = following.size;
+      $("followersCount").textContent = followers.size;
+      $("followingCount").textContent = following.size;
+    }
+  }catch(e){
+    console.error("syncFollowCounts error", e);
+  }
 }
 
 
@@ -2599,120 +2198,70 @@ async function syncFollowCounts(uid){
    PUBLIC PROFILE
 ============================== */
 
-window.openPublicProfile =
-async function(uid){
-
+window.openPublicProfile = async function(uid){
   if(!uid) return;
 
-  const p =
-    await getProfile(uid);
+  const p = await getProfile(uid);
 
-  $("publicPhoto").src =
-    avatar(p.photo,p.name);
+  $("publicProfileModal").dataset.uid = uid;
 
-  $("publicName").textContent =
-    p.name || "User";
-
-  $("publicUsername").textContent =
-    "@"+(p.username || "user");
+  $("publicPhoto").src = avatar(p.photo, p.name);
+  $("publicName").textContent = p.name || "User";
+  $("publicUsername").textContent = "@"+(p.username || "user");
 
   let extra = [];
-
   if(p.age) extra.push("Age: "+p.age);
-
   if(p.gender) extra.push(p.gender);
 
-  $("publicExtra").textContent =
-    extra.join(" • ");
+  $("publicExtra").textContent = extra.join(" • ");
 
-  $("publicFollowers").textContent =
-    p.followers || 0;
+  $("publicFollowers").textContent = p.followers || 0;
+  $("publicFollowing").textContent = p.following || 0;
+  $("publicVideos").textContent = p.videos || 0;
 
-  $("publicFollowing").textContent =
-    p.following || 0;
+  $("publicFollowBtn").onclick = ()=> toggleFollow(uid, $("publicFollowBtn"));
+  $("publicMessageBtn").onclick = ()=> openChat(uid);
 
-  $("publicVideos").textContent =
-    p.videos || 0;
-
-  $("publicFollowBtn").onclick =
-    ()=>toggleFollow(uid);
-
-  $("publicMessageBtn").onclick =
-    ()=>openChat(uid);
-
-  if(
-    currentUser &&
-    uid === currentUser.uid
-  ){
-
-    $("publicFollowBtn").style.display =
-      "none";
-
-    $("publicMessageBtn").style.display =
-      "none";
-
+  if(currentUser && uid === currentUser.uid){
+    $("publicFollowBtn").style.display = "none";
+    $("publicMessageBtn").style.display = "none";
   }else{
+    $("publicFollowBtn").style.display = "";
+    $("publicMessageBtn").style.display = "";
 
-    $("publicFollowBtn").style.display =
-      "";
-
-    $("publicMessageBtn").style.display =
-      "";
-
-    const followed =
-      await isFollowing(uid);
-
-    $("publicFollowBtn").textContent =
-      followed
-      ?"Following"
-      :"Follow";
-
+    const followed = await isFollowing(uid);
+    $("publicFollowBtn").textContent = followed ? "Following" : "Follow";
   }
 
   await loadPublicVideos(uid);
 
-  $("publicFollowersBtn").onclick =
-    ()=>openPeople(uid,"followers");
-
-  $("publicFollowingBtn").onclick =
-    ()=>openPeople(uid,"following");
+  $("publicFollowersBtn").onclick = ()=> openPeople(uid,"followers");
+  $("publicFollowingBtn").onclick = ()=> openPeople(uid,"following");
 
   showModal("publicProfileModal");
-
 };
 
 
 async function loadPublicVideos(uid){
-
-  const list =
-    videosCache.filter(
-      v=>
-        v.userId === uid &&
-        (
-          v.visibility !== "private" ||
-          uid === currentUser?.uid
-        )
-    );
-
-  renderVideoList(
-    $("publicVideosList"),
-    list,
-    false
+  const list = videosCache.filter(v=>
+    v.userId === uid &&
+    (v.visibility !== "private" || uid === currentUser?.uid)
   );
 
+  renderVideoList($("publicVideosList"), list, false);
 }
 
 
 /* ==============================
-   PEOPLE
+   PEOPLE (FOLLOWERS/FOLLOWING)
 ============================== */
 
 async function openPeople(uid,type){
 
+  if(!uid) return;
+
   $("peopleTitle").textContent =
-    type === "followers"
-    ?"Followers"
-    :"Following";
+    type === "followers" ? "Followers" : "Following";
 
   $("peopleList").innerHTML =
     `<div class="empty">Loading...</div>`;
@@ -2722,97 +2271,63 @@ async function openPeople(uid,type){
   let q;
 
   if(type === "followers"){
-
-    q =
-      query(
-        collection(db,"follows"),
-        where("following","==",uid)
-      );
-
+    q = query(
+      collection(db,"follows"),
+      where("following","==",uid)
+    );
   }else{
-
-    q =
-      query(
-        collection(db,"follows"),
-        where("follower","==",uid)
-      );
-
+    q = query(
+      collection(db,"follows"),
+      where("follower","==",uid)
+    );
   }
 
-  const snap =
-    await getDocs(q);
+  const snap = await getDocs(q);
 
   if(!snap.size){
-
     $("peopleList").innerHTML =
-      `<div class="empty">
-        No users found.
-      </div>`;
-
+      `<div class="empty">No users found.</div>`;
     return;
-
   }
 
   const people = [];
 
   for(const d of snap.docs){
-
     const data = d.data();
-
-    const personUid =
-      type === "followers"
-      ?data.follower
-      :data.following;
-
-    people.push(
-      await getProfile(personUid)
-    );
-
+    const personUid = type === "followers" ? data.follower : data.following;
+    people.push(await getProfile(personUid));
   }
 
-  $("peopleList").innerHTML =
-    people.map(p=>`
+  $("peopleList").innerHTML = people.map(p=>{
 
-      <div class="person">
+    const isFollowed = myFollowsCache.has(p.uid);
+    const isMe = currentUser && p.uid === currentUser.uid;
 
-        <img
-          class="avatar"
-          src="${avatar(p.photo,p.name)}"
-        >
+    return `
+    <div class="person">
+      <img class="avatar" src="${avatar(p.photo,p.name)}">
 
-        <div
-          class="person-info"
-          onclick='openPublicProfile(${JSON.stringify(p.uid)})'
-          style="cursor:pointer"
-        >
-
-          <strong>
-            ${esc(p.name)}
-          </strong>
-
-          <div class="username">
-            @${esc(p.username)}
-          </div>
-
-        </div>
-
-        ${
-          currentUser &&
-          p.uid !== currentUser.uid
-          ?`
-          <button
-            class="small-btn"
-            onclick='toggleFollow(${JSON.stringify(p.uid)})'>
-            Follow
-          </button>
-          `
-          :""
-        }
-
+      <div
+        class="person-info"
+        onclick='openPublicProfile(${JSON.stringify(p.uid)})'
+        style="cursor:pointer"
+      >
+        <strong>${esc(p.name)}</strong>
+        <div class="username">@${esc(p.username)}</div>
       </div>
 
-    `).join("");
-
+      ${
+        !isMe && currentUser
+        ? `<button
+             class="small-btn"
+             onclick='toggleFollow(${JSON.stringify(p.uid)}, this)'>
+             ${isFollowed ? "Following" : "Follow"}
+           </button>`
+        : ""
+      }
+    </div>
+    `;
+  }).join("");
 }
 
 
@@ -2820,305 +2335,188 @@ async function openPeople(uid,type){
    SEARCH
 ============================== */
 
-$("topSearch").addEventListener(
-  "input",
-  async e=>{
+let searchTimeout = null;
 
-    const value =
-      e.target.value
-      .trim()
-      .toLowerCase();
+$("topSearch").addEventListener("input", e=>{
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(()=> doSearch(e.target.value), 300);
+});
 
-    if(!value){
 
-      if(!$("searchPanel").classList.contains("hidden")){
-        $("searchResults").innerHTML =
-          `<div class="empty">
-            Search users by name or ID.
-          </div>`;
-      }
+async function doSearch(value){
+  value = value.trim().toLowerCase();
 
-      return;
-
+  if(!value){
+    if(!$("searchPanel").classList.contains("hidden")){
+      $("searchResults").innerHTML =
+        `<div class="empty">Search users by name or ID.</div>`;
     }
+    return;
+  }
 
-    openPanel("searchPanel");
+  openPanel("searchPanel");
+  $("searchResults").innerHTML =
+    `<div class="empty">Searching...</div>`;
 
-    const snap =
-      await getDocs(
-        collection(db,"profiles")
-      );
+  try{
+    const snap = await getDocs(collection(db,"profiles"));
 
-    const users =
-      snap.docs
-        .map(d=>({
-          uid:d.id,
-          ...d.data()
-        }))
-        .filter(p=>
-          String(p.name||"")
-            .toLowerCase()
-            .includes(value) ||
-          String(p.username||"")
-            .toLowerCase()
-            .includes(
-              value.replace("@","")
-            )
-        )
-        .slice(0,30);
+    const users = snap.docs
+      .map(d=>({ uid:d.id, ...d.data() }))
+      .filter(p=>
+        String(p.name||"").toLowerCase().includes(value) ||
+        String(p.username||"").toLowerCase().includes(value.replace("@",""))
+      )
+      .slice(0,30);
 
     if(!users.length){
-
       $("searchResults").innerHTML =
-        `<div class="empty">
-          No user found.
-        </div>`;
-
+        `<div class="empty">No user found.</div>`;
       return;
-
     }
 
-    $("searchResults").innerHTML =
-      users.map(p=>`
-
-        <div class="search-result"
-             onclick='openPublicProfile(${JSON.stringify(p.uid)})'>
-
-          <img
-            class="avatar"
-            src="${avatar(p.photo,p.name)}"
-          >
-
-          <div>
-            <strong>
-              ${esc(p.name)}
-            </strong>
-
-            <div class="username">
-              @${esc(p.username)}
-            </div>
-          </div>
-
+    $("searchResults").innerHTML = users.map(p=>`
+      <div class="search-result"
+           onclick='openPublicProfile(${JSON.stringify(p.uid)})'>
+        <img class="avatar" src="${avatar(p.photo,p.name)}">
+        <div>
+          <strong>${esc(p.name)}</strong>
+          <div class="username">@${esc(p.username)}</div>
         </div>
+      </div>
+    `).join("");
 
-      `).join("");
-
+  }catch(e){
+    $("searchResults").innerHTML =
+      `<div class="empty">Search error: ${esc(e.message)}</div>`;
   }
-);
+}
 
 
 /* ==============================
    PROFILE EDIT
 ============================== */
 
-$("editProfileBtn").addEventListener(
-  "click",
-  async()=>{
+$("editProfileBtn").addEventListener("click", async()=>{
+  const p = await getProfile(currentUser.uid);
 
-    const p =
-      await getProfile(currentUser.uid);
+  $("editName").value = p.name || "";
+  $("editUsername").value = p.username || "";
+  $("editAge").value = p.age || "";
+  $("editGender").value = p.gender || "";
+  $("editPhotoPreview").src = avatar(p.photo, p.name);
+  $("profilePhotoFile").value = "";
 
-    $("editName").value =
-      p.name || "";
+  showModal("editProfileModal");
+});
 
-    $("editUsername").value =
-      p.username || "";
 
-    $("editAge").value =
-      p.age || "";
+$("profilePhotoFile").addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  $("editPhotoPreview").src = URL.createObjectURL(file);
+});
 
-    $("editGender").value =
-      p.gender || "";
 
-    $("editPhotoPreview").src =
-      avatar(p.photo,p.name);
+$("saveProfileBtn").addEventListener("click", async()=>{
 
-    $("profilePhotoFile").value = "";
+  if(!currentUser) return;
 
-    showModal("editProfileModal");
+  const name = $("editName").value.trim();
 
+  let username = $("editUsername").value
+    .trim()
+    .toLowerCase()
+    .replace(/^@/,"")
+    .replace(/[^a-z0-9_]/g,"");
+
+  const age = $("editAge").value.trim();
+  const gender = $("editGender").value;
+
+  if(!name){
+    toast("Name डालो।");
+    return;
   }
-);
 
-
-$("profilePhotoFile").addEventListener(
-  "change",e=>{
-
-    const file =
-      e.target.files[0];
-
-    if(!file) return;
-
-    $("editPhotoPreview").src =
-      URL.createObjectURL(file);
-
+  if(!username){
+    toast("User ID डालो।");
+    return;
   }
-);
 
+  try{
+    $("profileSaveStatus").textContent = "Saving...";
+    $("saveProfileBtn").disabled = true;
 
-$("saveProfileBtn").addEventListener(
-  "click",
-  async()=>{
+    // Username uniqueness
+    const q = query(
+      collection(db,"profiles"),
+      where("username","==",username)
+    );
 
-    if(!currentUser) return;
+    const snap = await getDocs(q);
+    const duplicate = snap.docs.some(d=> d.id !== currentUser.uid);
 
-    const name =
-      $("editName").value.trim();
-
-    let username =
-      $("editUsername")
-      .value
-      .trim()
-      .toLowerCase()
-      .replace(/^@/,"")
-      .replace(/[^a-z0-9_]/g,"");
-
-    const age =
-      $("editAge").value.trim();
-
-    const gender =
-      $("editGender").value;
-
-    if(!name){
-
-      alert("Name डालो।");
-
+    if(duplicate){
+      $("profileSaveStatus").textContent = "This User ID is already taken.";
+      $("saveProfileBtn").disabled = false;
       return;
-
     }
 
-    if(!username){
+    let photo = currentProfile?.photo || "";
+    const file = $("profilePhotoFile").files[0];
 
-      alert("User ID डालो।");
-
-      return;
-
+    if(file){
+      $("profileSaveStatus").textContent = "Uploading profile photo...";
+      photo = await uploadToCloudinary(file);
     }
 
-    try{
+    await updateDoc(doc(db,"profiles",currentUser.uid),{
+      name,
+      username,
+      age,
+      gender,
+      photo,
+      updatedAt: serverTimestamp()
+    });
 
-      $("profileSaveStatus").textContent =
-        "Saving...";
+    currentProfile = await getProfile(currentUser.uid);
+    await loadProfile();
 
+    hideModal("editProfileModal");
+    $("profileSaveStatus").textContent = "";
+    toast("✅ Profile updated.");
 
-      /* Username uniqueness */
-
-      const q =
-        query(
-          collection(db,"profiles"),
-          where("username","==",username)
-        );
-
-      const snap =
-        await getDocs(q);
-
-      const duplicate =
-        snap.docs.some(
-          d=>d.id !== currentUser.uid
-        );
-
-      if(duplicate){
-
-        $("profileSaveStatus").textContent =
-          "This User ID is already taken.";
-
-        return;
-
-      }
-
-
-      let photo =
-        currentProfile?.photo || "";
-
-      const file =
-        $("profilePhotoFile").files[0];
-
-      if(file){
-
-        $("profileSaveStatus").textContent =
-          "Uploading profile photo...";
-
-        photo =
-          await uploadToCloudinary(file);
-      }
-
-
-      await updateDoc(
-        doc(
-          db,
-          "profiles",
-          currentUser.uid
-        ),
-        {
-          name,
-          username,
-          age,
-          gender,
-          photo,
-          updatedAt:serverTimestamp()
-        }
-      );
-
-
-      currentProfile =
-        await getProfile(
-          currentUser.uid
-        );
-
-      await loadProfile();
-
-      hideModal("editProfileModal");
-
-      alert("✅ Profile updated.");
-
-    }catch(error){
-
-      console.error(error);
-
-      $("profileSaveStatus").textContent =
-        error.message;
-
-    }
-
+  }catch(error){
+    console.error(error);
+    $("profileSaveStatus").textContent = error.message;
+  }finally{
+    $("saveProfileBtn").disabled = false;
   }
-);
+});
 
 
 /* ==============================
-   PROFILE PHOTO
+   PROFILE PHOTO VIEWER
 ============================== */
 
-$("profilePhoto").addEventListener(
-  "click",
-  ()=>{
+$("profilePhoto").addEventListener("click", ()=>{
+  if(!currentProfile) return;
 
-    if(!currentProfile) return;
+  $("largeProfilePhoto").src =
+    avatar(currentProfile.photo, currentProfile.name);
 
-    $("largeProfilePhoto").src =
-      avatar(
-        currentProfile.photo,
-        currentProfile.name
-      );
-
-    showModal("photoViewerModal");
-
-  }
-);
+  showModal("photoViewerModal");
+});
 
 
 /* ==============================
-   SHARE APP
+   SHARE APP / VIDEO
 ============================== */
 
-$("shareAppBtn").addEventListener(
-  "click",
-  shareApp
-);
+$("shareAppBtn").addEventListener("click", shareApp);
 
 async function shareApp(){
-
-  const url =
-    location.href;
+  const url = location.href;
 
   const data = {
     title:"ReelHub",
@@ -3127,65 +2525,36 @@ async function shareApp(){
   };
 
   try{
-
     if(navigator.share){
-
       await navigator.share(data);
-
     }else{
-
       await navigator.clipboard.writeText(url);
-
-      alert("App link copied.");
-
+      toast("App link copied.");
     }
-
   }catch(e){
-
     console.log(e);
-
   }
-
 }
 
 
-/* ==============================
-   SHARE VIDEO
-============================== */
-
-window.shareVideo =
-async function(id){
-
-  const url =
-    location.origin+
-    location.pathname+
-    "?video="+
-    encodeURIComponent(id);
+window.shareVideo = async function(id){
+  const url = location.origin + location.pathname +
+    "?video=" + encodeURIComponent(id);
 
   try{
-
     if(navigator.share){
-
       await navigator.share({
         title:"ReelHub Video",
         text:"Watch this video on ReelHub 🎬",
         url
       });
-
     }else{
-
       await navigator.clipboard.writeText(url);
-
-      alert("Video link copied.");
-
+      toast("Video link copied.");
     }
-
   }catch(e){
-
     console.log(e);
-
   }
-
 };
 
 
@@ -3193,62 +2562,45 @@ async function(id){
    NOTIFICATIONS
 ============================== */
 
-async function startNotifications(){
+function startNotifications(){
+
+  if(notificationsUnsubscribe){
+    notificationsUnsubscribe();
+    notificationsUnsubscribe = null;
+  }
 
   if(!currentUser) return;
 
-  onSnapshot(
+  notificationsUnsubscribe = onSnapshot(
     query(
       collection(db,"notifications"),
       where("to","==",currentUser.uid)
     ),
     snapshot=>{
 
-      const list =
-        snapshot.docs.map(d=>({
-          id:d.id,
-          ...d.data()
-        }));
+      const list = snapshot.docs.map(d=>({
+        id:d.id,
+        ...d.data()
+      }));
 
-      list.sort(
-        (a,b)=>
-          timeValue(b.createdAt) -
-          timeValue(a.createdAt)
-      );
+      list.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
 
       if(!list.length){
-
         $("notifications").innerHTML =
-          `<div class="empty">
-            No new alerts.
-          </div>`;
-
+          `<div class="empty">No new alerts.</div>`;
         return;
-
       }
 
-      $("notifications").innerHTML =
-        list.slice(0,50)
-        .map(n=>`
-
-          <div class="setting-card"
-               style="padding:15px">
-
-            <strong>
-              ${esc(n.title || "ReelHub")}
-            </strong>
-
-            <p style="margin-top:5px;color:var(--muted)">
-              ${esc(n.message || "")}
-            </p>
-
-          </div>
-
-        `).join("");
-
+      $("notifications").innerHTML = list.slice(0,50).map(n=>`
+        <div class="setting-card" style="padding:15px;margin-top:8px">
+          <strong>${esc(n.title || "ReelHub")}</strong>
+          <p style="margin-top:5px;color:var(--muted)">
+            ${esc(n.message || "")}
+          </p>
+        </div>
+      `).join("");
     }
   );
-
 }
 
 
@@ -3257,275 +2609,157 @@ async function startNotifications(){
 ============================== */
 
 function chatId(a,b){
-
   return [a,b].sort().join("_");
-
 }
 
 
-window.openChat =
-async function(uid){
+window.openChat = async function(uid){
 
-  if(!currentUser || uid === currentUser.uid)
-    return;
+  if(!currentUser || uid === currentUser.uid) return;
 
-  const p =
-    await getProfile(uid);
+  const p = await getProfile(uid);
 
   currentChatUser = p;
+  currentChatId = chatId(currentUser.uid, uid);
 
-  currentChatId =
-    chatId(
-      currentUser.uid,
-      uid
-    );
-
-  $("chatTitle").textContent =
-    "💬 "+p.name;
+  $("chatTitle").textContent = "💬 "+p.name;
 
   showModal("chatModal");
 
   await setDoc(
-    doc(
-      db,
-      "chats",
-      currentChatId
-    ),
+    doc(db,"chats",currentChatId),
     {
-      members:[
-        currentUser.uid,
-        uid
-      ],
-      updatedAt:serverTimestamp()
+      members:[currentUser.uid, uid],
+      updatedAt: serverTimestamp()
     },
-    {merge:true}
+    { merge:true }
   );
 
   startChatListener();
-
 };
 
 
 function startChatListener(){
 
   if(chatUnsubscribe){
-
     chatUnsubscribe();
-
     chatUnsubscribe = null;
-
   }
 
   if(!currentChatId) return;
 
-  chatUnsubscribe =
-    onSnapshot(
-      collection(
-        db,
-        "chats",
-        currentChatId,
-        "messages"
-      ),
-      snapshot=>{
+  chatUnsubscribe = onSnapshot(
+    collection(db,"chats",currentChatId,"messages"),
+    snapshot=>{
 
-        const list =
-          snapshot.docs.map(d=>({
-            id:d.id,
-            ...d.data()
-          }));
+      const list = snapshot.docs.map(d=>({
+        id:d.id,
+        ...d.data()
+      }));
 
-        list.sort(
-          (a,b)=>
-            timeValue(a.createdAt) -
-            timeValue(b.createdAt)
-        );
+      list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
 
-        $("chatMessages").innerHTML =
-          list.map(m=>{
+      $("chatMessages").innerHTML = list.map(m=>{
 
-            const mine =
-              m.userId ===
-              currentUser.uid;
+        const mine = m.userId === currentUser.uid;
 
-            return `
-              <div class="message ${mine?"mine":""}">
+        return `
+        <div class="message ${mine?"mine":""}">
+          ${esc(m.text)}
+          <small>${mine ? "You" : esc(m.userName || "User")}</small>
+          ${
+            mine
+            ? `<div style="margin-top:4px">
+                 <button
+                   style="background:none;color:inherit;font-size:11px"
+                   onclick='editMessage(${JSON.stringify(m.id)}, ${JSON.stringify(m.text)})'>
+                   Edit
+                 </button>
+                 <button
+                   style="background:none;color:inherit;font-size:11px"
+                   onclick='deleteMessage(${JSON.stringify(m.id)})'>
+                   Delete
+                 </button>
+               </div>`
+            : ""
+          }
+        </div>
+        `;
+      }).join("");
 
-                ${esc(m.text)}
-
-                <small>
-                  ${mine?"You":esc(m.userName || "User")}
-                </small>
-
-                ${
-                  mine
-                  ?`
-                  <div style="margin-top:4px">
-
-                    <button
-                      style="background:none;color:inherit;font-size:11px"
-                      onclick='editMessage(
-                        ${JSON.stringify(m.id)},
-                        ${JSON.stringify(m.text)}
-                      )'>
-                      Edit
-                    </button>
-
-                    <button
-                      style="background:none;color:inherit;font-size:11px"
-                      onclick='deleteMessage(
-                        ${JSON.stringify(m.id)}
-                      )'>
-                      Delete
-                    </button>
-
-                  </div>
-                  `
-                  :""
-                }
-
-              </div>
-            `;
-
-          }).join("");
-
-        $("chatMessages").scrollTop =
-          $("chatMessages").scrollHeight;
-
-      }
-    );
-
+      $("chatMessages").scrollTop = $("chatMessages").scrollHeight;
+    }
+  );
 }
 
 
-$("sendMessageBtn").addEventListener(
-  "click",
-  sendMessage
-);
+$("sendMessageBtn").addEventListener("click", sendMessage);
 
-$("chatInput").addEventListener(
-  "keydown",
-  e=>{
-
-    if(e.key === "Enter"){
-      sendMessage();
-    }
-
-  }
-);
+$("chatInput").addEventListener("keydown", e=>{
+  if(e.key === "Enter") sendMessage();
+});
 
 
 async function sendMessage(){
+  const text = $("chatInput").value.trim();
+  if(!text || !currentChatId) return;
 
-  const text =
-    $("chatInput").value.trim();
+  try{
+    await addDoc(
+      collection(db,"chats",currentChatId,"messages"),
+      {
+        userId: currentUser.uid,
+        userName: currentProfile?.name || "User",
+        text,
+        createdAt: serverTimestamp()
+      }
+    );
 
-  if(!text || !currentChatId)
-    return;
+    await updateDoc(doc(db,"chats",currentChatId),{
+      lastMessage: text,
+      updatedAt: serverTimestamp()
+    });
 
-  await addDoc(
-    collection(
-      db,
-      "chats",
-      currentChatId,
-      "messages"
-    ),
-    {
-      userId:currentUser.uid,
-      userName:
-        currentProfile?.name ||
-        "User",
-      text,
-      createdAt:serverTimestamp()
-    }
-  );
+    $("chatInput").value = "";
 
-  await updateDoc(
-    doc(
-      db,
-      "chats",
-      currentChatId
-    ),
-    {
-      lastMessage:text,
-      updatedAt:serverTimestamp()
-    }
-  );
-
-  $("chatInput").value = "";
-
+  }catch(e){
+    toast("Message error: "+e.message);
+  }
 }
 
 
-window.editMessage =
-async function(id,oldText){
+window.editMessage = async function(id, oldText){
 
-  const text =
-    prompt(
-      "Edit message:",
-      oldText
-    );
-
+  const text = prompt("Edit message:", oldText);
   if(text === null) return;
 
-  const clean =
-    text.trim();
-
+  const clean = text.trim();
   if(!clean) return;
 
-  const ref =
-    doc(
-      db,
-      "chats",
-      currentChatId,
-      "messages",
-      id
-    );
-
-  const snap =
-    await getDoc(ref);
+  const ref = doc(db,"chats",currentChatId,"messages",id);
+  const snap = await getDoc(ref);
 
   if(!snap.exists()) return;
-
-  if(
-    snap.data().userId !==
-    currentUser.uid
-  ) return;
+  if(snap.data().userId !== currentUser.uid) return;
 
   await updateDoc(ref,{
-    text:clean,
-    updatedAt:serverTimestamp()
+    text: clean,
+    updatedAt: serverTimestamp()
   });
-
 };
 
 
-window.deleteMessage =
-async function(id){
+window.deleteMessage = async function(id){
 
-  const ref =
-    doc(
-      db,
-      "chats",
-      currentChatId,
-      "messages",
-      id
-    );
-
-  const snap =
-    await getDoc(ref);
+  const ref = doc(db,"chats",currentChatId,"messages",id);
+  const snap = await getDoc(ref);
 
   if(!snap.exists()) return;
+  if(snap.data().userId !== currentUser.uid) return;
 
-  if(
-    snap.data().userId !==
-    currentUser.uid
-  ) return;
-
-  if(!confirm("Delete message?"))
-    return;
+  if(!confirm("Delete message?")) return;
 
   await deleteDoc(ref);
-
 };
 
 
@@ -3533,32 +2767,19 @@ async function(id){
    SETTINGS
 ============================== */
 
-$("settingsBtn").addEventListener(
-  "click",
-  ()=>showModal("settingsModal")
-);
+$("settingsBtn").addEventListener("click", ()=> showModal("settingsModal"));
 
-$("darkModeBtn").addEventListener(
-  "click",
-  ()=>{
-
-    document.body.classList.toggle("dark");
-
-    localStorage.setItem(
-      "reelhubDark",
-      document.body.classList.contains("dark")
-        ?"1"
-        :"0"
-    );
-
-  }
-);
+$("darkModeBtn").addEventListener("click", ()=>{
+  document.body.classList.toggle("dark");
+  localStorage.setItem(
+    "reelhubDark",
+    document.body.classList.contains("dark") ? "1" : "0"
+  );
+});
 
 
 if(localStorage.getItem("reelhubDark")==="1"){
-
   document.body.classList.add("dark");
-
 }
 
 
@@ -3566,59 +2787,37 @@ if(localStorage.getItem("reelhubDark")==="1"){
    LOGOUT
 ============================== */
 
-$("logoutBtn").addEventListener(
-  "click",
-  async()=>{
-
-    if(!confirm("Logout करना है?"))
-      return;
-
-    await signOut(auth);
-
-  }
-);
+$("logoutBtn").addEventListener("click", async()=>{
+  if(!confirm("Logout करना है?")) return;
+  await signOut(auth);
+});
 
 
 /* ==============================
-   FOLLOWERS / FOLLOWING
+   MY FOLLOWERS/FOLLOWING
 ============================== */
 
-$("myFollowersBtn").addEventListener(
-  "click",
-  ()=>openPeople(
-    currentUser.uid,
-    "followers"
-  )
-);
+$("myFollowersBtn").addEventListener("click", ()=>{
+  if(!currentUser) return;
+  openPeople(currentUser.uid, "followers");
+});
 
-$("myFollowingBtn").addEventListener(
-  "click",
-  ()=>openPeople(
-    currentUser.uid,
-    "following"
-  )
-);
+$("myFollowingBtn").addEventListener("click", ()=>{
+  if(!currentUser) return;
+  openPeople(currentUser.uid, "following");
+});
 
 
 /* ==============================
    MY VIDEOS
 ============================== */
 
-async function loadMyVideos(){
-
+function loadMyVideos(){
   if(!currentUser) return;
 
-  const list =
-    videosCache.filter(
-      v=>v.userId === currentUser.uid
-    );
+  const list = videosCache.filter(v=> v.userId === currentUser.uid);
 
-  renderVideoList(
-    $("myVideos"),
-    list,
-    false
-  );
-
+  renderVideoList($("myVideos"), list, false);
 }
 
 
@@ -3626,83 +2825,52 @@ async function loadMyVideos(){
    HEADER PROFILE
 ============================== */
 
-$("headerProfileBtn").addEventListener(
-  "click",
-  ()=>{
-
-    openPanel("profilePanel");
-
-    loadProfile();
-
-    loadMyVideos();
-
-  }
-);
+$("headerProfileBtn").addEventListener("click", ()=>{
+  openPanel("profilePanel");
+  loadProfile();
+  loadMyVideos();
+});
 
 
 /* ==============================
    MODAL CLOSE
 ============================== */
 
-document.querySelectorAll(
-  "[data-close]"
-).forEach(btn=>{
+document.querySelectorAll("[data-close]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const id = btn.dataset.close;
+    hideModal(id);
 
-  btn.addEventListener(
-    "click",
-    ()=>{
-
-      const id =
-        btn.dataset.close;
-
-      hideModal(id);
-
-      if(id === "commentsModal"){
-
-        if(commentsUnsubscribe){
-
-          commentsUnsubscribe();
-
-          commentsUnsubscribe = null;
-
-        }
-
+    if(id === "commentsModal"){
+      currentCommentVideoId = null;
+      if(commentsUnsubscribe){
+        commentsUnsubscribe();
+        commentsUnsubscribe = null;
       }
-
-      if(id === "chatModal"){
-
-        if(chatUnsubscribe){
-
-          chatUnsubscribe();
-
-          chatUnsubscribe = null;
-
-        }
-
-      }
-
     }
-  );
 
+    if(id === "chatModal"){
+      currentChatId = null;
+      currentChatUser = null;
+      if(chatUnsubscribe){
+        chatUnsubscribe();
+        chatUnsubscribe = null;
+      }
+    }
+
+    if(id === "publicProfileModal"){
+      delete $("publicProfileModal").dataset.uid;
+    }
+  });
 });
 
 
-document.querySelectorAll(".modal")
-.forEach(modal=>{
-
-  modal.addEventListener(
-    "click",
-    e=>{
-
-      if(e.target === modal){
-
-        modal.classList.remove("show");
-
-      }
-
+document.querySelectorAll(".modal").forEach(modal=>{
+  modal.addEventListener("click", e=>{
+    if(e.target === modal){
+      modal.classList.remove("show");
     }
-  );
-
+  });
 });
 
 
