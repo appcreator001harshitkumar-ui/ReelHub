@@ -1,6 +1,5 @@
 /* ============================================================
-   ReelHub - style.css (Fixed Version)
-   Profile Layout + Chat Input + Messages Fix
+   ReelHub - style.css (Final Fixed Version)
 ============================================================ */
 
 * {
@@ -43,10 +42,7 @@ button { border: 0; cursor: pointer; background: none; color: inherit; }
 input, textarea { outline: none; }
 .hidden { display: none !important; }
 
-/* ============================================================
-   LOGIN
-============================================================ */
-
+/* LOGIN */
 #loginPage {
   min-height: 100vh;
   display: flex;
@@ -88,10 +84,7 @@ input, textarea { outline: none; }
   font-size: 15px;
 }
 
-/* ============================================================
-   APP SHELL
-============================================================ */
-
+/* APP */
 #app {
   min-height: 100vh;
   padding-bottom: 60px;
@@ -146,10 +139,7 @@ input, textarea { outline: none; }
   text-align: center;
 }
 
-/* ============================================================
-   BOTTOM NAV
-============================================================ */
-
+/* BOTTOM NAV */
 .bottom-nav {
   position: fixed;
   left: 0;
@@ -219,10 +209,7 @@ input, textarea { outline: none; }
 .panel { padding-bottom: 60px; }
 .panel.hidden { display: none; }
 
-/* ============================================================
-   FEED
-============================================================ */
-
+/* FEED */
 .ig-post {
   background: var(--card);
   border-bottom: 1px solid var(--border);
@@ -324,10 +311,7 @@ input, textarea { outline: none; }
   gap: 5px;
 }
 
-/* ============================================================
-   SHORTS
-============================================================ */
-
+/* SHORTS */
 #shortsPanel { padding: 0; margin: 0; background: #000; position: relative; }
 
 .reels-container {
@@ -473,10 +457,7 @@ input, textarea { outline: none; }
   border-radius: 10px;
 }
 
-/* ============================================================
-   UPLOAD
-============================================================ */
-
+/* UPLOAD */
 .upload-wrap { padding: 16px; max-width: 640px; margin: 0 auto; }
 .upload-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
 .upload-header h2 { font-size: 20px; font-weight: 600; }
@@ -606,10 +587,7 @@ input, textarea { outline: none; }
 
 .yt-publish-btn:disabled { opacity: .5; cursor: not-allowed; }
 
-/* ============================================================
-   MESSAGES - FIXED CHAT LAYOUT
-============================================================ */
-
+/* MESSAGES */
 #messagesPanel {
   padding: 0;
   margin: 0;
@@ -870,10 +848,7 @@ input, textarea { outline: none; }
 .dm-empty h3 { font-size: 18px; color: var(--text); margin-bottom: 6px; font-weight: 600; }
 .dm-empty p { font-size: 14px; }
 
-/* ============================================================
-   PROFILE - FIXED LAYOUT
-============================================================ */
-
+/* PROFILE - FIXED */
 .yt-profile { max-width: 640px; margin: 0 auto; }
 
 .yt-banner {
@@ -883,17 +858,18 @@ input, textarea { outline: none; }
 
 .yt-profile-head {
   padding: 0 16px;
-  margin-top: -55px;
+  margin-top: -50px;
   display: flex;
   align-items: flex-end;
-  gap: 16px;
+  gap: 14px;
   position: relative;
   z-index: 2;
+  min-height: 100px;
 }
 
 .yt-profile-avatar {
-  width: 105px;
-  height: 105px;
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
   border: 4px solid var(--card);
   object-fit: cover;
@@ -903,35 +879,48 @@ input, textarea { outline: none; }
   position: relative;
   z-index: 3;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  margin-top: auto;
+  margin-bottom: 0;
 }
 
 .yt-profile-info {
   flex: 1;
-  padding-bottom: 10px;
+  padding-top: 55px;
+  padding-bottom: 8px;
   min-width: 0;
   text-align: left;
+  overflow: hidden;
 }
 
 .yt-profile-info h1 {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 700;
   margin-bottom: 4px;
   word-wrap: break-word;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .yt-profile-info .handle {
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--muted);
   margin-bottom: 4px;
   display: block;
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .yt-profile-info .meta {
   font-size: 12.5px;
   color: var(--muted);
   display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .yt-profile-bio {
@@ -1070,10 +1059,7 @@ input, textarea { outline: none; }
 
 .yt-empty { text-align: center; padding: 50px 20px; color: var(--muted); }
 
-/* ============================================================
-   SAVE / BOOKMARK
-============================================================ */
-
+/* SAVE */
 .ig-action-btn.saved { color: var(--primary); }
 .save-btn.saved .icon { filter: drop-shadow(0 0 4px var(--primary)); }
 
@@ -1098,10 +1084,7 @@ input, textarea { outline: none; }
   z-index: 5;
 }
 
-/* ============================================================
-   PLAYLIST
-============================================================ */
-
+/* PLAYLIST */
 .playlist-tab-content { padding: 12px 16px; }
 
 .playlist-card {
@@ -1298,10 +1281,7 @@ input, textarea { outline: none; }
   flex-shrink: 0;
 }
 
-/* ============================================================
-   DEEP LINK
-============================================================ */
-
+/* DEEP LINK */
 .deep-link-banner {
   background: linear-gradient(90deg, #7c3aed, #ec4899);
   color: white;
@@ -1317,10 +1297,7 @@ input, textarea { outline: none; }
 
 .deep-link-banner.show { display: flex; }
 
-/* ============================================================
-   MODALS
-============================================================ */
-
+/* MODALS */
 .modal {
   position: fixed;
   inset: 0;
@@ -1587,8 +1564,4 @@ input, textarea { outline: none; }
   .modal-box { padding: 16px; }
   .yt-video-thumb { width: 120px; height: 68px; }
   .playlist-cover { width: 80px; height: 50px; }
-  .yt-profile-avatar { width: 90px; height: 90px; }
-  .yt-profile-head { margin-top: -45px; }
-  .yt-profile-info { padding-bottom: 8px; }
-  .yt-profile-info h1 { font-size: 18px; }
 }
