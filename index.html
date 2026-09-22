@@ -41,25 +41,11 @@ body{
   overscroll-behavior-y:none;
 }
 
-button,input,textarea,select{
-  font:inherit;
-}
-
-button{
-  border:0;
-  cursor:pointer;
-  background:none;
-  color:inherit;
-}
-
-input,textarea{
-  outline:none;
-}
-
+button,input,textarea,select{font:inherit;}
+button{border:0;cursor:pointer;background:none;color:inherit;}
+input,textarea{outline:none;}
 .hidden{display:none!important;}
 
-
-/* LOGIN */
 #loginPage{
   min-height:100vh;
   display:flex;
@@ -101,8 +87,6 @@ input,textarea{
   font-size:15px;
 }
 
-
-/* APP SHELL */
 #app{
   min-height:100vh;
   padding-bottom:60px;
@@ -111,8 +95,6 @@ input,textarea{
   background:var(--card);
 }
 
-
-/* TOPBAR */
 .topbar{
   position:sticky;
   top:0;
@@ -143,10 +125,7 @@ input,textarea{
   font-size:22px;
 }
 
-.topbar-actions button{
-  padding:5px;
-  position:relative;
-}
+.topbar-actions button{padding:5px;position:relative;}
 
 .topbar-actions .badge{
   position:absolute;
@@ -162,8 +141,6 @@ input,textarea{
   text-align:center;
 }
 
-
-/* BOTTOM NAV */
 .bottom-nav{
   position:fixed;
   left:0;
@@ -202,19 +179,9 @@ input,textarea{
   height:26px;
 }
 
-.nav-btn .nav-label{
-  font-size:9.5px;
-  font-weight:500;
-}
-
-.nav-btn.active{
-  color:var(--text);
-  font-weight:bold;
-}
-
-.nav-btn:not(.active){
-  color:var(--muted);
-}
+.nav-btn .nav-label{font-size:9.5px;font-weight:500;}
+.nav-btn.active{color:var(--text);font-weight:bold;}
+.nav-btn:not(.active){color:var(--muted);}
 
 .nav-btn .avatar-mini{
   width:26px;
@@ -223,14 +190,8 @@ input,textarea{
   object-fit:cover;
 }
 
-.nav-btn.active .avatar-mini{
-  border:2px solid var(--text);
-}
-
-.nav-btn .plus-icon{
-  font-size:26px;
-  font-weight:300;
-}
+.nav-btn.active .avatar-mini{border:2px solid var(--text);}
+.nav-btn .plus-icon{font-size:26px;font-weight:300;}
 
 .nav-btn .nav-badge{
   position:absolute;
@@ -246,16 +207,9 @@ input,textarea{
   text-align:center;
 }
 
-
-/* PANELS */
-.panel{
-  padding-bottom:60px;
-}
-
+.panel{padding-bottom:60px;}
 .panel.hidden{display:none;}
 
-
-/* INSTAGRAM FEED */
 .ig-post{
   background:var(--card);
   border-bottom:1px solid var(--border);
@@ -278,11 +232,7 @@ input,textarea{
   cursor:pointer;
 }
 
-.ig-post-user{
-  flex:1;
-  cursor:pointer;
-  min-width:0;
-}
+.ig-post-user{flex:1;cursor:pointer;min-width:0;}
 
 .ig-post-user strong{
   font-size:13.5px;
@@ -302,16 +252,9 @@ input,textarea{
   white-space:nowrap;
 }
 
-.ig-post-head .more-btn{
-  font-size:20px;
-  color:var(--text);
-  padding:5px;
-}
+.ig-post-head .more-btn{font-size:20px;color:var(--text);padding:5px;}
 
-.ig-media{
-  background:#000;
-  width:100%;
-}
+.ig-media{background:#000;width:100%;}
 
 .ig-media video{
   width:100%;
@@ -338,23 +281,10 @@ input,textarea{
   align-items:center;
 }
 
-.ig-action-btn.liked{
-  color:#ed4956;
-}
-
-.ig-action-btn .icon{
-  font-size:24px;
-}
-
-.ig-actions .spacer{
-  flex:1;
-}
-
-.ig-likes{
-  padding:0 12px 5px;
-  font-size:13.5px;
-  font-weight:600;
-}
+.ig-action-btn.liked{color:#ed4956;}
+.ig-action-btn .icon{font-size:24px;}
+.ig-actions .spacer{flex:1;}
+.ig-likes{padding:0 12px 5px;font-size:13.5px;font-weight:600;}
 
 .ig-caption{
   padding:0 12px 6px;
@@ -363,11 +293,7 @@ input,textarea{
   word-wrap:break-word;
 }
 
-.ig-caption strong{
-  font-weight:600;
-  margin-right:6px;
-}
-
+.ig-caption strong{font-weight:600;margin-right:6px;}
 .ig-time{
   padding:0 12px 12px;
   font-size:10.5px;
@@ -375,14 +301,7 @@ input,textarea{
   text-transform:uppercase;
 }
 
-
-/* SHORTS (REELS) */
-#shortsPanel{
-  padding:0;
-  margin:0;
-  background:#000;
-  position:relative;
-}
+#shortsPanel{padding:0;margin:0;background:#000;position:relative;}
 
 .reels-container{
   height:calc(100vh - 56px);
@@ -423,11 +342,7 @@ input,textarea{
   background:linear-gradient(transparent 60%,rgba(0,0,0,0.7));
 }
 
-.reel-info{
-  color:white;
-  pointer-events:auto;
-  max-width:75%;
-}
+.reel-info{color:white;pointer-events:auto;max-width:75%;}
 
 .reel-user{
   display:flex;
@@ -446,10 +361,7 @@ input,textarea{
   cursor:pointer;
 }
 
-.reel-user strong{
-  font-size:14px;
-  color:white;
-}
+.reel-user strong{font-size:14px;color:white;}
 
 .reel-user .follow-btn-sm{
   font-size:12px;
@@ -461,9 +373,7 @@ input,textarea{
   background:rgba(255,255,255,0.15);
 }
 
-.reel-user .follow-btn-sm:active{
-  background:rgba(255,255,255,0.35);
-}
+.reel-user .follow-btn-sm:active{background:rgba(255,255,255,0.35);}
 
 .reel-title{
   font-size:13px;
@@ -506,9 +416,7 @@ input,textarea{
   filter:drop-shadow(0 1px 3px rgba(0,0,0,0.6));
 }
 
-.reel-action.liked .icon{
-  color:#ed4956;
-}
+.reel-action.liked .icon{color:#ed4956;}
 
 .reel-action small{
   font-size:11px;
@@ -527,25 +435,9 @@ input,textarea{
   background:var(--card);
 }
 
-
-/* UPLOAD (YOUTUBE STYLE) */
-.upload-wrap{
-  padding:16px;
-  max-width:640px;
-  margin:0 auto;
-}
-
-.upload-header{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  margin-bottom:20px;
-}
-
-.upload-header h2{
-  font-size:20px;
-  font-weight:600;
-}
+.upload-wrap{padding:16px;max-width:640px;margin:0 auto;}
+.upload-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+.upload-header h2{font-size:20px;font-weight:600;}
 
 .yt-card{
   background:var(--card);
@@ -579,22 +471,9 @@ input,textarea{
   background:rgba(124,58,237,0.03);
 }
 
-.yt-dropzone .icon{
-  font-size:48px;
-  margin-bottom:10px;
-  display:block;
-}
-
-.yt-dropzone .main-text{
-  font-size:15px;
-  font-weight:500;
-  margin-bottom:4px;
-}
-
-.yt-dropzone .sub-text{
-  font-size:12px;
-  color:var(--muted);
-}
+.yt-dropzone .icon{font-size:48px;margin-bottom:10px;display:block;}
+.yt-dropzone .main-text{font-size:15px;font-weight:500;margin-bottom:4px;}
+.yt-dropzone .sub-text{font-size:12px;color:var(--muted);}
 
 .yt-preview{
   width:100%;
@@ -615,9 +494,7 @@ input,textarea{
   transition:border .2s;
 }
 
-.yt-input:focus{
-  border-color:var(--primary);
-}
+.yt-input:focus{border-color:var(--primary);}
 
 .yt-textarea{
   width:100%;
@@ -631,9 +508,7 @@ input,textarea{
   font-size:14px;
 }
 
-.yt-textarea:focus{
-  border-color:var(--primary);
-}
+.yt-textarea:focus{border-color:var(--primary);}
 
 .yt-label{
   font-size:13px;
@@ -643,11 +518,7 @@ input,textarea{
   display:block;
 }
 
-.yt-radio-group{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
+.yt-radio-group{display:flex;gap:8px;flex-wrap:wrap;}
 
 .yt-radio{
   flex:1;
@@ -666,22 +537,9 @@ input,textarea{
   background:rgba(124,58,237,0.05);
 }
 
-.yt-radio .r-icon{
-  font-size:22px;
-  display:block;
-  margin-bottom:4px;
-}
-
-.yt-radio .r-title{
-  font-size:13px;
-  font-weight:600;
-}
-
-.yt-radio .r-sub{
-  font-size:11px;
-  color:var(--muted);
-  margin-top:2px;
-}
+.yt-radio .r-icon{font-size:22px;display:block;margin-bottom:4px;}
+.yt-radio .r-title{font-size:13px;font-weight:600;}
+.yt-radio .r-sub{font-size:11px;color:var(--muted);margin-top:2px;}
 
 .yt-progress{
   height:6px;
@@ -712,13 +570,8 @@ input,textarea{
   margin-top:14px;
 }
 
-.yt-publish-btn:disabled{
-  opacity:.5;
-  cursor:not-allowed;
-}
+.yt-publish-btn:disabled{opacity:.5;cursor:not-allowed;}
 
-
-/* MESSAGES - FIXED LAYOUT */
 #messagesPanel{
   padding:0;
   margin:0;
@@ -756,16 +609,8 @@ input,textarea{
   flex-shrink:0;
 }
 
-.dm-header h2{
-  font-size:17px;
-  font-weight:600;
-  flex:1;
-}
-
-.dm-header .icon-btn{
-  font-size:22px;
-  padding:5px;
-}
+.dm-header h2{font-size:17px;font-weight:600;flex:1;}
+.dm-header .icon-btn{font-size:22px;padding:5px;}
 
 .dm-search{
   padding:10px 16px;
@@ -783,11 +628,7 @@ input,textarea{
   font-size:14px;
 }
 
-#dmInboxList{
-  flex:1;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-}
+#dmInboxList{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 
 .dm-inbox-item{
   display:flex;
@@ -797,9 +638,7 @@ input,textarea{
   cursor:pointer;
 }
 
-.dm-inbox-item:hover{
-  background:var(--bg);
-}
+.dm-inbox-item:hover{background:var(--bg);}
 
 .dm-inbox-item img{
   width:56px;
@@ -810,10 +649,7 @@ input,textarea{
   flex-shrink:0;
 }
 
-.dm-inbox-info{
-  flex:1;
-  min-width:0;
-}
+.dm-inbox-info{flex:1;min-width:0;}
 
 .dm-inbox-info strong{
   display:block;
@@ -834,11 +670,7 @@ input,textarea{
   text-overflow:ellipsis;
 }
 
-.dm-inbox-time{
-  font-size:11px;
-  color:var(--muted);
-  flex-shrink:0;
-}
+.dm-inbox-time{font-size:11px;color:var(--muted);flex-shrink:0;}
 
 #dmChatView{
   display:flex;
@@ -866,10 +698,7 @@ input,textarea{
   object-fit:cover;
 }
 
-.dm-chat-header .info{
-  flex:1;
-  min-width:0;
-}
+.dm-chat-header .info{flex:1;min-width:0;}
 
 .dm-chat-header strong{
   display:block;
@@ -880,10 +709,7 @@ input,textarea{
   white-space:nowrap;
 }
 
-.dm-chat-header small{
-  font-size:11.5px;
-  color:var(--muted);
-}
+.dm-chat-header small{font-size:11.5px;color:var(--muted);}
 
 .dm-messages{
   flex:1;
@@ -920,18 +746,9 @@ input,textarea{
   border-bottom-right-radius:4px;
 }
 
-.dm-msg small{
-  display:block;
-  font-size:10px;
-  margin-top:3px;
-  opacity:.7;
-}
+.dm-msg small{display:block;font-size:10px;margin-top:3px;opacity:.7;}
 
-.dm-msg-actions{
-  display:flex;
-  gap:8px;
-  margin-top:4px;
-}
+.dm-msg-actions{display:flex;gap:8px;margin-top:4px;}
 
 .dm-msg-actions button{
   font-size:10px;
@@ -958,10 +775,7 @@ input,textarea{
   pointer-events:none;
 }
 
-.dm-shared-video .info{
-  padding:8px 10px;
-  font-size:12px;
-}
+.dm-shared-video .info{padding:8px 10px;font-size:12px;}
 
 .dm-input-bar{
   display:flex;
@@ -990,11 +804,7 @@ input,textarea{
   padding:6px 8px;
 }
 
-.dm-empty{
-  padding:60px 30px;
-  text-align:center;
-  color:var(--muted);
-}
+.dm-empty{padding:60px 30px;text-align:center;color:var(--muted);}
 
 .dm-empty .icon{
   font-size:56px;
@@ -1010,16 +820,9 @@ input,textarea{
   font-weight:600;
 }
 
-.dm-empty p{
-  font-size:14px;
-}
+.dm-empty p{font-size:14px;}
 
-
-/* PROFILE (YOUTUBE STYLE) */
-.yt-profile{
-  max-width:640px;
-  margin:0 auto;
-}
+.yt-profile{max-width:640px;margin:0 auto;}
 
 .yt-banner{
   height:110px;
@@ -1045,11 +848,7 @@ input,textarea{
   flex-shrink:0;
 }
 
-.yt-profile-info{
-  flex:1;
-  padding-bottom:8px;
-  min-width:0;
-}
+.yt-profile-info{flex:1;padding-bottom:8px;min-width:0;}
 
 .yt-profile-info h1{
   font-size:20px;
@@ -1058,16 +857,8 @@ input,textarea{
   word-wrap:break-word;
 }
 
-.yt-profile-info .handle{
-  font-size:13px;
-  color:var(--muted);
-  margin-bottom:5px;
-}
-
-.yt-profile-info .meta{
-  font-size:12.5px;
-  color:var(--muted);
-}
+.yt-profile-info .handle{font-size:13px;color:var(--muted);margin-bottom:5px;}
+.yt-profile-info .meta{font-size:12.5px;color:var(--muted);}
 
 .yt-profile-bio{
   padding:10px 16px 14px;
@@ -1083,21 +874,9 @@ input,textarea{
   border-bottom:1px solid var(--border);
 }
 
-.yt-stat{
-  cursor:pointer;
-  text-align:center;
-}
-
-.yt-stat strong{
-  display:block;
-  font-size:16px;
-  font-weight:600;
-}
-
-.yt-stat span{
-  font-size:12px;
-  color:var(--muted);
-}
+.yt-stat{cursor:pointer;text-align:center;}
+.yt-stat strong{display:block;font-size:16px;font-weight:600;}
+.yt-stat span{font-size:12px;color:var(--muted);}
 
 .yt-profile-actions{
   display:flex;
@@ -1146,14 +925,9 @@ input,textarea{
   white-space:nowrap;
 }
 
-.yt-tab.active{
-  color:var(--text);
-  border-bottom-color:var(--text);
-}
+.yt-tab.active{color:var(--text);border-bottom-color:var(--text);}
 
-.yt-videos-grid{
-  padding:12px 0;
-}
+.yt-videos-grid{padding:12px 0;}
 
 .yt-video-item{
   display:flex;
@@ -1179,10 +953,7 @@ input,textarea{
   object-fit:cover;
 }
 
-.yt-video-meta{
-  flex:1;
-  min-width:0;
-}
+.yt-video-meta{flex:1;min-width:0;}
 
 .yt-video-meta h4{
   font-size:14px;
@@ -1196,17 +967,8 @@ input,textarea{
   word-wrap:break-word;
 }
 
-.yt-video-meta .stats{
-  font-size:12px;
-  color:var(--muted);
-  margin-bottom:6px;
-}
-
-.yt-video-meta .btns{
-  display:flex;
-  gap:6px;
-  flex-wrap:wrap;
-}
+.yt-video-meta .stats{font-size:12px;color:var(--muted);margin-bottom:6px;}
+.yt-video-meta .btns{display:flex;gap:6px;flex-wrap:wrap;}
 
 .yt-mini-btn{
   padding:5px 10px;
@@ -1221,14 +983,8 @@ input,textarea{
 .yt-mini-btn.danger{color:var(--danger);border-color:var(--danger);}
 .yt-mini-btn.primary{color:var(--primary);border-color:var(--primary);}
 
-.yt-empty{
-  text-align:center;
-  padding:50px 20px;
-  color:var(--muted);
-}
+.yt-empty{text-align:center;padding:50px 20px;color:var(--muted);}
 
-
-/* MODALS */
 .modal{
   position:fixed;
   inset:0;
@@ -1264,10 +1020,7 @@ input,textarea{
   margin-bottom:16px;
 }
 
-.modal-header h2{
-  font-size:18px;
-  font-weight:600;
-}
+.modal-header h2{font-size:18px;font-weight:600;}
 
 .close{
   width:32px;
@@ -1281,8 +1034,6 @@ input,textarea{
   justify-content:center;
 }
 
-
-/* COMMENTS */
 .comment-item{
   display:flex;
   gap:10px;
@@ -1298,10 +1049,7 @@ input,textarea{
   flex-shrink:0;
 }
 
-.comment-content{
-  flex:1;
-  min-width:0;
-}
+.comment-content{flex:1;min-width:0;}
 
 .comment-content .name{
   font-size:13px;
@@ -1353,8 +1101,6 @@ input,textarea{
   padding:0 6px;
 }
 
-
-/* PEOPLE LIST */
 .person-item{
   display:flex;
   align-items:center;
@@ -1370,11 +1116,7 @@ input,textarea{
   cursor:pointer;
 }
 
-.person-item .info{
-  flex:1;
-  min-width:0;
-  cursor:pointer;
-}
+.person-item .info{flex:1;min-width:0;cursor:pointer;}
 
 .person-item .info strong{
   display:block;
@@ -1386,10 +1128,7 @@ input,textarea{
   white-space:nowrap;
 }
 
-.person-item .info small{
-  font-size:12px;
-  color:var(--muted);
-}
+.person-item .info small{font-size:12px;color:var(--muted);}
 
 .follow-btn{
   padding:7px 16px;
@@ -1403,9 +1142,7 @@ input,textarea{
   cursor:pointer;
 }
 
-.follow-btn:active{
-  transform:scale(0.95);
-}
+.follow-btn:active{transform:scale(0.95);}
 
 .follow-btn.following{
   background:var(--bg);
@@ -1413,12 +1150,8 @@ input,textarea{
   border:1px solid var(--border);
 }
 
-.follow-btn:disabled{
-  opacity:.6;
-}
+.follow-btn:disabled{opacity:.6;}
 
-
-/* SHARE SHEET */
 .share-sheet{
   position:fixed;
   inset:0;
@@ -1483,10 +1216,7 @@ input,textarea{
   white-space:nowrap;
 }
 
-.share-actions{
-  display:flex;
-  gap:10px;
-}
+.share-actions{display:flex;gap:10px;}
 
 .share-action-btn{
   flex:1;
@@ -1505,8 +1235,6 @@ input,textarea{
   margin-bottom:4px;
 }
 
-
-/* TOAST */
 .toast{
   position:fixed;
   bottom:80px;
@@ -1533,7 +1261,6 @@ input,textarea{
 
 <body>
 
-<!-- LOGIN -->
 <div id="loginPage">
   <div class="login-card">
     <div class="logo">ReelHub</div>
@@ -1543,23 +1270,16 @@ input,textarea{
   </div>
 </div>
 
-<!-- APP -->
 <div id="app" class="hidden">
-
   <header class="topbar" id="mainTopbar">
     <div class="topbar-brand">ReelHub</div>
     <div class="topbar-actions">
       <button id="topSearchBtn">🔍</button>
-      <button id="topAlertsBtn">
-        🔔
-        <span class="badge hidden" id="alertsBadge">0</span>
-      </button>
+      <button id="topAlertsBtn">🔔<span class="badge hidden" id="alertsBadge">0</span></button>
     </div>
   </header>
 
-  <section id="homePanel" class="panel">
-    <div id="feed"></div>
-  </section>
+  <section id="homePanel" class="panel"><div id="feed"></div></section>
 
   <section id="shortsPanel" class="panel hidden">
     <div class="reels-container" id="reelsContainer"></div>
@@ -1567,10 +1287,7 @@ input,textarea{
 
   <section id="uploadPanel" class="panel hidden">
     <div class="upload-wrap">
-      <div class="upload-header">
-        <h2>Upload Video</h2>
-      </div>
-
+      <div class="upload-header"><h2>Upload Video</h2></div>
       <div class="yt-card">
         <div class="yt-card-title">📹 Select Video</div>
         <div class="yt-dropzone" id="dropzone">
@@ -1731,10 +1448,8 @@ input,textarea{
       <span class="nav-label">Profile</span>
     </button>
   </nav>
-
 </div>
 
-<!-- MODALS -->
 <div id="searchModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1763,8 +1478,7 @@ input,textarea{
       <button class="close" data-close="editProfileModal">×</button>
     </div>
     <div style="text-align:center;margin-bottom:20px">
-      <img id="editPhotoPreview" class="yt-profile-avatar"
-           style="margin:0 auto" src="" alt="">
+      <img id="editPhotoPreview" class="yt-profile-avatar" style="margin:0 auto" src="" alt="">
       <div style="margin-top:10px">
         <input id="profilePhotoFile" type="file" accept="image/*">
       </div>
@@ -1943,8 +1657,6 @@ import {
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-
-/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
   authDomain: "reelhu.firebaseapp.com",
@@ -1963,8 +1675,6 @@ const provider = new GoogleAuthProvider();
 const CLOUDINARY_CLOUD_NAME = "s3eresx6";
 const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
 
-
-/* STATE */
 let currentUser = null;
 let currentProfile = null;
 let videosCache = [];
@@ -1986,8 +1696,6 @@ let uploadType = "long";
 
 const $ = id => document.getElementById(id);
 
-
-/* HELPERS */
 function esc(v){
   return String(v ?? "")
     .replaceAll("&","&amp;")
@@ -2036,7 +1744,6 @@ function timeAgo(v){
   if(wk < 4) return wk + "w";
   return new Date(t).toLocaleDateString();
 }
-
 
 /* NAVIGATION */
 document.querySelectorAll(".nav-btn").forEach(btn => {
@@ -2087,8 +1794,7 @@ function openPanel(id){
   if(id === "messagesPanel") showDMInbox();
 }
 
-
-/* GOOGLE LOGIN */
+/* LOGIN */
 $("googleLogin").addEventListener("click", async()=>{
   $("loginStatus").textContent = "Opening Google...";
   try{
@@ -2104,7 +1810,6 @@ $("googleLogin").addEventListener("click", async()=>{
 });
 
 getRedirectResult(auth).catch(console.error);
-
 
 /* PROFILE */
 async function createProfile(){
@@ -2177,7 +1882,6 @@ async function loadMyFollows(){
   }catch(e){ console.error(e); }
 }
 
-
 /* AUTH */
 onAuthStateChanged(auth, async user => {
   if(user){
@@ -2208,7 +1912,6 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-
 /* CLOUDINARY */
 function uploadToCloudinary(file, onProgress){
   return new Promise((resolve,reject)=>{
@@ -2238,7 +1941,6 @@ function uploadToCloudinary(file, onProgress){
   });
 }
 
-
 /* UPLOAD UI */
 $("dropzone").addEventListener("click", ()=> $("videoFile").click());
 
@@ -2266,7 +1968,6 @@ $("typeGroup").addEventListener("click", e=>{
   el.classList.add("selected");
   uploadType = el.dataset.value;
 });
-
 
 /* UPLOAD VIDEO */
 $("publishBtn").addEventListener("click", async()=>{
@@ -2325,8 +2026,7 @@ $("publishBtn").addEventListener("click", async()=>{
   }
 });
 
-
-/* REALTIME VIDEOS */
+/* VIDEOS REALTIME */
 function startRealtimeVideos(){
   if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
 
@@ -2344,7 +2044,6 @@ function startRealtimeVideos(){
     }
   });
 }
-
 
 /* HOME FEED */
 function renderFeed(){
@@ -2376,21 +2075,21 @@ function createIGPost(v){
   return `
   <article class="ig-post" data-id="${esc(v.id)}">
     <div class="ig-post-head">
-      <img class="ig-avatar" src="${avatar(v.userPhoto, v.userName)}"
-           onclick='event.stopPropagation(); openPublicProfile(${JSON.stringify(v.userId)})'>
-      <div class="ig-post-user" onclick='event.stopPropagation(); openPublicProfile(${JSON.stringify(v.userId)})'>
+      <img class="ig-avatar post-open-user" data-uid="${esc(v.userId)}"
+           src="${avatar(v.userPhoto, v.userName)}">
+      <div class="ig-post-user post-open-user" data-uid="${esc(v.userId)}">
         <strong>${esc(v.username || v.userName || "User")}</strong>
         <small>${esc(v.title || "")}</small>
       </div>
       ${!mine && currentUser ? `
         <button class="follow-btn ${isFollowing?"following":""}"
                 data-follow-uid="${esc(v.userId)}"
-                onclick='event.stopPropagation(); toggleFollow(${JSON.stringify(v.userId)}, this)'
+                data-action="follow"
                 style="padding:6px 14px;font-size:12px;border-radius:8px">
           ${isFollowing ? "Following" : "Follow"}
         </button>
       ` : ""}
-      ${mine ? `<button class="more-btn" onclick='event.stopPropagation(); openEditVideo(${JSON.stringify(v.id)})'>⋯</button>` : ""}
+      ${mine ? `<button class="more-btn" data-edit-video="${esc(v.id)}">⋯</button>` : ""}
     </div>
 
     <div class="ig-media">
@@ -2400,17 +2099,17 @@ function createIGPost(v){
 
     <div class="ig-actions">
       <button class="ig-action-btn like-btn" id="like-${esc(v.id)}"
-              onclick='event.stopPropagation(); toggleLike(${JSON.stringify(v.id)}, this)'>
+              data-like-video="${esc(v.id)}">
         <span class="icon">🤍</span>
       </button>
-      <button class="ig-action-btn" onclick='event.stopPropagation(); openComments(${JSON.stringify(v.id)})'>
+      <button class="ig-action-btn" data-comment-video="${esc(v.id)}">
         <span class="icon">💬</span>
       </button>
-      <button class="ig-action-btn" onclick='event.stopPropagation(); openShareSheet(${JSON.stringify(v.id)})'>
+      <button class="ig-action-btn" data-share-video="${esc(v.id)}">
         <span class="icon">📤</span>
       </button>
       <div class="spacer"></div>
-      ${mine ? `<button class="ig-action-btn" onclick='event.stopPropagation(); deleteVideo(${JSON.stringify(v.id)})' style="color:var(--danger)">
+      ${mine ? `<button class="ig-action-btn" data-delete-video="${esc(v.id)}" style="color:var(--danger)">
         <span class="icon">🗑️</span>
       </button>` : ""}
     </div>
@@ -2443,7 +2142,6 @@ async function updateLikeUI(videoId){
     }
   }catch(e){ console.error(e); }
 }
-
 
 /* SHORTS */
 function renderShorts(){
@@ -2481,12 +2179,12 @@ function createReel(v){
     <div class="reel-overlay">
       <div class="reel-info">
         <div class="reel-user">
-          <img src="${avatar(v.userPhoto, v.userName)}"
-               onclick='event.stopPropagation(); openPublicProfile(${JSON.stringify(v.userId)})'>
+          <img class="post-open-user" data-uid="${esc(v.userId)}"
+               src="${avatar(v.userPhoto, v.userName)}">
           <strong>@${esc(v.username || v.userName)}</strong>
           ${!mine ? `<button class="follow-btn-sm"
             data-follow-uid="${esc(v.userId)}"
-            onclick='event.stopPropagation(); toggleFollow(${JSON.stringify(v.userId)}, this)'>
+            data-action="follow">
             ${isFollowing ? "Following" : "Follow"}
           </button>` : ""}
         </div>
@@ -2497,19 +2195,19 @@ function createReel(v){
 
     <div class="reel-actions">
       <div class="reel-action like-btn" id="reel-like-${esc(v.id)}"
-           onclick='event.stopPropagation(); toggleLike(${JSON.stringify(v.id)}, this, true)'>
+           data-like-video="${esc(v.id)}" data-reel="true">
         <span class="icon">🤍</span>
         <small class="like-count">${v.likes || 0}</small>
       </div>
-      <div class="reel-action" onclick='event.stopPropagation(); openComments(${JSON.stringify(v.id)})'>
+      <div class="reel-action" data-comment-video="${esc(v.id)}">
         <span class="icon">💬</span>
         <small>Comment</small>
       </div>
-      <div class="reel-action" onclick='event.stopPropagation(); openShareSheet(${JSON.stringify(v.id)})'>
+      <div class="reel-action" data-share-video="${esc(v.id)}">
         <span class="icon">📤</span>
         <small>Share</small>
       </div>
-      ${mine ? `<div class="reel-action" onclick='event.stopPropagation(); deleteVideo(${JSON.stringify(v.id)})'>
+      ${mine ? `<div class="reel-action" data-delete-video="${esc(v.id)}">
         <span class="icon">🗑️</span>
         <small>Delete</small>
       </div>` : ""}
@@ -2557,6 +2255,107 @@ function setupReelsObserver(){
   videos.forEach(v => reelObserver.observe(v));
 }
 
+/* GLOBAL CLICK HANDLER - सभी dynamic buttons के लिए */
+document.addEventListener("click", async (e)=>{
+  const t = e.target;
+
+  // Open profile
+  const openUser = t.closest(".post-open-user");
+  if(openUser){
+    e.preventDefault();
+    e.stopPropagation();
+    const uid = openUser.dataset.uid;
+    if(uid) openPublicProfile(uid);
+    return;
+  }
+
+  // Follow button
+  const followBtn = t.closest('[data-action="follow"]');
+  if(followBtn){
+    e.preventDefault();
+    e.stopPropagation();
+    const uid = followBtn.dataset.followUid;
+    if(uid) toggleFollow(uid, followBtn);
+    return;
+  }
+
+  // Like button
+  const likeBtn = t.closest("[data-like-video]");
+  if(likeBtn){
+    e.preventDefault();
+    e.stopPropagation();
+    const vid = likeBtn.dataset.likeVideo;
+    const isReel = likeBtn.dataset.reel === "true";
+    if(vid) toggleLike(vid, likeBtn, isReel);
+    return;
+  }
+
+  // Comment button
+  const commentBtn = t.closest("[data-comment-video]");
+  if(commentBtn){
+    e.preventDefault();
+    e.stopPropagation();
+    const vid = commentBtn.dataset.commentVideo;
+    if(vid) openComments(vid);
+    return;
+  }
+
+  // Share button
+  const shareBtn = t.closest("[data-share-video]");
+  if(shareBtn){
+    e.preventDefault();
+    e.stopPropagation();
+    const vid = shareBtn.dataset.shareVideo;
+    if(vid) openShareSheet(vid);
+    return;
+  }
+
+  // Delete video
+  const deleteBtn = t.closest("[data-delete-video]");
+  if(deleteBtn){
+    e.preventDefault();
+    e.stopPropagation();
+    const vid = deleteBtn.dataset.deleteVideo;
+    if(vid) deleteVideo(vid);
+    return;
+  }
+
+  // Edit video
+  const editBtn = t.closest("[data-edit-video]");
+  if(editBtn){
+    e.preventDefault();
+    e.stopPropagation();
+    const vid = editBtn.dataset.editVideo;
+    if(vid) openEditVideo(vid);
+    return;
+  }
+
+  // Search result open user
+  const searchOpen = t.closest(".search-open-btn");
+  if(searchOpen){
+    e.preventDefault();
+    e.stopPropagation();
+    const uid = searchOpen.dataset.uid;
+    if(uid){
+      hideModal("searchModal");
+      setTimeout(()=> openPublicProfile(uid), 150);
+    }
+    return;
+  }
+
+  // People list open user
+  const peopleOpen = t.closest(".people-open-btn");
+  if(peopleOpen){
+    e.preventDefault();
+    e.stopPropagation();
+    const uid = peopleOpen.dataset.uid;
+    if(uid){
+      hideModal("peopleModal");
+      setTimeout(()=> openPublicProfile(uid), 150);
+    }
+    return;
+  }
+});
 
 /* LIKE */
 window.toggleLike = async function(videoId, btnEl, isReel=false){
@@ -2623,7 +2422,6 @@ window.toggleLike = async function(videoId, btnEl, isReel=false){
   }
 };
 
-
 /* COMMENTS */
 window.openComments = function(videoId){
   currentCommentVideoId = videoId;
@@ -2659,8 +2457,8 @@ function loadComments(videoId){
             <div class="actions">
               <span style="font-size:11px;color:var(--muted)">${timeAgo(c.createdAt)}</span>
               ${mine ? `
-                <button onclick='event.stopPropagation(); editComment(${JSON.stringify(videoId)}, ${JSON.stringify(c.id)}, ${JSON.stringify(c.text)})'>Edit</button>
-                <button onclick='event.stopPropagation(); deleteComment(${JSON.stringify(videoId)}, ${JSON.stringify(c.id)})'>Delete</button>
+                <button data-edit-comment="${esc(videoId)}|${esc(c.id)}">Edit</button>
+                <button data-delete-comment="${esc(videoId)}|${esc(c.id)}">Delete</button>
               ` : ""}
             </div>
           </div>
@@ -2723,6 +2521,29 @@ window.deleteComment = async function(videoId, commentId){
   await deleteDoc(ref);
 };
 
+/* Comment edit/delete clicks */
+document.addEventListener("click", async (e)=>{
+  const editC = e.target.closest("[data-edit-comment]");
+  if(editC){
+    e.preventDefault();
+    e.stopPropagation();
+    const [vid, cid] = editC.dataset.editComment.split("|");
+    const parent = editC.closest(".comment-item");
+    const textEl = parent?.querySelector(".text");
+    const oldText = textEl?.textContent || "";
+    if(vid && cid) await editComment(vid, cid, oldText);
+    return;
+  }
+
+  const delC = e.target.closest("[data-delete-comment]");
+  if(delC){
+    e.preventDefault();
+    e.stopPropagation();
+    const [vid, cid] = delC.dataset.deleteComment.split("|");
+    if(vid && cid) await deleteComment(vid, cid);
+    return;
+  }
+});
 
 /* DELETE VIDEO */
 window.deleteVideo = async function(videoId){
@@ -2746,7 +2567,6 @@ window.deleteVideo = async function(videoId){
     toast("🗑️ Video deleted");
   }catch(e){ console.error(e); toast("Delete failed"); }
 };
-
 
 /* EDIT VIDEO */
 window.openEditVideo = async function(videoId){
@@ -2783,7 +2603,6 @@ $("saveVideoEditBtn").addEventListener("click", async()=>{
   }catch(e){ toast("Update failed"); }
 });
 
-
 /* VIDEO COUNT */
 async function syncVideoCount(uid){
   try{
@@ -2798,12 +2617,10 @@ async function syncVideoCount(uid){
   }catch(e){ console.error(e); }
 }
 
-
-/* FOLLOW - FIXED */
+/* FOLLOW */
 window.toggleFollow = async function(targetUid, btnEl){
   if(!currentUser || targetUid === currentUser.uid) return;
 
-  // Disable button to prevent double-click
   if(btnEl){
     btnEl.disabled = true;
     btnEl.style.opacity = "0.6";
@@ -2816,12 +2633,10 @@ window.toggleFollow = async function(targetUid, btnEl){
     const snap = await getDoc(ref);
 
     if(snap.exists()){
-      // Unfollow
       await deleteDoc(ref);
       myFollowsCache.delete(targetUid);
       updateAllFollowButtons(targetUid, false);
     }else{
-      // Follow
       await setDoc(ref, {
         follower: currentUser.uid,
         following: targetUid,
@@ -2830,7 +2645,6 @@ window.toggleFollow = async function(targetUid, btnEl){
       myFollowsCache.add(targetUid);
       updateAllFollowButtons(targetUid, true);
 
-      // Notification
       await addDoc(collection(db,"notifications"), {
         to: targetUid,
         from: currentUser.uid,
@@ -2843,7 +2657,6 @@ window.toggleFollow = async function(targetUid, btnEl){
     await syncFollowCounts(currentUser.uid);
     await syncFollowCounts(targetUid);
 
-    // Update public profile follow button
     if($("publicProfileModal").classList.contains("show")){
       const uid = $("publicProfileModal").dataset.uid;
       if(uid === targetUid){
@@ -2867,9 +2680,8 @@ window.toggleFollow = async function(targetUid, btnEl){
   }
 };
 
-// Update ALL buttons with same targetUid
 function updateAllFollowButtons(targetUid, isFollowing){
-  document.querySelectorAll(`button[data-follow-uid="${targetUid}"]`).forEach(btn=>{
+  document.querySelectorAll(`[data-follow-uid="${targetUid}"]`).forEach(btn=>{
     btn.textContent = isFollowing ? "Following" : "Follow";
     btn.classList.toggle("following", isFollowing);
   });
@@ -2896,58 +2708,88 @@ async function syncFollowCounts(uid){
   }catch(e){ console.error(e); }
 }
 
-
 /* PUBLIC PROFILE */
 window.openPublicProfile = async function(uid){
-  if(!uid) return;
+  if(!uid){ toast("Invalid user"); return; }
 
-  const p = await getProfile(uid);
-  $("publicProfileModal").dataset.uid = uid;
+  try{
+    const p = await getProfile(uid);
+    $("publicProfileModal").dataset.uid = uid;
 
-  $("publicPhoto").src = avatar(p.photo, p.name);
-  $("publicName").textContent = p.name || "User";
-  $("publicUsername").textContent = "@" + (p.username || "user");
+    $("publicPhoto").src = avatar(p.photo, p.name);
+    $("publicName").textContent = p.name || "User";
+    $("publicUsername").textContent = "@" + (p.username || "user");
 
-  let extra = [];
-  if(p.age) extra.push("Age: " + p.age);
-  if(p.gender) extra.push(p.gender);
-  $("publicExtra").textContent = extra.join(" · ");
+    let extra = [];
+    if(p.age) extra.push("Age: " + p.age);
+    if(p.gender) extra.push(p.gender);
+    $("publicExtra").textContent = extra.join(" · ");
 
-  $("publicFollowers").textContent = p.followers || 0;
-  $("publicFollowing").textContent = p.following || 0;
-  $("publicVideos").textContent = p.videos || 0;
+    $("publicFollowers").textContent = p.followers || 0;
+    $("publicFollowing").textContent = p.following || 0;
+    $("publicVideos").textContent = p.videos || 0;
 
-  if(currentUser && uid === currentUser.uid){
-    $("publicFollowBtn").style.display = "none";
-    $("publicMessageBtn").style.display = "none";
-  }else{
-    $("publicFollowBtn").style.display = "";
-    $("publicMessageBtn").style.display = "";
+    // Clone follow/message buttons to remove old listeners
+    const followBtn = $("publicFollowBtn");
+    const newFollowBtn = followBtn.cloneNode(true);
+    followBtn.parentNode.replaceChild(newFollowBtn, followBtn);
 
-    const followed = myFollowsCache.has(uid);
-    $("publicFollowBtn").textContent = followed ? "Following" : "Follow";
-    $("publicFollowBtn").className = followed
-      ? "yt-btn yt-btn-gray"
-      : "yt-btn yt-btn-primary";
+    const msgBtn = $("publicMessageBtn");
+    const newMsgBtn = msgBtn.cloneNode(true);
+    msgBtn.parentNode.replaceChild(newMsgBtn, msgBtn);
 
-    // Use onclick (single handler)
-    $("publicFollowBtn").onclick = (e)=>{
+    if(currentUser && uid === currentUser.uid){
+      newFollowBtn.style.display = "none";
+      newMsgBtn.style.display = "none";
+    }else{
+      newFollowBtn.style.display = "";
+      newMsgBtn.style.display = "";
+
+      const followed = myFollowsCache.has(uid);
+      newFollowBtn.textContent = followed ? "Following" : "Follow";
+      newFollowBtn.className = followed
+        ? "yt-btn yt-btn-gray"
+        : "yt-btn yt-btn-primary";
+
+      newFollowBtn.addEventListener("click", (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        toggleFollow(uid, newFollowBtn);
+      });
+
+      newMsgBtn.addEventListener("click", (e)=>{
+        e.preventDefault();
+        e.stopPropagation();
+        openChatFromProfile(uid);
+      });
+    }
+
+    await loadPublicVideos(uid);
+
+    // Clone followers/following buttons
+    const fBtn = $("publicFollowersBtn");
+    const newFBtn = fBtn.cloneNode(true);
+    fBtn.parentNode.replaceChild(newFBtn, fBtn);
+    newFBtn.addEventListener("click", (e)=>{
+      e.preventDefault();
       e.stopPropagation();
-      toggleFollow(uid, $("publicFollowBtn"));
-    };
+      openPeople(uid, "followers");
+    });
 
-    $("publicMessageBtn").onclick = (e)=>{
+    const fwBtn = $("publicFollowingBtn");
+    const newFwBtn = fwBtn.cloneNode(true);
+    fwBtn.parentNode.replaceChild(newFwBtn, fwBtn);
+    newFwBtn.addEventListener("click", (e)=>{
+      e.preventDefault();
       e.stopPropagation();
-      openChatFromProfile(uid);
-    };
+      openPeople(uid, "following");
+    });
+
+    showModal("publicProfileModal");
+  }catch(e){
+    console.error("openPublicProfile error:", e);
+    toast("Error opening profile");
   }
-
-  await loadPublicVideos(uid);
-
-  $("publicFollowersBtn").onclick = ()=> openPeople(uid, "followers");
-  $("publicFollowingBtn").onclick = ()=> openPeople(uid, "following");
-
-  showModal("publicProfileModal");
 };
 
 async function loadPublicVideos(uid){
@@ -2969,7 +2811,7 @@ async function loadPublicVideos(uid){
 
 function createYTVideoItem(v, isMine){
   return `
-  <div class="yt-video-item" onclick='event.stopPropagation(); openPublicProfile(${JSON.stringify(v.userId)})'>
+  <div class="yt-video-item" data-open-video-owner="${esc(v.userId)}">
     <div class="yt-video-thumb">
       <video src="${esc(v.videoURL)}" preload="metadata" muted></video>
     </div>
@@ -2979,16 +2821,15 @@ function createYTVideoItem(v, isMine){
         ${v.likes || 0} likes · ${timeAgo(v.createdAt)}
       </div>
       ${isMine ? `
-        <div class="btns" onclick="event.stopPropagation()">
-          <button class="yt-mini-btn primary" onclick='event.stopPropagation(); openEditVideo(${JSON.stringify(v.id)})'>Edit</button>
-          <button class="yt-mini-btn danger" onclick='event.stopPropagation(); deleteVideo(${JSON.stringify(v.id)})'>Delete</button>
+        <div class="btns">
+          <button class="yt-mini-btn primary" data-edit-video="${esc(v.id)}">Edit</button>
+          <button class="yt-mini-btn danger" data-delete-video="${esc(v.id)}">Delete</button>
         </div>
       ` : ""}
     </div>
   </div>
   `;
 }
-
 
 /* MY VIDEOS */
 async function loadMyVideos(){
@@ -3008,7 +2849,6 @@ async function loadMyVideos(){
 
   container.innerHTML = list.map(v => createYTVideoItem(v, true)).join("");
 }
-
 
 /* PEOPLE */
 async function openPeople(uid, type){
@@ -3036,7 +2876,7 @@ async function openPeople(uid, type){
     for(const d of snap.docs){
       const data = d.data();
       const personUid = type === "followers" ? data.follower : data.following;
-      people.push(await getProfile(personUid));
+      try{ people.push(await getProfile(personUid)); }catch(e){}
     }
 
     $("peopleList").innerHTML = people.map(p=>{
@@ -3044,17 +2884,16 @@ async function openPeople(uid, type){
       const isMe = currentUser && p.uid === currentUser.uid;
       return `
       <div class="person-item">
-        <img src="${avatar(p.photo, p.name)}"
-             onclick='event.stopPropagation(); hideModal("peopleModal"); openPublicProfile(${JSON.stringify(p.uid)})'>
-        <div class="info"
-             onclick='event.stopPropagation(); hideModal("peopleModal"); openPublicProfile(${JSON.stringify(p.uid)})'>
+        <img class="people-open-btn" data-uid="${esc(p.uid)}"
+             src="${avatar(p.photo, p.name)}">
+        <div class="info people-open-btn" data-uid="${esc(p.uid)}">
           <strong>${esc(p.name)}</strong>
           <small>@${esc(p.username)}</small>
         </div>
         ${!isMe && currentUser ? `
           <button class="follow-btn ${followed?"following":""}"
                   data-follow-uid="${esc(p.uid)}"
-                  onclick='event.stopPropagation(); toggleFollow(${JSON.stringify(p.uid)}, this)'>
+                  data-action="follow">
             ${followed ? "Following" : "Follow"}
           </button>
         ` : ""}
@@ -3062,7 +2901,8 @@ async function openPeople(uid, type){
       `;
     }).join("");
   }catch(e){
-    $("peopleList").innerHTML = `<div class="yt-empty" style="padding:30px">Error loading</div>`;
+    console.error("openPeople error:", e);
+    $("peopleList").innerHTML = `<div class="yt-empty" style="padding:30px">Error</div>`;
   }
 }
 
@@ -3073,7 +2913,6 @@ $("myFollowersBtn").addEventListener("click", ()=>{
 $("myFollowingBtn").addEventListener("click", ()=>{
   if(currentUser) openPeople(currentUser.uid, "following");
 });
-
 
 /* SEARCH */
 $("topSearchBtn").addEventListener("click", ()=>{
@@ -3118,17 +2957,16 @@ async function doSearch(value){
       const isMe = currentUser && p.uid === currentUser.uid;
       return `
       <div class="person-item">
-        <img src="${avatar(p.photo, p.name)}"
-             onclick='event.stopPropagation(); hideModal("searchModal"); openPublicProfile(${JSON.stringify(p.uid)})'>
-        <div class="info"
-             onclick='event.stopPropagation(); hideModal("searchModal"); openPublicProfile(${JSON.stringify(p.uid)})'>
+        <img class="search-open-btn" data-uid="${esc(p.uid)}"
+             src="${avatar(p.photo, p.name)}">
+        <div class="info search-open-btn" data-uid="${esc(p.uid)}">
           <strong>${esc(p.name)}</strong>
           <small>@${esc(p.username)}</small>
         </div>
         ${!isMe && currentUser ? `
           <button class="follow-btn ${followed?"following":""}"
                   data-follow-uid="${esc(p.uid)}"
-                  onclick='event.stopPropagation(); toggleFollow(${JSON.stringify(p.uid)}, this)'>
+                  data-action="follow">
             ${followed ? "Following" : "Follow"}
           </button>
         ` : ""}
@@ -3136,10 +2974,10 @@ async function doSearch(value){
       `;
     }).join("");
   }catch(e){
+    console.error(e);
     container.innerHTML = `<div class="yt-empty" style="padding:20px">Error</div>`;
   }
 }
-
 
 /* PROFILE EDIT */
 $("editProfileBtn").addEventListener("click", async()=>{
@@ -3207,7 +3045,6 @@ $("saveProfileBtn").addEventListener("click", async()=>{
   }
 });
 
-
 /* SETTINGS */
 $("settingsBtn").addEventListener("click", ()=> showModal("settingsModal"));
 
@@ -3236,7 +3073,6 @@ $("shareAppBtn").addEventListener("click", async()=>{
     else { await navigator.clipboard.writeText(location.href); toast("Link copied"); }
   }catch(e){}
 });
-
 
 /* NOTIFICATIONS */
 function startNotifications(){
@@ -3278,7 +3114,6 @@ function startNotifications(){
 
 $("topAlertsBtn").addEventListener("click", ()=> showModal("alertsModal"));
 
-
 /* MESSAGES */
 function startChatsListListener(){
   if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
@@ -3309,7 +3144,6 @@ function showDMInbox(){
   $("dmInboxView").classList.remove("hidden");
   $("dmChatView").classList.add("hidden");
 
-  // Clear current chat
   if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
   currentChatId = null;
   currentChatUser = null;
@@ -3332,9 +3166,7 @@ function renderDMInbox(){
 
   container.innerHTML = myChatsCache.map(c=>{
     const otherUid = c.members.find(uid => uid !== currentUser.uid);
-    return `<div class="dm-inbox-item"
-                 onclick='openChat(${JSON.stringify(otherUid)})'
-                 data-uid="${esc(otherUid)}">
+    return `<div class="dm-inbox-item" data-open-chat="${esc(otherUid)}">
       <img src="${avatar("", "U")}" class="dm-inbox-avatar-${esc(otherUid)}">
       <div class="dm-inbox-info">
         <strong class="dm-inbox-name-${esc(otherUid)}">Loading...</strong>
@@ -3344,7 +3176,6 @@ function renderDMInbox(){
     </div>`;
   }).join("");
 
-  // Load profiles async
   myChatsCache.forEach(async c=>{
     const otherUid = c.members.find(uid => uid !== currentUser.uid);
     try{
@@ -3359,6 +3190,18 @@ function renderDMInbox(){
   });
 }
 
+/* DM inbox click */
+document.addEventListener("click", (e)=>{
+  const chatItem = e.target.closest("[data-open-chat]");
+  if(chatItem){
+    e.preventDefault();
+    e.stopPropagation();
+    const uid = chatItem.dataset.openChat;
+    if(uid) openChat(uid);
+    return;
+  }
+});
+
 window.openChat = async function(uid){
   if(!currentUser || uid === currentUser.uid) return;
 
@@ -3372,11 +3215,15 @@ window.openChat = async function(uid){
   $("dmInboxView").classList.add("hidden");
   $("dmChatView").classList.remove("hidden");
 
-  $("dmChatProfileBtn").onclick = ()=>{
+  $("dmChatProfileBtn").onclick = (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    hideModal("chatModal");
     openPublicProfile(uid);
   };
 
   hideModal("publicProfileModal");
+  hideModal("searchModal");
 
   await setDoc(doc(db,"chats",currentChatId), {
     members: [currentUser.uid, uid],
@@ -3387,8 +3234,19 @@ window.openChat = async function(uid){
 };
 
 window.openChatFromProfile = function(uid){
+  if(!uid) return;
+
   hideModal("publicProfileModal");
-  openPanel("messagesPanel");
+  hideModal("searchModal");
+
+  document.querySelectorAll(".panel").forEach(p => p.classList.add("hidden"));
+  $("messagesPanel").classList.remove("hidden");
+  $("mainTopbar").classList.remove("hidden");
+
+  document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
+  const msgBtn = document.querySelector('[data-panel="messagesPanel"]');
+  if(msgBtn) msgBtn.classList.add("active");
+
   setTimeout(()=> openChat(uid), 200);
 };
 
@@ -3417,7 +3275,7 @@ function startChatListener(){
         if(m.type === "shared_video" && m.videoId){
           return `
           <div class="dm-msg ${mine?"me":"them"}">
-            <div class="dm-shared-video" onclick='openVideoFromShare(${JSON.stringify(m.videoId)})'>
+            <div class="dm-shared-video" data-open-shared="${esc(m.videoId)}">
               <video src="${esc(m.videoURL || "")}" muted preload="metadata"></video>
               <div class="info">
                 <strong>${esc(m.videoTitle || "Video")}</strong>
@@ -3427,7 +3285,7 @@ function startChatListener(){
             <small>${timeAgo(m.createdAt)}</small>
             ${mine ? `
               <div class="dm-msg-actions">
-                <button onclick='event.stopPropagation(); deleteMessage(${JSON.stringify(m.id)})'>Delete</button>
+                <button data-delete-msg="${esc(m.id)}">Delete</button>
               </div>
             ` : ""}
           </div>
@@ -3440,8 +3298,8 @@ function startChatListener(){
           <small>${timeAgo(m.createdAt)}</small>
           ${mine ? `
             <div class="dm-msg-actions">
-              <button onclick='event.stopPropagation(); editMessage(${JSON.stringify(m.id)}, ${JSON.stringify(m.text)})'>Edit</button>
-              <button onclick='event.stopPropagation(); deleteMessage(${JSON.stringify(m.id)})'>Delete</button>
+              <button data-edit-msg="${esc(m.id)}" data-old-text="${esc(m.text)}">Edit</button>
+              <button data-delete-msg="${esc(m.id)}">Delete</button>
             </div>
           ` : ""}
         </div>
@@ -3452,6 +3310,35 @@ function startChatListener(){
     }
   );
 }
+
+/* Message edit/delete */
+document.addEventListener("click", async (e)=>{
+  const editM = e.target.closest("[data-edit-msg]");
+  if(editM){
+    e.preventDefault();
+    e.stopPropagation();
+    await editMessage(editM.dataset.editMsg, editM.dataset.oldText || "");
+    return;
+  }
+
+  const delM = e.target.closest("[data-delete-msg]");
+  if(delM){
+    e.preventDefault();
+    e.stopPropagation();
+    await deleteMessage(delM.dataset.deleteMsg);
+    return;
+  }
+
+  const sharedVid = e.target.closest("[data-open-shared]");
+  if(sharedVid){
+    e.preventDefault();
+    e.stopPropagation();
+    const vid = sharedVid.dataset.openShared;
+    const v = videosCache.find(x => x.id === vid);
+    if(v) openPublicProfile(v.userId);
+    return;
+  }
+});
 
 window.openVideoFromShare = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
@@ -3514,7 +3401,6 @@ $("newMsgBtn").addEventListener("click", ()=>{
   setTimeout(()=> $("searchInput").focus(), 100);
 });
 
-
 /* SHARE SHEET */
 window.openShareSheet = async function(videoId){
   shareVideoId = videoId;
@@ -3543,7 +3429,7 @@ window.openShareSheet = async function(videoId){
     for(const uid of Array.from(allUids).slice(0, 20)){
       const p = await getProfile(uid);
       chips.push(`
-        <div class="share-user-chip" onclick='shareToUser(${JSON.stringify(uid)})'>
+        <div class="share-user-chip" data-share-user="${esc(uid)}">
           <img src="${avatar(p.photo, p.name)}">
           <span>${esc(p.name.split(" ")[0])}</span>
         </div>
@@ -3554,6 +3440,16 @@ window.openShareSheet = async function(videoId){
     list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">Error</div>`;
   }
 };
+
+document.addEventListener("click", (e)=>{
+  const chip = e.target.closest("[data-share-user]");
+  if(chip){
+    e.preventDefault();
+    e.stopPropagation();
+    shareToUser(chip.dataset.shareUser);
+    return;
+  }
+});
 
 window.shareToUser = async function(uid){
   if(!shareVideoId || !uid) return;
@@ -3628,10 +3524,10 @@ $("shareNative").addEventListener("click", async()=>{
   }catch(e){}
 });
 
-
 /* MODAL CLOSE */
 document.querySelectorAll("[data-close]").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
+  btn.addEventListener("click", (e)=>{
+    e.stopPropagation();
     const id = btn.dataset.close;
     hideModal(id);
 
@@ -3669,7 +3565,6 @@ $("shareSheet").addEventListener("click", e=>{
   }
 });
 
-
 /* DM SEARCH FILTER */
 $("dmSearchInput").addEventListener("input", e=>{
   const val = e.target.value.toLowerCase().trim();
@@ -3678,7 +3573,6 @@ $("dmSearchInput").addEventListener("input", e=>{
     item.style.display = name.includes(val) ? "" : "none";
   });
 });
-
 
 /* START */
 openPanel("homePanel");
