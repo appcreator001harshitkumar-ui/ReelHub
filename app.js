@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (Final with Online Status)
+   ReelHub - app.js (With Video Player Modal)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -163,9 +163,7 @@ async function updatePresence(){
       lastSeen: serverTimestamp(),
       online: true
     }, { merge: true });
-  }catch(e){
-    console.error("Presence update error:", e);
-  }
+  }catch(e){ console.error("Presence update error:", e); }
 }
 
 async function markOffline(){
@@ -175,9 +173,7 @@ async function markOffline(){
       online: false,
       lastSeen: serverTimestamp()
     });
-  }catch(e){
-    console.error("Mark offline error:", e);
-  }
+  }catch(e){ console.error("Mark offline error:", e); }
 }
 
 function startPresenceHeartbeat(){
@@ -232,7 +228,6 @@ function startPresenceListener(uids){
 }
 
 function updateOnlineIndicators(){
-  // Update header status text
   document.querySelectorAll("[data-presence-uid]").forEach(el=>{
     const uid = el.dataset.presenceUid;
     const status = onlineUsersCache[uid];
@@ -249,7 +244,6 @@ function updateOnlineIndicators(){
     }
   });
 
-  // Update inbox status dots
   document.querySelectorAll("[data-dot-uid]").forEach(el=>{
     const uid = el.dataset.dotUid;
     const status = onlineUsersCache[uid];
@@ -983,8 +977,7 @@ document.addEventListener("click", async (e)=>{
     e.preventDefault();
     e.stopPropagation();
     const vid = sharedVid.dataset.openShared;
-    const v = videosCache.find(x => x.id === vid);
-    if(v) openPublicProfile(v.userId);
+    if(vid) openVideoPlayer(vid);
     return;
   }
 
@@ -1059,7 +1052,24 @@ document.addEventListener("click", async (e)=>{
     const vid = openPV.dataset.playlistVideo;
     if(vid){
       hideModal("playlistDetailModal");
-      setTimeout(()=> openVideoByDeepLink(vid), 200);
+      setTimeout(()=> openVideoPlayer(vid), 200);
+    }
+    return;
+  }
+
+  // Open video player from any list (NEW)
+  const openVideoBtn = t.closest("[data-open-video]");
+  if(openVideoBtn){
+    const insideStop = t.closest("[data-stop-propagation]");
+    if(!insideStop){
+      e.preventDefault();
+      e.stopPropagation();
+      const vid = openVideoBtn.dataset.openVideo;
+      if(vid){
+        hideModal("playlistDetailModal");
+        hideModal("publicProfileModal");
+        setTimeout(()=> openVideoPlayer(vid), 100);
+      }
     }
     return;
   }
@@ -1623,13 +1633,8 @@ async function openVideoByDeepLink(videoId){
     setTimeout(()=> banner.classList.remove("show"), 3000);
   }
 
-  if(v.userId === currentUser?.uid){
-    openPanel("profilePanel");
-    loadProfile();
-    loadMyVideos();
-  }else{
-    await openPublicProfile(v.userId);
-  }
+  // Open video player directly
+  openVideoPlayer(videoId);
 }
 
 async function checkDeepLink(){
@@ -1639,6 +1644,97 @@ async function checkDeepLink(){
 
   deepLinkChecked = true;
   await openVideoByDeepLink(vid);
+}
+
+/* ============================================================
+   VIDEO PLAYER MODAL
+============================================================ */
+
+window.openVideoPlayer = function(videoId){
+  const v = videosCache.find(x => x.id === videoId);
+  if(!v){
+    toast("Video not found");
+    return;
+  }
+
+  if(v.visibility === "private" && v.userId !== currentUser?.uid){
+    toast("This video is private");
+    return;
+  }
+
+  // Track view
+  trackView(videoId);
+
+  // Set video source
+  const videoEl = $("videoPlayerVideo");
+  if(videoEl){
+    videoEl.src = v.videoURL;
+    videoEl.play().catch(()=>{});
+  }
+
+  // Title
+  const titleEl = $("videoPlayerTitle");
+  if(titleEl) titleEl.textContent = v.title || "Untitled";
+
+  // Meta
+  const metaEl = $("videoPlayerMeta");
+  if(metaEl){
+    metaEl.textContent = formatViews(v.views) + " · " + timeAgo(v.createdAt);
+  }
+
+  // Description
+  const descEl = $("videoPlayerDesc");
+  if(descEl){
+    descEl.textContent = v.description || "";
+    descEl.style.display = v.description ? "block" : "none";
+  }
+
+  // Likes count
+  const likesEl = $("videoPlayerLikes");
+  if(likesEl) likesEl.textContent = (v.likes || 0) + " likes";
+
+  // Update like button state
+  updateVideoPlayerLike(videoId);
+
+  // Like button click
+  const likeBtn = $("videoPlayerLikeBtn");
+  if(likeBtn){
+    likeBtn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      toggleLike(videoId, likeBtn, false);
+    };
+  }
+
+  // Share button click
+  const shareBtn = $("videoPlayerShareBtn");
+  if(shareBtn){
+    shareBtn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      openShareSheet(videoId);
+    };
+  }
+
+  showModal("videoPlayerModal");
+};
+
+async function updateVideoPlayerLike(videoId){
+  if(!currentUser) return;
+  try{
+    const likeRef = doc(db,"videos",videoId,"likes",currentUser.uid);
+    const snap = await getDoc(likeRef);
+    const btn = $("videoPlayerLikeBtn");
+    if(!btn) return;
+
+    if(snap.exists()){
+      btn.classList.add("liked");
+      btn.querySelector(".icon").textContent = "❤️";
+    }else{
+      btn.classList.remove("liked");
+      btn.querySelector(".icon").textContent = "🤍";
+    }
+  }catch(e){ console.error(e); }
 }
 
 /* SHARE */
@@ -2077,7 +2173,6 @@ async function openPublicProfile(uid){
       openPeople(uid, "following");
     });
 
-    // Start presence listener for this user
     startPresenceListener([uid]);
 
     showModal("publicProfileModal");
@@ -2107,7 +2202,7 @@ async function loadPublicVideos(uid){
 function createYTVideoItem(v, isMine){
   const views = Number(v.views || 0);
   return `
-  <div class="yt-video-item" data-playlist-video="${esc(v.id)}">
+  <div class="yt-video-item" data-open-video="${esc(v.id)}">
     <div class="yt-video-thumb">
       <video src="${esc(v.videoURL)}" preload="metadata" muted></video>
       <div class="view-badge">👁️ ${formatViewsShort(views)}</div>
@@ -2117,7 +2212,7 @@ function createYTVideoItem(v, isMine){
       <div class="views">${formatViews(views)}</div>
       <div class="stats">${v.likes || 0} likes · ${timeAgo(v.createdAt)}</div>
       ${isMine ? `
-        <div class="btns">
+        <div class="btns" data-stop-propagation>
           <button class="yt-mini-btn primary" data-edit-video="${esc(v.id)}">Edit</button>
           <button class="yt-mini-btn danger" data-delete-video="${esc(v.id)}">Delete</button>
         </div>
@@ -2432,7 +2527,6 @@ function startChatsListListener(){
         renderDMInbox();
       }
 
-      // Start presence for all chat partners
       const chatUids = myChatsCache.map(c => c.members.find(uid => uid !== currentUser.uid));
       if(chatUids.length) startPresenceListener(chatUids);
     }
@@ -2524,7 +2618,6 @@ async function openChat(uid){
   if(inbox){ inbox.classList.add("hidden"); inbox.style.display = "none"; }
   if(chat){ chat.classList.remove("hidden"); chat.style.display = "flex"; }
 
-  // Add online status to header
   const statusEl = document.querySelector(".dm-chat-header .info small");
   if(statusEl){
     statusEl.dataset.presenceUid = uid;
@@ -2713,6 +2806,14 @@ document.querySelectorAll("[data-close]").forEach(btn=>{
     if(id === "playlistDetailModal"){
       currentPlaylistView = null;
     }
+
+    if(id === "videoPlayerModal"){
+      const videoEl = $("videoPlayerVideo");
+      if(videoEl){
+        videoEl.pause();
+        videoEl.src = "";
+      }
+    }
   });
 });
 
@@ -2732,6 +2833,14 @@ document.querySelectorAll(".modal").forEach(modal=>{
 
       if(modal.id === "playlistDetailModal"){
         currentPlaylistView = null;
+      }
+
+      if(modal.id === "videoPlayerModal"){
+        const videoEl = $("videoPlayerVideo");
+        if(videoEl){
+          videoEl.pause();
+          videoEl.src = "";
+        }
       }
     }
   });
@@ -2755,4 +2864,4 @@ $("dmSearchInput")?.addEventListener("input", e=>{
 /* START */
 openPanel("homePanel");
 
-console.log("✅ ReelHub loaded with Online Status!");
+console.log("✅ ReelHub loaded with Video Player!");
