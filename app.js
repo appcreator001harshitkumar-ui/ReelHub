@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (Final Fixed Version)
+   ReelHub - app.js (Final with Online Status)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -48,6 +48,7 @@ const provider = new GoogleAuthProvider();
 const CLOUDINARY_CLOUD_NAME = "s3eresx6";
 const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
 
+/* STATE */
 let currentUser = null;
 let currentProfile = null;
 let videosCache = [];
@@ -62,6 +63,10 @@ let commentsUnsubscribe = null;
 let chatUnsubscribe = null;
 let chatsListUnsubscribe = null;
 let playlistsUnsubscribe = null;
+let presenceUnsubscribe = null;
+let heartbeatInterval = null;
+
+let onlineUsersCache = {};
 
 let currentCommentVideoId = null;
 let currentChatId = null;
@@ -77,6 +82,7 @@ let deepLinkChecked = false;
 
 const $ = id => document.getElementById(id);
 
+/* HELPERS */
 function esc(v){
   return String(v ?? "")
     .replaceAll("&","&amp;")
@@ -143,6 +149,125 @@ function formatViewsShort(num){
   return (num/1000000000).toFixed(1) + "B";
 }
 
+/* ============================================================
+   ONLINE STATUS (PRESENCE)
+============================================================ */
+
+async function updatePresence(){
+  if(!currentUser) return;
+  try{
+    await setDoc(doc(db, "presence", currentUser.uid), {
+      userId: currentUser.uid,
+      userName: currentProfile?.name || "User",
+      userPhoto: currentProfile?.photo || "",
+      lastSeen: serverTimestamp(),
+      online: true
+    }, { merge: true });
+  }catch(e){
+    console.error("Presence update error:", e);
+  }
+}
+
+async function markOffline(){
+  if(!currentUser) return;
+  try{
+    await updateDoc(doc(db, "presence", currentUser.uid), {
+      online: false,
+      lastSeen: serverTimestamp()
+    });
+  }catch(e){
+    console.error("Mark offline error:", e);
+  }
+}
+
+function startPresenceHeartbeat(){
+  if(!currentUser) return;
+  if(heartbeatInterval) clearInterval(heartbeatInterval);
+
+  updatePresence();
+  heartbeatInterval = setInterval(updatePresence, 30000);
+
+  document.addEventListener("visibilitychange", ()=>{
+    if(document.visibilityState === "hidden"){
+      markOffline();
+    }else{
+      updatePresence();
+    }
+  });
+
+  window.addEventListener("beforeunload", markOffline);
+}
+
+function startPresenceListener(uids){
+  if(presenceUnsubscribe){
+    presenceUnsubscribe();
+    presenceUnsubscribe = null;
+  }
+
+  if(!uids || !uids.length) return;
+
+  const uniqueUids = [...new Set(uids)].filter(u => u && u !== currentUser?.uid);
+
+  if(!uniqueUids.length) return;
+
+  const limitedUids = uniqueUids.slice(0, 10);
+
+  presenceUnsubscribe = onSnapshot(
+    query(
+      collection(db, "presence"),
+      where("userId", "in", limitedUids)
+    ),
+    snapshot=>{
+      snapshot.docs.forEach(d=>{
+        const data = d.data();
+        onlineUsersCache[data.userId] = {
+          online: data.online,
+          lastSeen: data.lastSeen
+        };
+      });
+      updateOnlineIndicators();
+    },
+    error=>console.error("Presence listener error:", error)
+  );
+}
+
+function updateOnlineIndicators(){
+  // Update header status text
+  document.querySelectorAll("[data-presence-uid]").forEach(el=>{
+    const uid = el.dataset.presenceUid;
+    const status = onlineUsersCache[uid];
+    if(!status) return;
+
+    if(status.online){
+      el.classList.add("online");
+      el.classList.remove("offline");
+      el.textContent = "Active now";
+    }else{
+      el.classList.remove("online");
+      el.classList.add("offline");
+      el.textContent = "Active " + timeAgo(status.lastSeen);
+    }
+  });
+
+  // Update inbox status dots
+  document.querySelectorAll("[data-dot-uid]").forEach(el=>{
+    const uid = el.dataset.dotUid;
+    const status = onlineUsersCache[uid];
+    if(status?.online){
+      el.style.display = "block";
+    }else{
+      el.style.display = "none";
+    }
+  });
+}
+
+function getOnlineText(uid){
+  const status = onlineUsersCache[uid];
+  if(!status) return "Offline";
+  if(status.online) return "Active now";
+  return "Active " + timeAgo(status.lastSeen);
+}
+
 /* NAVIGATION */
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", ()=>{
@@ -167,7 +292,6 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
     }
 
     if(panelId === "messagesPanel"){
-      // हमेशा inbox से शुरू करें
       const inbox = $("dmInboxView");
       const chat = $("dmChatView");
       if(inbox){ inbox.classList.remove("hidden"); inbox.style.display = "flex"; }
@@ -322,19 +446,25 @@ onAuthStateChanged(auth, async user => {
     startNotifications();
     startChatsListListener();
     startPlaylistsListener();
+    startPresenceHeartbeat();
 
     setTimeout(checkDeepLink, 1500);
   }else{
+    if(currentUser) await markOffline();
+
     currentUser = null;
     currentProfile = null;
     videosCache = [];
     myFollowsCache.clear();
     mySavesCache.clear();
+    onlineUsersCache = {};
 
     if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
     if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
     if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
     if(playlistsUnsubscribe){ playlistsUnsubscribe(); playlistsUnsubscribe = null; }
+    if(presenceUnsubscribe){ presenceUnsubscribe(); presenceUnsubscribe = null; }
+    if(heartbeatInterval){ clearInterval(heartbeatInterval); heartbeatInterval = null; }
 
     $("app").classList.add("hidden");
     $("loginPage").classList.remove("hidden");
@@ -1947,6 +2077,9 @@ async function openPublicProfile(uid){
       openPeople(uid, "following");
     });
 
+    // Start presence listener for this user
+    startPresenceListener([uid]);
+
     showModal("publicProfileModal");
   }catch(e){
     console.error("openPublicProfile:", e);
@@ -2219,6 +2352,7 @@ if(localStorage.getItem("reelhubDark") === "1"){
 
 $("logoutBtn")?.addEventListener("click", async()=>{
   if(!confirm("Logout?")) return;
+  await markOffline();
   await signOut(auth);
 });
 
@@ -2293,11 +2427,14 @@ function startChatsListListener(){
         badge.classList.add("hidden");
       }
 
-      // हमेशा inbox में update करें
       const inbox = $("dmInboxView");
       if(inbox && !inbox.classList.contains("hidden")){
         renderDMInbox();
       }
+
+      // Start presence for all chat partners
+      const chatUids = myChatsCache.map(c => c.members.find(uid => uid !== currentUser.uid));
+      if(chatUids.length) startPresenceListener(chatUids);
     }
   );
 }
@@ -2341,7 +2478,10 @@ function renderDMInbox(){
   container.innerHTML = myChatsCache.map(c=>{
     const otherUid = c.members.find(uid => uid !== currentUser.uid);
     return `<div class="dm-inbox-item" data-open-chat="${esc(otherUid)}">
-      <img src="${avatar("", "U")}" class="dm-inbox-avatar-${esc(otherUid)}">
+      <div class="avatar-wrapper">
+        <img src="${avatar("", "U")}" class="dm-inbox-avatar-${esc(otherUid)}">
+        <span class="online-indicator" data-dot-uid="${esc(otherUid)}" style="display:none"></span>
+      </div>
       <div class="dm-inbox-info">
         <strong class="dm-inbox-name-${esc(otherUid)}">Loading...</strong>
         <small>${esc(c.lastMessage || "Started a chat")}</small>
@@ -2362,6 +2502,8 @@ function renderDMInbox(){
       });
     }catch(e){}
   });
+
+  updateOnlineIndicators();
 }
 
 async function openChat(uid){
@@ -2382,6 +2524,14 @@ async function openChat(uid){
   if(inbox){ inbox.classList.add("hidden"); inbox.style.display = "none"; }
   if(chat){ chat.classList.remove("hidden"); chat.style.display = "flex"; }
 
+  // Add online status to header
+  const statusEl = document.querySelector(".dm-chat-header .info small");
+  if(statusEl){
+    statusEl.dataset.presenceUid = uid;
+    statusEl.textContent = getOnlineText(uid);
+    statusEl.classList.add("dm-chat-status");
+  }
+
   const profileBtn = $("dmChatProfileBtn");
   if(profileBtn){
     profileBtn.onclick = (e)=>{
@@ -2393,6 +2543,8 @@ async function openChat(uid){
 
   hideModal("publicProfileModal");
   hideModal("searchModal");
+
+  startPresenceListener([uid]);
 
   try{
     await setDoc(doc(db,"chats",currentChatId), {
@@ -2480,9 +2632,7 @@ function startChatListener(){
 
       container.scrollTop = container.scrollHeight;
     },
-    error=>{
-      console.error("Chat listener error:", error);
-    }
+    error=>console.error("Chat listener error:", error)
   );
 }
 
@@ -2605,4 +2755,4 @@ $("dmSearchInput")?.addEventListener("input", e=>{
 /* START */
 openPanel("homePanel");
 
-console.log("✅ ReelHub loaded!");
+console.log("✅ ReelHub loaded with Online Status!");
