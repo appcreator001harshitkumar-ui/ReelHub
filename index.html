@@ -22,7 +22,6 @@
 <!-- ============ APP ============ -->
 <div id="app" class="hidden">
 
-  <!-- TOP BAR -->
   <header class="topbar" id="mainTopbar">
     <div class="topbar-brand">ReelHub</div>
     <div class="topbar-actions">
@@ -152,9 +151,7 @@
   <!-- PROFILE -->
   <section id="profilePanel" class="panel hidden">
     <div class="yt-profile">
-
       <div class="yt-banner"></div>
-
       <div class="yt-profile-head">
         <img id="profilePhoto" class="yt-profile-avatar" src="" alt="">
         <div class="yt-profile-info">
@@ -204,7 +201,6 @@
       <div class="playlist-tab-content hidden" id="playlistsTab"></div>
       <div class="yt-videos-grid hidden" id="savedVideos"></div>
       <div class="yt-videos-grid hidden" id="aboutTab"></div>
-
     </div>
   </section>
 
@@ -355,7 +351,7 @@
   </div>
 </div>
 
-<!-- PEOPLE (FOLLOWERS/FOLLOWING) -->
+<!-- PEOPLE -->
 <div id="peopleModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -407,6 +403,81 @@
   </div>
 </div>
 
+<!-- CREATE PLAYLIST -->
+<div id="createPlaylistModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Create Playlist</h2>
+      <button class="close" data-close="createPlaylistModal">×</button>
+    </div>
+    <label class="yt-label">Playlist Name *</label>
+    <input id="playlistName" class="yt-input" placeholder="e.g. My Favorites"
+           maxlength="60" style="margin-bottom:14px">
+    <label class="yt-label">Description (optional)</label>
+    <textarea id="playlistDesc" class="yt-textarea"
+              placeholder="What's this playlist about?"
+              maxlength="200" style="margin-bottom:14px"></textarea>
+    <button class="yt-publish-btn" id="createPlaylistBtn">Create Playlist</button>
+  </div>
+</div>
+
+<!-- ADD TO PLAYLIST -->
+<div id="addToPlaylistModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Save to Playlist</h2>
+      <button class="close" data-close="addToPlaylistModal">×</button>
+    </div>
+    <button class="playlist-create-btn" id="newPlaylistFromAddBtn"
+            style="margin-bottom:14px;width:100%;justify-content:center">
+      ➕ Create New Playlist
+    </button>
+    <div id="playlistSelectList"></div>
+    <button class="yt-publish-btn" id="saveToPlaylistBtn" style="margin-top:14px">
+      Done
+    </button>
+  </div>
+</div>
+
+<!-- PLAYLIST DETAIL -->
+<div id="playlistDetailModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="playlistDetailTitle">Playlist</h2>
+      <button class="close" data-close="playlistDetailModal">×</button>
+    </div>
+    <div id="playlistDetailContent"></div>
+  </div>
+</div>
+
+<!-- VIDEO PLAYER MODAL (NEW) -->
+<div id="videoPlayerModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden;max-width:560px">
+    <button class="close" data-close="videoPlayerModal"
+            style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:white;z-index:10">×</button>
+
+    <video id="videoPlayerVideo" controls playsinline webkit-playsinline
+           style="width:100%;max-height:70vh;background:#000;display:block"></video>
+
+    <div style="padding:14px 16px">
+      <h3 id="videoPlayerTitle" style="font-size:16px;font-weight:600;margin-bottom:8px"></h3>
+      <div id="videoPlayerMeta" style="font-size:12.5px;color:var(--muted);margin-bottom:10px"></div>
+      <div id="videoPlayerDesc" style="font-size:13.5px;line-height:1.4;color:var(--text)"></div>
+    </div>
+
+    <div style="display:flex;gap:14px;padding:10px 16px;border-top:1px solid var(--border);align-items:center">
+      <button class="ig-action-btn" id="videoPlayerLikeBtn">
+        <span class="icon">🤍</span>
+      </button>
+      <span id="videoPlayerLikes" style="font-size:13px;color:var(--muted)">0 likes</span>
+      <div style="flex:1"></div>
+      <button class="ig-action-btn" id="videoPlayerShareBtn">
+        <span class="icon">📤</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- SHARE SHEET -->
 <div id="shareSheet" class="share-sheet">
   <div class="share-sheet-box">
@@ -422,60 +493,6 @@
         Share
       </div>
     </div>
-  </div>
-</div>
-
-<!-- CREATE PLAYLIST MODAL -->
-<div id="createPlaylistModal" class="modal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h2>Create Playlist</h2>
-      <button class="close" data-close="createPlaylistModal">×</button>
-    </div>
-
-    <label class="yt-label">Playlist Name *</label>
-    <input id="playlistName" class="yt-input" placeholder="e.g. My Favorites"
-           maxlength="60" style="margin-bottom:14px">
-
-    <label class="yt-label">Description (optional)</label>
-    <textarea id="playlistDesc" class="yt-textarea"
-              placeholder="What's this playlist about?"
-              maxlength="200" style="margin-bottom:14px"></textarea>
-
-    <button class="yt-publish-btn" id="createPlaylistBtn">Create Playlist</button>
-  </div>
-</div>
-
-<!-- ADD TO PLAYLIST MODAL -->
-<div id="addToPlaylistModal" class="modal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h2>Save to Playlist</h2>
-      <button class="close" data-close="addToPlaylistModal">×</button>
-    </div>
-
-    <button class="playlist-create-btn" id="newPlaylistFromAddBtn"
-            style="margin-bottom:14px;width:100%;justify-content:center">
-      ➕ Create New Playlist
-    </button>
-
-    <div id="playlistSelectList"></div>
-
-    <button class="yt-publish-btn" id="saveToPlaylistBtn" style="margin-top:14px">
-      Done
-    </button>
-  </div>
-</div>
-
-<!-- PLAYLIST DETAIL MODAL -->
-<div id="playlistDetailModal" class="modal">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h2 id="playlistDetailTitle">Playlist</h2>
-      <button class="close" data-close="playlistDetailModal">×</button>
-    </div>
-
-    <div id="playlistDetailContent"></div>
   </div>
 </div>
 
