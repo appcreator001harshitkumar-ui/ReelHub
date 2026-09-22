@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>ReelHub</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginPage">
+  <div class="login-card">
+    <div class="logo">ReelHub</div>
+    <p>Watch · Upload · Share</p>
+    <button class="google-btn" id="googleLogin">Continue with Google</button>
+    <p id="loginStatus" style="margin-top:15px;font-size:13px"></p>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+
+  <!-- TOP BAR -->
+  <header class="topbar" id="mainTopbar">
+    <div class="topbar-brand">ReelHub</div>
+    <div class="topbar-actions">
+      <button id="topSearchBtn">🔍</button>
+      <button id="topAlertsBtn">
+        🔔
+        <span class="badge hidden" id="alertsBadge">0</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- HOME -->
+  <section id="homePanel" class="panel">
+    <div id="feed"></div>
+  </section>
+
+  <!-- SHORTS -->
+  <section id="shortsPanel" class="panel hidden">
+    <div class="reels-container" id="reelsContainer"></div>
+  </section>
+
+  <!-- UPLOAD -->
+  <section id="uploadPanel" class="panel hidden">
+    <div class="upload-wrap">
+      <div class="upload-header">
+        <h2>Upload Video</h2>
+      </div>
+
+      <div class="yt-card">
+        <div class="yt-card-title">📹 Select Video</div>
+        <div class="yt-dropzone" id="dropzone">
+          <span class="icon">⬆️</span>
+          <div class="main-text">Click to select video</div>
+          <div class="sub-text">MP4, WebM, MOV · Max 100MB</div>
+        </div>
+        <video id="uploadPreview" class="yt-preview hidden" controls></video>
+        <input type="file" id="videoFile" accept="video/*" class="hidden">
+      </div>
+
+      <div class="yt-card">
+        <div class="yt-card-title">📝 Details</div>
+        <label class="yt-label">Title *</label>
+        <input id="videoTitle" class="yt-input" maxlength="100"
+               placeholder="Enter an engaging title" style="margin-bottom:14px">
+        <label class="yt-label">Description</label>
+        <textarea id="videoDescription" class="yt-textarea"
+                  placeholder="Tell viewers about your video"></textarea>
+      </div>
+
+      <div class="yt-card">
+        <div class="yt-card-title">👁️ Visibility</div>
+        <div class="yt-radio-group" id="visibilityGroup">
+          <div class="yt-radio selected" data-value="public">
+            <span class="r-icon">🌍</span>
+            <div class="r-title">Public</div>
+            <div class="r-sub">Everyone can watch</div>
+          </div>
+          <div class="yt-radio" data-value="private">
+            <span class="r-icon">🔒</span>
+            <div class="r-title">Private</div>
+            <div class="r-sub">Only you</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="yt-card">
+        <div class="yt-card-title">🎬 Video Type</div>
+        <div class="yt-radio-group" id="typeGroup">
+          <div class="yt-radio selected" data-value="long">
+            <span class="r-icon">🎥</span>
+            <div class="r-title">Long Video</div>
+            <div class="r-sub">Horizontal · Feed</div>
+          </div>
+          <div class="yt-radio" data-value="short">
+            <span class="r-icon">📱</span>
+            <div class="r-title">Short</div>
+            <div class="r-sub">Vertical · 9:16</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="yt-progress" id="uploadProgressWrap">
+        <div class="yt-progress-bar" id="uploadProgressBar"></div>
+      </div>
+
+      <p id="uploadStatus" style="font-size:13px;color:var(--muted);margin-top:10px;text-align:center"></p>
+
+      <button class="yt-publish-btn" id="publishBtn">🚀 Publish</button>
+    </div>
+  </section>
+
+  <!-- MESSAGES -->
+  <section id="messagesPanel" class="panel hidden">
+    <div class="dm-container">
+
+      <div id="dmInboxView">
+        <div class="dm-header">
+          <h2>Messages</h2>
+          <button class="icon-btn" id="newMsgBtn">✏️</button>
+        </div>
+        <div class="dm-search">
+          <input id="dmSearchInput" placeholder="Search messages...">
+        </div>
+        <div id="dmInboxList"></div>
+      </div>
+
+      <div id="dmChatView" class="hidden">
+        <div class="dm-chat-header">
+          <button class="icon-btn" id="dmBackBtn" style="font-size:22px">←</button>
+          <img id="dmChatAvatar" src="" alt="">
+          <div class="info">
+            <strong id="dmChatName">User</strong>
+            <small>Active now</small>
+          </div>
+          <button class="icon-btn" id="dmChatProfileBtn">ℹ️</button>
+        </div>
+        <div class="dm-messages" id="dmMessages"></div>
+        <div class="dm-input-bar">
+          <input id="dmInput" placeholder="Message...">
+          <button id="dmSendBtn">Send</button>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PROFILE -->
+  <section id="profilePanel" class="panel hidden">
+    <div class="yt-profile">
+
+      <div class="yt-banner"></div>
+
+      <div class="yt-profile-head">
+        <img id="profilePhoto" class="yt-profile-avatar" src="" alt="">
+        <div class="yt-profile-info">
+          <h1 id="profileName">User</h1>
+          <div class="handle" id="profileUsername">@user</div>
+          <div class="meta" id="profileExtra"></div>
+        </div>
+      </div>
+
+      <div class="yt-profile-bio" id="profileBio"></div>
+
+      <div class="yt-profile-stats">
+        <div class="yt-stat" id="myFollowersBtn">
+          <strong id="followersCount">0</strong>
+          <span>Followers</span>
+        </div>
+        <div class="yt-stat" id="myFollowingBtn">
+          <strong id="followingCount">0</strong>
+          <span>Following</span>
+        </div>
+        <div class="yt-stat">
+          <strong id="videosCount">0</strong>
+          <span>Videos</span>
+        </div>
+      </div>
+
+      <div class="yt-profile-actions">
+        <button class="yt-btn yt-btn-primary" id="editProfileBtn">✏️ Edit Profile</button>
+        <button class="yt-btn yt-btn-gray" id="shareAppBtn">📤 Share</button>
+        <button class="yt-btn yt-btn-gray" id="settingsBtn">⚙️</button>
+      </div>
+
+      <div class="yt-tabs" id="profileTabs">
+        <div class="yt-tab active" data-tab="videos">
+          Videos <span class="tab-count" id="tabVideosCount">0</span>
+        </div>
+        <div class="yt-tab" data-tab="playlists">
+          Playlists <span class="tab-count" id="tabPlaylistsCount">0</span>
+        </div>
+        <div class="yt-tab" data-tab="saved">
+          Saved <span class="tab-count" id="tabSavedCount">0</span>
+        </div>
+        <div class="yt-tab" data-tab="about">About</div>
+      </div>
+
+      <div class="yt-videos-grid" id="myVideos"></div>
+      <div class="playlist-tab-content hidden" id="playlistsTab"></div>
+      <div class="yt-videos-grid hidden" id="savedVideos"></div>
+      <div class="yt-videos-grid hidden" id="aboutTab"></div>
+
+    </div>
+  </section>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-panel="homePanel">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Home</span>
+    </button>
+    <button class="nav-btn" data-panel="shortsPanel">
+      <span class="nav-icon">🎞️</span>
+      <span class="nav-label">Shorts</span>
+    </button>
+    <button class="nav-btn" data-panel="uploadPanel">
+      <span class="nav-icon plus-icon">➕</span>
+      <span class="nav-label">Upload</span>
+    </button>
+    <button class="nav-btn" data-panel="messagesPanel">
+      <span class="nav-icon">💬</span>
+      <span class="nav-label">Messages</span>
+      <span class="nav-badge hidden" id="msgBadge">0</span>
+    </button>
+    <button class="nav-btn" data-panel="profilePanel">
+      <span class="nav-icon">
+        <img id="navProfileAvatar" class="avatar-mini"
+             src="https://ui-avatars.com/api/?name=U&background=7c3aed&color=fff" alt="">
+      </span>
+      <span class="nav-label">Profile</span>
+    </button>
+  </nav>
+
+</div>
+
+<!-- ============ MODALS ============ -->
+
+<!-- SEARCH -->
+<div id="searchModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Search</h2>
+      <button class="close" data-close="searchModal">×</button>
+    </div>
+    <input id="searchInput" class="yt-input" placeholder="Search users..." style="margin-bottom:14px">
+    <div id="searchResults"></div>
+  </div>
+</div>
+
+<!-- ALERTS -->
+<div id="alertsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Notifications</h2>
+      <button class="close" data-close="alertsModal">×</button>
+    </div>
+    <div id="notificationsList"></div>
+  </div>
+</div>
+
+<!-- EDIT PROFILE -->
+<div id="editProfileModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Edit Profile</h2>
+      <button class="close" data-close="editProfileModal">×</button>
+    </div>
+    <div style="text-align:center;margin-bottom:20px">
+      <img id="editPhotoPreview" class="yt-profile-avatar" style="margin:0 auto" src="" alt="">
+      <div style="margin-top:10px">
+        <input id="profilePhotoFile" type="file" accept="image/*">
+      </div>
+    </div>
+    <label class="yt-label">Name</label>
+    <input id="editName" class="yt-input" style="margin-bottom:14px">
+    <label class="yt-label">User ID</label>
+    <input id="editUsername" class="yt-input" placeholder="example: harshit" style="margin-bottom:14px">
+    <label class="yt-label">Age</label>
+    <input id="editAge" class="yt-input" type="number" min="1" max="120" style="margin-bottom:14px">
+    <label class="yt-label">Gender</label>
+    <select id="editGender" class="yt-input" style="margin-bottom:14px">
+      <option value="">Prefer not to say</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
+    <label class="yt-label">Bio</label>
+    <textarea id="editBio" class="yt-textarea" placeholder="Tell about yourself..." style="margin-bottom:14px"></textarea>
+    <button class="yt-publish-btn" id="saveProfileBtn">Save Profile</button>
+    <p id="profileSaveStatus" style="margin-top:10px;color:var(--muted);text-align:center;font-size:13px"></p>
+  </div>
+</div>
+
+<!-- SETTINGS -->
+<div id="settingsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Settings</h2>
+      <button class="close" data-close="settingsModal">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="darkModeBtn">🌙 Dark Mode</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left">🔒 Privacy</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left">🔔 Notifications</button>
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left;margin-top:12px" id="logoutBtn">🚪 Logout</button>
+    </div>
+  </div>
+</div>
+
+<!-- PUBLIC PROFILE -->
+<div id="publicProfileModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden">
+    <div style="position:relative">
+      <div class="yt-banner"></div>
+      <button class="close" data-close="publicProfileModal"
+              style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:white">×</button>
+    </div>
+    <div style="padding:0 16px">
+      <div class="yt-profile-head" style="margin-top:-45px">
+        <img id="publicPhoto" class="yt-profile-avatar" src="" alt="">
+        <div class="yt-profile-info">
+          <h1 id="publicName">User</h1>
+          <div class="handle" id="publicUsername">@user</div>
+          <div class="meta" id="publicExtra"></div>
+        </div>
+      </div>
+      <div class="yt-profile-stats" style="margin-top:10px">
+        <div class="yt-stat" id="publicFollowersBtn">
+          <strong id="publicFollowers">0</strong>
+          <span>Followers</span>
+        </div>
+        <div class="yt-stat" id="publicFollowingBtn">
+          <strong id="publicFollowing">0</strong>
+          <span>Following</span>
+        </div>
+        <div class="yt-stat">
+          <strong id="publicVideos">0</strong>
+          <span>Videos</span>
+        </div>
+      </div>
+      <div class="yt-profile-actions">
+        <button class="yt-btn yt-btn-primary" id="publicFollowBtn">Follow</button>
+        <button class="yt-btn yt-btn-gray" id="publicMessageBtn">💬 Message</button>
+      </div>
+      <div class="yt-tabs" style="margin:0 -16px;padding:0 16px">
+        <div class="yt-tab active">Videos</div>
+      </div>
+      <div class="yt-videos-grid" id="publicVideosList" style="padding-bottom:20px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PEOPLE (FOLLOWERS/FOLLOWING) -->
+<div id="peopleModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="peopleTitle">Followers</h2>
+      <button class="close" data-close="peopleModal">×</button>
+    </div>
+    <div id="peopleList"></div>
+  </div>
+</div>
+
+<!-- COMMENTS -->
+<div id="commentsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Comments</h2>
+      <button class="close" data-close="commentsModal">×</button>
+    </div>
+    <div id="commentsList"></div>
+    <div class="comment-form-inline">
+      <input id="commentInput" placeholder="Add a comment...">
+      <button id="sendCommentBtn">Post</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT VIDEO -->
+<div id="editVideoModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Edit Video</h2>
+      <button class="close" data-close="editVideoModal">×</button>
+    </div>
+    <input type="hidden" id="editVideoId">
+    <label class="yt-label">Title</label>
+    <input id="editVideoTitle" class="yt-input" style="margin-bottom:14px">
+    <label class="yt-label">Description</label>
+    <textarea id="editVideoDescription" class="yt-textarea" style="margin-bottom:14px"></textarea>
+    <label class="yt-label">Visibility</label>
+    <select id="editVideoVisibility" class="yt-input" style="margin-bottom:14px">
+      <option value="public">Public</option>
+      <option value="private">Private</option>
+    </select>
+    <label class="yt-label">Type</label>
+    <select id="editVideoType" class="yt-input" style="margin-bottom:14px">
+      <option value="long">Long Video</option>
+      <option value="short">Short</option>
+    </select>
+    <button class="yt-publish-btn" id="saveVideoEditBtn">Save Changes</button>
+  </div>
+</div>
+
+<!-- SHARE SHEET -->
+<div id="shareSheet" class="share-sheet">
+  <div class="share-sheet-box">
+    <h3>Share with</h3>
+    <div class="share-user-list" id="shareUserList"></div>
+    <div class="share-actions">
+      <div class="share-action-btn" id="shareCopyLink">
+        <span class="icon">🔗</span>
+        Copy Link
+      </div>
+      <div class="share-action-btn" id="shareNative">
+        <span class="icon">📤</span>
+        Share
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE PLAYLIST MODAL -->
+<div id="createPlaylistModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Create Playlist</h2>
+      <button class="close" data-close="createPlaylistModal">×</button>
+    </div>
+
+    <label class="yt-label">Playlist Name *</label>
+    <input id="playlistName" class="yt-input" placeholder="e.g. My Favorites"
+           maxlength="60" style="margin-bottom:14px">
+
+    <label class="yt-label">Description (optional)</label>
+    <textarea id="playlistDesc" class="yt-textarea"
+              placeholder="What's this playlist about?"
+              maxlength="200" style="margin-bottom:14px"></textarea>
+
+    <button class="yt-publish-btn" id="createPlaylistBtn">Create Playlist</button>
+  </div>
+</div>
+
+<!-- ADD TO PLAYLIST MODAL -->
+<div id="addToPlaylistModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Save to Playlist</h2>
+      <button class="close" data-close="addToPlaylistModal">×</button>
+    </div>
+
+    <button class="playlist-create-btn" id="newPlaylistFromAddBtn"
+            style="margin-bottom:14px;width:100%;justify-content:center">
+      ➕ Create New Playlist
+    </button>
+
+    <div id="playlistSelectList"></div>
+
+    <button class="yt-publish-btn" id="saveToPlaylistBtn" style="margin-top:14px">
+      Done
+    </button>
+  </div>
+</div>
+
+<!-- PLAYLIST DETAIL MODAL -->
+<div id="playlistDetailModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="playlistDetailTitle">Playlist</h2>
+      <button class="close" data-close="playlistDetailModal">×</button>
+    </div>
+
+    <div id="playlistDetailContent"></div>
+  </div>
+</div>
+
+<!-- DEEP LINK BANNER -->
+<div class="deep-link-banner" id="deepLinkBanner">
+  <span>📹</span>
+  <span>Opening shared video...</span>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- APP SCRIPT -->
+<script type="module" src="app.js"></script>
+
+</body>
+</html>
