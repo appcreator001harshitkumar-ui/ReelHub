@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - style.css (With Online Status)
+   ReelHub - style.css (Final with Video Player)
 ============================================================ */
 
 * {
@@ -1007,6 +1007,10 @@ input, textarea { outline: none; }
   align-items: flex-start;
 }
 
+.yt-video-item:hover {
+  background: var(--bg);
+}
+
 .yt-video-thumb {
   width: 150px;
   height: 84px;
@@ -1239,6 +1243,11 @@ input, textarea { outline: none; }
   padding: 8px 0;
   border-bottom: 1px solid var(--border);
   align-items: flex-start;
+  cursor: pointer;
+}
+
+.playlist-video-item:hover {
+  background: var(--bg);
 }
 
 .playlist-video-item:last-child { border-bottom: 0; }
@@ -1344,6 +1353,35 @@ input, textarea { outline: none; }
   justify-content: center;
 }
 
+/* ============================================================
+   VIDEO PLAYER MODAL (NEW)
+============================================================ */
+
+#videoPlayerModal .modal-box {
+  padding: 0;
+  overflow: hidden;
+}
+
+#videoPlayerVideo {
+  width: 100%;
+  max-height: 70vh;
+  background: #000;
+  display: block;
+  border-radius: 16px 16px 0 0;
+}
+
+#videoPlayerModal .ig-action-btn.liked {
+  color: #ed4956;
+}
+
+#videoPlayerModal .ig-action-btn.liked .icon {
+  color: #ed4956;
+}
+
+/* ============================================================
+   COMMENTS
+============================================================ */
+
 .comment-item {
   display: flex;
   gap: 10px;
@@ -1406,6 +1444,7 @@ input, textarea { outline: none; }
   padding: 0 6px;
 }
 
+/* PEOPLE */
 .person-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
 
 .person-item img {
@@ -1450,6 +1489,7 @@ input, textarea { outline: none; }
 
 .follow-btn:disabled { opacity: .6; }
 
+/* SHARE SHEET */
 .share-sheet {
   position: fixed;
   inset: 0;
@@ -1533,6 +1573,7 @@ input, textarea { outline: none; }
   margin-bottom: 4px;
 }
 
+/* TOAST */
 .toast {
   position: fixed;
   bottom: 80px;
@@ -1556,7 +1597,7 @@ input, textarea { outline: none; }
 .toast.show { opacity: 1; }
 
 /* ============================================================
-   ONLINE STATUS - NEW
+   ONLINE STATUS
 ============================================================ */
 
 .online-indicator {
@@ -1640,10 +1681,16 @@ input, textarea { outline: none; }
   50% { opacity: 0.5; }
 }
 
+/* RESPONSIVE */
 @media (max-width: 500px) {
   .panel { padding: 10px; }
   .stats { gap: 20px; }
   .modal-box { padding: 16px; }
   .yt-video-thumb { width: 120px; height: 68px; }
   .playlist-cover { width: 80px; height: 50px; }
+  .yt-profile-avatar { width: 90px; height: 90px; }
+  .yt-profile-head { margin-top: -45px; }
+  .yt-profile-info { padding-top: 45px; }
+  .yt-profile-info h1 { font-size: 18px; }
+  #videoPlayerVideo { max-height: 60vh; }
 }
