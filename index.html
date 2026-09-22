@@ -59,8 +59,7 @@ input,textarea{
 .hidden{display:none!important;}
 
 
-/* ============ LOGIN ============ */
-
+/* LOGIN */
 #loginPage{
   min-height:100vh;
   display:flex;
@@ -103,8 +102,7 @@ input,textarea{
 }
 
 
-/* ============ APP SHELL ============ */
-
+/* APP SHELL */
 #app{
   min-height:100vh;
   padding-bottom:60px;
@@ -114,8 +112,7 @@ input,textarea{
 }
 
 
-/* ============ TOP BAR ============ */
-
+/* TOPBAR */
 .topbar{
   position:sticky;
   top:0;
@@ -166,8 +163,7 @@ input,textarea{
 }
 
 
-/* ============ BOTTOM NAV ============ */
-
+/* BOTTOM NAV */
 .bottom-nav{
   position:fixed;
   left:0;
@@ -251,8 +247,7 @@ input,textarea{
 }
 
 
-/* ============ PANELS ============ */
-
+/* PANELS */
 .panel{
   padding-bottom:60px;
 }
@@ -260,8 +255,7 @@ input,textarea{
 .panel.hidden{display:none;}
 
 
-/* ============ INSTAGRAM FEED ============ */
-
+/* INSTAGRAM FEED */
 .ig-post{
   background:var(--card);
   border-bottom:1px solid var(--border);
@@ -282,30 +276,30 @@ input,textarea{
   object-fit:cover;
   background:#eee;
   cursor:pointer;
-  border:2px solid transparent;
-}
-
-.ig-avatar.ring{
-  border:2px solid;
-  border-image:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888) 1;
-  padding:2px;
 }
 
 .ig-post-user{
   flex:1;
   cursor:pointer;
+  min-width:0;
 }
 
 .ig-post-user strong{
   font-size:13.5px;
   font-weight:600;
   display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 .ig-post-user small{
   font-size:11.5px;
   color:var(--muted);
   display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 .ig-post-head .more-btn{
@@ -382,8 +376,7 @@ input,textarea{
 }
 
 
-/* ============ SHORTS (REELS) ============ */
-
+/* SHORTS (REELS) */
 #shortsPanel{
   padding:0;
   margin:0;
@@ -441,6 +434,7 @@ input,textarea{
   align-items:center;
   gap:10px;
   margin-bottom:10px;
+  flex-wrap:wrap;
 }
 
 .reel-user img{
@@ -449,6 +443,7 @@ input,textarea{
   border-radius:50%;
   object-fit:cover;
   border:2px solid white;
+  cursor:pointer;
 }
 
 .reel-user strong{
@@ -464,6 +459,10 @@ input,textarea{
   border-radius:6px;
   margin-left:8px;
   background:rgba(255,255,255,0.15);
+}
+
+.reel-user .follow-btn-sm:active{
+  background:rgba(255,255,255,0.35);
 }
 
 .reel-title{
@@ -498,6 +497,7 @@ input,textarea{
   align-items:center;
   color:white;
   gap:3px;
+  cursor:pointer;
 }
 
 .reel-action .icon{
@@ -528,8 +528,7 @@ input,textarea{
 }
 
 
-/* ============ UPLOAD (YOUTUBE STYLE) ============ */
-
+/* UPLOAD (YOUTUBE STYLE) */
 .upload-wrap{
   padding:16px;
   max-width:640px;
@@ -644,12 +643,6 @@ input,textarea{
   display:block;
 }
 
-.yt-row{
-  display:flex;
-  gap:10px;
-  margin-top:14px;
-}
-
 .yt-radio-group{
   display:flex;
   gap:8px;
@@ -725,13 +718,33 @@ input,textarea{
 }
 
 
-/* ============ MESSAGES (INSTAGRAM DM) ============ */
+/* MESSAGES - FIXED LAYOUT */
+#messagesPanel{
+  padding:0;
+  margin:0;
+  height:calc(100vh - 56px);
+  overflow:hidden;
+}
 
-.dm-container{
+#messagesPanel .dm-container{
+  width:100%;
   max-width:640px;
   margin:0 auto;
+  height:100%;
+  display:flex;
+  flex-direction:column;
   background:var(--card);
+  overflow:hidden;
 }
+
+#dmInboxView{
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+#dmInboxView.hidden{display:none;}
 
 .dm-header{
   display:flex;
@@ -739,10 +752,8 @@ input,textarea{
   gap:12px;
   padding:14px 16px;
   border-bottom:1px solid var(--border);
-  position:sticky;
-  top:0;
   background:var(--card);
-  z-index:10;
+  flex-shrink:0;
 }
 
 .dm-header h2{
@@ -758,6 +769,8 @@ input,textarea{
 
 .dm-search{
   padding:10px 16px;
+  flex-shrink:0;
+  border-bottom:1px solid var(--border);
 }
 
 .dm-search input{
@@ -768,6 +781,12 @@ input,textarea{
   background:var(--bg);
   color:var(--text);
   font-size:14px;
+}
+
+#dmInboxList{
+  flex:1;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
 }
 
 .dm-inbox-item{
@@ -788,6 +807,7 @@ input,textarea{
   border-radius:50%;
   object-fit:cover;
   background:#eee;
+  flex-shrink:0;
 }
 
 .dm-inbox-info{
@@ -799,7 +819,10 @@ input,textarea{
   display:block;
   font-size:14px;
   font-weight:600;
-  margin-bottom:2px;
+  margin-bottom:3px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 .dm-inbox-info small{
@@ -817,17 +840,20 @@ input,textarea{
   flex-shrink:0;
 }
 
-.dm-chat-view{
+#dmChatView{
   display:flex;
   flex-direction:column;
-  height:calc(100vh - 56px);
+  height:100%;
+  overflow:hidden;
 }
+
+#dmChatView.hidden{display:none;}
 
 .dm-chat-header{
   display:flex;
   align-items:center;
   gap:12px;
-  padding:12px 14px;
+  padding:10px 14px;
   border-bottom:1px solid var(--border);
   background:var(--card);
   flex-shrink:0;
@@ -842,12 +868,16 @@ input,textarea{
 
 .dm-chat-header .info{
   flex:1;
+  min-width:0;
 }
 
 .dm-chat-header strong{
   display:block;
   font-size:14px;
   font-weight:600;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 .dm-chat-header small{
@@ -862,6 +892,7 @@ input,textarea{
   display:flex;
   flex-direction:column;
   gap:6px;
+  -webkit-overflow-scrolling:touch;
 }
 
 .dm-msg{
@@ -872,6 +903,7 @@ input,textarea{
   line-height:1.35;
   word-wrap:break-word;
   position:relative;
+  flex-shrink:0;
 }
 
 .dm-msg.them{
@@ -915,6 +947,7 @@ input,textarea{
   overflow:hidden;
   margin-top:6px;
   max-width:220px;
+  cursor:pointer;
 }
 
 .dm-shared-video video{
@@ -922,6 +955,7 @@ input,textarea{
   display:block;
   max-height:200px;
   background:#000;
+  pointer-events:none;
 }
 
 .dm-shared-video .info{
@@ -981,8 +1015,7 @@ input,textarea{
 }
 
 
-/* ============ PROFILE (YOUTUBE STYLE) ============ */
-
+/* PROFILE (YOUTUBE STYLE) */
 .yt-profile{
   max-width:640px;
   margin:0 auto;
@@ -1070,6 +1103,7 @@ input,textarea{
   display:flex;
   gap:8px;
   padding:14px 16px;
+  flex-wrap:wrap;
 }
 
 .yt-btn{
@@ -1194,8 +1228,7 @@ input,textarea{
 }
 
 
-/* ============ MODALS ============ */
-
+/* MODALS */
 .modal{
   position:fixed;
   inset:0;
@@ -1250,7 +1283,6 @@ input,textarea{
 
 
 /* COMMENTS */
-
 .comment-item{
   display:flex;
   gap:10px;
@@ -1287,6 +1319,7 @@ input,textarea{
   display:flex;
   gap:12px;
   margin-top:5px;
+  align-items:center;
 }
 
 .comment-content .actions button{
@@ -1322,7 +1355,6 @@ input,textarea{
 
 
 /* PEOPLE LIST */
-
 .person-item{
   display:flex;
   align-items:center;
@@ -1335,6 +1367,7 @@ input,textarea{
   height:44px;
   border-radius:50%;
   object-fit:cover;
+  cursor:pointer;
 }
 
 .person-item .info{
@@ -1348,6 +1381,9 @@ input,textarea{
   font-size:14px;
   font-weight:600;
   margin-bottom:2px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
 }
 
 .person-item .info small{
@@ -1362,6 +1398,13 @@ input,textarea{
   font-weight:600;
   background:var(--blue);
   color:white;
+  transition:all .15s;
+  flex-shrink:0;
+  cursor:pointer;
+}
+
+.follow-btn:active{
+  transform:scale(0.95);
 }
 
 .follow-btn.following{
@@ -1370,9 +1413,12 @@ input,textarea{
   border:1px solid var(--border);
 }
 
+.follow-btn:disabled{
+  opacity:.6;
+}
+
 
 /* SHARE SHEET */
-
 .share-sheet{
   position:fixed;
   inset:0;
@@ -1450,6 +1496,7 @@ input,textarea{
   text-align:center;
   font-size:13px;
   font-weight:500;
+  cursor:pointer;
 }
 
 .share-action-btn .icon{
@@ -1460,7 +1507,6 @@ input,textarea{
 
 
 /* TOAST */
-
 .toast{
   position:fixed;
   bottom:80px;
@@ -1487,7 +1533,7 @@ input,textarea{
 
 <body>
 
-<!-- ============ LOGIN ============ -->
+<!-- LOGIN -->
 <div id="loginPage">
   <div class="login-card">
     <div class="logo">ReelHub</div>
@@ -1497,11 +1543,9 @@ input,textarea{
   </div>
 </div>
 
-
-<!-- ============ APP ============ -->
+<!-- APP -->
 <div id="app" class="hidden">
 
-  <!-- TOP BAR -->
   <header class="topbar" id="mainTopbar">
     <div class="topbar-brand">ReelHub</div>
     <div class="topbar-actions">
@@ -1513,17 +1557,14 @@ input,textarea{
     </div>
   </header>
 
-  <!-- HOME (INSTAGRAM FEED) -->
   <section id="homePanel" class="panel">
     <div id="feed"></div>
   </section>
 
-  <!-- SHORTS (REELS) -->
   <section id="shortsPanel" class="panel hidden">
     <div class="reels-container" id="reelsContainer"></div>
   </section>
 
-  <!-- UPLOAD (YOUTUBE) -->
   <section id="uploadPanel" class="panel hidden">
     <div class="upload-wrap">
       <div class="upload-header">
@@ -1532,24 +1573,20 @@ input,textarea{
 
       <div class="yt-card">
         <div class="yt-card-title">📹 Select Video</div>
-
         <div class="yt-dropzone" id="dropzone">
           <span class="icon">⬆️</span>
           <div class="main-text">Click to select video</div>
           <div class="sub-text">MP4, WebM, MOV · Max 100MB</div>
         </div>
-
         <video id="uploadPreview" class="yt-preview hidden" controls></video>
         <input type="file" id="videoFile" accept="video/*" class="hidden">
       </div>
 
       <div class="yt-card">
         <div class="yt-card-title">📝 Details</div>
-
         <label class="yt-label">Title *</label>
         <input id="videoTitle" class="yt-input" maxlength="100"
                placeholder="Enter an engaging title" style="margin-bottom:14px">
-
         <label class="yt-label">Description</label>
         <textarea id="videoDescription" class="yt-textarea"
                   placeholder="Tell viewers about your video"></textarea>
@@ -1597,26 +1634,20 @@ input,textarea{
     </div>
   </section>
 
-  <!-- MESSAGES (INSTAGRAM DM) -->
   <section id="messagesPanel" class="panel hidden">
     <div class="dm-container">
-
-      <!-- INBOX VIEW -->
       <div id="dmInboxView">
         <div class="dm-header">
           <h2>Messages</h2>
           <button class="icon-btn" id="newMsgBtn">✏️</button>
         </div>
-
         <div class="dm-search">
           <input id="dmSearchInput" placeholder="Search messages...">
         </div>
-
         <div id="dmInboxList"></div>
       </div>
 
-      <!-- CHAT VIEW -->
-      <div id="dmChatView" class="dm-chat-view hidden">
+      <div id="dmChatView" class="hidden">
         <div class="dm-chat-header">
           <button class="icon-btn" id="dmBackBtn" style="font-size:22px">←</button>
           <img id="dmChatAvatar" src="" alt="">
@@ -1626,23 +1657,18 @@ input,textarea{
           </div>
           <button class="icon-btn" id="dmChatProfileBtn">ℹ️</button>
         </div>
-
         <div class="dm-messages" id="dmMessages"></div>
-
         <div class="dm-input-bar">
           <input id="dmInput" placeholder="Message...">
           <button id="dmSendBtn">Send</button>
         </div>
       </div>
-
     </div>
   </section>
 
-  <!-- PROFILE (YOUTUBE) -->
   <section id="profilePanel" class="panel hidden">
     <div class="yt-profile">
       <div class="yt-banner"></div>
-
       <div class="yt-profile-head">
         <img id="profilePhoto" class="yt-profile-avatar" src="" alt="">
         <div class="yt-profile-info">
@@ -1651,9 +1677,7 @@ input,textarea{
           <div class="meta" id="profileExtra"></div>
         </div>
       </div>
-
       <div class="yt-profile-bio" id="profileBio"></div>
-
       <div class="yt-profile-stats">
         <div class="yt-stat" id="myFollowersBtn">
           <strong id="followersCount">0</strong>
@@ -1668,45 +1692,37 @@ input,textarea{
           <span>Videos</span>
         </div>
       </div>
-
       <div class="yt-profile-actions">
         <button class="yt-btn yt-btn-primary" id="editProfileBtn">✏️ Edit Profile</button>
         <button class="yt-btn yt-btn-gray" id="shareAppBtn">📤 Share</button>
         <button class="yt-btn yt-btn-gray" id="settingsBtn">⚙️</button>
       </div>
-
       <div class="yt-tabs">
         <div class="yt-tab active">Videos</div>
         <div class="yt-tab">About</div>
       </div>
-
       <div class="yt-videos-grid" id="myVideos"></div>
     </div>
   </section>
 
-  <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <button class="nav-btn active" data-panel="homePanel">
       <span class="nav-icon">🏠</span>
       <span class="nav-label">Home</span>
     </button>
-
     <button class="nav-btn" data-panel="shortsPanel">
       <span class="nav-icon">🎞️</span>
       <span class="nav-label">Shorts</span>
     </button>
-
     <button class="nav-btn" data-panel="uploadPanel">
       <span class="nav-icon plus-icon">➕</span>
       <span class="nav-label">Upload</span>
     </button>
-
     <button class="nav-btn" data-panel="messagesPanel">
       <span class="nav-icon">💬</span>
       <span class="nav-label">Messages</span>
       <span class="nav-badge hidden" id="msgBadge">0</span>
     </button>
-
     <button class="nav-btn" data-panel="profilePanel">
       <span class="nav-icon">
         <img id="navProfileAvatar" class="avatar-mini"
@@ -1718,10 +1734,7 @@ input,textarea{
 
 </div>
 
-
-<!-- ============ MODALS ============ -->
-
-<!-- SEARCH -->
+<!-- MODALS -->
 <div id="searchModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1733,7 +1746,6 @@ input,textarea{
   </div>
 </div>
 
-<!-- ALERTS -->
 <div id="alertsModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1744,14 +1756,12 @@ input,textarea{
   </div>
 </div>
 
-<!-- EDIT PROFILE -->
 <div id="editProfileModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
       <h2>Edit Profile</h2>
       <button class="close" data-close="editProfileModal">×</button>
     </div>
-
     <div style="text-align:center;margin-bottom:20px">
       <img id="editPhotoPreview" class="yt-profile-avatar"
            style="margin:0 auto" src="" alt="">
@@ -1759,16 +1769,12 @@ input,textarea{
         <input id="profilePhotoFile" type="file" accept="image/*">
       </div>
     </div>
-
     <label class="yt-label">Name</label>
     <input id="editName" class="yt-input" style="margin-bottom:14px">
-
     <label class="yt-label">User ID</label>
     <input id="editUsername" class="yt-input" placeholder="example: harshit" style="margin-bottom:14px">
-
     <label class="yt-label">Age</label>
     <input id="editAge" class="yt-input" type="number" min="1" max="120" style="margin-bottom:14px">
-
     <label class="yt-label">Gender</label>
     <select id="editGender" class="yt-input" style="margin-bottom:14px">
       <option value="">Prefer not to say</option>
@@ -1776,24 +1782,20 @@ input,textarea{
       <option value="Female">Female</option>
       <option value="Other">Other</option>
     </select>
-
     <label class="yt-label">Bio</label>
     <textarea id="editBio" class="yt-textarea" placeholder="Tell about yourself..." style="margin-bottom:14px"></textarea>
-
     <button class="yt-publish-btn" id="saveProfileBtn">Save Profile</button>
     <p id="profileSaveStatus" style="margin-top:10px;color:var(--muted);text-align:center;font-size:13px"></p>
   </div>
 </div>
 
-<!-- SETTINGS -->
 <div id="settingsModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
       <h2>Settings</h2>
       <button class="close" data-close="settingsModal">×</button>
     </div>
-
-    <div style="display:flex;flex-direction:column;gap:2px">
+    <div style="display:flex;flex-direction:column;gap:8px">
       <button class="yt-mini-btn" style="padding:14px;text-align:left" id="darkModeBtn">🌙 Dark Mode</button>
       <button class="yt-mini-btn" style="padding:14px;text-align:left">🔒 Privacy</button>
       <button class="yt-mini-btn" style="padding:14px;text-align:left">🔔 Notifications</button>
@@ -1802,7 +1804,6 @@ input,textarea{
   </div>
 </div>
 
-<!-- PUBLIC PROFILE -->
 <div id="publicProfileModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden">
     <div style="position:relative">
@@ -1810,7 +1811,6 @@ input,textarea{
       <button class="close" data-close="publicProfileModal"
               style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:white">×</button>
     </div>
-
     <div style="padding:0 16px">
       <div class="yt-profile-head" style="margin-top:-45px">
         <img id="publicPhoto" class="yt-profile-avatar" src="" alt="">
@@ -1820,7 +1820,6 @@ input,textarea{
           <div class="meta" id="publicExtra"></div>
         </div>
       </div>
-
       <div class="yt-profile-stats" style="margin-top:10px">
         <div class="yt-stat" id="publicFollowersBtn">
           <strong id="publicFollowers">0</strong>
@@ -1835,22 +1834,18 @@ input,textarea{
           <span>Videos</span>
         </div>
       </div>
-
       <div class="yt-profile-actions">
         <button class="yt-btn yt-btn-primary" id="publicFollowBtn">Follow</button>
         <button class="yt-btn yt-btn-gray" id="publicMessageBtn">💬 Message</button>
       </div>
-
       <div class="yt-tabs" style="margin:0 -16px;padding:0 16px">
         <div class="yt-tab active">Videos</div>
       </div>
-
       <div class="yt-videos-grid" id="publicVideosList" style="padding-bottom:20px"></div>
     </div>
   </div>
 </div>
 
-<!-- PEOPLE (FOLLOWERS/FOLLOWING) -->
 <div id="peopleModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1861,7 +1856,6 @@ input,textarea{
   </div>
 </div>
 
-<!-- COMMENTS -->
 <div id="commentsModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1869,7 +1863,6 @@ input,textarea{
       <button class="close" data-close="commentsModal">×</button>
     </div>
     <div id="commentsList"></div>
-
     <div class="comment-form-inline">
       <input id="commentInput" placeholder="Add a comment...">
       <button id="sendCommentBtn">Post</button>
@@ -1877,39 +1870,31 @@ input,textarea{
   </div>
 </div>
 
-<!-- EDIT VIDEO -->
 <div id="editVideoModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
       <h2>Edit Video</h2>
       <button class="close" data-close="editVideoModal">×</button>
     </div>
-
     <input type="hidden" id="editVideoId">
-
     <label class="yt-label">Title</label>
     <input id="editVideoTitle" class="yt-input" style="margin-bottom:14px">
-
     <label class="yt-label">Description</label>
     <textarea id="editVideoDescription" class="yt-textarea" style="margin-bottom:14px"></textarea>
-
     <label class="yt-label">Visibility</label>
     <select id="editVideoVisibility" class="yt-input" style="margin-bottom:14px">
       <option value="public">Public</option>
       <option value="private">Private</option>
     </select>
-
     <label class="yt-label">Type</label>
     <select id="editVideoType" class="yt-input" style="margin-bottom:14px">
       <option value="long">Long Video</option>
       <option value="short">Short</option>
     </select>
-
     <button class="yt-publish-btn" id="saveVideoEditBtn">Save Changes</button>
   </div>
 </div>
 
-<!-- SHARE SHEET -->
 <div id="shareSheet" class="share-sheet">
   <div class="share-sheet-box">
     <h3>Share with</h3>
@@ -1927,10 +1912,7 @@ input,textarea{
   </div>
 </div>
 
-<!-- TOAST -->
 <div id="toast" class="toast"></div>
-
-
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -1957,16 +1939,12 @@ import {
   deleteDoc,
   query,
   where,
-  orderBy,
   serverTimestamp,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
-/* ==============================
-   FIREBASE
-============================== */
-
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
   authDomain: "reelhu.firebaseapp.com",
@@ -1986,17 +1964,12 @@ const CLOUDINARY_CLOUD_NAME = "s3eresx6";
 const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
 
 
-/* ==============================
-   STATE
-============================== */
-
+/* STATE */
 let currentUser = null;
 let currentProfile = null;
 let videosCache = [];
 let myFollowsCache = new Set();
-let myLikedVideos = new Set();
 let myChatsCache = [];
-let unreadCounts = {};
 
 let videosUnsubscribe = null;
 let notificationsUnsubscribe = null;
@@ -2011,14 +1984,10 @@ let shareVideoId = null;
 let uploadVisibility = "public";
 let uploadType = "long";
 
-
 const $ = id => document.getElementById(id);
 
 
-/* ==============================
-   HELPERS
-============================== */
-
+/* HELPERS */
 function esc(v){
   return String(v ?? "")
     .replaceAll("&","&amp;")
@@ -2069,10 +2038,7 @@ function timeAgo(v){
 }
 
 
-/* ==============================
-   NAVIGATION
-============================== */
-
+/* NAVIGATION */
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", ()=>{
     const panelId = btn.dataset.panel;
@@ -2083,7 +2049,6 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
     document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
     btn.classList.add("active");
 
-    // Hide topbar on shorts
     if(panelId === "shortsPanel"){
       $("mainTopbar").classList.add("hidden");
     }else{
@@ -2100,7 +2065,7 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
     }
 
     if(panelId === "shortsPanel"){
-      setupReelsObserver();
+      setTimeout(setupReelsObserver, 100);
     }
   });
 });
@@ -2123,10 +2088,7 @@ function openPanel(id){
 }
 
 
-/* ==============================
-   GOOGLE LOGIN
-============================== */
-
+/* GOOGLE LOGIN */
 $("googleLogin").addEventListener("click", async()=>{
   $("loginStatus").textContent = "Opening Google...";
   try{
@@ -2144,10 +2106,7 @@ $("googleLogin").addEventListener("click", async()=>{
 getRedirectResult(auth).catch(console.error);
 
 
-/* ==============================
-   PROFILE
-============================== */
-
+/* PROFILE */
 async function createProfile(){
   const ref = doc(db, "profiles", currentUser.uid);
   const snap = await getDoc(ref);
@@ -2189,7 +2148,6 @@ async function getProfile(uid){
 
 async function loadProfile(){
   if(!currentUser) return;
-
   currentProfile = await getProfile(currentUser.uid);
 
   $("profileName").textContent = currentProfile.name || "User";
@@ -2219,17 +2177,8 @@ async function loadMyFollows(){
   }catch(e){ console.error(e); }
 }
 
-async function loadMyLikes(){
-  if(!currentUser) return;
-  myLikedVideos = new Set();
-  // Will be filled per-video check when video renders
-}
 
-
-/* ==============================
-   AUTH
-============================== */
-
+/* AUTH */
 onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
@@ -2260,10 +2209,7 @@ onAuthStateChanged(auth, async user => {
 });
 
 
-/* ==============================
-   CLOUDINARY UPLOAD
-============================== */
-
+/* CLOUDINARY */
 function uploadToCloudinary(file, onProgress){
   return new Promise((resolve,reject)=>{
     const resource = file.type.startsWith("video/") ? "video" : "image";
@@ -2293,23 +2239,18 @@ function uploadToCloudinary(file, onProgress){
 }
 
 
-/* ==============================
-   UPLOAD UI
-============================== */
-
+/* UPLOAD UI */
 $("dropzone").addEventListener("click", ()=> $("videoFile").click());
 
 $("videoFile").addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
-
   const preview = $("uploadPreview");
   preview.src = URL.createObjectURL(file);
   preview.classList.remove("hidden");
   $("dropzone").classList.add("hidden");
 });
 
-// Radio groups
 $("visibilityGroup").addEventListener("click", e=>{
   const el = e.target.closest(".yt-radio");
   if(!el) return;
@@ -2327,10 +2268,7 @@ $("typeGroup").addEventListener("click", e=>{
 });
 
 
-/* ==============================
-   UPLOAD VIDEO
-============================== */
-
+/* UPLOAD VIDEO */
 $("publishBtn").addEventListener("click", async()=>{
   const file = $("videoFile").files[0];
   const title = $("videoTitle").value.trim();
@@ -2353,6 +2291,7 @@ $("publishBtn").addEventListener("click", async()=>{
     await addDoc(collection(db,"videos"), {
       userId: currentUser.uid,
       userName: currentProfile?.name || currentUser.displayName || "User",
+      username: currentProfile?.username || "",
       userPhoto: currentProfile?.photo || currentUser.photoURL || "",
       videoURL: url,
       title,
@@ -2365,7 +2304,6 @@ $("publishBtn").addEventListener("click", async()=>{
 
     await syncVideoCount(currentUser.uid);
 
-    // Reset form
     $("videoFile").value = "";
     $("videoTitle").value = "";
     $("videoDescription").value = "";
@@ -2388,10 +2326,7 @@ $("publishBtn").addEventListener("click", async()=>{
 });
 
 
-/* ==============================
-   REALTIME VIDEOS
-============================== */
-
+/* REALTIME VIDEOS */
 function startRealtimeVideos(){
   if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
 
@@ -2411,10 +2346,7 @@ function startRealtimeVideos(){
 }
 
 
-/* ==============================
-   HOME FEED (INSTAGRAM)
-============================== */
-
+/* HOME FEED */
 function renderFeed(){
   const feed = $("feed");
   if(!feed) return;
@@ -2434,8 +2366,6 @@ function renderFeed(){
   }
 
   feed.innerHTML = list.map(v => createIGPost(v)).join("");
-
-  // Check like status
   list.forEach(v => updateLikeUI(v.id));
 }
 
@@ -2447,12 +2377,20 @@ function createIGPost(v){
   <article class="ig-post" data-id="${esc(v.id)}">
     <div class="ig-post-head">
       <img class="ig-avatar" src="${avatar(v.userPhoto, v.userName)}"
-           onclick='openPublicProfile(${JSON.stringify(v.userId)})'>
-      <div class="ig-post-user" onclick='openPublicProfile(${JSON.stringify(v.userId)})'>
+           onclick='event.stopPropagation(); openPublicProfile(${JSON.stringify(v.userId)})'>
+      <div class="ig-post-user" onclick='event.stopPropagation(); openPublicProfile(${JSON.stringify(v.userId)})'>
         <strong>${esc(v.username || v.userName || "User")}</strong>
         <small>${esc(v.title || "")}</small>
       </div>
-      ${mine ? `<button class="more-btn" onclick='openEditVideo(${JSON.stringify(v.id)})'>⋯</button>` : ""}
+      ${!mine && currentUser ? `
+        <button class="follow-btn ${isFollowing?"following":""}"
+                data-follow-uid="${esc(v.userId)}"
+                onclick='event.stopPropagation(); toggleFollow(${JSON.stringify(v.userId)}, this)'
+                style="padding:6px 14px;font-size:12px;border-radius:8px">
+          ${isFollowing ? "Following" : "Follow"}
+        </button>
+      ` : ""}
+      ${mine ? `<button class="more-btn" onclick='event.stopPropagation(); openEditVideo(${JSON.stringify(v.id)})'>⋯</button>` : ""}
     </div>
 
     <div class="ig-media">
@@ -2462,17 +2400,17 @@ function createIGPost(v){
 
     <div class="ig-actions">
       <button class="ig-action-btn like-btn" id="like-${esc(v.id)}"
-              onclick='toggleLike(${JSON.stringify(v.id)}, this)'>
+              onclick='event.stopPropagation(); toggleLike(${JSON.stringify(v.id)}, this)'>
         <span class="icon">🤍</span>
       </button>
-      <button class="ig-action-btn" onclick='openComments(${JSON.stringify(v.id)})'>
+      <button class="ig-action-btn" onclick='event.stopPropagation(); openComments(${JSON.stringify(v.id)})'>
         <span class="icon">💬</span>
       </button>
-      <button class="ig-action-btn" onclick='openShareSheet(${JSON.stringify(v.id)})'>
+      <button class="ig-action-btn" onclick='event.stopPropagation(); openShareSheet(${JSON.stringify(v.id)})'>
         <span class="icon">📤</span>
       </button>
       <div class="spacer"></div>
-      ${mine ? `<button class="ig-action-btn" onclick='deleteVideo(${JSON.stringify(v.id)})' style="color:var(--danger)">
+      ${mine ? `<button class="ig-action-btn" onclick='event.stopPropagation(); deleteVideo(${JSON.stringify(v.id)})' style="color:var(--danger)">
         <span class="icon">🗑️</span>
       </button>` : ""}
     </div>
@@ -2507,10 +2445,7 @@ async function updateLikeUI(videoId){
 }
 
 
-/* ==============================
-   SHORTS (REELS)
-============================== */
-
+/* SHORTS */
 function renderShorts(){
   const container = $("reelsContainer");
   if(!container) return;
@@ -2530,9 +2465,8 @@ function renderShorts(){
   }
 
   container.innerHTML = list.map(v => createReel(v)).join("");
-
   list.forEach(v => updateReelLikeUI(v.id));
-  setupReelsObserver();
+  setTimeout(setupReelsObserver, 100);
 }
 
 function createReel(v){
@@ -2548,10 +2482,11 @@ function createReel(v){
       <div class="reel-info">
         <div class="reel-user">
           <img src="${avatar(v.userPhoto, v.userName)}"
-               onclick='openPublicProfile(${JSON.stringify(v.userId)})'>
+               onclick='event.stopPropagation(); openPublicProfile(${JSON.stringify(v.userId)})'>
           <strong>@${esc(v.username || v.userName)}</strong>
           ${!mine ? `<button class="follow-btn-sm"
-            onclick='toggleFollow(${JSON.stringify(v.userId)}, this)'>
+            data-follow-uid="${esc(v.userId)}"
+            onclick='event.stopPropagation(); toggleFollow(${JSON.stringify(v.userId)}, this)'>
             ${isFollowing ? "Following" : "Follow"}
           </button>` : ""}
         </div>
@@ -2562,22 +2497,19 @@ function createReel(v){
 
     <div class="reel-actions">
       <div class="reel-action like-btn" id="reel-like-${esc(v.id)}"
-           onclick='toggleLike(${JSON.stringify(v.id)}, this, true)'>
+           onclick='event.stopPropagation(); toggleLike(${JSON.stringify(v.id)}, this, true)'>
         <span class="icon">🤍</span>
         <small class="like-count">${v.likes || 0}</small>
       </div>
-
-      <div class="reel-action" onclick='openComments(${JSON.stringify(v.id)})'>
+      <div class="reel-action" onclick='event.stopPropagation(); openComments(${JSON.stringify(v.id)})'>
         <span class="icon">💬</span>
         <small>Comment</small>
       </div>
-
-      <div class="reel-action" onclick='openShareSheet(${JSON.stringify(v.id)})'>
+      <div class="reel-action" onclick='event.stopPropagation(); openShareSheet(${JSON.stringify(v.id)})'>
         <span class="icon">📤</span>
         <small>Share</small>
       </div>
-
-      ${mine ? `<div class="reel-action" onclick='deleteVideo(${JSON.stringify(v.id)})'>
+      ${mine ? `<div class="reel-action" onclick='event.stopPropagation(); deleteVideo(${JSON.stringify(v.id)})'>
         <span class="icon">🗑️</span>
         <small>Delete</small>
       </div>` : ""}
@@ -2607,12 +2539,10 @@ async function updateReelLikeUI(videoId){
 let reelObserver = null;
 function setupReelsObserver(){
   if(reelObserver) reelObserver.disconnect();
-
   const container = $("reelsContainer");
   if(!container) return;
 
   const videos = container.querySelectorAll("video");
-
   reelObserver = new IntersectionObserver(entries=>{
     entries.forEach(entry=>{
       const vid = entry.target;
@@ -2628,10 +2558,7 @@ function setupReelsObserver(){
 }
 
 
-/* ==============================
-   LIKE (ONCE PER USER)
-============================== */
-
+/* LIKE */
 window.toggleLike = async function(videoId, btnEl, isReel=false){
   if(!currentUser){ toast("Login required"); return; }
 
@@ -2660,7 +2587,6 @@ window.toggleLike = async function(videoId, btnEl, isReel=false){
         const count = btnEl.querySelector(".like-count");
         if(count) count.textContent = Math.max(0, currentLikes - 1);
       }
-
       const likesEl = $("likes-" + videoId);
       if(likesEl) likesEl.textContent = Math.max(0, currentLikes - 1) + " likes";
 
@@ -2669,7 +2595,6 @@ window.toggleLike = async function(videoId, btnEl, isReel=false){
         userId: currentUser.uid,
         createdAt: serverTimestamp()
       });
-
       await updateDoc(videoRef, { likes: currentLikes + 1 });
 
       if(btnEl){
@@ -2679,11 +2604,9 @@ window.toggleLike = async function(videoId, btnEl, isReel=false){
         const count = btnEl.querySelector(".like-count");
         if(count) count.textContent = currentLikes + 1;
       }
-
       const likesEl = $("likes-" + videoId);
       if(likesEl) likesEl.textContent = (currentLikes + 1) + " likes";
 
-      // Notification
       if(ownerId !== currentUser.uid){
         await addDoc(collection(db,"notifications"), {
           to: ownerId,
@@ -2701,10 +2624,7 @@ window.toggleLike = async function(videoId, btnEl, isReel=false){
 };
 
 
-/* ==============================
-   COMMENTS
-============================== */
-
+/* COMMENTS */
 window.openComments = function(videoId){
   currentCommentVideoId = videoId;
   showModal("commentsModal");
@@ -2739,8 +2659,8 @@ function loadComments(videoId){
             <div class="actions">
               <span style="font-size:11px;color:var(--muted)">${timeAgo(c.createdAt)}</span>
               ${mine ? `
-                <button onclick='editComment(${JSON.stringify(videoId)}, ${JSON.stringify(c.id)}, ${JSON.stringify(c.text)})'>Edit</button>
-                <button onclick='deleteComment(${JSON.stringify(videoId)}, ${JSON.stringify(c.id)})'>Delete</button>
+                <button onclick='event.stopPropagation(); editComment(${JSON.stringify(videoId)}, ${JSON.stringify(c.id)}, ${JSON.stringify(c.text)})'>Edit</button>
+                <button onclick='event.stopPropagation(); deleteComment(${JSON.stringify(videoId)}, ${JSON.stringify(c.id)})'>Delete</button>
               ` : ""}
             </div>
           </div>
@@ -2767,7 +2687,6 @@ async function sendComment(){
       createdAt: serverTimestamp()
     });
 
-    // Notification
     const videoSnap = await getDoc(doc(db,"videos",currentCommentVideoId));
     if(videoSnap.exists()){
       const ownerId = videoSnap.data().userId;
@@ -2781,11 +2700,8 @@ async function sendComment(){
         });
       }
     }
-
     $("commentInput").value = "";
-  }catch(e){
-    toast("Comment failed");
-  }
+  }catch(e){ toast("Comment failed"); }
 }
 
 window.editComment = async function(videoId, commentId, oldText){
@@ -2793,11 +2709,9 @@ window.editComment = async function(videoId, commentId, oldText){
   if(text === null) return;
   const clean = text.trim();
   if(!clean) return;
-
   const ref = doc(db,"videos",videoId,"comments",commentId);
   const snap = await getDoc(ref);
   if(!snap.exists() || snap.data().userId !== currentUser.uid) return;
-
   await updateDoc(ref, { text: clean, updatedAt: serverTimestamp() });
 };
 
@@ -2810,46 +2724,31 @@ window.deleteComment = async function(videoId, commentId){
 };
 
 
-/* ==============================
-   DELETE VIDEO
-============================== */
-
+/* DELETE VIDEO */
 window.deleteVideo = async function(videoId){
   if(!currentUser) return;
-
   const ref = doc(db,"videos",videoId);
   const snap = await getDoc(ref);
 
   if(!snap.exists()){ toast("Not found"); return; }
-  if(snap.data().userId !== currentUser.uid){
-    toast("Not your video"); return;
-  }
+  if(snap.data().userId !== currentUser.uid){ toast("Not your video"); return; }
   if(!confirm("Delete this video?")) return;
 
   try{
-    // Delete comments
     const comments = await getDocs(collection(db,"videos",videoId,"comments"));
     for(const c of comments.docs) await deleteDoc(c.ref);
 
-    // Delete likes
     const likes = await getDocs(collection(db,"videos",videoId,"likes"));
     for(const l of likes.docs) await deleteDoc(l.ref);
 
     await deleteDoc(ref);
     await syncVideoCount(currentUser.uid);
-
     toast("🗑️ Video deleted");
-  }catch(e){
-    console.error(e);
-    toast("Delete failed");
-  }
+  }catch(e){ console.error(e); toast("Delete failed"); }
 };
 
 
-/* ==============================
-   EDIT VIDEO
-============================== */
-
+/* EDIT VIDEO */
 window.openEditVideo = async function(videoId){
   const snap = await getDoc(doc(db,"videos",videoId));
   if(!snap.exists()) return;
@@ -2867,7 +2766,6 @@ window.openEditVideo = async function(videoId){
 $("saveVideoEditBtn").addEventListener("click", async()=>{
   const id = $("editVideoId").value;
   if(!id) return;
-
   try{
     const ref = doc(db,"videos",id);
     const snap = await getDoc(ref);
@@ -2880,19 +2778,13 @@ $("saveVideoEditBtn").addEventListener("click", async()=>{
       type: $("editVideoType").value,
       updatedAt: serverTimestamp()
     });
-
     hideModal("editVideoModal");
     toast("✅ Updated");
-  }catch(e){
-    toast("Update failed");
-  }
+  }catch(e){ toast("Update failed"); }
 });
 
 
-/* ==============================
-   VIDEO COUNT SYNC
-============================== */
-
+/* VIDEO COUNT */
 async function syncVideoCount(uid){
   try{
     const q = query(collection(db,"videos"), where("userId","==",uid));
@@ -2907,36 +2799,36 @@ async function syncVideoCount(uid){
 }
 
 
-/* ==============================
-   FOLLOW
-============================== */
-
+/* FOLLOW - FIXED */
 window.toggleFollow = async function(targetUid, btnEl){
   if(!currentUser || targetUid === currentUser.uid) return;
 
+  // Disable button to prevent double-click
+  if(btnEl){
+    btnEl.disabled = true;
+    btnEl.style.opacity = "0.6";
+  }
+
   const id = currentUser.uid + "_" + targetUid;
   const ref = doc(db,"follows",id);
-  const snap = await getDoc(ref);
 
   try{
+    const snap = await getDoc(ref);
+
     if(snap.exists()){
+      // Unfollow
       await deleteDoc(ref);
       myFollowsCache.delete(targetUid);
-      if(btnEl){
-        btnEl.textContent = "Follow";
-        btnEl.classList.remove("following");
-      }
+      updateAllFollowButtons(targetUid, false);
     }else{
+      // Follow
       await setDoc(ref, {
         follower: currentUser.uid,
         following: targetUid,
         createdAt: serverTimestamp()
       });
       myFollowsCache.add(targetUid);
-      if(btnEl){
-        btnEl.textContent = "Following";
-        btnEl.classList.add("following");
-      }
+      updateAllFollowButtons(targetUid, true);
 
       // Notification
       await addDoc(collection(db,"notifications"), {
@@ -2957,16 +2849,31 @@ window.toggleFollow = async function(targetUid, btnEl){
       if(uid === targetUid){
         const followed = myFollowsCache.has(targetUid);
         const btn = $("publicFollowBtn");
-        btn.textContent = followed ? "Following" : "Follow";
-        btn.classList.toggle("yt-btn-gray", followed);
-        btn.classList.toggle("yt-btn-primary", !followed);
+        if(btn){
+          btn.textContent = followed ? "Following" : "Follow";
+          btn.classList.toggle("yt-btn-gray", followed);
+          btn.classList.toggle("yt-btn-primary", !followed);
+        }
       }
     }
   }catch(e){
     console.error(e);
     toast("Follow failed");
+  }finally{
+    if(btnEl){
+      btnEl.disabled = false;
+      btnEl.style.opacity = "1";
+    }
   }
 };
+
+// Update ALL buttons with same targetUid
+function updateAllFollowButtons(targetUid, isFollowing){
+  document.querySelectorAll(`button[data-follow-uid="${targetUid}"]`).forEach(btn=>{
+    btn.textContent = isFollowing ? "Following" : "Follow";
+    btn.classList.toggle("following", isFollowing);
+  });
+}
 
 async function syncFollowCounts(uid){
   try{
@@ -2990,10 +2897,7 @@ async function syncFollowCounts(uid){
 }
 
 
-/* ==============================
-   PUBLIC PROFILE
-============================== */
-
+/* PUBLIC PROFILE */
 window.openPublicProfile = async function(uid){
   if(!uid) return;
 
@@ -3022,9 +2926,20 @@ window.openPublicProfile = async function(uid){
 
     const followed = myFollowsCache.has(uid);
     $("publicFollowBtn").textContent = followed ? "Following" : "Follow";
-    $("publicFollowBtn").className = followed ? "yt-btn yt-btn-gray" : "yt-btn yt-btn-primary";
-    $("publicFollowBtn").onclick = ()=> toggleFollow(uid, $("publicFollowBtn"));
-    $("publicMessageBtn").onclick = ()=> openChatFromProfile(uid);
+    $("publicFollowBtn").className = followed
+      ? "yt-btn yt-btn-gray"
+      : "yt-btn yt-btn-primary";
+
+    // Use onclick (single handler)
+    $("publicFollowBtn").onclick = (e)=>{
+      e.stopPropagation();
+      toggleFollow(uid, $("publicFollowBtn"));
+    };
+
+    $("publicMessageBtn").onclick = (e)=>{
+      e.stopPropagation();
+      openChatFromProfile(uid);
+    };
   }
 
   await loadPublicVideos(uid);
@@ -3054,7 +2969,7 @@ async function loadPublicVideos(uid){
 
 function createYTVideoItem(v, isMine){
   return `
-  <div class="yt-video-item" onclick='openVideoDetails(${JSON.stringify(v.id)})'>
+  <div class="yt-video-item" onclick='event.stopPropagation(); openPublicProfile(${JSON.stringify(v.userId)})'>
     <div class="yt-video-thumb">
       <video src="${esc(v.videoURL)}" preload="metadata" muted></video>
     </div>
@@ -3065,8 +2980,8 @@ function createYTVideoItem(v, isMine){
       </div>
       ${isMine ? `
         <div class="btns" onclick="event.stopPropagation()">
-          <button class="yt-mini-btn primary" onclick='openEditVideo(${JSON.stringify(v.id)})'>Edit</button>
-          <button class="yt-mini-btn danger" onclick='deleteVideo(${JSON.stringify(v.id)})'>Delete</button>
+          <button class="yt-mini-btn primary" onclick='event.stopPropagation(); openEditVideo(${JSON.stringify(v.id)})'>Edit</button>
+          <button class="yt-mini-btn danger" onclick='event.stopPropagation(); deleteVideo(${JSON.stringify(v.id)})'>Delete</button>
         </div>
       ` : ""}
     </div>
@@ -3074,19 +2989,8 @@ function createYTVideoItem(v, isMine){
   `;
 }
 
-window.openVideoDetails = async function(videoId){
-  const v = videosCache.find(x => x.id === videoId);
-  if(!v) return;
 
-  // Open public profile of owner
-  openPublicProfile(v.userId);
-};
-
-
-/* ==============================
-   MY VIDEOS
-============================== */
-
+/* MY VIDEOS */
 async function loadMyVideos(){
   if(!currentUser) return;
 
@@ -3106,10 +3010,7 @@ async function loadMyVideos(){
 }
 
 
-/* ==============================
-   PEOPLE (Followers/Following)
-============================== */
-
+/* PEOPLE */
 async function openPeople(uid, type){
   if(!uid) return;
 
@@ -3144,16 +3045,16 @@ async function openPeople(uid, type){
       return `
       <div class="person-item">
         <img src="${avatar(p.photo, p.name)}"
-             onclick='hideModal("peopleModal"); openPublicProfile(${JSON.stringify(p.uid)})'
-             style="cursor:pointer">
+             onclick='event.stopPropagation(); hideModal("peopleModal"); openPublicProfile(${JSON.stringify(p.uid)})'>
         <div class="info"
-             onclick='hideModal("peopleModal"); openPublicProfile(${JSON.stringify(p.uid)})'>
+             onclick='event.stopPropagation(); hideModal("peopleModal"); openPublicProfile(${JSON.stringify(p.uid)})'>
           <strong>${esc(p.name)}</strong>
           <small>@${esc(p.username)}</small>
         </div>
         ${!isMe && currentUser ? `
           <button class="follow-btn ${followed?"following":""}"
-                  onclick='toggleFollow(${JSON.stringify(p.uid)}, this)'>
+                  data-follow-uid="${esc(p.uid)}"
+                  onclick='event.stopPropagation(); toggleFollow(${JSON.stringify(p.uid)}, this)'>
             ${followed ? "Following" : "Follow"}
           </button>
         ` : ""}
@@ -3174,13 +3075,10 @@ $("myFollowingBtn").addEventListener("click", ()=>{
 });
 
 
-/* ==============================
-   SEARCH
-============================== */
-
+/* SEARCH */
 $("topSearchBtn").addEventListener("click", ()=>{
   showModal("searchModal");
-  $("searchInput").focus();
+  setTimeout(()=> $("searchInput").focus(), 100);
 });
 
 let searchTimeout = null;
@@ -3221,16 +3119,16 @@ async function doSearch(value){
       return `
       <div class="person-item">
         <img src="${avatar(p.photo, p.name)}"
-             onclick='hideModal("searchModal"); openPublicProfile(${JSON.stringify(p.uid)})'
-             style="cursor:pointer">
+             onclick='event.stopPropagation(); hideModal("searchModal"); openPublicProfile(${JSON.stringify(p.uid)})'>
         <div class="info"
-             onclick='hideModal("searchModal"); openPublicProfile(${JSON.stringify(p.uid)})'>
+             onclick='event.stopPropagation(); hideModal("searchModal"); openPublicProfile(${JSON.stringify(p.uid)})'>
           <strong>${esc(p.name)}</strong>
           <small>@${esc(p.username)}</small>
         </div>
         ${!isMe && currentUser ? `
           <button class="follow-btn ${followed?"following":""}"
-                  onclick='toggleFollow(${JSON.stringify(p.uid)}, this)'>
+                  data-follow-uid="${esc(p.uid)}"
+                  onclick='event.stopPropagation(); toggleFollow(${JSON.stringify(p.uid)}, this)'>
             ${followed ? "Following" : "Follow"}
           </button>
         ` : ""}
@@ -3243,10 +3141,7 @@ async function doSearch(value){
 }
 
 
-/* ==============================
-   PROFILE EDIT
-============================== */
-
+/* PROFILE EDIT */
 $("editProfileBtn").addEventListener("click", async()=>{
   const p = await getProfile(currentUser.uid);
   $("editName").value = p.name || "";
@@ -3281,7 +3176,6 @@ $("saveProfileBtn").addEventListener("click", async()=>{
     $("profileSaveStatus").textContent = "Saving...";
     $("saveProfileBtn").disabled = true;
 
-    // Check username uniqueness
     const q = query(collection(db,"profiles"), where("username","==",username));
     const snap = await getDocs(q);
     if(snap.docs.some(d => d.id !== currentUser.uid)){
@@ -3314,10 +3208,7 @@ $("saveProfileBtn").addEventListener("click", async()=>{
 });
 
 
-/* ==============================
-   SETTINGS
-============================== */
-
+/* SETTINGS */
 $("settingsBtn").addEventListener("click", ()=> showModal("settingsModal"));
 
 $("darkModeBtn").addEventListener("click", ()=>{
@@ -3347,10 +3238,7 @@ $("shareAppBtn").addEventListener("click", async()=>{
 });
 
 
-/* ==============================
-   NOTIFICATIONS
-============================== */
-
+/* NOTIFICATIONS */
 function startNotifications(){
   if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
   if(!currentUser) return;
@@ -3391,25 +3279,18 @@ function startNotifications(){
 $("topAlertsBtn").addEventListener("click", ()=> showModal("alertsModal"));
 
 
-/* ==============================
-   MESSAGES (DM SYSTEM)
-============================== */
-
+/* MESSAGES */
 function startChatsListListener(){
   if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
   if(!currentUser) return;
 
   chatsListUnsubscribe = onSnapshot(
     query(collection(db,"chats"), where("members","array-contains",currentUser.uid)),
-    async snapshot=>{
+    snapshot=>{
       myChatsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       myChatsCache.sort((a,b)=> timeValue(b.updatedAt) - timeValue(a.updatedAt));
 
-      // Count unread (messages not from me, after lastRead)
-      let totalUnread = 0;
       const badge = $("msgBadge");
-
-      // Just count total chats for now (simplified badge)
       if(myChatsCache.length > 0){
         badge.textContent = myChatsCache.length;
         badge.classList.remove("hidden");
@@ -3424,13 +3305,17 @@ function startChatsListListener(){
   );
 }
 
-
 function showDMInbox(){
   $("dmInboxView").classList.remove("hidden");
   $("dmChatView").classList.add("hidden");
+
+  // Clear current chat
+  if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
+  currentChatId = null;
+  currentChatUser = null;
+
   renderDMInbox();
 }
-
 
 function renderDMInbox(){
   const container = $("dmInboxList");
@@ -3447,7 +3332,8 @@ function renderDMInbox(){
 
   container.innerHTML = myChatsCache.map(c=>{
     const otherUid = c.members.find(uid => uid !== currentUser.uid);
-    return `<div class="dm-inbox-item" onclick='openChat(${JSON.stringify(otherUid)})'
+    return `<div class="dm-inbox-item"
+                 onclick='openChat(${JSON.stringify(otherUid)})'
                  data-uid="${esc(otherUid)}">
       <img src="${avatar("", "U")}" class="dm-inbox-avatar-${esc(otherUid)}">
       <div class="dm-inbox-info">
@@ -3458,19 +3344,20 @@ function renderDMInbox(){
     </div>`;
   }).join("");
 
-  // Load profiles
+  // Load profiles async
   myChatsCache.forEach(async c=>{
     const otherUid = c.members.find(uid => uid !== currentUser.uid);
-    const p = await getProfile(otherUid);
-    document.querySelectorAll(".dm-inbox-avatar-" + otherUid).forEach(img=>{
-      img.src = avatar(p.photo, p.name);
-    });
-    document.querySelectorAll(".dm-inbox-name-" + otherUid).forEach(el=>{
-      el.textContent = p.name;
-    });
+    try{
+      const p = await getProfile(otherUid);
+      document.querySelectorAll(".dm-inbox-avatar-" + otherUid).forEach(img=>{
+        img.src = avatar(p.photo, p.name);
+      });
+      document.querySelectorAll(".dm-inbox-name-" + otherUid).forEach(el=>{
+        el.textContent = p.name;
+      });
+    }catch(e){}
   });
 }
-
 
 window.openChat = async function(uid){
   if(!currentUser || uid === currentUser.uid) return;
@@ -3486,11 +3373,9 @@ window.openChat = async function(uid){
   $("dmChatView").classList.remove("hidden");
 
   $("dmChatProfileBtn").onclick = ()=>{
-    hideModal("chatModal");
     openPublicProfile(uid);
   };
 
-  // Hide other modals if open
   hideModal("publicProfileModal");
 
   await setDoc(doc(db,"chats",currentChatId), {
@@ -3501,13 +3386,11 @@ window.openChat = async function(uid){
   startChatListener();
 };
 
-
 window.openChatFromProfile = function(uid){
   hideModal("publicProfileModal");
   openPanel("messagesPanel");
-  setTimeout(()=> openChat(uid), 150);
+  setTimeout(()=> openChat(uid), 200);
 };
-
 
 function startChatListener(){
   if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
@@ -3534,7 +3417,7 @@ function startChatListener(){
         if(m.type === "shared_video" && m.videoId){
           return `
           <div class="dm-msg ${mine?"me":"them"}">
-            <div class="dm-shared-video" onclick='hideModal("chatModal"); openVideoFromShare(${JSON.stringify(m.videoId)})'>
+            <div class="dm-shared-video" onclick='openVideoFromShare(${JSON.stringify(m.videoId)})'>
               <video src="${esc(m.videoURL || "")}" muted preload="metadata"></video>
               <div class="info">
                 <strong>${esc(m.videoTitle || "Video")}</strong>
@@ -3544,7 +3427,7 @@ function startChatListener(){
             <small>${timeAgo(m.createdAt)}</small>
             ${mine ? `
               <div class="dm-msg-actions">
-                <button onclick='deleteMessage(${JSON.stringify(m.id)})'>Delete</button>
+                <button onclick='event.stopPropagation(); deleteMessage(${JSON.stringify(m.id)})'>Delete</button>
               </div>
             ` : ""}
           </div>
@@ -3557,8 +3440,8 @@ function startChatListener(){
           <small>${timeAgo(m.createdAt)}</small>
           ${mine ? `
             <div class="dm-msg-actions">
-              <button onclick='editMessage(${JSON.stringify(m.id)}, ${JSON.stringify(m.text)})'>Edit</button>
-              <button onclick='deleteMessage(${JSON.stringify(m.id)})'>Delete</button>
+              <button onclick='event.stopPropagation(); editMessage(${JSON.stringify(m.id)}, ${JSON.stringify(m.text)})'>Edit</button>
+              <button onclick='event.stopPropagation(); deleteMessage(${JSON.stringify(m.id)})'>Delete</button>
             </div>
           ` : ""}
         </div>
@@ -3570,14 +3453,10 @@ function startChatListener(){
   );
 }
 
-
 window.openVideoFromShare = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
-  if(v){
-    openPublicProfile(v.userId);
-  }
+  if(v) openPublicProfile(v.userId);
 };
-
 
 $("dmSendBtn").addEventListener("click", sendDM);
 $("dmInput").addEventListener("keydown", e=>{ if(e.key === "Enter") sendDM(); });
@@ -3607,20 +3486,16 @@ async function sendDM(){
   }
 }
 
-
 window.editMessage = async function(id, oldText){
   const text = prompt("Edit message:", oldText);
   if(text === null) return;
   const clean = text.trim();
   if(!clean) return;
-
   const ref = doc(db,"chats",currentChatId,"messages",id);
   const snap = await getDoc(ref);
   if(!snap.exists() || snap.data().userId !== currentUser.uid) return;
-
   await updateDoc(ref, { text: clean, updatedAt: serverTimestamp() });
 };
-
 
 window.deleteMessage = async function(id){
   const ref = doc(db,"chats",currentChatId,"messages",id);
@@ -3630,19 +3505,17 @@ window.deleteMessage = async function(id){
   await deleteDoc(ref);
 };
 
-
 $("dmBackBtn").addEventListener("click", ()=>{
-  if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
-  currentChatId = null;
-  currentChatUser = null;
   showDMInbox();
 });
 
+$("newMsgBtn").addEventListener("click", ()=>{
+  showModal("searchModal");
+  setTimeout(()=> $("searchInput").focus(), 100);
+});
 
-/* ==============================
-   SHARE SHEET
-============================== */
 
+/* SHARE SHEET */
 window.openShareSheet = async function(videoId){
   shareVideoId = videoId;
   showModal("shareSheet");
@@ -3651,7 +3524,6 @@ window.openShareSheet = async function(videoId){
   list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">Loading...</div>`;
 
   try{
-    // Get recent chats + following
     const chatUids = new Set();
     myChatsCache.forEach(c=>{
       const other = c.members.find(uid => uid !== currentUser.uid);
@@ -3683,10 +3555,8 @@ window.openShareSheet = async function(videoId){
   }
 };
 
-
 window.shareToUser = async function(uid){
   if(!shareVideoId || !uid) return;
-
   const v = videosCache.find(x => x.id === shareVideoId);
   if(!v) return;
 
@@ -3717,7 +3587,6 @@ window.shareToUser = async function(uid){
     hideModal("shareSheet");
     toast("✅ Video shared");
 
-    // Notification
     await addDoc(collection(db,"notifications"), {
       to: uid,
       from: currentUser.uid,
@@ -3725,13 +3594,11 @@ window.shareToUser = async function(uid){
       message: (currentProfile?.name || "Someone") + " shared a video with you",
       createdAt: serverTimestamp()
     });
-
   }catch(e){
     console.error(e);
     toast("Share failed");
   }
 };
-
 
 $("shareCopyLink").addEventListener("click", async()=>{
   if(!shareVideoId) return;
@@ -3742,7 +3609,6 @@ $("shareCopyLink").addEventListener("click", async()=>{
     hideModal("shareSheet");
   }catch(e){ toast("Copy failed"); }
 });
-
 
 $("shareNative").addEventListener("click", async()=>{
   if(!shareVideoId) return;
@@ -3763,10 +3629,7 @@ $("shareNative").addEventListener("click", async()=>{
 });
 
 
-/* ==============================
-   MODAL CLOSE
-============================== */
-
+/* MODAL CLOSE */
 document.querySelectorAll("[data-close]").forEach(btn=>{
   btn.addEventListener("click", ()=>{
     const id = btn.dataset.close;
@@ -3782,7 +3645,6 @@ document.querySelectorAll("[data-close]").forEach(btn=>{
     }
   });
 });
-
 
 document.querySelectorAll(".modal").forEach(modal=>{
   modal.addEventListener("click", e=>{
@@ -3801,7 +3663,6 @@ document.querySelectorAll(".modal").forEach(modal=>{
   });
 });
 
-
 $("shareSheet").addEventListener("click", e=>{
   if(e.target === $("shareSheet")){
     $("shareSheet").classList.remove("show");
@@ -3809,13 +3670,19 @@ $("shareSheet").addEventListener("click", e=>{
 });
 
 
-/* ==============================
-   START
-============================== */
+/* DM SEARCH FILTER */
+$("dmSearchInput").addEventListener("input", e=>{
+  const val = e.target.value.toLowerCase().trim();
+  document.querySelectorAll("#dmInboxList .dm-inbox-item").forEach(item=>{
+    const name = item.querySelector("strong")?.textContent.toLowerCase() || "";
+    item.style.display = name.includes(val) ? "" : "none";
+  });
+});
 
+
+/* START */
 openPanel("homePanel");
 
 </script>
-
 </body>
 </html>
