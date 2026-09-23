@@ -15,9 +15,7 @@
 
 <body>
 
-<!-- ============================================================
-     SPLASH SCREEN
-============================================================ -->
+<!-- ============ SPLASH SCREEN ============ -->
 <div id="splashScreen">
   <div class="splash-icon">🎬</div>
   <div class="splash-title">ReelHub</div>
@@ -32,6 +30,12 @@
     <p>Watch · Upload · Share</p>
     <button class="google-btn" id="googleLogin">Continue with Google</button>
     <p id="loginStatus" style="margin-top:15px;font-size:13px"></p>
+    <p style="margin-top:20px;font-size:11px;color:#888;line-height:1.5">
+      By continuing, you agree to our
+      <a href="/ReelHub/terms.html" style="color:#7c3aed">Terms of Service</a>
+      and
+      <a href="/ReelHub/privacy.html" style="color:#7c3aed">Privacy Policy</a>
+    </p>
   </div>
 </div>
 
@@ -331,6 +335,7 @@
       <button class="close" data-close="settingsModal">×</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
+
       <button class="yt-mini-btn" style="padding:14px;text-align:left" id="darkModeBtn">
         🌙 Dark Mode
       </button>
@@ -350,6 +355,22 @@
       </button>
 
       <button class="yt-mini-btn" style="padding:14px;text-align:left">🔔 Notifications</button>
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="privacyPolicyBtn">
+        📄 Privacy Policy
+      </button>
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="termsOfServiceBtn">
+        📋 Terms of Service
+      </button>
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="deleteAccountBtn">
+        🗑️ Delete Account
+      </button>
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="contactUsBtn">
+        📧 Contact Us
+      </button>
 
       <button class="yt-mini-btn danger" style="padding:14px;text-align:left;margin-top:12px" id="logoutBtn">
         🚪 Logout
