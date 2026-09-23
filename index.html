@@ -140,9 +140,24 @@
         </div>
         <div class="dm-messages" id="dmMessages"></div>
         <div class="dm-input-bar">
+          <button class="dm-attach-btn" id="dmAttachBtn" type="button">📎</button>
           <input id="dmInput" placeholder="Message...">
           <button id="dmSendBtn">Send</button>
         </div>
+
+        <div class="dm-attach-menu" id="dmAttachMenu">
+          <div class="dm-attach-option" id="attachPhotoBtn">
+            <span class="icon">📷</span>
+            <span>Photo</span>
+          </div>
+          <div class="dm-attach-option" id="attachVideoBtn">
+            <span class="icon">🎥</span>
+            <span>Video</span>
+          </div>
+        </div>
+
+        <input type="file" id="dmPhotoFile" accept="image/*" class="hidden">
+        <input type="file" id="dmVideoFile" accept="video/*" class="hidden">
       </div>
 
     </div>
@@ -300,10 +315,25 @@
       <button class="close" data-close="settingsModal">×</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="darkModeBtn">🌙 Dark Mode</button>
-      <button class="yt-mini-btn" style="padding:14px;text-align:left">🔒 Privacy</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="darkModeBtn">
+        🌙 Dark Mode
+      </button>
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="privateAccountBtn">
+        <span>🔒 Private Account</span>
+        <span id="privateAccountToggle" style="font-size:13px;font-weight:bold;color:var(--muted)">OFF</span>
+      </button>
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="followRequestsBtn">
+        <span>📬 Follow Requests</span>
+        <span id="followRequestsBadge" style="background:var(--danger);color:white;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:bold;display:none">0</span>
+      </button>
+
       <button class="yt-mini-btn" style="padding:14px;text-align:left">🔔 Notifications</button>
-      <button class="yt-mini-btn danger" style="padding:14px;text-align:left;margin-top:12px" id="logoutBtn">🚪 Logout</button>
+
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left;margin-top:12px" id="logoutBtn">
+        🚪 Logout
+      </button>
     </div>
   </div>
 </div>
@@ -343,7 +373,12 @@
         <button class="yt-btn yt-btn-primary" id="publicFollowBtn">Follow</button>
         <button class="yt-btn yt-btn-gray" id="publicMessageBtn">💬 Message</button>
       </div>
-      <div class="yt-tabs" style="margin:0 -16px;padding:0 16px">
+      <div id="privateAccountNotice" class="hidden" style="padding:20px 16px;text-align:center;border-top:1px solid var(--border)">
+        <div style="font-size:40px;margin-bottom:10px">🔒</div>
+        <div style="font-weight:600;margin-bottom:6px">This account is private</div>
+        <div style="font-size:13px;color:var(--muted)">Follow this account to see their videos</div>
+      </div>
+      <div class="yt-tabs" style="margin:0 -16px;padding:0 16px" id="publicTabs">
         <div class="yt-tab active">Videos</div>
       </div>
       <div class="yt-videos-grid" id="publicVideosList" style="padding-bottom:20px"></div>
@@ -450,7 +485,7 @@
   </div>
 </div>
 
-<!-- VIDEO PLAYER MODAL (NEW) -->
+<!-- VIDEO PLAYER MODAL -->
 <div id="videoPlayerModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden;max-width:560px">
     <button class="close" data-close="videoPlayerModal"
@@ -493,6 +528,27 @@
         Share
       </div>
     </div>
+  </div>
+</div>
+
+<!-- FOLLOW REQUESTS MODAL -->
+<div id="followRequestsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Follow Requests</h2>
+      <button class="close" data-close="followRequestsModal">×</button>
+    </div>
+    <div id="followRequestsList"></div>
+  </div>
+</div>
+
+<!-- IMAGE VIEWER MODAL -->
+<div id="imageViewerModal" class="modal">
+  <div class="modal-box" style="padding:0;background:#000;max-width:100%;text-align:center">
+    <button class="close" data-close="imageViewerModal"
+            style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);color:white;z-index:10">×</button>
+    <img id="largeChatImage" src="" alt=""
+         style="width:100%;max-height:85vh;object-fit:contain;display:block">
   </div>
 </div>
 
