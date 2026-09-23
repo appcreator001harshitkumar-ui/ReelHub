@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (With Stories + Email/Password Auth)
+   ReelHub - app.js (With Stories + Email/Password Auth + Back Button Fix)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -109,6 +109,9 @@ let storyElapsed = 0;
 let storyUploadFile = null;
 let storyMediaType = null;
 
+/* MODAL HISTORY */
+let modalHistoryStack = [];
+
 const $ = id => document.getElementById(id);
 
 /* HELPERS */
@@ -121,8 +124,34 @@ function esc(v){
     .replaceAll("'","&#039;");
 }
 
-function showModal(id){ $(id)?.classList.add("show"); }
-function hideModal(id){ $(id)?.classList.remove("show"); }
+/* MODAL MANAGEMENT WITH BACK BUTTON */
+function showModal(id){
+  const el = $(id);
+  if(!el) return;
+  if(el.classList.contains("show")) return;
+  
+  el.classList.add("show");
+  
+  try{
+    window.history.pushState(
+      { modalId: id, reelhubModal: true },
+      "",
+      window.location.href
+    );
+    modalHistoryStack.push(id);
+  }catch(e){}
+}
+
+function hideModal(id){
+  const el = $(id);
+  if(!el) return;
+  if(!el.classList.contains("show")) return;
+  
+  el.classList.remove("show");
+  
+  const idx = modalHistoryStack.indexOf(id);
+  if(idx > -1) modalHistoryStack.splice(idx, 1);
+}
 
 function timeValue(v){
   if(!v) return 0;
@@ -534,7 +563,10 @@ function openStoryViewer(userIndex, storyIndex){
   currentStoryIndex = storyIndex || 0;
 
   const viewer = $("storyViewer");
-  if(viewer) viewer.classList.add("show");
+  if(viewer){
+    viewer.classList.add("show");
+    try{ window.history.pushState({ storyViewer: true }, "", window.location.href); }catch(e){}
+  }
 
   loadCurrentStory();
 }
@@ -1045,11 +1077,11 @@ async function calculateAllUnread(){
   }
   updateMsgBadge();
 }
+
 /* ============================================================
    EMAIL / PASSWORD AUTH
 ============================================================ */
 
-// Tab switching (Login / Signup)
 document.querySelectorAll(".auth-tab").forEach(tab => {
   tab.addEventListener("click", () => {
     const tabName = tab.dataset.tab;
@@ -1070,7 +1102,6 @@ document.querySelectorAll(".auth-tab").forEach(tab => {
   });
 });
 
-// Email/Password Login
 $("loginForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = $("loginEmail").value.trim();
@@ -1093,7 +1124,6 @@ $("loginForm")?.addEventListener("submit", async (e) => {
   }
 });
 
-// Email/Password Signup
 $("signupForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = $("signupName").value.trim();
@@ -1128,7 +1158,6 @@ $("signupForm")?.addEventListener("submit", async (e) => {
   }
 });
 
-// Forgot Password
 $("forgotPasswordBtn")?.addEventListener("click", async () => {
   const email = $("loginEmail").value.trim();
   const status = $("loginStatus");
@@ -1150,7 +1179,6 @@ $("forgotPasswordBtn")?.addEventListener("click", async () => {
   }
 });
 
-// Error message helper
 function getAuthError(code){
   const errors = {
     "auth/email-already-in-use": "This email is already registered",
@@ -1402,6 +1430,14 @@ onAuthStateChanged(auth, async user => {
     startFollowRequestsListener();
     startStoriesListener();
 
+    // History state setup for back button
+    try{
+      window.history.replaceState({ reelhubHome: true }, "", window.location.href);
+    }catch(e){}
+    try{
+      window.history.pushState({ reelhubApp: true }, "", window.location.href);
+    }catch(e){}
+
     setTimeout(checkDeepLink, 1500);
   }else{
     if(currentUser) await markOffline();
@@ -1417,6 +1453,7 @@ onAuthStateChanged(auth, async user => {
     onlineUsersCache = {};
     unreadChatsCache = {};
     chatLastReadCache = {};
+    modalHistoryStack = [];
 
     if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
     if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
@@ -1461,7 +1498,6 @@ function uploadToCloudinary(file, onProgress){
     xhr.send(form);
   });
 }
-
 /* UPLOAD */
 $("dropzone")?.addEventListener("click", ()=> $("videoFile").click());
 
@@ -1655,6 +1691,7 @@ $("bannerFile")?.addEventListener("change", async (e)=>{
     e.target.value = "";
   }
 });
+
 /* PRIVATE ACCOUNT */
 async function canViewUser(uid){
   if(!uid) return false;
@@ -4395,5 +4432,73 @@ setTimeout(()=>{
     setTimeout(()=> splash.remove(), 500);
   }
 }, 2500);
+/* ============================================================
+   BROWSER BACK BUTTON HANDLER
+   (Settings/Modal kholne pe back button se login pe na jaye)
+============================================================ */
 
-console.log("✅ ReelHub loaded with Email/Password Auth + Stories!");
+window.addEventListener("popstate", (e) => {
+  // 1. Story viewer check
+  const storyViewer = $("storyViewer");
+  if(storyViewer && storyViewer.classList.contains("show")){
+    closeStoryViewer();
+    try{ window.history.pushState({ reelhubModal: true }, "", window.location.href); }catch(err){}
+    return;
+  }
+
+  // 2. Open modals check
+  const openModals = document.querySelectorAll(".modal.show");
+  if(openModals.length > 0){
+    const topModal = openModals[openModals.length - 1];
+    const id = topModal.id;
+    
+    if(id === "commentsModal"){
+      currentCommentVideoId = null;
+      if(commentsUnsubscribe){ commentsUnsubscribe(); commentsUnsubscribe = null; }
+    }
+    if(id === "publicProfileModal"){
+      delete $("publicProfileModal").dataset.uid;
+      $("privateAccountNotice")?.classList.add("hidden");
+    }
+    if(id === "playlistDetailModal"){
+      currentPlaylistView = null;
+    }
+    if(id === "videoPlayerModal"){
+      const videoEl = $("videoPlayerVideo");
+      if(videoEl){ videoEl.pause(); videoEl.src = ""; }
+    }
+    if(id === "imageViewerModal"){
+      const imgEl = $("largeChatImage");
+      if(imgEl) imgEl.src = "";
+    }
+    
+    topModal.classList.remove("show");
+    
+    const idx = modalHistoryStack.indexOf(id);
+    if(idx > -1) modalHistoryStack.splice(idx, 1);
+    
+    try{ window.history.pushState({ reelhubModal: true }, "", window.location.href); }catch(err){}
+    return;
+  }
+  
+  // 3. Share sheet check
+  const shareSheet = $("shareSheet");
+  if(shareSheet && shareSheet.classList.contains("show")){
+    shareSheet.classList.remove("show");
+    try{ window.history.pushState({ reelhubModal: true }, "", window.location.href); }catch(err){}
+    return;
+  }
+  
+  // 4. DM Chat view check — inbox pe wapas jao
+  const dmChatView = $("dmChatView");
+  if(dmChatView && !dmChatView.classList.contains("hidden")){
+    if(currentChatId) markChatAsRead(currentChatId);
+    showDMInbox();
+    try{ window.history.pushState({ reelhubModal: true }, "", window.location.href); }catch(err){}
+    return;
+  }
+  
+  // Kuch bhi open nahi tha — normal browser back chalega
+}, { passive: true });
+
+console.log("✅ ReelHub loaded with Email/Password Auth + Stories + Back Button Fix!");
