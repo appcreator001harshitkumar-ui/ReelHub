@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (With Offline Hide)
+   ReelHub - app.js (With Stories + Offline Hide)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -48,6 +48,10 @@ const provider = new GoogleAuthProvider();
 const CLOUDINARY_CLOUD_NAME = "s3eresx6";
 const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
 
+const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
+const STORY_DURATION_IMAGE = 5000;
+const STORY_DURATION_VIDEO_MAX = 15000;
+
 /* STATE */
 let currentUser = null;
 let currentProfile = null;
@@ -67,6 +71,7 @@ let chatsListUnsubscribe = null;
 let playlistsUnsubscribe = null;
 let presenceUnsubscribe = null;
 let followRequestsUnsubscribe = null;
+let storiesUnsubscribe = null;
 let heartbeatInterval = null;
 
 let onlineUsersCache = {};
@@ -85,6 +90,19 @@ let selectedPlaylists = new Set();
 let currentPlaylistView = null;
 let deepLinkChecked = false;
 let viewingProfileUid = null;
+
+/* STORIES STATE */
+let storiesCache = [];
+let groupedStories = [];
+let currentStoryUserIndex = 0;
+let currentStoryIndex = 0;
+let storyProgressRAF = null;
+let storyPaused = false;
+let storyStartTime = 0;
+let storyDuration = 5000;
+let storyElapsed = 0;
+let storyUploadFile = null;
+let storyMediaType = null;
 
 const $ = id => document.getElementById(id);
 
@@ -137,6 +155,19 @@ function timeAgo(v){
   const wk = Math.floor(day/7);
   if(wk < 4) return wk + "w";
   return new Date(t).toLocaleDateString();
+}
+
+function timeAgoShort(v){
+  const t = timeValue(v);
+  if(!t) return "";
+  const diff = Date.now() - t;
+  const sec = Math.floor(diff/1000);
+  if(sec < 60) return "now";
+  const min = Math.floor(sec/60);
+  if(min < 60) return min + "m";
+  const hr = Math.floor(min/60);
+  if(hr < 24) return hr + "h";
+  return Math.floor(hr/24) + "d";
 }
 
 function formatViews(num){
@@ -235,6 +266,601 @@ $("suspensionLogoutBtn")?.addEventListener("click", async ()=>{
   }catch(e){
     console.error(e);
   }
+});
+
+/* ============================================================
+   STORIES SYSTEM
+============================================================ */
+
+function startStoriesListener(){
+  if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
+  if(!currentUser) return;
+
+  storiesUnsubscribe = onSnapshot(
+    collection(db, "stories"),
+    snapshot=>{
+      const now = Date.now();
+      storiesCache = snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .filter(s => {
+          const created = timeValue(s.createdAt);
+          return (now - created) < STORY_LIFETIME_MS;
+        });
+      storiesCache.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
+      groupStories();
+      renderStoriesBar();
+    },
+    error=>console.error("Stories listener error:", error)
+  );
+}
+
+function groupStories(){
+  const map = {};
+  storiesCache.forEach(s=>{
+    if(!map[s.userId]){
+      map[s.userId] = {
+        userId: s.userId,
+        userName: s.userName || "User",
+        userPhoto: s.userPhoto || "",
+        stories: [],
+        latestAt: 0
+      };
+    }
+    map[s.userId].stories.push(s);
+    const t = timeValue(s.createdAt);
+    if(t > map[s.userId].latestAt) map[s.userId].latestAt = t;
+  });
+
+  groupedStories = Object.values(map);
+
+  groupedStories.forEach(g=>{
+    g.stories.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
+  });
+
+  groupedStories.sort((a,b)=>{
+    if(a.userId === currentUser?.uid) return -1;
+    if(b.userId === currentUser?.uid) return 1;
+    return b.latestAt - a.latestAt;
+  });
+}
+
+function renderStoriesBar(){
+  const bar = $("storiesBar");
+  if(!bar) return;
+
+  if(!currentUser){
+    bar.innerHTML = "";
+    return;
+  }
+
+  const myGroup = groupedStories.find(g => g.userId === currentUser.uid);
+  const otherGroups = groupedStories.filter(g => g.userId !== currentUser.uid);
+
+  let html = "";
+
+  const myPhoto = currentProfile?.photo || "";
+  const myName = currentProfile?.name || "You";
+  const myHasStory = myGroup && myGroup.stories.length > 0;
+
+  html += `
+    <div class="story-item" data-my-story="true">
+      <div class="story-ring ${myHasStory ? 'active' : 'yours'}">
+        <img src="${avatar(myPhoto, myName)}" alt="You">
+        ${!myHasStory ? `<span class="add-icon">+</span>` : ""}
+      </div>
+      <div class="story-name">Your Story</div>
+    </div>
+  `;
+
+  otherGroups.forEach((g)=>{
+    html += `
+      <div class="story-item" data-story-user="${esc(g.userId)}">
+        <div class="story-ring active">
+          <img src="${avatar(g.userPhoto, g.userName)}" alt="${esc(g.userName)}">
+        </div>
+        <div class="story-name">${esc(g.userName.split(" ")[0])}</div>
+      </div>
+    `;
+  });
+
+  bar.innerHTML = html;
+}
+
+document.addEventListener("click", (e)=>{
+  const myStory = e.target.closest("[data-my-story]");
+  if(myStory){
+    e.preventDefault();
+    e.stopPropagation();
+    const myGroup = groupedStories.find(g => g.userId === currentUser?.uid);
+    if(myGroup && myGroup.stories.length > 0){
+      const idx = groupedStories.findIndex(g => g.userId === currentUser.uid);
+      openStoryViewer(idx, 0);
+    }else{
+      openCreateStoryModal();
+    }
+    return;
+  }
+
+  const storyUser = e.target.closest("[data-story-user]");
+  if(storyUser){
+    e.preventDefault();
+    e.stopPropagation();
+    const uid = storyUser.dataset.storyUser;
+    const idx = groupedStories.findIndex(g => g.userId === uid);
+    if(idx >= 0) openStoryViewer(idx, 0);
+    return;
+  }
+});
+
+function openCreateStoryModal(){
+  storyUploadFile = null;
+  storyMediaType = null;
+
+  const imgPrev = $("storyImagePreview");
+  const vidPrev = $("storyVideoPreview");
+  const zone = $("storyUploadZone");
+  const btn = $("storyUploadBtn");
+  const prog = $("storyUploadProgress");
+  const status = $("storyUploadStatus");
+
+  if(imgPrev){ imgPrev.src = ""; imgPrev.classList.add("hidden"); }
+  if(vidPrev){ vidPrev.src = ""; vidPrev.classList.add("hidden"); }
+  if(zone) zone.classList.remove("hidden");
+  if(btn) btn.disabled = true;
+  if(prog) prog.classList.remove("active");
+  if(status) status.textContent = "";
+
+  const progressBar = $("storyUploadProgressBar");
+  if(progressBar) progressBar.style.width = "0%";
+
+  showModal("createStoryModal");
+}
+
+$("storyUploadZone")?.addEventListener("click", ()=>{
+  $("storyFile")?.click();
+});
+
+$("storyFile")?.addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  if(file.size > 30 * 1024 * 1024){
+    toast("File too large (max 30MB)");
+    e.target.value = "";
+    return;
+  }
+
+  storyUploadFile = file;
+  storyMediaType = file.type.startsWith("video/") ? "video" : "image";
+
+  const imgPrev = $("storyImagePreview");
+  const vidPrev = $("storyVideoPreview");
+  const zone = $("storyUploadZone");
+  const btn = $("storyUploadBtn");
+
+  if(zone) zone.classList.add("hidden");
+
+  const url = URL.createObjectURL(file);
+
+  if(storyMediaType === "image"){
+    if(imgPrev){ imgPrev.src = url; imgPrev.classList.remove("hidden"); }
+    if(vidPrev){ vidPrev.src = ""; vidPrev.classList.add("hidden"); }
+  }else{
+    if(vidPrev){ vidPrev.src = url; vidPrev.classList.remove("hidden"); }
+    if(imgPrev){ imgPrev.src = ""; imgPrev.classList.add("hidden"); }
+  }
+
+  if(btn) btn.disabled = false;
+});
+
+$("storyUploadBtn")?.addEventListener("click", async ()=>{
+  if(!storyUploadFile || !currentUser){
+    toast("Select a file first");
+    return;
+  }
+
+  const btn = $("storyUploadBtn");
+  const prog = $("storyUploadProgress");
+  const progBar = $("storyUploadProgressBar");
+  const status = $("storyUploadStatus");
+
+  if(btn) btn.disabled = true;
+  if(prog) prog.classList.add("active");
+  if(status) status.textContent = "Uploading...";
+
+  try{
+    const url = await uploadToCloudinary(storyUploadFile, (pct)=>{
+      if(progBar) progBar.style.width = pct + "%";
+      if(status) status.textContent = "Uploading " + pct + "%";
+    });
+
+    const expiresAt = new Date(Date.now() + STORY_LIFETIME_MS);
+
+    await addDoc(collection(db, "stories"), {
+      userId: currentUser.uid,
+      userName: currentProfile?.name || currentUser.displayName || "User",
+      userPhoto: currentProfile?.photo || currentUser.photoURL || "",
+      username: currentProfile?.username || "",
+      mediaURL: url,
+      mediaType: storyMediaType,
+      createdAt: serverTimestamp(),
+      expiresAt: expiresAt
+    });
+
+    try{
+      const followersSnap = await getDocs(
+        query(collection(db, "follows"), where("following", "==", currentUser.uid))
+      );
+      for(const d of followersSnap.docs){
+        const followerUid = d.data().follower;
+        if(followerUid && followerUid !== currentUser.uid){
+          await addDoc(collection(db, "notifications"), {
+            to: followerUid,
+            from: currentUser.uid,
+            title: "📸 New Story",
+            message: (currentProfile?.name || "Someone") + " added a new story",
+            createdAt: serverTimestamp()
+          });
+        }
+      }
+    }catch(err){ console.error("Story notify error:", err); }
+
+    if(status) status.textContent = "✅ Story shared!";
+    toast("✅ Story added");
+
+    setTimeout(()=>{
+      hideModal("createStoryModal");
+    }, 500);
+
+  }catch(err){
+    console.error("Story upload error:", err);
+    if(status) status.textContent = "Error: " + err.message;
+    toast("Story upload failed");
+  }finally{
+    if(btn) btn.disabled = false;
+  }
+});
+
+/* STORY VIEWER */
+function openStoryViewer(userIndex, storyIndex){
+  if(!groupedStories.length) return;
+
+  currentStoryUserIndex = userIndex;
+  currentStoryIndex = storyIndex || 0;
+
+  const viewer = $("storyViewer");
+  if(viewer) viewer.classList.add("show");
+
+  loadCurrentStory();
+}
+
+function closeStoryViewer(){
+  const viewer = $("storyViewer");
+  if(viewer) viewer.classList.remove("show");
+
+  stopStoryTimer();
+
+  const media = $("storyMedia");
+  if(media) media.innerHTML = "";
+}
+
+function loadCurrentStory(){
+  stopStoryTimer();
+
+  const group = groupedStories[currentStoryUserIndex];
+  if(!group || !group.stories.length){
+    closeStoryViewer();
+    return;
+  }
+
+  const story = group.stories[currentStoryIndex];
+  if(!story){
+    if(currentStoryUserIndex < groupedStories.length - 1){
+      currentStoryUserIndex++;
+      currentStoryIndex = 0;
+      loadCurrentStory();
+    }else{
+      closeStoryViewer();
+    }
+    return;
+  }
+
+  const avatarEl = $("storyViewerAvatar");
+  const nameEl = $("storyViewerName");
+  const timeEl = $("storyViewerTime");
+
+  if(avatarEl) avatarEl.src = avatar(group.userPhoto, group.userName);
+  if(nameEl) nameEl.textContent = group.userName;
+  if(timeEl) timeEl.textContent = timeAgoShort(story.createdAt) + " ago";
+
+  renderStoryProgress(group.stories.length, currentStoryIndex);
+
+  const mediaContainer = $("storyMedia");
+  if(mediaContainer){
+    mediaContainer.innerHTML = "";
+
+    if(story.mediaType === "video"){
+      const vid = document.createElement("video");
+      vid.src = story.mediaURL;
+      vid.autoplay = true;
+      vid.playsInline = true;
+      vid.muted = false;
+      vid.preload = "auto";
+
+      vid.addEventListener("loadedmetadata", ()=>{
+        const dur = Math.min((vid.duration || 5) * 1000, STORY_DURATION_VIDEO_MAX);
+        startStoryTimer(dur);
+      });
+
+      vid.addEventListener("ended", ()=>{ nextStory(); });
+      vid.addEventListener("error", ()=>{ toast("Video failed to load"); nextStory(); });
+
+      mediaContainer.appendChild(vid);
+      vid.play().catch(()=>{});
+    }else{
+      const img = document.createElement("img");
+      img.src = story.mediaURL;
+      img.alt = "";
+
+      img.addEventListener("load", ()=>{ startStoryTimer(STORY_DURATION_IMAGE); });
+      img.addEventListener("error", ()=>{ toast("Image failed to load"); nextStory(); });
+
+      mediaContainer.appendChild(img);
+    }
+  }
+
+  const viewsCounter = $("storyViewsCounter");
+  if(viewsCounter) viewsCounter.classList.add("hidden");
+
+  if(story.userId !== currentUser?.uid){
+    markStoryViewed(story.id);
+  }
+
+  const footer = $("storyFooter");
+  if(footer){
+    if(story.userId === currentUser?.uid){
+      footer.style.display = "none";
+    }else{
+      footer.style.display = "flex";
+      const input = $("storyReplyInput");
+      if(input) input.value = "";
+    }
+  }
+}
+
+function renderStoryProgress(total, current){
+  const bar = $("storyProgressBar");
+  if(!bar) return;
+
+  let html = "";
+  for(let i = 0; i < total; i++){
+    let fillClass = "";
+    if(i < current) fillClass = "complete";
+    html += `
+      <div class="story-progress-segment">
+        <div class="story-progress-fill ${fillClass}" data-seg="${i}"></div>
+      </div>
+    `;
+  }
+  bar.innerHTML = html;
+}
+
+function startStoryTimer(duration){
+  stopStoryTimer();
+
+  storyDuration = duration;
+  storyStartTime = Date.now();
+  storyElapsed = 0;
+  storyPaused = false;
+
+  updateStoryProgressLoop();
+}
+
+function updateStoryProgressLoop(){
+  if(storyPaused) return;
+
+  const elapsed = Date.now() - storyStartTime;
+  storyElapsed = elapsed;
+
+  const pct = Math.min((elapsed / storyDuration) * 100, 100);
+  const fill = document.querySelector(`[data-seg="${currentStoryIndex}"]`);
+  if(fill) fill.style.width = pct + "%";
+
+  if(elapsed >= storyDuration){
+    nextStory();
+    return;
+  }
+
+  storyProgressRAF = requestAnimationFrame(updateStoryProgressLoop);
+}
+
+function stopStoryTimer(){
+  if(storyProgressRAF){
+    cancelAnimationFrame(storyProgressRAF);
+    storyProgressRAF = null;
+  }
+}
+
+function pauseStoryTimer(){
+  if(storyPaused) return;
+  storyPaused = true;
+  storyElapsed = Date.now() - storyStartTime;
+  if(storyProgressRAF){
+    cancelAnimationFrame(storyProgressRAF);
+    storyProgressRAF = null;
+  }
+}
+
+function resumeStoryTimer(){
+  if(!storyPaused) return;
+  storyPaused = false;
+  storyStartTime = Date.now() - storyElapsed;
+  updateStoryProgressLoop();
+}
+
+function nextStory(){
+  stopStoryTimer();
+  const group = groupedStories[currentStoryUserIndex];
+  if(!group) { closeStoryViewer(); return; }
+
+  if(currentStoryIndex < group.stories.length - 1){
+    currentStoryIndex++;
+    loadCurrentStory();
+  }else{
+    if(currentStoryUserIndex < groupedStories.length - 1){
+      currentStoryUserIndex++;
+      currentStoryIndex = 0;
+      loadCurrentStory();
+    }else{
+      closeStoryViewer();
+    }
+  }
+}
+
+function prevStory(){
+  stopStoryTimer();
+  if(currentStoryIndex > 0){
+    currentStoryIndex--;
+    loadCurrentStory();
+  }else{
+    if(currentStoryUserIndex > 0){
+      currentStoryUserIndex--;
+      const group = groupedStories[currentStoryUserIndex];
+      currentStoryIndex = group ? group.stories.length - 1 : 0;
+      loadCurrentStory();
+    }
+  }
+}
+
+async function markStoryViewed(storyId){
+  if(!currentUser || !storyId) return;
+  try{
+    const viewRef = doc(db, "stories", storyId, "views", currentUser.uid);
+    const snap = await getDoc(viewRef);
+    if(!snap.exists()){
+      await setDoc(viewRef, {
+        userId: currentUser.uid,
+        viewedAt: serverTimestamp()
+      });
+    }
+  }catch(e){ console.error("markStoryViewed:", e); }
+}
+
+$("storyProgressBar")?.addEventListener("click", (e)=>{
+  const seg = e.target.closest("[data-seg]");
+  if(!seg) return;
+  const idx = Number(seg.dataset.seg);
+  if(!Number.isNaN(idx)){
+    currentStoryIndex = idx;
+    loadCurrentStory();
+  }
+});
+
+$("storyNextZone")?.addEventListener("click", (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  nextStory();
+});
+
+$("storyPrevZone")?.addEventListener("click", (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  prevStory();
+});
+
+$("storyCloseBtn")?.addEventListener("click", (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  closeStoryViewer();
+});
+
+let storyHoldTimer = null;
+const storyMediaEl = $("storyMedia");
+
+if(storyMediaEl){
+  storyMediaEl.addEventListener("touchstart", ()=>{
+    storyHoldTimer = setTimeout(()=>{ pauseStoryTimer(); }, 250);
+  }, { passive: true });
+
+  storyMediaEl.addEventListener("touchend", ()=>{
+    if(storyHoldTimer){ clearTimeout(storyHoldTimer); storyHoldTimer = null; }
+    resumeStoryTimer();
+  }, { passive: true });
+
+  storyMediaEl.addEventListener("mousedown", ()=>{
+    storyHoldTimer = setTimeout(()=>{ pauseStoryTimer(); }, 250);
+  });
+
+  storyMediaEl.addEventListener("mouseup", ()=>{
+    if(storyHoldTimer){ clearTimeout(storyHoldTimer); storyHoldTimer = null; }
+    resumeStoryTimer();
+  });
+
+  storyMediaEl.addEventListener("mouseleave", ()=>{
+    if(storyHoldTimer){ clearTimeout(storyHoldTimer); storyHoldTimer = null; }
+    resumeStoryTimer();
+  });
+}
+
+$("storySendBtn")?.addEventListener("click", async (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  await sendStoryReply();
+});
+
+$("storyReplyInput")?.addEventListener("keydown", (e)=>{
+  if(e.key === "Enter"){
+    e.preventDefault();
+    sendStoryReply();
+  }
+});
+
+async function sendStoryReply(){
+  const input = $("storyReplyInput");
+  if(!input) return;
+  const text = input.value.trim();
+  if(!text) return;
+
+  const group = groupedStories[currentStoryUserIndex];
+  if(!group || group.userId === currentUser?.uid) return;
+
+  const targetUid = group.userId;
+  const chatId = [currentUser.uid, targetUid].sort().join("_");
+
+  try{
+    await setDoc(doc(db, "chats", chatId), {
+      members: [currentUser.uid, targetUid],
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    await addDoc(collection(db, "chats", chatId, "messages"), {
+      userId: currentUser.uid,
+      userName: currentProfile?.name || "User",
+      text: "📸 Replied to story: " + text,
+      type: "text",
+      createdAt: serverTimestamp()
+    });
+
+    await updateDoc(doc(db, "chats", chatId), {
+      lastMessage: "📸 Replied to story",
+      updatedAt: serverTimestamp()
+    });
+
+    input.value = "";
+    toast("✅ Reply sent");
+  }catch(err){
+    console.error("Story reply error:", err);
+    toast("Reply failed");
+  }
+}
+
+document.addEventListener("keydown", (e)=>{
+  const viewer = $("storyViewer");
+  if(!viewer || !viewer.classList.contains("show")) return;
+
+  if(e.key === "ArrowRight") nextStory();
+  else if(e.key === "ArrowLeft") prevStory();
+  else if(e.key === "Escape") closeStoryViewer();
 });
 
 /* ONLINE STATUS */
@@ -400,7 +1026,7 @@ function updateMsgBadge(){
 
 async function calculateAllUnread(){
   if(!currentUser || !myChatsCache.length) {
-    updateMsgBadge();
+  updateMsgBadge();
     return;
   }
   for(const chat of myChatsCache){
@@ -414,7 +1040,6 @@ async function calculateAllUnread(){
   }
   updateMsgBadge();
 }
-
 /* NAVIGATION */
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", ()=>{
@@ -627,9 +1252,7 @@ onAuthStateChanged(auth, async user => {
     currentUser = user;
 
     const isSuspended = await checkSuspension(user.uid);
-    if(isSuspended){
-      return;
-    }
+    if(isSuspended){ return; }
 
     await createProfile();
     await loadProfile();
@@ -646,6 +1269,7 @@ onAuthStateChanged(auth, async user => {
     startPlaylistsListener();
     startPresenceHeartbeat();
     startFollowRequestsListener();
+    startStoriesListener();
 
     setTimeout(checkDeepLink, 1500);
   }else{
@@ -654,6 +1278,8 @@ onAuthStateChanged(auth, async user => {
     currentUser = null;
     currentProfile = null;
     videosCache = [];
+    storiesCache = [];
+    groupedStories = [];
     myFollowsCache.clear();
     mySavesCache.clear();
     mySentRequestsCache.clear();
@@ -667,6 +1293,7 @@ onAuthStateChanged(auth, async user => {
     if(playlistsUnsubscribe){ playlistsUnsubscribe(); playlistsUnsubscribe = null; }
     if(presenceUnsubscribe){ presenceUnsubscribe(); presenceUnsubscribe = null; }
     if(followRequestsUnsubscribe){ followRequestsUnsubscribe(); followRequestsUnsubscribe = null; }
+    if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
     if(heartbeatInterval){ clearInterval(heartbeatInterval); heartbeatInterval = null; }
 
     $("app").classList.add("hidden");
@@ -1327,6 +1954,11 @@ function setupReelsObserver(){
 
   videos.forEach(v => reelObserver.observe(v));
 }
+
+/* ============================================================
+   NOTE: Part 2 continues below. Ye Part 2 of 2 hai.
+   Iske baad "GLOBAL CLICK HANDLER" section aata hai.
+============================================================ */
 
 /* GLOBAL CLICK HANDLER */
 document.addEventListener("click", async (e)=>{
@@ -3630,7 +4262,7 @@ $("dmSearchInput")?.addEventListener("input", e=>{
 /* START */
 openPanel("homePanel");
 
-/* SPLASH SCREEN - Auto Hide */
+/* SPLASH SCREEN */
 setTimeout(()=>{
   const splash = $("splashScreen");
   if(splash){
@@ -3639,4 +4271,4 @@ setTimeout(()=>{
   }
 }, 2500);
 
-console.log("✅ ReelHub loaded with Offline Hide!");
+console.log("✅ ReelHub loaded with Stories!");
