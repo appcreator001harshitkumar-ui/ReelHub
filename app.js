@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (With Suspension Check)
+   ReelHub - app.js (With Offline Hide)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -155,10 +155,7 @@ function formatViewsShort(num){
   return (num/1000000000).toFixed(1) + "B";
 }
 
-/* ============================================================
-   SUSPENSION CHECK
-============================================================ */
-
+/* SUSPENSION CHECK */
 function showSuspensionScreen(profile){
   const screen = $("suspensionScreen");
   if(!screen) return;
@@ -184,7 +181,6 @@ function showSuspensionScreen(profile){
   if(untilEl) untilEl.textContent = until;
   if(dateEl) dateEl.textContent = date;
 
-  // Hide all other screens
   $("loginPage")?.classList.add("hidden");
   $("app")?.classList.add("hidden");
   const splash = $("splashScreen");
@@ -205,14 +201,11 @@ async function checkSuspension(uid){
 
     const profileData = snap.docs[0].data();
 
-    // Not suspended
     if(!profileData.suspended) return false;
 
-    // Check if suspension expired (auto-unsuspend)
     if(profileData.suspendUntil){
       const untilTime = timeValue(profileData.suspendUntil);
       if(Date.now() > untilTime){
-        // Auto-unsuspend
         await updateDoc(doc(db, "profiles", snap.docs[0].id), {
           suspended: false,
           suspendReason: "",
@@ -220,13 +213,11 @@ async function checkSuspension(uid){
           suspendUntil: null,
           autoUnsuspendedAt: serverTimestamp()
         });
-
         toast("✅ Your suspension has ended");
         return false;
       }
     }
 
-    // Still suspended — show screen
     showSuspensionScreen(profileData);
     return true;
 
@@ -236,7 +227,6 @@ async function checkSuspension(uid){
   }
 }
 
-/* Suspension logout */
 $("suspensionLogoutBtn")?.addEventListener("click", async ()=>{
   if(!confirm("Logout?")) return;
   try{
@@ -322,7 +312,13 @@ function updateOnlineIndicators(){
   document.querySelectorAll("[data-presence-uid]").forEach(el=>{
     const uid = el.dataset.presenceUid;
     const status = onlineUsersCache[uid];
-    if(!status) return;
+    
+    if(!status){
+      el.classList.remove("online");
+      el.classList.add("offline");
+      el.textContent = "";
+      return;
+    }
 
     if(status.online){
       el.classList.add("online");
@@ -331,7 +327,7 @@ function updateOnlineIndicators(){
     }else{
       el.classList.remove("online");
       el.classList.add("offline");
-      el.textContent = "Active " + timeAgo(status.lastSeen);
+      el.textContent = "";
     }
   });
 
@@ -348,9 +344,9 @@ function updateOnlineIndicators(){
 
 function getOnlineText(uid){
   const status = onlineUsersCache[uid];
-  if(!status) return "Offline";
+  if(!status) return "";
   if(status.online) return "Active now";
-  return "Active " + timeAgo(status.lastSeen);
+  return "";
 }
 
 /* CHAT READ STATUS */
@@ -630,10 +626,8 @@ onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
 
-    // ✅ CHECK SUSPENSION FIRST
     const isSuspended = await checkSuspension(user.uid);
     if(isSuspended){
-      // Don't continue - user is suspended
       return;
     }
 
@@ -3243,6 +3237,11 @@ async function openChat(uid){
     statusEl.dataset.presenceUid = uid;
     statusEl.textContent = getOnlineText(uid);
     statusEl.classList.add("dm-chat-status");
+    if(getOnlineText(uid) === ""){
+      statusEl.classList.add("offline");
+    }else{
+      statusEl.classList.remove("offline");
+    }
   }
 
   const profileBtn = $("dmChatProfileBtn");
@@ -3640,4 +3639,4 @@ setTimeout(()=>{
   }
 }, 2500);
 
-console.log("✅ ReelHub loaded with Suspension Check!");
+console.log("✅ ReelHub loaded with Offline Hide!");
