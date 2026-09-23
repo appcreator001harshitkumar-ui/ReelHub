@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - style.css (Final with Video Player)
+   ReelHub - style.css (With Splash + Banner)
 ============================================================ */
 
 * {
@@ -42,7 +42,66 @@ button { border: 0; cursor: pointer; background: none; color: inherit; }
 input, textarea { outline: none; }
 .hidden { display: none !important; }
 
-/* LOGIN */
+/* ============================================================
+   SPLASH SCREEN
+============================================================ */
+
+#splashScreen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease-out;
+}
+
+#splashScreen.fade-out {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-icon {
+  font-size: 120px;
+  margin-bottom: 24px;
+  animation: splashPulse 1.5s ease-in-out infinite;
+}
+
+.splash-title {
+  font-size: 46px;
+  font-weight: 900;
+  color: white;
+  margin-bottom: 12px;
+  letter-spacing: 1px;
+}
+
+.splash-tagline {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.splash-footer {
+  position: absolute;
+  bottom: 50px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 1px;
+}
+
+@keyframes splashPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+/* ============================================================
+   LOGIN
+============================================================ */
+
 #loginPage {
   min-height: 100vh;
   display: flex;
@@ -84,7 +143,10 @@ input, textarea { outline: none; }
   font-size: 15px;
 }
 
-/* APP */
+/* ============================================================
+   APP SHELL
+============================================================ */
+
 #app {
   min-height: 100vh;
   padding-bottom: 60px;
@@ -811,6 +873,71 @@ input, textarea { outline: none; }
 
 .dm-shared-video .info { padding: 8px 10px; font-size: 12px; }
 
+/* Chat image */
+.dm-msg-image {
+  max-width: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.dm-msg-image img {
+  width: 100%;
+  display: block;
+  max-height: 280px;
+  object-fit: cover;
+}
+
+.dm-attach-btn {
+  font-size: 22px;
+  padding: 6px;
+  color: var(--text);
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.dm-attach-btn:active { background: var(--bg); }
+
+.dm-attach-menu {
+  position: absolute;
+  bottom: 70px;
+  left: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 8px;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  z-index: 20;
+  min-width: 160px;
+}
+
+.dm-attach-menu.show { display: flex; }
+
+.dm-attach-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.dm-attach-option:active { background: var(--bg); }
+.dm-attach-option .icon { font-size: 20px; }
+
 .dm-input-bar {
   display: flex;
   gap: 8px;
@@ -854,7 +981,32 @@ input, textarea { outline: none; }
 .yt-banner {
   height: 120px;
   background: linear-gradient(135deg, #7c3aed, #ec4899);
+  background-size: cover;
+  background-position: center;
+  position: relative;
 }
+
+.yt-banner.banner-image { background-color: #000; }
+
+.banner-edit-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  backdrop-filter: blur(8px);
+  z-index: 5;
+}
+
+.banner-edit-btn:active { background: rgba(0, 0, 0, 0.85); }
 
 .yt-profile-head {
   padding: 0 16px;
@@ -1007,9 +1159,7 @@ input, textarea { outline: none; }
   align-items: flex-start;
 }
 
-.yt-video-item:hover {
-  background: var(--bg);
-}
+.yt-video-item:hover { background: var(--bg); }
 
 .yt-video-thumb {
   width: 150px;
@@ -1246,10 +1396,7 @@ input, textarea { outline: none; }
   cursor: pointer;
 }
 
-.playlist-video-item:hover {
-  background: var(--bg);
-}
-
+.playlist-video-item:hover { background: var(--bg); }
 .playlist-video-item:last-child { border-bottom: 0; }
 
 .playlist-video-item .thumb {
@@ -1353,14 +1500,8 @@ input, textarea { outline: none; }
   justify-content: center;
 }
 
-/* ============================================================
-   VIDEO PLAYER MODAL (NEW)
-============================================================ */
-
-#videoPlayerModal .modal-box {
-  padding: 0;
-  overflow: hidden;
-}
+/* VIDEO PLAYER MODAL */
+#videoPlayerModal .modal-box { padding: 0; overflow: hidden; }
 
 #videoPlayerVideo {
   width: 100%;
@@ -1370,18 +1511,10 @@ input, textarea { outline: none; }
   border-radius: 16px 16px 0 0;
 }
 
-#videoPlayerModal .ig-action-btn.liked {
-  color: #ed4956;
-}
+#videoPlayerModal .ig-action-btn.liked { color: #ed4956; }
+#videoPlayerModal .ig-action-btn.liked .icon { color: #ed4956; }
 
-#videoPlayerModal .ig-action-btn.liked .icon {
-  color: #ed4956;
-}
-
-/* ============================================================
-   COMMENTS
-============================================================ */
-
+/* COMMENTS */
 .comment-item {
   display: flex;
   gap: 10px;
@@ -1596,10 +1729,7 @@ input, textarea { outline: none; }
 
 .toast.show { opacity: 1; }
 
-/* ============================================================
-   ONLINE STATUS
-============================================================ */
-
+/* ONLINE STATUS */
 .online-indicator {
   position: absolute;
   bottom: 2px;
@@ -1612,9 +1742,7 @@ input, textarea { outline: none; }
   z-index: 5;
 }
 
-.online-indicator.offline {
-  background: #9ca3af;
-}
+.online-indicator.offline { background: #9ca3af; }
 
 .avatar-wrapper {
   position: relative;
@@ -1635,56 +1763,67 @@ input, textarea { outline: none; }
   font-weight: 500;
 }
 
-.dm-inbox-status {
-  font-size: 11px;
-  color: #22c55e;
-  font-weight: 500;
-  margin-left: 6px;
+/* BANNER OPTIONS */
+.banner-options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.dm-inbox-status.offline {
-  color: var(--muted);
-  font-weight: normal;
-}
-
-.profile-online-badge {
-  display: inline-flex;
+.banner-option {
+  display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
+  gap: 14px;
+  padding: 14px;
   border-radius: 12px;
-  font-size: 11.5px;
-  font-weight: 500;
-  margin-top: 4px;
-}
-
-.profile-online-badge.online {
-  background: rgba(34, 197, 94, 0.1);
-  color: #22c55e;
-}
-
-.profile-online-badge.offline {
   background: var(--bg);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.banner-option:active { background: var(--border); }
+
+.banner-option .opt-icon {
+  font-size: 24px;
+  width: 40px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.banner-option .opt-info { flex: 1; }
+
+.banner-option .opt-info strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.banner-option .opt-info small {
+  font-size: 12px;
   color: var(--muted);
 }
 
-.profile-online-badge .dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-  animation: pulse 2s infinite;
+.banner-gradients {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+.banner-gradient-item {
+  height: 50px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 3px solid transparent;
+  transition: border 0.2s;
 }
+
+.banner-gradient-item.selected { border-color: var(--primary); }
 
 /* RESPONSIVE */
 @media (max-width: 500px) {
   .panel { padding: 10px; }
-  .stats { gap: 20px; }
   .modal-box { padding: 16px; }
   .yt-video-thumb { width: 120px; height: 68px; }
   .playlist-cover { width: 80px; height: 50px; }
@@ -1693,4 +1832,6 @@ input, textarea { outline: none; }
   .yt-profile-info { padding-top: 45px; }
   .yt-profile-info h1 { font-size: 18px; }
   #videoPlayerVideo { max-height: 60vh; }
+  .splash-title { font-size: 36px; }
+  .splash-icon { font-size: 90px; }
 }
