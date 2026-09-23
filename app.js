@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (With Splash + Banner + Private Account)
+   ReelHub - app.js (With Read Status Tracking)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -70,6 +70,8 @@ let followRequestsUnsubscribe = null;
 let heartbeatInterval = null;
 
 let onlineUsersCache = {};
+let unreadChatsCache = {};
+let chatLastReadCache = {};
 
 let currentCommentVideoId = null;
 let currentChatId = null;
@@ -153,10 +155,7 @@ function formatViewsShort(num){
   return (num/1000000000).toFixed(1) + "B";
 }
 
-/* ============================================================
-   ONLINE STATUS
-============================================================ */
-
+/* ONLINE STATUS */
 async function updatePresence(){
   if(!currentUser) return;
   try{
@@ -212,10 +211,7 @@ function startPresenceListener(uids){
   const limitedUids = uniqueUids.slice(0, 10);
 
   presenceUnsubscribe = onSnapshot(
-    query(
-      collection(db, "presence"),
-      where("userId", "in", limitedUids)
-    ),
+    query(collection(db, "presence"), where("userId", "in", limitedUids)),
     snapshot=>{
       snapshot.docs.forEach(d=>{
         const data = d.data();
@@ -263,6 +259,98 @@ function getOnlineText(uid){
   if(!status) return "Offline";
   if(status.online) return "Active now";
   return "Active " + timeAgo(status.lastSeen);
+}
+
+/* ============================================================
+   CHAT READ STATUS - Unread Count
+============================================================ */
+
+async function markChatAsRead(chatId){
+  if(!currentUser || !chatId) return;
+
+  try{
+    const userKey = "readBy_" + currentUser.uid;
+    await updateDoc(doc(db, "chats", chatId), {
+      [userKey]: serverTimestamp()
+    });
+
+    chatLastReadCache[chatId] = Date.now();
+    unreadChatsCache[chatId] = 0;
+
+    updateMsgBadge();
+
+    // Update inbox UI if open
+    const inbox = $("dmInboxView");
+    if(inbox && !inbox.classList.contains("hidden")){
+      renderDMInbox();
+    }
+  }catch(e){
+    console.error("Mark read error:", e);
+  }
+}
+
+async function countUnreadMessages(chatId, lastReadTimestamp){
+  if(!currentUser) return 0;
+
+  try{
+    const q = query(collection(db, "chats", chatId, "messages"));
+    const snap = await getDocs(q);
+    let unreadCount = 0;
+
+    snap.forEach(d => {
+      const msg = d.data();
+      if(msg.userId === currentUser.uid) return;
+
+      const msgTime = timeValue(msg.createdAt);
+      if(msgTime > lastReadTimestamp){
+        unreadCount++;
+      }
+    });
+
+    return unreadCount;
+  }catch(e){
+    console.error("Unread count error:", e);
+    return 0;
+  }
+}
+
+function updateMsgBadge(){
+  const badge = $("msgBadge");
+  if(!badge) return;
+
+  let unreadChatCount = 0;
+  Object.values(unreadChatsCache).forEach(count => {
+    if(count > 0) unreadChatCount++;
+  });
+
+  if(unreadChatCount > 0){
+    badge.textContent = unreadChatCount;
+    badge.classList.remove("hidden");
+  }else{
+    badge.classList.add("hidden");
+  }
+}
+
+async function calculateAllUnread(){
+  if(!currentUser || !myChatsCache.length) {
+    updateMsgBadge();
+    return;
+  }
+
+  for(const chat of myChatsCache){
+    try{
+      const userKey = "readBy_" + currentUser.uid;
+      const lastRead = timeValue(chat[userKey]);
+      chatLastReadCache[chat.id] = lastRead;
+
+      const unread = await countUnreadMessages(chat.id, lastRead);
+      unreadChatsCache[chat.id] = unread;
+    }catch(e){
+      unreadChatsCache[chat.id] = 0;
+    }
+  }
+
+  updateMsgBadge();
 }
 
 /* NAVIGATION */
@@ -418,7 +506,6 @@ async function loadProfile(){
   updateProfileTabCounts();
   updatePrivateToggleUI();
 
-  // Apply banner
   applyBanner(currentProfile);
   addBannerEditButton();
 }
@@ -497,6 +584,8 @@ onAuthStateChanged(auth, async user => {
     mySavesCache.clear();
     mySentRequestsCache.clear();
     onlineUsersCache = {};
+    unreadChatsCache = {};
+    chatLastReadCache = {};
 
     if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
     if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
@@ -624,10 +713,7 @@ $("publishBtn")?.addEventListener("click", async()=>{
   }
 });
 
-/* ============================================================
-   PROFILE BANNER - UPLOAD / GRADIENT
-============================================================ */
-
+/* BANNER */
 function applyBanner(profile){
   const bannerEl = document.querySelector("#profilePanel .yt-banner");
   if(!bannerEl || !profile) return;
@@ -712,7 +798,6 @@ $("bannerFile")?.addEventListener("change", async (e)=>{
 
   try{
     toast("Uploading banner...");
-
     const url = await uploadToCloudinary(file, (pct)=>{
       if(pct % 25 === 0) toast("Banner " + pct + "%");
     });
@@ -738,14 +823,10 @@ $("bannerFile")?.addEventListener("change", async (e)=>{
   }
 });
 
-/* ============================================================
-   PRIVATE ACCOUNT
-============================================================ */
-
+/* PRIVATE ACCOUNT */
 async function canViewUser(uid){
   if(!uid) return false;
   if(uid === currentUser?.uid) return true;
-
   const profile = await getProfile(uid);
   if(!profile.private) return true;
   if(myFollowsCache.has(uid)) return true;
@@ -758,10 +839,8 @@ async function canViewUserVideos(uid){
 
 async function sendFollowRequest(targetUid){
   if(!currentUser || targetUid === currentUser.uid) return;
-
   const reqId = currentUser.uid + "_" + targetUid;
   const ref = doc(db, "follow_requests", reqId);
-
   try{
     await setDoc(ref, {
       from: currentUser.uid,
@@ -771,9 +850,7 @@ async function sendFollowRequest(targetUid){
       status: "pending",
       createdAt: serverTimestamp()
     });
-
     mySentRequestsCache.add(targetUid);
-
     await addDoc(collection(db, "notifications"), {
       to: targetUid,
       from: currentUser.uid,
@@ -781,22 +858,18 @@ async function sendFollowRequest(targetUid){
       message: (currentProfile?.name || "Someone") + " wants to follow you",
       createdAt: serverTimestamp()
     });
-
     toast("✅ Follow request sent");
   }catch(e){
-    console.error("Send follow request error:", e);
+    console.error(e);
     toast("Request failed");
   }
 }
 
 async function cancelFollowRequest(targetUid){
   if(!currentUser) return;
-
   const reqId = currentUser.uid + "_" + targetUid;
-  const ref = doc(db, "follow_requests", reqId);
-
   try{
-    await deleteDoc(ref);
+    await deleteDoc(doc(db, "follow_requests", reqId));
     mySentRequestsCache.delete(targetUid);
     toast("Request cancelled");
   }catch(e){ console.error(e); }
@@ -804,9 +877,7 @@ async function cancelFollowRequest(targetUid){
 
 async function acceptFollowRequest(fromUid){
   if(!currentUser) return;
-
   const reqId = fromUid + "_" + currentUser.uid;
-
   try{
     const followId = fromUid + "_" + currentUser.uid;
     await setDoc(doc(db, "follows", followId), {
@@ -814,12 +885,9 @@ async function acceptFollowRequest(fromUid){
       following: currentUser.uid,
       createdAt: serverTimestamp()
     });
-
     await deleteDoc(doc(db, "follow_requests", reqId));
-
     await syncFollowCounts(fromUid);
     await syncFollowCounts(currentUser.uid);
-
     await addDoc(collection(db, "notifications"), {
       to: fromUid,
       from: currentUser.uid,
@@ -827,7 +895,6 @@ async function acceptFollowRequest(fromUid){
       message: (currentProfile?.name || "User") + " accepted your follow request",
       createdAt: serverTimestamp()
     });
-
     toast("✅ Request accepted");
     renderFollowRequests();
   }catch(e){
@@ -838,9 +905,7 @@ async function acceptFollowRequest(fromUid){
 
 async function rejectFollowRequest(fromUid){
   if(!currentUser) return;
-
   const reqId = fromUid + "_" + currentUser.uid;
-
   try{
     await deleteDoc(doc(db, "follow_requests", reqId));
     toast("Request rejected");
@@ -862,7 +927,6 @@ function startFollowRequestsListener(){
     query(collection(db, "follow_requests"), where("to", "==", currentUser.uid)),
     snapshot=>{
       myFollowRequestsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-
       const badge = $("followRequestsBadge");
       if(badge){
         if(myFollowRequestsCache.length > 0){
@@ -872,7 +936,6 @@ function startFollowRequestsListener(){
           badge.style.display = "none";
         }
       }
-
       if($("followRequestsModal")?.classList.contains("show")){
         renderFollowRequests();
       }
@@ -894,7 +957,6 @@ async function renderFollowRequests(){
   }
 
   const reqs = [];
-
   for(const req of myFollowRequestsCache){
     const p = await getProfile(req.from);
     reqs.push({
@@ -924,20 +986,13 @@ async function renderFollowRequests(){
 
 $("privateAccountBtn")?.addEventListener("click", async()=>{
   if(!currentUser || !currentProfile) return;
-
   const newValue = !currentProfile.private;
-
   if(newValue && !confirm("Make account private?\n\nOnly followers will see your videos.")) return;
   if(!newValue && !confirm("Make account public?\n\nEveryone will see your videos.")) return;
-
   try{
-    await updateDoc(doc(db, "profiles", currentUser.uid), {
-      private: newValue
-    });
-
+    await updateDoc(doc(db, "profiles", currentUser.uid), { private: newValue });
     currentProfile.private = newValue;
     updatePrivateToggleUI();
-
     toast(newValue ? "🔒 Account is now private" : "🌍 Account is now public");
   }catch(e){
     console.error(e);
@@ -2064,13 +2119,10 @@ async function checkDeepLink(){
   await openVideoByDeepLink(vid);
 }
 
-/* VIDEO PLAYER MODAL */
+/* VIDEO PLAYER */
 window.openVideoPlayer = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
-  if(!v){
-    toast("Video not found");
-    return;
-  }
+  if(!v){ toast("Video not found"); return; }
 
   if(v.visibility === "private" && v.userId !== currentUser?.uid){
     toast("This video is private");
@@ -2089,9 +2141,7 @@ window.openVideoPlayer = function(videoId){
   if(titleEl) titleEl.textContent = v.title || "Untitled";
 
   const metaEl = $("videoPlayerMeta");
-  if(metaEl){
-    metaEl.textContent = formatViews(v.views) + " · " + timeAgo(v.createdAt);
-  }
+  if(metaEl) metaEl.textContent = formatViews(v.views) + " · " + timeAgo(v.createdAt);
 
   const descEl = $("videoPlayerDesc");
   if(descEl){
@@ -2567,7 +2617,6 @@ async function openPublicProfile(uid){
     $("publicFollowing").textContent = p.following || 0;
     $("publicVideos").textContent = p.videos || 0;
 
-    // Apply banner on public profile
     const publicBanner = document.querySelector("#publicProfileModal .yt-banner");
     if(publicBanner){
       if(p.bannerType === "image" && p.bannerURL){
@@ -2992,17 +3041,11 @@ function startChatsListListener(){
 
   chatsListUnsubscribe = onSnapshot(
     query(collection(db,"chats"), where("members","array-contains",currentUser.uid)),
-    snapshot=>{
+    async snapshot=>{
       myChatsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       myChatsCache.sort((a,b)=> timeValue(b.updatedAt) - timeValue(a.updatedAt));
 
-      const badge = $("msgBadge");
-      if(myChatsCache.length > 0){
-        badge.textContent = myChatsCache.length;
-        badge.classList.remove("hidden");
-      }else{
-        badge.classList.add("hidden");
-      }
+      await calculateAllUnread();
 
       const inbox = $("dmInboxView");
       if(inbox && !inbox.classList.contains("hidden")){
@@ -3044,13 +3087,18 @@ function renderDMInbox(){
 
   container.innerHTML = myChatsCache.map(c=>{
     const otherUid = c.members.find(uid => uid !== currentUser.uid);
-    return `<div class="dm-inbox-item" data-open-chat="${esc(otherUid)}">
+    const unreadCount = unreadChatsCache[c.id] || 0;
+    const unreadDot = unreadCount > 0 ? `<span class="dm-unread-dot"></span>` : "";
+    
+    return `<div class="dm-inbox-item ${unreadCount > 0 ? 'unread' : ''}" data-open-chat="${esc(otherUid)}">
       <div class="avatar-wrapper">
         <img src="${avatar("", "U")}" class="dm-inbox-avatar-${esc(otherUid)}">
         <span class="online-indicator" data-dot-uid="${esc(otherUid)}" style="display:none"></span>
       </div>
       <div class="dm-inbox-info">
-        <strong class="dm-inbox-name-${esc(otherUid)}">Loading...</strong>
+        <strong class="dm-inbox-name-${esc(otherUid)}">
+          ${unreadDot}Loading...
+        </strong>
         <small>${esc(c.lastMessage || "Started a chat")}</small>
       </div>
       <div class="dm-inbox-time">${timeAgo(c.updatedAt)}</div>
@@ -3065,7 +3113,7 @@ function renderDMInbox(){
         img.src = avatar(p.photo, p.name);
       });
       document.querySelectorAll(".dm-inbox-name-" + otherUid).forEach(el=>{
-        el.textContent = p.name;
+        el.innerHTML = (unreadChatsCache[c.id] > 0 ? `<span class="dm-unread-dot"></span>` : "") + p.name;
       });
     }catch(e){}
   });
@@ -3079,6 +3127,9 @@ async function openChat(uid){
   const p = await getProfile(uid);
   currentChatUser = p;
   currentChatId = [currentUser.uid, uid].sort().join("_");
+
+  // Mark as read after entering
+  setTimeout(()=> markChatAsRead(currentChatId), 500);
 
   const avatarEl = $("dmChatAvatar");
   const nameEl = $("dmChatName");
@@ -3285,6 +3336,8 @@ async function deleteMessage(id){
 $("dmBackBtn")?.addEventListener("click", (e)=>{
   e.preventDefault();
   e.stopPropagation();
+  // Mark as read when leaving
+  if(currentChatId) markChatAsRead(currentChatId);
   showDMInbox();
 });
 
@@ -3492,4 +3545,4 @@ setTimeout(()=>{
   }
 }, 2500);
 
-console.log("✅ ReelHub loaded with Splash + Banner!");
+console.log("✅ ReelHub loaded with Read Status!");
