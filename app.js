@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (With Video Player Modal)
+   ReelHub - app.js (Private Account + Photo/Video Chat)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -56,6 +56,8 @@ let myFollowsCache = new Set();
 let mySavesCache = new Set();
 let myChatsCache = [];
 let myPlaylistsCache = [];
+let myFollowRequestsCache = [];
+let mySentRequestsCache = new Set();
 
 let videosUnsubscribe = null;
 let notificationsUnsubscribe = null;
@@ -64,6 +66,7 @@ let chatUnsubscribe = null;
 let chatsListUnsubscribe = null;
 let playlistsUnsubscribe = null;
 let presenceUnsubscribe = null;
+let followRequestsUnsubscribe = null;
 let heartbeatInterval = null;
 
 let onlineUsersCache = {};
@@ -79,6 +82,7 @@ let currentPlaylistVideoId = null;
 let selectedPlaylists = new Set();
 let currentPlaylistView = null;
 let deepLinkChecked = false;
+let viewingProfileUid = null;
 
 const $ = id => document.getElementById(id);
 
@@ -150,7 +154,7 @@ function formatViewsShort(num){
 }
 
 /* ============================================================
-   ONLINE STATUS (PRESENCE)
+   ONLINE STATUS
 ============================================================ */
 
 async function updatePresence(){
@@ -361,6 +365,7 @@ async function createProfile(){
       followers: 0,
       following: 0,
       videos: 0,
+      private: false,
       createdAt: serverTimestamp()
     });
   }
@@ -370,7 +375,7 @@ async function getProfile(uid){
   const snap = await getDoc(doc(db, "profiles", uid));
   if(!snap.exists()){
     return { uid, name:"User", username:"user", age:"", gender:"", bio:"",
-             photo:"", followers:0, following:0, videos:0 };
+             photo:"", followers:0, following:0, videos:0, private:false };
   }
   const d = snap.data();
   return {
@@ -378,7 +383,8 @@ async function getProfile(uid){
     ...d,
     followers: Number(d.followers || 0),
     following: Number(d.following || 0),
-    videos: Number(d.videos || 0)
+    videos: Number(d.videos || 0),
+    private: d.private === true
   };
 }
 
@@ -402,6 +408,20 @@ async function loadProfile(){
 
   $("profileBio").textContent = currentProfile.bio || "";
   updateProfileTabCounts();
+  updatePrivateToggleUI();
+}
+
+function updatePrivateToggleUI(){
+  const toggle = $("privateAccountToggle");
+  if(!toggle) return;
+
+  if(currentProfile?.private){
+    toggle.textContent = "ON";
+    toggle.style.color = "#22c55e";
+  }else{
+    toggle.textContent = "OFF";
+    toggle.style.color = "var(--muted)";
+  }
 }
 
 async function loadMyFollows(){
@@ -424,6 +444,16 @@ async function loadMySaves(){
   }catch(e){ console.error(e); }
 }
 
+async function loadMySentRequests(){
+  if(!currentUser) return;
+  mySentRequestsCache = new Set();
+  try{
+    const q = query(collection(db,"follow_requests"), where("from","==",currentUser.uid));
+    const snap = await getDocs(q);
+    snap.forEach(d => mySentRequestsCache.add(d.data().to));
+  }catch(e){ console.error(e); }
+}
+
 /* AUTH */
 onAuthStateChanged(auth, async user => {
   if(user){
@@ -432,6 +462,7 @@ onAuthStateChanged(auth, async user => {
     await loadProfile();
     await loadMyFollows();
     await loadMySaves();
+    await loadMySentRequests();
 
     $("loginPage").classList.add("hidden");
     $("app").classList.remove("hidden");
@@ -441,6 +472,7 @@ onAuthStateChanged(auth, async user => {
     startChatsListListener();
     startPlaylistsListener();
     startPresenceHeartbeat();
+    startFollowRequestsListener();
 
     setTimeout(checkDeepLink, 1500);
   }else{
@@ -451,6 +483,7 @@ onAuthStateChanged(auth, async user => {
     videosCache = [];
     myFollowsCache.clear();
     mySavesCache.clear();
+    mySentRequestsCache.clear();
     onlineUsersCache = {};
 
     if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
@@ -458,6 +491,7 @@ onAuthStateChanged(auth, async user => {
     if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
     if(playlistsUnsubscribe){ playlistsUnsubscribe(); playlistsUnsubscribe = null; }
     if(presenceUnsubscribe){ presenceUnsubscribe(); presenceUnsubscribe = null; }
+    if(followRequestsUnsubscribe){ followRequestsUnsubscribe(); followRequestsUnsubscribe = null; }
     if(heartbeatInterval){ clearInterval(heartbeatInterval); heartbeatInterval = null; }
 
     $("app").classList.add("hidden");
@@ -576,6 +610,239 @@ $("publishBtn")?.addEventListener("click", async()=>{
   }finally{
     $("publishBtn").disabled = false;
   }
+});
+
+/* ============================================================
+   PRIVATE ACCOUNT - VISIBILITY CHECK
+============================================================ */
+
+async function canViewUser(uid){
+  if(!uid) return false;
+  if(uid === currentUser?.uid) return true;
+
+  const profile = await getProfile(uid);
+
+  // Public account - everyone can view
+  if(!profile.private) return true;
+
+  // Private account - only followers can view
+  if(myFollowsCache.has(uid)) return true;
+
+  return false;
+}
+
+async function canViewUserVideos(uid){
+  return await canViewUser(uid);
+}
+
+/* ============================================================
+   FOLLOW REQUESTS SYSTEM
+============================================================ */
+
+async function sendFollowRequest(targetUid){
+  if(!currentUser || targetUid === currentUser.uid) return;
+
+  const reqId = currentUser.uid + "_" + targetUid;
+  const ref = doc(db, "follow_requests", reqId);
+
+  try{
+    await setDoc(ref, {
+      from: currentUser.uid,
+      fromName: currentProfile?.name || "User",
+      fromPhoto: currentProfile?.photo || "",
+      to: targetUid,
+      status: "pending",
+      createdAt: serverTimestamp()
+    });
+
+    mySentRequestsCache.add(targetUid);
+
+    // Send notification
+    await addDoc(collection(db, "notifications"), {
+      to: targetUid,
+      from: currentUser.uid,
+      title: "🔒 Follow Request",
+      message: (currentProfile?.name || "Someone") + " wants to follow you",
+      createdAt: serverTimestamp()
+    });
+
+    toast("✅ Follow request sent");
+  }catch(e){
+    console.error("Send follow request error:", e);
+    toast("Request failed");
+  }
+}
+
+async function cancelFollowRequest(targetUid){
+  if(!currentUser) return;
+
+  const reqId = currentUser.uid + "_" + targetUid;
+  const ref = doc(db, "follow_requests", reqId);
+
+  try{
+    await deleteDoc(ref);
+    mySentRequestsCache.delete(targetUid);
+    toast("Request cancelled");
+  }catch(e){
+    console.error(e);
+  }
+}
+
+async function acceptFollowRequest(fromUid){
+  if(!currentUser) return;
+
+  const reqId = fromUid + "_" + currentUser.uid;
+
+  try{
+    // Add as follower
+    const followId = fromUid + "_" + currentUser.uid;
+    await setDoc(doc(db, "follows", followId), {
+      follower: fromUid,
+      following: currentUser.uid,
+      createdAt: serverTimestamp()
+    });
+
+    // Delete request
+    await deleteDoc(doc(db, "follow_requests", reqId));
+
+    // Update counts
+    await syncFollowCounts(fromUid);
+    await syncFollowCounts(currentUser.uid);
+
+    // Notify
+    await addDoc(collection(db, "notifications"), {
+      to: fromUid,
+      from: currentUser.uid,
+      title: "✅ Request Accepted",
+      message: (currentProfile?.name || "User") + " accepted your follow request",
+      createdAt: serverTimestamp()
+    });
+
+    toast("✅ Request accepted");
+    renderFollowRequests();
+  }catch(e){
+    console.error(e);
+    toast("Failed to accept");
+  }
+}
+
+async function rejectFollowRequest(fromUid){
+  if(!currentUser) return;
+
+  const reqId = fromUid + "_" + currentUser.uid;
+
+  try{
+    await deleteDoc(doc(db, "follow_requests", reqId));
+    toast("Request rejected");
+    renderFollowRequests();
+  }catch(e){
+    console.error(e);
+    toast("Failed to reject");
+  }
+}
+
+function startFollowRequestsListener(){
+  if(followRequestsUnsubscribe){
+    followRequestsUnsubscribe();
+    followRequestsUnsubscribe = null;
+  }
+  if(!currentUser) return;
+
+  followRequestsUnsubscribe = onSnapshot(
+    query(collection(db, "follow_requests"), where("to", "==", currentUser.uid)),
+    snapshot=>{
+      myFollowRequestsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      const badge = $("followRequestsBadge");
+      if(badge){
+        if(myFollowRequestsCache.length > 0){
+          badge.textContent = myFollowRequestsCache.length;
+          badge.style.display = "inline";
+        }else{
+          badge.style.display = "none";
+        }
+      }
+
+      if($("followRequestsModal")?.classList.contains("show")){
+        renderFollowRequests();
+      }
+    }
+  );
+}
+
+async function renderFollowRequests(){
+  const container = $("followRequestsList");
+  if(!container) return;
+
+  if(!myFollowRequestsCache.length){
+    container.innerHTML = `<div class="yt-empty" style="padding:40px 20px">
+      <div style="font-size:48px;margin-bottom:12px">📬</div>
+      <h3 style="font-size:16px;margin-bottom:6px">No requests</h3>
+      <p style="font-size:13px">Follow requests will appear here</p>
+    </div>`;
+    return;
+  }
+
+  const reqs = [];
+
+  for(const req of myFollowRequestsCache){
+    const p = await getProfile(req.from);
+    reqs.push({
+      uid: req.from,
+      name: p.name || req.fromName || "User",
+      username: p.username || "",
+      photo: p.photo || req.fromPhoto || ""
+    });
+  }
+
+  container.innerHTML = reqs.map(r=>`
+    <div class="person-item">
+      <img src="${avatar(r.photo, r.name)}" class="people-open-btn" data-uid="${esc(r.uid)}">
+      <div class="info people-open-btn" data-uid="${esc(r.uid)}">
+        <strong>${esc(r.name)}</strong>
+        <small>@${esc(r.username)}</small>
+      </div>
+      <button class="follow-btn" data-accept-request="${esc(r.uid)}" style="background:#22c55e">
+        Accept
+      </button>
+      <button class="follow-btn following" data-reject-request="${esc(r.uid)}">
+        Reject
+      </button>
+    </div>
+  `).join("");
+}
+
+/* ============================================================
+   PRIVATE TOGGLE
+============================================================ */
+
+$("privateAccountBtn")?.addEventListener("click", async()=>{
+  if(!currentUser || !currentProfile) return;
+
+  const newValue = !currentProfile.private;
+
+  if(newValue && !confirm("Make account private?\n\nOnly followers will see your videos.")) return;
+  if(!newValue && !confirm("Make account public?\n\nEveryone will see your videos.")) return;
+
+  try{
+    await updateDoc(doc(db, "profiles", currentUser.uid), {
+      private: newValue
+    });
+
+    currentProfile.private = newValue;
+    updatePrivateToggleUI();
+
+    toast(newValue ? "🔒 Account is now private" : "🌍 Account is now public");
+  }catch(e){
+    console.error(e);
+    toast("Failed to update");
+  }
+});
+
+$("followRequestsBtn")?.addEventListener("click", ()=>{
+  hideModal("settingsModal");
+  showModal("followRequestsModal");
+  renderFollowRequests();
 });
 
 /* VIDEOS */
@@ -829,6 +1096,25 @@ function setupReelsObserver(){
 document.addEventListener("click", async (e)=>{
   const t = e.target;
 
+  // Accept/Reject follow request
+  const acceptReq = t.closest("[data-accept-request]");
+  if(acceptReq){
+    e.preventDefault();
+    e.stopPropagation();
+    const uid = acceptReq.dataset.acceptRequest;
+    if(uid) await acceptFollowRequest(uid);
+    return;
+  }
+
+  const rejectReq = t.closest("[data-reject-request]");
+  if(rejectReq){
+    e.preventDefault();
+    e.stopPropagation();
+    const uid = rejectReq.dataset.rejectRequest;
+    if(uid) await rejectFollowRequest(uid);
+    return;
+  }
+
   const openUser = t.closest(".post-open-user");
   if(openUser){
     e.preventDefault();
@@ -921,6 +1207,7 @@ document.addEventListener("click", async (e)=>{
     const uid = peopleOpen.dataset.uid;
     if(uid){
       hideModal("peopleModal");
+      hideModal("followRequestsModal");
       setTimeout(()=> openPublicProfile(uid), 150);
     }
     return;
@@ -978,6 +1265,28 @@ document.addEventListener("click", async (e)=>{
     e.stopPropagation();
     const vid = sharedVid.dataset.openShared;
     if(vid) openVideoPlayer(vid);
+    return;
+  }
+
+  const chatImage = t.closest("[data-open-image]");
+  if(chatImage){
+    e.preventDefault();
+    e.stopPropagation();
+    const url = chatImage.dataset.openImage;
+    if(url){
+      const imgEl = $("largeChatImage");
+      if(imgEl) imgEl.src = url;
+      showModal("imageViewerModal");
+    }
+    return;
+  }
+
+  const chatVideo = t.closest("[data-open-chat-video]");
+  if(chatVideo){
+    e.preventDefault();
+    e.stopPropagation();
+    const url = chatVideo.dataset.openChatVideo;
+    if(url) window.open(url, "_blank");
     return;
   }
 
@@ -1057,7 +1366,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // Open video player from any list (NEW)
   const openVideoBtn = t.closest("[data-open-video]");
   if(openVideoBtn){
     const insideStop = t.closest("[data-stop-propagation]");
@@ -1625,6 +1933,12 @@ async function openVideoByDeepLink(videoId){
     return;
   }
 
+  const canView = await canViewUserVideos(v.userId);
+  if(!canView){
+    toast("This account is private");
+    return;
+  }
+
   await trackView(videoId);
 
   const banner = $("deepLinkBanner");
@@ -1633,7 +1947,6 @@ async function openVideoByDeepLink(videoId){
     setTimeout(()=> banner.classList.remove("show"), 3000);
   }
 
-  // Open video player directly
   openVideoPlayer(videoId);
 }
 
@@ -1662,41 +1975,33 @@ window.openVideoPlayer = function(videoId){
     return;
   }
 
-  // Track view
   trackView(videoId);
 
-  // Set video source
   const videoEl = $("videoPlayerVideo");
   if(videoEl){
     videoEl.src = v.videoURL;
     videoEl.play().catch(()=>{});
   }
 
-  // Title
   const titleEl = $("videoPlayerTitle");
   if(titleEl) titleEl.textContent = v.title || "Untitled";
 
-  // Meta
   const metaEl = $("videoPlayerMeta");
   if(metaEl){
     metaEl.textContent = formatViews(v.views) + " · " + timeAgo(v.createdAt);
   }
 
-  // Description
   const descEl = $("videoPlayerDesc");
   if(descEl){
     descEl.textContent = v.description || "";
     descEl.style.display = v.description ? "block" : "none";
   }
 
-  // Likes count
   const likesEl = $("videoPlayerLikes");
   if(likesEl) likesEl.textContent = (v.likes || 0) + " likes";
 
-  // Update like button state
   updateVideoPlayerLike(videoId);
 
-  // Like button click
   const likeBtn = $("videoPlayerLikeBtn");
   if(likeBtn){
     likeBtn.onclick = (e)=>{
@@ -1706,7 +2011,6 @@ window.openVideoPlayer = function(videoId){
     };
   }
 
-  // Share button click
   const shareBtn = $("videoPlayerShareBtn");
   if(shareBtn){
     shareBtn.onclick = (e)=>{
@@ -2015,7 +2319,10 @@ async function syncVideoCount(uid){
   }catch(e){ console.error(e); }
 }
 
-/* FOLLOW */
+/* ============================================================
+   FOLLOW - WITH PRIVATE SUPPORT
+============================================================ */
+
 async function toggleFollow(targetUid, btnEl){
   if(!currentUser || targetUid === currentUser.uid) return;
 
@@ -2026,42 +2333,57 @@ async function toggleFollow(targetUid, btnEl){
 
   try{
     const snap = await getDoc(ref);
+    const targetProfile = await getProfile(targetUid);
 
     if(snap.exists()){
+      // Unfollow
       await deleteDoc(ref);
       myFollowsCache.delete(targetUid);
       updateAllFollowButtons(targetUid, false);
+      await syncFollowCounts(currentUser.uid);
+      await syncFollowCounts(targetUid);
     }else{
-      await setDoc(ref, {
-        follower: currentUser.uid,
-        following: targetUid,
-        createdAt: serverTimestamp()
-      });
-      myFollowsCache.add(targetUid);
-      updateAllFollowButtons(targetUid, true);
+      // Not following yet
+      if(targetProfile.private){
+        // Send request
+        if(mySentRequestsCache.has(targetUid)){
+          // Cancel request
+          await cancelFollowRequest(targetUid);
+          updateAllFollowButtons(targetUid, "cancelled");
+        }else{
+          // Send new request
+          await sendFollowRequest(targetUid);
+          updateAllFollowButtons(targetUid, "requested");
+        }
+      }else{
+        // Direct follow
+        await setDoc(ref, {
+          follower: currentUser.uid,
+          following: targetUid,
+          createdAt: serverTimestamp()
+        });
+        myFollowsCache.add(targetUid);
+        updateAllFollowButtons(targetUid, true);
 
-      await addDoc(collection(db,"notifications"), {
-        to: targetUid,
-        from: currentUser.uid,
-        title: "👤 New Follower",
-        message: (currentProfile?.name || "Someone") + " started following you",
-        createdAt: serverTimestamp()
-      });
+        await addDoc(collection(db,"notifications"), {
+          to: targetUid,
+          from: currentUser.uid,
+          title: "👤 New Follower",
+          message: (currentProfile?.name || "Someone") + " started following you",
+          createdAt: serverTimestamp()
+        });
+
+        await syncFollowCounts(currentUser.uid);
+        await syncFollowCounts(targetUid);
+      }
     }
 
-    await syncFollowCounts(currentUser.uid);
-    await syncFollowCounts(targetUid);
-
+    // Update public profile button
     if($("publicProfileModal").classList.contains("show")){
       const uid = $("publicProfileModal").dataset.uid;
       if(uid === targetUid){
-        const followed = myFollowsCache.has(targetUid);
-        const btn = $("publicFollowBtn");
-        if(btn){
-          btn.textContent = followed ? "Following" : "Follow";
-          btn.classList.toggle("yt-btn-gray", followed);
-          btn.classList.toggle("yt-btn-primary", !followed);
-        }
+        updateFollowButtonState(targetUid);
+        await loadPublicVideos(targetUid);
       }
     }
   }catch(e){
@@ -2072,11 +2394,41 @@ async function toggleFollow(targetUid, btnEl){
   }
 }
 
-function updateAllFollowButtons(targetUid, isFollowing){
+function updateAllFollowButtons(targetUid, state){
   document.querySelectorAll(`[data-follow-uid="${targetUid}"]`).forEach(btn=>{
-    btn.textContent = isFollowing ? "Following" : "Follow";
-    btn.classList.toggle("following", isFollowing);
+    if(state === true){
+      btn.textContent = "Following";
+      btn.classList.add("following");
+    }else if(state === false){
+      btn.textContent = "Follow";
+      btn.classList.remove("following");
+    }else if(state === "requested"){
+      btn.textContent = "Requested";
+      btn.classList.remove("following");
+    }else if(state === "cancelled"){
+      btn.textContent = "Follow";
+      btn.classList.remove("following");
+    }
   });
+}
+
+async function updateFollowButtonState(targetUid){
+  const followed = myFollowsCache.has(targetUid);
+  const requested = mySentRequestsCache.has(targetUid);
+
+  const btn = $("publicFollowBtn");
+  if(!btn) return;
+
+  if(followed){
+    btn.textContent = "Following";
+    btn.className = "yt-btn yt-btn-gray";
+  }else if(requested){
+    btn.textContent = "Requested";
+    btn.className = "yt-btn yt-btn-gray";
+  }else{
+    btn.textContent = "Follow";
+    btn.className = "yt-btn yt-btn-primary";
+  }
 }
 
 async function syncFollowCounts(uid){
@@ -2100,11 +2452,15 @@ async function syncFollowCounts(uid){
   }catch(e){ console.error(e); }
 }
 
-/* PUBLIC PROFILE */
+/* ============================================================
+   PUBLIC PROFILE - WITH PRIVATE ACCOUNT
+============================================================ */
+
 async function openPublicProfile(uid){
   if(!uid){ toast("Invalid user"); return; }
 
   try{
+    viewingProfileUid = uid;
     const p = await getProfile(uid);
     $("publicProfileModal").dataset.uid = uid;
 
@@ -2115,6 +2471,7 @@ async function openPublicProfile(uid){
     let extra = [];
     if(p.age) extra.push("Age: " + p.age);
     if(p.gender) extra.push(p.gender);
+    if(p.private) extra.push("🔒 Private");
     $("publicExtra").textContent = extra.join(" · ");
 
     $("publicFollowers").textContent = p.followers || 0;
@@ -2129,16 +2486,18 @@ async function openPublicProfile(uid){
     const newMsgBtn = msgBtn.cloneNode(true);
     msgBtn.parentNode.replaceChild(newMsgBtn, msgBtn);
 
+    // Check if can view
+    const canView = await canViewUser(uid);
+
     if(currentUser && uid === currentUser.uid){
       newFollowBtn.style.display = "none";
       newMsgBtn.style.display = "none";
+      $("privateAccountNotice").classList.add("hidden");
     }else{
       newFollowBtn.style.display = "";
       newMsgBtn.style.display = "";
 
-      const followed = myFollowsCache.has(uid);
-      newFollowBtn.textContent = followed ? "Following" : "Follow";
-      newFollowBtn.className = followed ? "yt-btn yt-btn-gray" : "yt-btn yt-btn-primary";
+      await updateFollowButtonState(uid);
 
       newFollowBtn.addEventListener("click", (e)=>{
         e.preventDefault();
@@ -2151,6 +2510,13 @@ async function openPublicProfile(uid){
         e.stopPropagation();
         openChatFromProfile(uid);
       });
+
+      // Show private notice if can't view
+      if(!canView && p.private){
+        $("privateAccountNotice").classList.remove("hidden");
+      }else{
+        $("privateAccountNotice").classList.add("hidden");
+      }
     }
 
     await loadPublicVideos(uid);
@@ -2183,12 +2549,19 @@ async function openPublicProfile(uid){
 }
 
 async function loadPublicVideos(uid){
+  const canView = await canViewUserVideos(uid);
+  const container = $("publicVideosList");
+
+  if(!canView){
+    container.innerHTML = "";
+    return;
+  }
+
   const list = videosCache.filter(v =>
     v.userId === uid &&
     (v.visibility !== "private" || uid === currentUser?.uid)
   );
 
-  const container = $("publicVideosList");
   if(!list.length){
     container.innerHTML = `<div class="yt-empty" style="padding:30px 0;font-size:13px">
       No videos yet
@@ -2272,7 +2645,13 @@ async function openPeople(uid, type){
 
     $("peopleList").innerHTML = people.map(p=>{
       const followed = myFollowsCache.has(p.uid);
+      const requested = mySentRequestsCache.has(p.uid);
       const isMe = currentUser && p.uid === currentUser.uid;
+
+      let btnText = "Follow";
+      if(followed) btnText = "Following";
+      else if(requested) btnText = "Requested";
+
       return `
       <div class="person-item">
         <img class="people-open-btn" data-uid="${esc(p.uid)}"
@@ -2285,7 +2664,7 @@ async function openPeople(uid, type){
           <button class="follow-btn ${followed?"following":""}"
                   data-follow-uid="${esc(p.uid)}"
                   data-action="follow">
-            ${followed ? "Following" : "Follow"}
+            ${btnText}
           </button>
         ` : ""}
       </div>
@@ -2342,20 +2721,26 @@ async function doSearch(value){
 
     container.innerHTML = users.map(p=>{
       const followed = myFollowsCache.has(p.uid);
+      const requested = mySentRequestsCache.has(p.uid);
       const isMe = currentUser && p.uid === currentUser.uid;
+
+      let btnText = "Follow";
+      if(followed) btnText = "Following";
+      else if(requested) btnText = "Requested";
+
       return `
       <div class="person-item">
         <img class="search-open-btn" data-uid="${esc(p.uid)}"
              src="${avatar(p.photo, p.name)}">
         <div class="info search-open-btn" data-uid="${esc(p.uid)}">
           <strong>${esc(p.name)}</strong>
-          <small>@${esc(p.username)}</small>
+          <small>@${esc(p.username)}${p.private ? " · 🔒" : ""}</small>
         </div>
         ${!isMe && currentUser ? `
           <button class="follow-btn ${followed?"following":""}"
                   data-follow-uid="${esc(p.uid)}"
                   data-action="follow">
-            ${followed ? "Following" : "Follow"}
+            ${btnText}
           </button>
         ` : ""}
       </div>
@@ -2503,7 +2888,10 @@ function startNotifications(){
 
 $("topAlertsBtn")?.addEventListener("click", ()=> showModal("alertsModal"));
 
-/* MESSAGES */
+/* ============================================================
+   MESSAGES (DM)
+============================================================ */
+
 function startChatsListListener(){
   if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
   if(!currentUser) return;
@@ -2691,6 +3079,7 @@ function startChatListener(){
       container.innerHTML = list.map(m=>{
         const mine = m.userId === currentUser.uid;
 
+        // Shared video message
         if(m.type === "shared_video" && m.videoId){
           return `
           <div class="dm-msg ${mine?"me":"them"}">
@@ -2698,7 +3087,6 @@ function startChatListener(){
               <video src="${esc(m.videoURL || "")}" muted preload="metadata"></video>
               <div class="info"><strong>${esc(m.videoTitle || "Video")}</strong></div>
             </div>
-            ${m.text ? `<div style="margin-top:6px">${esc(m.text)}</div>` : ""}
             <small>${timeAgo(m.createdAt)}</small>
             ${mine ? `
               <div class="dm-msg-actions">
@@ -2709,6 +3097,43 @@ function startChatListener(){
           `;
         }
 
+        // Image message
+        if(m.type === "image" && m.imageURL){
+          return `
+          <div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">
+            <div class="dm-msg-image" data-open-image="${esc(m.imageURL)}">
+              <img src="${esc(m.imageURL)}" alt="Photo">
+            </div>
+            <small style="margin-left:8px">${timeAgo(m.createdAt)}</small>
+            ${mine ? `
+              <div class="dm-msg-actions" style="margin-left:8px">
+                <button data-delete-msg="${esc(m.id)}">Delete</button>
+              </div>
+            ` : ""}
+          </div>
+          `;
+        }
+
+        // Chat video message
+        if(m.type === "chat_video" && m.videoURL){
+          return `
+          <div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">
+            <div class="dm-msg-image">
+              <video src="${esc(m.videoURL)}" controls playsinline preload="metadata"
+                     style="width:100%;display:block;border-radius:12px;max-height:280px;background:#000"
+                     data-open-chat-video="${esc(m.videoURL)}"></video>
+            </div>
+            <small style="margin-left:8px">${timeAgo(m.createdAt)}</small>
+            ${mine ? `
+              <div class="dm-msg-actions" style="margin-left:8px">
+                <button data-delete-msg="${esc(m.id)}">Delete</button>
+              </div>
+            ` : ""}
+          </div>
+          `;
+        }
+
+        // Text message
         return `
         <div class="dm-msg ${mine?"me":"them"}">
           ${esc(m.text)}
@@ -2787,6 +3212,113 @@ $("newMsgBtn")?.addEventListener("click", ()=>{
   setTimeout(()=> $("searchInput").focus(), 100);
 });
 
+/* ============================================================
+   CHAT ATTACH - PHOTO / VIDEO
+============================================================ */
+
+$("dmAttachBtn")?.addEventListener("click", (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  const menu = $("dmAttachMenu");
+  if(menu) menu.classList.toggle("show");
+});
+
+// Close attach menu on outside click
+document.addEventListener("click", (e)=>{
+  const menu = $("dmAttachMenu");
+  const btn = $("dmAttachBtn");
+  if(!menu || !btn) return;
+  if(!menu.contains(e.target) && !btn.contains(e.target)){
+    menu.classList.remove("show");
+  }
+});
+
+$("attachPhotoBtn")?.addEventListener("click", (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  $("dmAttachMenu")?.classList.remove("show");
+  $("dmPhotoFile")?.click();
+});
+
+$("attachVideoBtn")?.addEventListener("click", (e)=>{
+  e.preventDefault();
+  e.stopPropagation();
+  $("dmAttachMenu")?.classList.remove("show");
+  $("dmVideoFile")?.click();
+});
+
+$("dmPhotoFile")?.addEventListener("change", async (e)=>{
+  const file = e.target.files[0];
+  if(!file || !currentChatId) return;
+  await sendPhotoInChat(file);
+  e.target.value = "";
+});
+
+$("dmVideoFile")?.addEventListener("change", async (e)=>{
+  const file = e.target.files[0];
+  if(!file || !currentChatId) return;
+  await sendChatVideo(file);
+  e.target.value = "";
+});
+
+async function sendPhotoInChat(file){
+  try{
+    toast("Uploading photo...");
+
+    const url = await uploadToCloudinary(file, (pct)=>{
+      if(pct % 25 === 0) toast("Photo " + pct + "%");
+    });
+
+    await addDoc(collection(db,"chats",currentChatId,"messages"), {
+      userId: currentUser.uid,
+      userName: currentProfile?.name || "User",
+      text: "",
+      type: "image",
+      imageURL: url,
+      createdAt: serverTimestamp()
+    });
+
+    await updateDoc(doc(db,"chats",currentChatId), {
+      lastMessage: "📷 Photo",
+      updatedAt: serverTimestamp()
+    });
+
+    toast("✅ Photo sent");
+  }catch(e){
+    console.error("Photo send error:", e);
+    toast("Photo send failed");
+  }
+}
+
+async function sendChatVideo(file){
+  try{
+    toast("Uploading video...");
+
+    const url = await uploadToCloudinary(file, (pct)=>{
+      if(pct % 25 === 0) toast("Video " + pct + "%");
+    });
+
+    await addDoc(collection(db,"chats",currentChatId,"messages"), {
+      userId: currentUser.uid,
+      userName: currentProfile?.name || "User",
+      text: "",
+      type: "chat_video",
+      videoURL: url,
+      createdAt: serverTimestamp()
+    });
+
+    await updateDoc(doc(db,"chats",currentChatId), {
+      lastMessage: "🎥 Video",
+      updatedAt: serverTimestamp()
+    });
+
+    toast("✅ Video sent");
+  }catch(e){
+    console.error("Video send error:", e);
+    toast("Video send failed");
+  }
+}
+
 /* MODAL CLOSE */
 document.querySelectorAll("[data-close]").forEach(btn=>{
   btn.addEventListener("click", (e)=>{
@@ -2801,6 +3333,7 @@ document.querySelectorAll("[data-close]").forEach(btn=>{
 
     if(id === "publicProfileModal"){
       delete $("publicProfileModal").dataset.uid;
+      $("privateAccountNotice")?.classList.add("hidden");
     }
 
     if(id === "playlistDetailModal"){
@@ -2813,6 +3346,11 @@ document.querySelectorAll("[data-close]").forEach(btn=>{
         videoEl.pause();
         videoEl.src = "";
       }
+    }
+
+    if(id === "imageViewerModal"){
+      const imgEl = $("largeChatImage");
+      if(imgEl) imgEl.src = "";
     }
   });
 });
@@ -2829,6 +3367,7 @@ document.querySelectorAll(".modal").forEach(modal=>{
 
       if(modal.id === "publicProfileModal"){
         delete $("publicProfileModal").dataset.uid;
+        $("privateAccountNotice")?.classList.add("hidden");
       }
 
       if(modal.id === "playlistDetailModal"){
@@ -2841,6 +3380,11 @@ document.querySelectorAll(".modal").forEach(modal=>{
           videoEl.pause();
           videoEl.src = "";
         }
+      }
+
+      if(modal.id === "imageViewerModal"){
+        const imgEl = $("largeChatImage");
+        if(imgEl) imgEl.src = "";
       }
     }
   });
@@ -2864,4 +3408,4 @@ $("dmSearchInput")?.addEventListener("input", e=>{
 /* START */
 openPanel("homePanel");
 
-console.log("✅ ReelHub loaded with Video Player!");
+console.log("✅ ReelHub loaded with Private Account + Photo/Video Chat!");
