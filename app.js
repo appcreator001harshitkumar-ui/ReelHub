@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (With Stories + Offline Hide)
+   ReelHub - app.js (With Stories + Email/Password Auth)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -11,7 +11,12 @@ import {
   signInWithRedirect,
   getRedirectResult,
   onAuthStateChanged,
-  signOut
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile,
+  sendEmailVerification
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
 import {
@@ -1026,7 +1031,7 @@ function updateMsgBadge(){
 
 async function calculateAllUnread(){
   if(!currentUser || !myChatsCache.length) {
-  updateMsgBadge();
+    updateMsgBadge();
     return;
   }
   for(const chat of myChatsCache){
@@ -1040,6 +1045,130 @@ async function calculateAllUnread(){
   }
   updateMsgBadge();
 }
+/* ============================================================
+   EMAIL / PASSWORD AUTH
+============================================================ */
+
+// Tab switching (Login / Signup)
+document.querySelectorAll(".auth-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    const tabName = tab.dataset.tab;
+    
+    document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    
+    if(tabName === "login"){
+      $("loginForm")?.classList.remove("hidden");
+      $("signupForm")?.classList.add("hidden");
+    }else{
+      $("loginForm")?.classList.add("hidden");
+      $("signupForm")?.classList.remove("hidden");
+    }
+    
+    const status = $("loginStatus");
+    if(status){ status.textContent = ""; status.style.color = "#ed4956"; }
+  });
+});
+
+// Email/Password Login
+$("loginForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = $("loginEmail").value.trim();
+  const password = $("loginPassword").value;
+  const status = $("loginStatus");
+  
+  if(!email || !password){
+    if(status){ status.textContent = "Email and password required"; status.style.color = "#ed4956"; }
+    return;
+  }
+  
+  if(status){ status.textContent = "Logging in..."; status.style.color = "#7c3aed"; }
+  
+  try{
+    await signInWithEmailAndPassword(auth, email, password);
+    if(status){ status.textContent = ""; status.style.color = "#ed4956"; }
+  }catch(err){
+    console.error(err);
+    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; }
+  }
+});
+
+// Email/Password Signup
+$("signupForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = $("signupName").value.trim();
+  const email = $("signupEmail").value.trim();
+  const password = $("signupPassword").value;
+  const status = $("loginStatus");
+  
+  if(!name || !email || !password){
+    if(status){ status.textContent = "All fields required"; status.style.color = "#ed4956"; }
+    return;
+  }
+  
+  if(password.length < 6){
+    if(status){ status.textContent = "Password must be at least 6 characters"; status.style.color = "#ed4956"; }
+    return;
+  }
+  
+  if(status){ status.textContent = "Creating account..."; status.style.color = "#7c3aed"; }
+  
+  try{
+    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(userCred.user, { displayName: name });
+    
+    try{
+      await sendEmailVerification(userCred.user);
+    }catch(e){ console.log("Verification email failed:", e); }
+    
+    if(status){ status.textContent = "✅ Account created!"; status.style.color = "#22c55e"; }
+  }catch(err){
+    console.error(err);
+    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; }
+  }
+});
+
+// Forgot Password
+$("forgotPasswordBtn")?.addEventListener("click", async () => {
+  const email = $("loginEmail").value.trim();
+  const status = $("loginStatus");
+  
+  if(!email){
+    if(status){ status.textContent = "Enter your email first"; status.style.color = "#ed4956"; }
+    return;
+  }
+  
+  try{
+    await sendPasswordResetEmail(auth, email);
+    if(status){ status.textContent = "✅ Password reset email sent!"; status.style.color = "#22c55e"; }
+    setTimeout(() => {
+      if(status) status.style.color = "#ed4956";
+    }, 4000);
+  }catch(err){
+    console.error(err);
+    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; }
+  }
+});
+
+// Error message helper
+function getAuthError(code){
+  const errors = {
+    "auth/email-already-in-use": "This email is already registered",
+    "auth/invalid-email": "Invalid email address",
+    "auth/weak-password": "Password too weak (min 6 characters)",
+    "auth/user-not-found": "No account found with this email",
+    "auth/wrong-password": "Incorrect password",
+    "auth/invalid-credential": "Invalid email or password",
+    "auth/too-many-requests": "Too many attempts. Try again later",
+    "auth/network-request-failed": "Network error. Check your internet",
+    "auth/user-disabled": "This account has been disabled",
+    "auth/operation-not-allowed": "Email/Password login is not enabled",
+    "auth/missing-password": "Please enter your password",
+    "auth/missing-email": "Please enter your email"
+  };
+  return errors[code] || "Something went wrong. Please try again";
+}
+
 /* NAVIGATION */
 document.querySelectorAll(".nav-btn").forEach(btn => {
   btn.addEventListener("click", ()=>{
@@ -1103,7 +1232,7 @@ function openPanel(id){
   }
 }
 
-/* LOGIN */
+/* LOGIN (Google) */
 $("googleLogin")?.addEventListener("click", async()=>{
   $("loginStatus").textContent = "Opening Google...";
   try{
@@ -1126,11 +1255,13 @@ async function createProfile(){
   const snap = await getDoc(ref);
 
   if(!snap.exists()){
+    const displayName = currentUser.displayName || 
+      (currentUser.email ? currentUser.email.split("@")[0] : "User");
+    
     await setDoc(ref, {
       uid: currentUser.uid,
-      name: currentUser.displayName || "User",
-      username: (currentUser.displayName || "user")
-        .toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,20) ||
+      name: displayName,
+      username: displayName.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,20) ||
         "user" + Date.now().toString().slice(-5),
       age: "",
       gender: "",
@@ -1246,7 +1377,7 @@ async function loadMySentRequests(){
   }catch(e){ console.error(e); }
 }
 
-/* AUTH */
+/* AUTH STATE */
 onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
@@ -1524,7 +1655,6 @@ $("bannerFile")?.addEventListener("change", async (e)=>{
     e.target.value = "";
   }
 });
-
 /* PRIVATE ACCOUNT */
 async function canViewUser(uid){
   if(!uid) return false;
@@ -1954,11 +2084,6 @@ function setupReelsObserver(){
 
   videos.forEach(v => reelObserver.observe(v));
 }
-
-/* ============================================================
-   NOTE: Part 2 continues below. Ye Part 2 of 2 hai.
-   Iske baad "GLOBAL CLICK HANDLER" section aata hai.
-============================================================ */
 
 /* GLOBAL CLICK HANDLER */
 document.addEventListener("click", async (e)=>{
@@ -4271,4 +4396,4 @@ setTimeout(()=>{
   }
 }, 2500);
 
-console.log("✅ ReelHub loaded with Stories!");
+console.log("✅ ReelHub loaded with Email/Password Auth + Stories!");
