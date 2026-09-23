@@ -15,12 +15,57 @@
 
 <body>
 
-<!-- ============ SPLASH SCREEN ============ -->
+<!-- ============================================================
+     SPLASH SCREEN
+============================================================ -->
 <div id="splashScreen">
   <div class="splash-icon">🎬</div>
   <div class="splash-title">ReelHub</div>
   <div class="splash-tagline">Watch · Upload · Share</div>
   <div class="splash-footer">Powered by ReelHub</div>
+</div>
+
+<!-- ============================================================
+     SUSPENSION SCREEN
+============================================================ -->
+<div id="suspensionScreen" class="hidden">
+  <div class="suspension-card">
+    <div class="suspension-icon">🚫</div>
+    <div class="suspension-title">Account Suspended</div>
+    <div class="suspension-subtitle">
+      Your account has been temporarily suspended for violating our Terms of Service.
+    </div>
+
+    <div class="suspension-info">
+      <div class="suspension-info-row">
+        <span class="label">Reason:</span>
+        <span class="value danger" id="suspensionReason">—</span>
+      </div>
+      <div class="suspension-info-row">
+        <span class="label">Duration:</span>
+        <span class="value" id="suspensionDuration">—</span>
+      </div>
+      <div class="suspension-info-row">
+        <span class="label">Until:</span>
+        <span class="value" id="suspensionUntil">—</span>
+      </div>
+      <div class="suspension-info-row">
+        <span class="label">Suspended on:</span>
+        <span class="value" id="suspensionDate">—</span>
+      </div>
+    </div>
+
+    <div class="suspension-appeal">
+      <p>If you believe this was a mistake, you can appeal:</p>
+      <a href="mailto:appcreator001.harshitkumar@gmail.com?subject=Account%20Suspension%20Appeal">
+        📧 appcreator001.harshitkumar@gmail.com
+      </a>
+    </div>
+
+    <button class="suspension-logout" id="suspensionLogoutBtn">
+      🚪 Logout
+    </button>
+  </div>
 </div>
 
 <!-- ============ LOGIN ============ -->
