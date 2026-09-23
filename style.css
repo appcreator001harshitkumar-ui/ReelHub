@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - style.css (With Splash + Banner)
+   ReelHub - style.css (With Unread Chat Indicator)
 ============================================================ */
 
 * {
@@ -42,10 +42,7 @@ button { border: 0; cursor: pointer; background: none; color: inherit; }
 input, textarea { outline: none; }
 .hidden { display: none !important; }
 
-/* ============================================================
-   SPLASH SCREEN
-============================================================ */
-
+/* SPLASH SCREEN */
 #splashScreen {
   position: fixed;
   inset: 0;
@@ -98,10 +95,7 @@ input, textarea { outline: none; }
   50% { transform: scale(1.15); }
 }
 
-/* ============================================================
-   LOGIN
-============================================================ */
-
+/* LOGIN */
 #loginPage {
   min-height: 100vh;
   display: flex;
@@ -143,10 +137,7 @@ input, textarea { outline: none; }
   font-size: 15px;
 }
 
-/* ============================================================
-   APP SHELL
-============================================================ */
-
+/* APP SHELL */
 #app {
   min-height: 100vh;
   padding-bottom: 60px;
@@ -732,6 +723,17 @@ input, textarea { outline: none; }
   -webkit-overflow-scrolling: touch;
 }
 
+/* Unread dot indicator */
+.dm-unread-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--danger);
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
 .dm-inbox-item {
   display: flex;
   align-items: center;
@@ -770,6 +772,15 @@ input, textarea { outline: none; }
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.dm-inbox-item.unread .dm-inbox-info strong {
+  font-weight: 700;
+}
+
+.dm-inbox-item.unread .dm-inbox-info small {
+  font-weight: 600;
+  color: var(--text);
 }
 
 .dm-inbox-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
@@ -873,7 +884,6 @@ input, textarea { outline: none; }
 
 .dm-shared-video .info { padding: 8px 10px; font-size: 12px; }
 
-/* Chat image */
 .dm-msg-image {
   max-width: 220px;
   border-radius: 12px;
