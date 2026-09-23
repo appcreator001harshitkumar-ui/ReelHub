@@ -19,7 +19,6 @@ body {
   min-height: 100vh;
 }
 
-/* LOGIN */
 #adminLogin {
   display: flex;
   justify-content: center;
@@ -67,7 +66,6 @@ body {
   border: 0;
 }
 
-/* HEADER */
 .admin-header {
   background: linear-gradient(90deg, #7c3aed, #ec4899);
   padding: 20px 16px;
@@ -95,7 +93,6 @@ body {
   cursor: pointer;
 }
 
-/* STATS */
 .admin-stats {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -128,7 +125,6 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* TABS */
 .admin-tabs {
   display: flex;
   gap: 8px;
@@ -160,7 +156,6 @@ body {
   border-color: transparent;
 }
 
-/* CONTENT */
 .admin-content {
   padding: 0 16px 80px;
 }
@@ -174,6 +169,11 @@ body {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+.admin-item.suspended {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
 }
 
 .admin-item img {
@@ -210,14 +210,34 @@ body {
   text-overflow: ellipsis;
 }
 
-.admin-btn {
-  padding: 8px 12px;
+.admin-item .info .suspend-tag {
+  display: inline-block;
+  background: #ef4444;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
   border-radius: 8px;
-  font-size: 11.5px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.admin-btn {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 11px;
   font-weight: 700;
   cursor: pointer;
-  flex-shrink: 0;
   border: 0;
+  white-space: nowrap;
 }
 
 .admin-btn.danger {
@@ -226,10 +246,10 @@ body {
   border: 1px solid #ef4444;
 }
 
-.admin-btn.view {
-  background: rgba(124, 58, 237, 0.15);
-  color: #a78bfa;
-  border: 1px solid #7c3aed;
+.admin-btn.warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+  border: 1px solid #f59e0b;
 }
 
 .admin-btn.success {
@@ -238,7 +258,12 @@ body {
   border: 1px solid #22c55e;
 }
 
-/* VIDEO THUMB */
+.admin-btn.view {
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+  border: 1px solid #7c3aed;
+}
+
 .video-thumb-admin {
   width: 70px;
   height: 48px;
@@ -248,7 +273,6 @@ body {
   flex-shrink: 0;
 }
 
-/* EMPTY */
 .admin-empty {
   text-align: center;
   padding: 60px 20px;
@@ -261,7 +285,175 @@ body {
   margin-bottom: 12px;
 }
 
-/* BROADCAST FORM */
+/* MODAL */
+.admin-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.admin-modal.show {
+  display: flex;
+}
+
+.admin-modal-box {
+  width: 100%;
+  max-width: 440px;
+  background: #1a1a22;
+  border: 1px solid #2a2a35;
+  border-radius: 20px;
+  padding: 24px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.admin-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.admin-modal-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.admin-modal-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2a2a35;
+  color: #fff;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  cursor: pointer;
+}
+
+.admin-form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #aaa;
+  margin-bottom: 8px;
+  margin-top: 16px;
+}
+
+.admin-form-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #2a2a35;
+  background: #0a0a0f;
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+}
+
+.admin-form-input:focus {
+  border-color: #7c3aed;
+}
+
+.duration-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.duration-option {
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid #2a2a35;
+  background: #0a0a0f;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.duration-option.selected {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+}
+
+.duration-option:active {
+  transform: scale(0.97);
+}
+
+.admin-submit-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  background: #ef4444;
+  color: white;
+  border: 0;
+  font-size: 15px;
+  font-weight: 700;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+.admin-submit-btn:disabled {
+  opacity: 0.5;
+}
+
+.admin-submit-btn.success {
+  background: #22c55e;
+}
+
+.admin-cancel-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  background: #2a2a35;
+  color: #fff;
+  border: 0;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 8px;
+  cursor: pointer;
+}
+
+.admin-user-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #0a0a0f;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+
+.admin-user-preview img {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.admin-user-preview strong {
+  display: block;
+  font-size: 15px;
+  margin-bottom: 2px;
+}
+
+.admin-user-preview small {
+  color: #888;
+  font-size: 12.5px;
+}
+
 .broadcast-form {
   background: #1a1a22;
   border: 1px solid #2a2a35;
@@ -306,7 +498,6 @@ body {
   cursor: pointer;
 }
 
-/* TOAST */
 .admin-toast {
   position: fixed;
   bottom: 30px;
@@ -318,7 +509,7 @@ body {
   border-radius: 25px;
   font-size: 13.5px;
   font-weight: 600;
-  z-index: 999;
+  z-index: 9999;
   opacity: 0;
   transition: opacity 0.3s;
   pointer-events: none;
@@ -375,8 +566,8 @@ body {
       <div class="lbl">❤️ Likes</div>
     </div>
     <div class="stat-card">
-      <div class="num" id="statChats">0</div>
-      <div class="lbl">💬 Chats</div>
+      <div class="num" id="statSuspended">0</div>
+      <div class="lbl">🚫 Suspended</div>
     </div>
   </div>
 
@@ -384,11 +575,77 @@ body {
     <div class="admin-tab active" data-tab="users">👥 Users</div>
     <div class="admin-tab" data-tab="videos">🎬 Videos</div>
     <div class="admin-tab" data-tab="reports">⚠️ Reports</div>
-    <div class="admin-tab" data-tab="actions">📢 Broadcast</div>
+    <div class="admin-tab" data-tab="broadcast">📢 Broadcast</div>
   </div>
 
   <div class="admin-content" id="adminContent"></div>
 
+</div>
+
+<!-- SUSPEND MODAL -->
+<div id="suspendModal" class="admin-modal">
+  <div class="admin-modal-box">
+    <div class="admin-modal-header">
+      <h2>🚫 Suspend User</h2>
+      <button class="admin-modal-close" id="suspendModalClose">×</button>
+    </div>
+
+    <div class="admin-user-preview" id="suspendUserPreview">
+      <img id="suspendUserPhoto" src="" alt="">
+      <div>
+        <strong id="suspendUserName">User</strong>
+        <small id="suspendUserUsername">@user</small>
+      </div>
+    </div>
+
+    <label class="admin-form-label">Duration</label>
+    <div class="duration-options" id="durationOptions">
+      <div class="duration-option" data-days="7">7 days</div>
+      <div class="duration-option selected" data-days="30">30 days</div>
+      <div class="duration-option" data-days="90">90 days</div>
+      <div class="duration-option" data-days="permanent">Permanent</div>
+    </div>
+
+    <label class="admin-form-label">Reason</label>
+    <textarea class="admin-form-input" id="suspendReason" 
+              placeholder="Reason for suspension..." rows="3" maxlength="200"></textarea>
+
+    <button class="admin-submit-btn" id="confirmSuspendBtn">
+      🚫 Suspend User
+    </button>
+    <button class="admin-cancel-btn" id="cancelSuspendBtn">
+      Cancel
+    </button>
+  </div>
+</div>
+
+<!-- UNSUSPEND MODAL -->
+<div id="unsuspendModal" class="admin-modal">
+  <div class="admin-modal-box">
+    <div class="admin-modal-header">
+      <h2>✅ Unsuspend User</h2>
+      <button class="admin-modal-close" id="unsuspendModalClose">×</button>
+    </div>
+
+    <div class="admin-user-preview" id="unsuspendUserPreview">
+      <img id="unsuspendUserPhoto" src="" alt="">
+      <div>
+        <strong id="unsuspendUserName">User</strong>
+        <small id="unsuspendUserUsername">@user</small>
+      </div>
+    </div>
+
+    <p style="color:#aaa;font-size:14px;line-height:1.6;margin-bottom:16px">
+      This user's account will be reactivated. They will be able to login and use the app again.
+    </p>
+
+    <button class="admin-submit-btn success" id="confirmUnsuspendBtn">
+      ✅ Unsuspend User
+    </button>
+    <button class="admin-cancel-btn" id="cancelUnsuspendBtn">
+      Cancel
+    </button>
+  </div>
 </div>
 
 <div class="admin-toast" id="adminToast"></div>
@@ -414,7 +671,8 @@ import {
   updateDoc,
   query,
   where,
-  serverTimestamp
+  serverTimestamp,
+  Timestamp
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -436,6 +694,9 @@ let currentUser = null;
 let currentTab = "users";
 let allUsers = [];
 let allVideos = [];
+let suspendTargetUid = null;
+let unsuspendTargetUid = null;
+let selectedDuration = 30; // days
 
 const $ = id => document.getElementById(id);
 
@@ -479,7 +740,7 @@ function timeAgo(v){
   return Math.floor(day / 7) + "w";
 }
 
-/* ============ LOGIN ============ */
+/* LOGIN */
 $("adminLoginBtn")?.addEventListener("click", async () => {
   $("adminLoginStatus").textContent = "Opening Google...";
   try {
@@ -495,7 +756,7 @@ $("adminLogoutBtn")?.addEventListener("click", async () => {
   window.location.reload();
 });
 
-/* ============ AUTH ============ */
+/* AUTH */
 onAuthStateChanged(auth, async (user) => {
   if(!user){
     $("adminLogin").style.display = "flex";
@@ -528,16 +789,21 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 
-/* ============ STATS ============ */
+/* STATS */
 async function loadStats(){
   try {
-    const [usersSnap, videosSnap, chatsSnap] = await Promise.all([
+    const [usersSnap, videosSnap] = await Promise.all([
       getDocs(collection(db, "profiles")),
-      getDocs(collection(db, "videos")),
-      getDocs(collection(db, "chats"))
+      getDocs(collection(db, "videos"))
     ]);
 
     let totalLikes = 0;
+    let suspendedCount = 0;
+
+    usersSnap.forEach(d => {
+      if(d.data().suspended) suspendedCount++;
+    });
+
     videosSnap.forEach(d => {
       totalLikes += Number(d.data().likes || 0);
     });
@@ -545,13 +811,13 @@ async function loadStats(){
     $("statUsers").textContent = usersSnap.size;
     $("statVideos").textContent = videosSnap.size;
     $("statLikes").textContent = totalLikes;
-    $("statChats").textContent = chatsSnap.size;
+    $("statSuspended").textContent = suspendedCount;
   } catch(e) {
     console.error(e);
   }
 }
 
-/* ============ TABS ============ */
+/* TABS */
 document.querySelectorAll(".admin-tab").forEach(tab => {
   tab.addEventListener("click", async () => {
     document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
@@ -571,17 +837,22 @@ async function renderTab(tab){
   if(tab === "users") await renderUsers();
   else if(tab === "videos") await renderVideos();
   else if(tab === "reports") await renderReports();
-  else if(tab === "actions") await renderBroadcast();
+  else if(tab === "broadcast") await renderBroadcast();
 }
 
-/* ============ USERS ============ */
+/* USERS */
 async function renderUsers(){
   const content = $("adminContent");
 
   try {
     const snap = await getDocs(collection(db, "profiles"));
     allUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
-    allUsers.sort((a, b) => (b.videos || 0) - (a.videos || 0));
+    allUsers.sort((a, b) => {
+      // Suspended first
+      if(a.suspended && !b.suspended) return -1;
+      if(!a.suspended && b.suspended) return 1;
+      return (b.videos || 0) - (a.videos || 0);
+    });
 
     if(!allUsers.length){
       content.innerHTML = `<div class="admin-empty">
@@ -592,19 +863,37 @@ async function renderUsers(){
     }
 
     content.innerHTML = allUsers.map(u => `
-      <div class="admin-item">
+      <div class="admin-item ${u.suspended ? 'suspended' : ''}">
         <img src="${avatar(u.photo, u.name)}" alt="">
         <div class="info">
           <strong>${esc(u.name || "User")} ${u.isAdmin ? "👑" : ""}</strong>
           <small>@${esc(u.username || "user")} · ${u.videos || 0} videos · ${u.followers || 0} followers</small>
+          ${u.suspended ? `<span class="suspend-tag">🚫 Suspended</span>` : ''}
         </div>
-        ${u.uid === currentUser.uid
-          ? `<span style="font-size:11px;color:#22c55e;font-weight:700">YOU</span>`
-          : `<button class="admin-btn danger" data-del-user="${esc(u.uid)}">Delete</button>`
-        }
+        <div class="admin-actions">
+          ${u.uid === currentUser.uid
+            ? `<span style="font-size:11px;color:#22c55e;font-weight:700">YOU</span>`
+            : u.suspended
+              ? `<button class="admin-btn success" data-unsuspend="${esc(u.uid)}">✅ Unsuspend</button>
+                 <button class="admin-btn danger" data-del-user="${esc(u.uid)}">🗑️ Delete</button>`
+              : `<button class="admin-btn warning" data-suspend="${esc(u.uid)}">🚫 Suspend</button>
+                 <button class="admin-btn danger" data-del-user="${esc(u.uid)}">🗑️ Delete</button>`
+          }
+        </div>
       </div>
     `).join("");
 
+    // Suspend buttons
+    content.querySelectorAll("[data-suspend]").forEach(btn => {
+      btn.addEventListener("click", () => openSuspendModal(btn.dataset.suspend));
+    });
+
+    // Unsuspend buttons
+    content.querySelectorAll("[data-unsuspend]").forEach(btn => {
+      btn.addEventListener("click", () => openUnsuspendModal(btn.dataset.unsuspend));
+    });
+
+    // Delete buttons
     content.querySelectorAll("[data-del-user]").forEach(btn => {
       btn.addEventListener("click", () => deleteUser(btn.dataset.delUser));
     });
@@ -617,6 +906,181 @@ async function renderUsers(){
   }
 }
 
+/* SUSPEND MODAL */
+function openSuspendModal(uid){
+  const user = allUsers.find(u => u.uid === uid);
+  if(!user) return;
+
+  suspendTargetUid = uid;
+  selectedDuration = 30;
+
+  $("suspendUserPhoto").src = avatar(user.photo, user.name);
+  $("suspendUserName").textContent = user.name || "User";
+  $("suspendUserUsername").textContent = "@" + (user.username || "user");
+  $("suspendReason").value = "";
+
+  // Reset duration selection
+  document.querySelectorAll(".duration-option").forEach(opt => {
+    opt.classList.toggle("selected", opt.dataset.days === "30");
+  });
+
+  $("suspendModal").classList.add("show");
+}
+
+document.querySelectorAll(".duration-option").forEach(opt => {
+  opt.addEventListener("click", () => {
+    document.querySelectorAll(".duration-option").forEach(o => o.classList.remove("selected"));
+    opt.classList.add("selected");
+    const days = opt.dataset.days;
+    selectedDuration = days === "permanent" ? "permanent" : parseInt(days);
+  });
+});
+
+$("suspendModalClose")?.addEventListener("click", () => {
+  $("suspendModal").classList.remove("show");
+  suspendTargetUid = null;
+});
+
+$("cancelSuspendBtn")?.addEventListener("click", () => {
+  $("suspendModal").classList.remove("show");
+  suspendTargetUid = null;
+});
+
+$("confirmSuspendBtn")?.addEventListener("click", async () => {
+  if(!suspendTargetUid) return;
+
+  const reason = $("suspendReason").value.trim();
+  if(!reason){
+    showToast("Reason डालो", true);
+    return;
+  }
+
+  const btn = $("confirmSuspendBtn");
+  btn.disabled = true;
+  btn.textContent = "Suspending...";
+
+  try {
+    // Calculate suspendUntil
+    let suspendUntil = null;
+    let durationText = "";
+
+    if(selectedDuration === "permanent"){
+      durationText = "Permanent";
+      suspendUntil = null;
+    }else{
+      durationText = selectedDuration + " days";
+      const untilDate = new Date();
+      untilDate.setDate(untilDate.getDate() + selectedDuration);
+      suspendUntil = Timestamp.fromDate(untilDate);
+    }
+
+    const user = allUsers.find(u => u.uid === suspendTargetUid);
+
+    await updateDoc(doc(db, "profiles", suspendTargetUid), {
+      suspended: true,
+      suspendReason: reason,
+      suspendDuration: durationText,
+      suspendUntil: suspendUntil,
+      suspendedAt: serverTimestamp(),
+      suspendedBy: currentUser.uid
+    });
+
+    // Send notification
+    try {
+      await addDoc(collection(db, "notifications"), {
+        to: suspendTargetUid,
+        from: currentUser.uid,
+        title: "🚫 Account Suspended",
+        message: `Your account has been suspended. Reason: ${reason}. Duration: ${durationText}`,
+        createdAt: serverTimestamp()
+      });
+    } catch(e) {}
+
+    showToast("✅ User suspended");
+    $("suspendModal").classList.remove("show");
+    suspendTargetUid = null;
+
+    await loadStats();
+    await renderUsers();
+
+  } catch(e) {
+    console.error(e);
+    showToast("Error: " + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🚫 Suspend User";
+  }
+});
+
+/* UNSUSPEND MODAL */
+function openUnsuspendModal(uid){
+  const user = allUsers.find(u => u.uid === uid);
+  if(!user) return;
+
+  unsuspendTargetUid = uid;
+
+  $("unsuspendUserPhoto").src = avatar(user.photo, user.name);
+  $("unsuspendUserName").textContent = user.name || "User";
+  $("unsuspendUserUsername").textContent = "@" + (user.username || "user");
+
+  $("unsuspendModal").classList.add("show");
+}
+
+$("unsuspendModalClose")?.addEventListener("click", () => {
+  $("unsuspendModal").classList.remove("show");
+  unsuspendTargetUid = null;
+});
+
+$("cancelUnsuspendBtn")?.addEventListener("click", () => {
+  $("unsuspendModal").classList.remove("show");
+  unsuspendTargetUid = null;
+});
+
+$("confirmUnsuspendBtn")?.addEventListener("click", async () => {
+  if(!unsuspendTargetUid) return;
+
+  const btn = $("confirmUnsuspendBtn");
+  btn.disabled = true;
+  btn.textContent = "Unsuspending...";
+
+  try {
+    await updateDoc(doc(db, "profiles", unsuspendTargetUid), {
+      suspended: false,
+      suspendReason: "",
+      suspendDuration: "",
+      suspendUntil: null,
+      unsuspendedAt: serverTimestamp(),
+      unsuspendedBy: currentUser.uid
+    });
+
+    // Send notification
+    try {
+      await addDoc(collection(db, "notifications"), {
+        to: unsuspendTargetUid,
+        from: currentUser.uid,
+        title: "✅ Account Restored",
+        message: "Your account has been unsuspended. Welcome back!",
+        createdAt: serverTimestamp()
+      });
+    } catch(e) {}
+
+    showToast("✅ User unsuspended");
+    $("unsuspendModal").classList.remove("show");
+    unsuspendTargetUid = null;
+
+    await loadStats();
+    await renderUsers();
+
+  } catch(e) {
+    console.error(e);
+    showToast("Error: " + e.message, true);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✅ Unsuspend User";
+  }
+});
+
+/* DELETE USER */
 async function deleteUser(uid){
   if(uid === currentUser.uid){
     showToast("You can't delete yourself", true);
@@ -626,34 +1090,28 @@ async function deleteUser(uid){
   if(!confirm("Delete this user and all their data?")) return;
 
   try {
-    // Delete user's videos + subcollections
     const videosSnap = await getDocs(
       query(collection(db, "videos"), where("userId", "==", uid))
     );
 
     for(const v of videosSnap.docs){
-      // Delete comments
       const comments = await getDocs(collection(db, "videos", v.id, "comments"));
       for(const c of comments.docs) await deleteDoc(c.ref);
 
-      // Delete likes
       const likes = await getDocs(collection(db, "videos", v.id, "likes"));
       for(const l of likes.docs) await deleteDoc(l.ref);
 
-      // Delete views
       const views = await getDocs(collection(db, "videos", v.id, "views"));
       for(const view of views.docs) await deleteDoc(view.ref);
 
       await deleteDoc(v.ref);
     }
 
-    // Delete profile
     await deleteDoc(doc(db, "profiles", uid));
 
-    // Delete presence
     try {
       await deleteDoc(doc(db, "presence", uid));
-    } catch(e){}
+    } catch(e) {}
 
     showToast("✅ User deleted");
     await loadStats();
@@ -664,7 +1122,7 @@ async function deleteUser(uid){
   }
 }
 
-/* ============ VIDEOS ============ */
+/* VIDEOS */
 async function renderVideos(){
   const content = $("adminContent");
 
@@ -712,19 +1170,15 @@ async function deleteVideoAdmin(vid){
   if(!confirm("Delete this video?")) return;
 
   try {
-    // Delete comments
     const comments = await getDocs(collection(db, "videos", vid, "comments"));
     for(const c of comments.docs) await deleteDoc(c.ref);
 
-    // Delete likes
     const likes = await getDocs(collection(db, "videos", vid, "likes"));
     for(const l of likes.docs) await deleteDoc(l.ref);
 
-    // Delete views
     const views = await getDocs(collection(db, "videos", vid, "views"));
     for(const view of views.docs) await deleteDoc(view.ref);
 
-    // Delete video
     await deleteDoc(doc(db, "videos", vid));
 
     showToast("✅ Video deleted");
@@ -736,7 +1190,7 @@ async function deleteVideoAdmin(vid){
   }
 }
 
-/* ============ REPORTS ============ */
+/* REPORTS */
 async function renderReports(){
   const content = $("adminContent");
 
@@ -784,7 +1238,7 @@ async function renderReports(){
   }
 }
 
-/* ============ BROADCAST ============ */
+/* BROADCAST */
 async function renderBroadcast(){
   const content = $("adminContent");
 
@@ -813,15 +1267,8 @@ async function sendBroadcast(){
   const title = $("bcTitle").value.trim();
   const message = $("bcMessage").value.trim();
 
-  if(!title){
-    showToast("Title डालो", true);
-    return;
-  }
-
-  if(!message){
-    showToast("Message डालो", true);
-    return;
-  }
+  if(!title){ showToast("Title डालो", true); return; }
+  if(!message){ showToast("Message डालो", true); return; }
 
   if(!confirm("Send notification to ALL users?")) return;
 
@@ -834,7 +1281,6 @@ async function sendBroadcast(){
 
     for(const u of usersSnap.docs){
       if(u.id === currentUser.uid) continue;
-
       try {
         await addDoc(collection(db, "notifications"), {
           to: u.id,
@@ -859,7 +1305,16 @@ async function sendBroadcast(){
   }
 }
 
-console.log("✅ Admin Panel loaded!");
+/* CLOSE MODALS ON BACKDROP CLICK */
+document.querySelectorAll(".admin-modal").forEach(modal => {
+  modal.addEventListener("click", (e) => {
+    if(e.target === modal){
+      modal.classList.remove("show");
+    }
+  });
+});
+
+console.log("✅ Admin Panel loaded with Suspension!");
 </script>
 
 </body>
