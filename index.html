@@ -73,8 +73,57 @@
   <div class="login-card">
     <div class="logo">ReelHub</div>
     <p>Watch · Upload · Share</p>
-    <button class="google-btn" id="googleLogin">Continue with Google</button>
-    <p id="loginStatus" style="margin-top:15px;font-size:13px"></p>
+
+    <!-- Tabs: Login / Signup -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login" type="button">Login</button>
+      <button class="auth-tab" data-tab="signup" type="button">Sign Up</button>
+    </div>
+
+    <!-- Login Form -->
+    <form id="loginForm" class="auth-form">
+      <input type="email" id="loginEmail" class="yt-input" 
+             placeholder="Email" style="margin-bottom:10px" required autocomplete="email">
+      <input type="password" id="loginPassword" class="yt-input" 
+             placeholder="Password" style="margin-bottom:14px" required autocomplete="current-password">
+      <button type="submit" class="google-btn" 
+              style="background:linear-gradient(90deg,#7c3aed,#ec4899)">
+        Login
+      </button>
+      <button type="button" id="forgotPasswordBtn" 
+              style="background:none;color:#7c3aed;font-size:13px;margin-top:12px;font-weight:600;padding:8px">
+        Forgot Password?
+      </button>
+    </form>
+
+    <!-- Signup Form -->
+    <form id="signupForm" class="auth-form hidden">
+      <input type="text" id="signupName" class="yt-input" 
+             placeholder="Full Name" style="margin-bottom:10px" required autocomplete="name">
+      <input type="email" id="signupEmail" class="yt-input" 
+             placeholder="Email" style="margin-bottom:10px" required autocomplete="email">
+      <input type="password" id="signupPassword" class="yt-input" 
+             placeholder="Password (min 6 characters)" 
+             style="margin-bottom:14px" minlength="6" required autocomplete="new-password">
+      <button type="submit" class="google-btn" 
+              style="background:linear-gradient(90deg,#7c3aed,#ec4899)">
+        Create Account
+      </button>
+    </form>
+
+    <!-- Divider -->
+    <div class="auth-divider">
+      <span>OR</span>
+    </div>
+
+    <!-- Google Button -->
+    <button class="google-btn" id="googleLogin" type="button">
+      <span style="margin-right:8px">🔵</span> Continue with Google
+    </button>
+
+    <!-- Status Message -->
+    <p id="loginStatus" style="margin-top:15px;font-size:13px;color:#ed4956;min-height:18px"></p>
+
     <p style="margin-top:20px;font-size:11px;color:#888;line-height:1.5">
       By continuing, you agree to our
       <a href="/ReelHub/terms.html" style="color:#7c3aed">Terms of Service</a>
@@ -101,7 +150,7 @@
   <!-- HOME -->
   <section id="homePanel" class="panel">
 
-    <!-- ✅ STORIES BAR -->
+    <!-- STORIES BAR -->
     <div class="stories-bar" id="storiesBar">
       <div class="stories-loading">Loading stories...</div>
     </div>
@@ -696,9 +745,7 @@
 
 <input type="file" id="bannerFile" accept="image/*" class="hidden">
 
-<!-- ============================================================
-     ✅ CREATE STORY MODAL (NEW)
-============================================================ -->
+<!-- CREATE STORY MODAL -->
 <div id="createStoryModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -735,15 +782,11 @@
 <!-- Hidden story file input -->
 <input type="file" id="storyFile" accept="image/*,video/*" class="hidden">
 
-<!-- ============================================================
-     ✅ STORY VIEWER (NEW)
-============================================================ -->
+<!-- STORY VIEWER -->
 <div id="storyViewer">
 
   <!-- Progress bars -->
-  <div class="story-progress-bar" id="storyProgressBar">
-    <!-- Segments JS se render honge -->
-  </div>
+  <div class="story-progress-bar" id="storyProgressBar"></div>
 
   <!-- Header -->
   <div class="story-header">
@@ -757,15 +800,13 @@
   </div>
 
   <!-- Media -->
-  <div class="story-media" id="storyMedia">
-    <!-- Image/Video JS se inject hoga -->
-  </div>
+  <div class="story-media" id="storyMedia"></div>
 
   <!-- Tap zones -->
   <div class="story-nav-left" id="storyPrevZone"></div>
   <div class="story-nav-right" id="storyNextZone"></div>
 
-  <!-- Views counter (only for own story) -->
+  <!-- Views counter -->
   <div class="story-views hidden" id="storyViewsCounter">
     <span>👁️</span>
     <span id="storyViewsCount">0</span>
