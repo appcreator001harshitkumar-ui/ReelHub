@@ -126,60 +126,138 @@ a {
   font-size: 14px;
 }
 
-.step-card {
-  background: white;
-  border: 1px solid #e5e5e5;
-  border-radius: 12px;
-  padding: 18px 20px;
-  margin-bottom: 14px;
-  position: relative;
-}
-
-.step-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: linear-gradient(90deg, #7c3aed, #ec4899);
-  color: white;
-  border-radius: 50%;
-  font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-
-.step-card h3 {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 6px;
-  color: #171717;
-}
-
-.step-card p {
-  font-size: 14px;
-  margin-bottom: 0;
-  color: #555;
-}
-
-.delete-btn {
+.delete-account-btn {
   display: block;
   width: 100%;
-  padding: 14px;
+  padding: 16px;
   background: #ef4444;
   color: white;
   border: 0;
-  border-radius: 10px;
-  font-size: 15px;
+  border-radius: 12px;
+  font-size: 16px;
   font-weight: 700;
-  margin-top: 20px;
+  margin-top: 24px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.delete-account-btn:active {
+  background: #dc2626;
+  transform: scale(0.98);
+}
+
+.delete-account-btn:disabled {
+  background: #999;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cancel-btn {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: #f5f5f7;
+  color: #171717;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  margin-top: 12px;
   cursor: pointer;
   text-align: center;
   text-decoration: none;
 }
 
-.delete-btn:active {
-  background: #dc2626;
+.cancel-btn:active {
+  background: #e5e5e5;
+}
+
+#loginPrompt {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  margin-top: 20px;
+}
+
+#loginPrompt .icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+#loginPrompt h3 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+#loginPrompt p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.login-btn {
+  display: inline-block;
+  padding: 12px 28px;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  color: white;
+  border: 0;
+  border-radius: 25px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+#successScreen {
+  display: none;
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 16px;
+  padding: 40px 24px;
+  text-align: center;
+  margin-top: 20px;
+}
+
+#successScreen .icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+#successScreen h2 {
+  font-size: 22px;
+  font-weight: 900;
+  color: #22c55e;
+  margin-bottom: 12px;
+  background: none;
+  -webkit-background-clip: unset;
+}
+
+#successScreen p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.loading {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .footer {
@@ -196,6 +274,8 @@ a {
   margin: 0 8px;
 }
 
+.hidden { display: none !important; }
+
 @media (max-width: 500px) {
   body { padding: 16px 14px 40px; font-size: 14px; }
   h1 { font-size: 24px; }
@@ -207,96 +287,257 @@ a {
 
 <a href="/ReelHub/" class="back-btn">← Back to ReelHub</a>
 
-<h1>Delete Account</h1>
-<div class="last-updated">Last Updated: 23 September 2026</div>
+<div id="mainContent">
+  <h1>Delete Account</h1>
+  <div class="last-updated">Last Updated: 23 September 2026</div>
 
-<div class="warning-box">
-  <p>⚠️ <strong>Warning:</strong> Deleting your account is permanent and cannot be undone. All your data will be removed.</p>
+  <div class="warning-box">
+    <p>⚠️ <strong>Warning:</strong> Deleting your account is permanent and cannot be undone. All your data will be permanently removed.</p>
+  </div>
+
+  <h2>What Will Be Deleted</h2>
+  <p>When you delete your ReelHub account, the following data will be <strong>permanently removed</strong>:</p>
+  <ul>
+    <li>✅ Your profile (name, username, bio, photo)</li>
+    <li>✅ All your videos</li>
+    <li>✅ All your comments</li>
+    <li>✅ All your likes</li>
+    <li>✅ All your messages and chats</li>
+    <li>✅ Your followers and following list</li>
+    <li>✅ All notifications</li>
+    <li>✅ Your saved videos and playlists</li>
+  </ul>
+
+  <div class="info-box">
+    <p>💡 <strong>Note:</strong> Once deleted, this action <strong>cannot be reversed</strong>. Please make sure you want to proceed.</p>
+  </div>
+
+  <div id="loginPrompt" class="hidden">
+    <div class="icon">🔐</div>
+    <h3>Login Required</h3>
+    <p>Please login to your account to delete it.</p>
+    <a href="/ReelHub/" class="login-btn">Go to Login</a>
+  </div>
+
+  <div id="deleteAction" class="hidden">
+    <h2>Ready to Delete?</h2>
+    <p>Click the button below to permanently delete your account. You will be asked to confirm.</p>
+
+    <button class="delete-account-btn" id="deleteAccountConfirmBtn">
+      🗑️ Delete My Account Forever
+    </button>
+
+    <a href="/ReelHub/" class="cancel-btn">
+      ❌ Cancel - Keep My Account
+    </a>
+
+    <div id="deleteStatus" style="margin-top:16px;text-align:center;font-size:14px;color:#666"></div>
+  </div>
+
+  <div id="successScreen">
+    <div class="icon">✅</div>
+    <h2>Account Deleted</h2>
+    <p>Your ReelHub account has been permanently deleted.<br>All your data has been removed.</p>
+    <p style="font-size:12px;color:#888">Thank you for using ReelHub. We're sad to see you go.</p>
+    <a href="/ReelHub/" class="login-btn" style="margin-top:16px">← Back to ReelHub</a>
+  </div>
+
+  <h2>Alternative: Email Request</h2>
+  <p>If you are unable to delete your account through the app, you can email us:</p>
+  <div class="contact-box">
+    <p><strong>Email:</strong> appcreator001.harshitkumar@gmail.com</p>
+    <p><strong>Subject:</strong> Account Deletion Request</p>
+    <p><strong>Response Time:</strong> Within 7 days</p>
+  </div>
+
+  <div class="footer">
+    <a href="/ReelHub/privacy.html">Privacy Policy</a> ·
+    <a href="/ReelHub/terms.html">Terms of Service</a> ·
+    <a href="/ReelHub/delete-account.html">Delete Account</a>
+    <p style="margin-top:12px">© 2026 ReelHub. All rights reserved.</p>
+  </div>
 </div>
 
-<h2>What Gets Deleted</h2>
-<p>When you delete your ReelHub account, the following data will be <strong>permanently removed</strong>:</p>
-<ul>
-  <li>✅ Your profile (name, username, bio, photo)</li>
-  <li>✅ All your videos</li>
-  <li>✅ All your comments</li>
-  <li>✅ All your likes</li>
-  <li>✅ All your messages and chats</li>
-  <li>✅ Your followers and following list</li>
-  <li>✅ All notifications</li>
-  <li>✅ Your saved videos and playlists</li>
-</ul>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDocs,
+  deleteDoc,
+  query,
+  where,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-<h2>How to Delete Your Account</h2>
+const firebaseConfig = {
+  apiKey: "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
+  authDomain: "reelhu.firebaseapp.com",
+  projectId: "reelhu",
+  storageBucket: "reelhu.firebasestorage.app",
+  messagingSenderId: "883255506643",
+  appId: "1:883255506643:web:600256ed9bb47a4f828626",
+  measurementId: "G-FY9N5XNF6Z"
+};
 
-<div class="step-card">
-  <div class="step-num">1</div>
-  <h3>Open ReelHub App</h3>
-  <p>Open the ReelHub app on your device and make sure you are logged in.</p>
-</div>
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-<div class="step-card">
-  <div class="step-num">2</div>
-  <h3>Go to Settings</h3>
-  <p>Tap on <strong>Profile</strong> (bottom navigation) → Tap the <strong>⚙️ Settings</strong> button.</p>
-</div>
+const $ = id => document.getElementById(id);
 
-<div class="step-card">
-  <div class="step-num">3</div>
-  <h3>Tap "Delete Account"</h3>
-  <p>Find the red <strong>"Delete Account"</strong> button at the bottom of Settings.</p>
-</div>
+let currentUser = null;
+let currentProfile = null;
 
-<div class="step-card">
-  <div class="step-num">4</div>
-  <h3>Confirm Deletion</h3>
-  <p>Read the warning, then tap <strong>"Yes, Delete Forever"</strong> to confirm.</p>
-</div>
+onAuthStateChanged(auth, async (user) => {
+  if(user){
+    currentUser = user;
+    const snap = await getDocs(
+      query(collection(db, "profiles"), where("uid", "==", user.uid))
+    );
+    if(!snap.empty){
+      currentProfile = { id: snap.docs[0].id, ...snap.docs[0].data() };
+    }
+    $("loginPrompt").classList.add("hidden");
+    $("deleteAction").classList.remove("hidden");
+  }else{
+    currentUser = null;
+    $("loginPrompt").classList.remove("hidden");
+    $("deleteAction").classList.add("hidden");
+  }
+});
 
-<h2>Alternative: Email Request</h2>
-<p>
-  If you are unable to access the app, you can request account deletion via email:
-</p>
-<div class="contact-box">
-  <p><strong>Email:</strong> appcreator001.harshitkumar@gmail.com</p>
-  <p><strong>Subject:</strong> Account Deletion Request</p>
-  <p><strong>Include:</strong> Your username and registered email</p>
-  <p><strong>Response Time:</strong> Within 7 days</p>
-</div>
+$("deleteAccountConfirmBtn")?.addEventListener("click", async () => {
+  if(!currentUser || !currentProfile){
+    alert("Please login first");
+    return;
+  }
 
-<h2>Data Retention After Deletion</h2>
-<p>
-  After you delete your account:
-</p>
-<ul>
-  <li>Your profile is deleted <strong>immediately</strong></li>
-  <li>Your videos, comments, likes removed <strong>immediately</strong></li>
-  <li>Backup copies are deleted within <strong>30 days</strong></li>
-  <li>Some anonymized data may be retained for legal/analytics purposes</li>
-</ul>
+  const confirm1 = confirm(
+    "⚠️ Are you sure you want to DELETE your account?\n\n" +
+    "This will permanently remove:\n" +
+    "• Your profile\n" +
+    "• All your videos\n" +
+    "• All your comments, likes, messages\n" +
+    "• Followers and following\n\n" +
+    "This CANNOT be undone!"
+  );
 
-<h2>Before You Delete</h2>
-<div class="info-box">
-  <p>💡 <strong>Consider:</strong> You can also download your data before deleting. Contact us at appcreator001.harshitkumar@gmail.com to request a copy of your data.</p>
-</div>
+  if(!confirm1) return;
 
-<h2>Need Help?</h2>
-<p>
-  If you have any questions about account deletion, please contact us:
-</p>
-<div class="contact-box">
-  <p><strong>Email:</strong> appcreator001.harshitkumar@gmail.com</p>
-  <p><strong>Response Time:</strong> Within 48 hours</p>
-</div>
+  const userInput = prompt("Type DELETE (in capital letters) to confirm:");
+  if(userInput !== "DELETE"){
+    alert("Cancelled. You must type DELETE in capital letters.");
+    return;
+  }
 
-<a href="/ReelHub/" class="delete-btn">Cancel - Go Back to ReelHub</a>
+  const btn = $("deleteAccountConfirmBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="loading"></span>Deleting...';
 
-<div class="footer">
-  <a href="/ReelHub/privacy.html">Privacy Policy</a> ·
-  <a href="/ReelHub/terms.html">Terms of Service</a> ·
-  <a href="/ReelHub/delete-account.html">Delete Account</a>
-  <p style="margin-top:12px">© 2026 ReelHub. All rights reserved.</p>
-</div>
+  const status = $("deleteStatus");
+  const uid = currentUser.uid;
+
+  try{
+    status.textContent = "Deleting videos...";
+    const videosSnap = await getDocs(
+      query(collection(db, "videos"), where("userId", "==", uid))
+    );
+
+    for(const v of videosSnap.docs){
+      const comments = await getDocs(collection(db, "videos", v.id, "comments"));
+      for(const c of comments.docs) await deleteDoc(c.ref);
+
+      const likes = await getDocs(collection(db, "videos", v.id, "likes"));
+      for(const l of likes.docs) await deleteDoc(l.ref);
+
+      const views = await getDocs(collection(db, "videos", v.id, "views"));
+      for(const view of views.docs) await deleteDoc(view.ref);
+
+      await deleteDoc(v.ref);
+    }
+
+    status.textContent = "Deleting profile...";
+    if(currentProfile?.id){
+      await deleteDoc(doc(db, "profiles", currentProfile.id));
+    }
+
+    status.textContent = "Cleaning up...";
+    try{
+      await deleteDoc(doc(db, "presence", uid));
+    }catch(e){}
+
+    try{
+      const reqFrom = await getDocs(query(collection(db, "follow_requests"), where("from", "==", uid)));
+      for(const r of reqFrom.docs) await deleteDoc(r.ref);
+
+      const reqTo = await getDocs(query(collection(db, "follow_requests"), where("to", "==", uid)));
+      for(const r of reqTo.docs) await deleteDoc(r.ref);
+    }catch(e){}
+
+    try{
+      const follower = await getDocs(query(collection(db, "follows"), where("follower", "==", uid)));
+      for(const f of follower.docs) await deleteDoc(f.ref);
+
+      const following = await getDocs(query(collection(db, "follows"), where("following", "==", uid)));
+      for(const f of following.docs) await deleteDoc(f.ref);
+    }catch(e){}
+
+    try{
+      const saves = await getDocs(query(collection(db, "saves"), where("userId", "==", uid)));
+      for(const s of saves.docs) await deleteDoc(s.ref);
+    }catch(e){}
+
+    try{
+      const playlists = await getDocs(query(collection(db, "playlists"), where("userId", "==", uid)));
+      for(const p of playlists.docs){
+        const items = await getDocs(collection(db, "playlists", p.id, "items"));
+        for(const i of items.docs) await deleteDoc(i.ref);
+        await deleteDoc(p.ref);
+      }
+    }catch(e){}
+
+    try{
+      const notifs = await getDocs(query(collection(db, "notifications"), where("to", "==", uid)));
+      for(const n of notifs.docs) await deleteDoc(n.ref);
+    }catch(e){}
+
+    try{
+      await addDoc(collection(db, "deletions"), {
+        uid: uid,
+        name: currentProfile?.name || "User",
+        username: currentProfile?.username || "",
+        email: currentUser.email || "",
+        deletedAt: serverTimestamp()
+      });
+    }catch(e){}
+
+    status.textContent = "Signing out...";
+    await signOut(auth);
+
+    document.querySelectorAll("#mainContent > h2, #mainContent > p, #mainContent > ul, #mainContent > .warning-box, #mainContent > .info-box, #mainContent > .contact-box, #deleteAction").forEach(el => {
+      el.style.display = "none";
+    });
+    $("successScreen").style.display = "block";
+    window.scrollTo(0, 0);
+
+  }catch(error){
+    console.error(error);
+    alert("Error deleting account: " + error.message);
+    btn.disabled = false;
+    btn.textContent = "🗑️ Delete My Account Forever";
+    status.textContent = "Failed: " + error.message;
+  }
+});
+
+</script>
 
 </body>
 </html>
