@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Contact Us - ReelHub</title>
+<style>
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+body {
+  background: #fafafa;
+  color: #171717;
+  line-height: 1.7;
+  padding: 20px 16px 60px;
+  max-width: 720px;
+  margin: 0 auto;
+  font-size: 15px;
+}
+
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  color: white;
+  text-decoration: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 900;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 32px;
+  margin-bottom: 12px;
+  color: #171717;
+}
+
+p {
+  margin-bottom: 12px;
+  color: #444;
+}
+
+strong {
+  color: #171717;
+  font-weight: 700;
+}
+
+a {
+  color: #7c3aed;
+  text-decoration: underline;
+}
+
+.contact-card {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: all 0.2s;
+}
+
+.contact-card:active {
+  background: #f5f5f7;
+  transform: scale(0.98);
+}
+
+.contact-card .icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.contact-card .info {
+  flex: 1;
+  min-width: 0;
+}
+
+.contact-card .info strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: #171717;
+}
+
+.contact-card .info small {
+  font-size: 13px;
+  color: #888;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-card .arrow {
+  font-size: 18px;
+  color: #ccc;
+  flex-shrink: 0;
+}
+
+.info-box {
+  background: linear-gradient(135deg, rgba(124,58,237,0.08), rgba(236,72,153,0.08));
+  border-left: 4px solid #7c3aed;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+}
+
+.info-box p {
+  margin-bottom: 0;
+  font-size: 14px;
+}
+
+.faq-item {
+  background: white;
+  border: 1px solid #e5e5e5;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.faq-q {
+  padding: 14px 16px;
+  font-weight: 600;
+  font-size: 14.5px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #171717;
+}
+
+.faq-q:active {
+  background: #f5f5f7;
+}
+
+.faq-q .plus {
+  font-size: 20px;
+  color: #7c3aed;
+  font-weight: 300;
+  transition: transform 0.2s;
+}
+
+.faq-a {
+  padding: 0 16px;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.3s;
+  font-size: 14px;
+  color: #555;
+  border-top: 0 solid #e5e5e5;
+}
+
+.faq-item.open .faq-a {
+  padding: 12px 16px;
+  max-height: 300px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.faq-item.open .faq-q .plus {
+  transform: rotate(45deg);
+}
+
+.footer {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e5e5;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+}
+
+.footer a {
+  color: #7c3aed;
+  margin: 0 8px;
+}
+
+@media (max-width: 500px) {
+  body { padding: 16px 14px 40px; font-size: 14px; }
+  h1 { font-size: 24px; }
+  h2 { font-size: 18px; }
+}
+</style>
+</head>
+<body>
+
+<a href="/ReelHub/" class="back-btn">← Back to ReelHub</a>
+
+<h1>Contact Us</h1>
+<div class="subtitle">We're here to help! Reach out to us anytime.</div>
+
+<h2>📧 Get in Touch</h2>
+
+<a href="mailto:appcreator001.harshitkumar@gmail.com" class="contact-card">
+  <div class="icon-box">📧</div>
+  <div class="info">
+    <strong>Email Support</strong>
+    <small>appcreator001.harshitkumar@gmail.com</small>
+  </div>
+  <div class="arrow">›</div>
+</a>
+
+<a href="mailto:appcreator001.harshitkumar@gmail.com?subject=Report%20Abuse" class="contact-card">
+  <div class="icon-box">⚠️</div>
+  <div class="info">
+    <strong>Report Abuse</strong>
+    <small>Report harmful content or users</small>
+  </div>
+  <div class="arrow">›</div>
+</a>
+
+<a href="mailto:appcreator001.harshitkumar@gmail.com?subject=Account%20Deletion%20Request" class="contact-card">
+  <div class="icon-box">🗑️</div>
+  <div class="info">
+    <strong>Delete Account</strong>
+    <small>Request account deletion</small>
+  </div>
+  <div class="arrow">›</div>
+</a>
+
+<a href="mailto:appcreator001.harshitkumar@gmail.com?subject=Business%20Inquiry" class="contact-card">
+  <div class="icon-box">💼</div>
+  <div class="info">
+    <strong>Business Inquiry</strong>
+    <small>Partnerships and collaborations</small>
+  </div>
+  <div class="arrow">›</div>
+</a>
+
+<a href="mailto:appcreator001.harshitkumar@gmail.com?subject=Bug%20Report" class="contact-card">
+  <div class="icon-box">🐛</div>
+  <div class="info">
+    <strong>Report a Bug</strong>
+    <small>Found an issue? Let us know</small>
+  </div>
+  <div class="arrow">›</div>
+</a>
+
+<h2>⏱️ Response Time</h2>
+<p>
+  We try our best to respond to all inquiries within:
+</p>
+<ul style="margin-left:20px;color:#444;margin-bottom:14px">
+  <li><strong>General Support:</strong> 48 hours</li>
+  <li><strong>Report Abuse:</strong> 24 hours</li>
+  <li><strong>Account Deletion:</strong> 7 days</li>
+  <li><strong>Grievance Officer:</strong> 15 days</li>
+</ul>
+
+<h2>❓ Frequently Asked Questions</h2>
+
+<div class="faq-item">
+  <div class="faq-q">
+    How do I delete my account?
+    <span class="plus">+</span>
+  </div>
+  <div class="faq-a">
+    Go to Settings → Delete Account. If you can't access the app, email us at appcreator001.harshitkumar@gmail.com with your username.
+  </div>
+</div>
+
+<div class="faq-item">
+  <div class="faq-q">
+    How do I report inappropriate content?
+    <span class="plus">+</span>
+  </div>
+  <div class="faq-a">
+    Tap the three dots (⋯) on any video or comment and select "Report". Our team will review it within 24 hours.
+  </div>
+</div>
+
+<div class="faq-item">
+  <div class="faq-q">
+    Can I get my data back after deletion?
+    <span class="plus">+</span>
+  </div>
+  <div class="faq-a">
+    No. Account deletion is permanent. Once deleted, your data cannot be recovered.
+  </div>
+</div>
+
+<div class="faq-item">
+  <div class="faq-q">
+    How do I make my account private?
+    <span class="plus">+</span>
+  </div>
+  <div class="faq-a">
+    Go to Settings → Private Account → Toggle ON. Only approved followers will see your videos.
+  </div>
+</div>
+
+<div class="faq-item">
+  <div class="faq-q">
+    Someone is harassing me. What should I do?
+    <span class="plus">+</span>
+  </div>
+  <div class="faq-a">
+    Block the user immediately (Profile → Block). Then report them via email with screenshots. We take harassment very seriously.
+  </div>
+</div>
+
+<div class="faq-item">
+  <div class="faq-q">
+    Why was my video removed?
+    <span class="plus">+</span>
+  </div>
+  <div class="faq-a">
+    Your video may have violated our Terms of Service (e.g., nudity, violence, copyright). Check your email for details.
+  </div>
+</div>
+
+<div class="faq-item">
+  <div class="faq-q">
+    How do I change my username?
+    <span class="plus">+</span>
+  </div>
+  <div class="faq-a">
+    Go to Profile → Edit Profile → Change User ID. Make sure it's unique.
+  </div>
+</div>
+
+<div class="faq-item">
+  <div class="faq-q">
+    Is ReelHub free to use?
+    <span class="plus">+</span>
+  </div>
+  <div class="faq-a">
+    Yes! ReelHub is completely free. We may add premium features in the future.
+  </div>
+</div>
+
+<h2>📢 Grievance Officer</h2>
+<p>
+  For legal complaints as per IT Rules 2021:
+</p>
+<div class="info-box">
+  <p><strong>Name:</strong> Harshit Kumar</p>
+  <p><strong>Email:</strong> appcreator001.harshitkumar@gmail.com</p>
+  <p><strong>Response:</strong> Within 15 days</p>
+</div>
+
+<h2>🏢 About ReelHub</h2>
+<p>
+  <strong>ReelHub</strong> is a social video-sharing platform where creators can share short videos, connect with followers, and discover new content.
+</p>
+<p>
+  <strong>Operated from:</strong> India 🇮🇳
+</p>
+<p>
+  <strong>Business Email:</strong> <a href="mailto:appcreator001.harshitkumar@gmail.com">appcreator001.harshitkumar@gmail.com</a>
+</p>
+
+<div class="footer">
+  <a href="/ReelHub/privacy.html">Privacy Policy</a> ·
+  <a href="/ReelHub/terms.html">Terms of Service</a> ·
+  <a href="/ReelHub/delete-account.html">Delete Account</a>
+  <p style="margin-top:12px">© 2026 ReelHub. All rights reserved.</p>
+</div>
+
+<script>
+document.querySelectorAll(".faq-q").forEach(q => {
+  q.addEventListener("click", () => {
+    q.parentElement.classList.toggle("open");
+  });
+});
+</script>
+
+</body>
+</html>
