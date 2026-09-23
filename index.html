@@ -15,6 +15,16 @@
 
 <body>
 
+<!-- ============================================================
+     SPLASH SCREEN
+============================================================ -->
+<div id="splashScreen">
+  <div class="splash-icon">🎬</div>
+  <div class="splash-title">ReelHub</div>
+  <div class="splash-tagline">Watch · Upload · Share</div>
+  <div class="splash-footer">Powered by ReelHub</div>
+</div>
+
 <!-- ============ LOGIN ============ -->
 <div id="loginPage">
   <div class="login-card">
@@ -325,6 +335,10 @@
         🌙 Dark Mode
       </button>
 
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="changeBannerBtn">
+        🎨 Change Banner
+      </button>
+
       <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="privateAccountBtn">
         <span>🔒 Private Account</span>
         <span id="privateAccountToggle" style="font-size:13px;font-weight:bold;color:var(--muted)">OFF</span>
@@ -557,6 +571,58 @@
          style="width:100%;max-height:85vh;object-fit:contain;display:block">
   </div>
 </div>
+
+<!-- BANNER OPTIONS MODAL -->
+<div id="bannerOptionsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Change Banner</h2>
+      <button class="close" data-close="bannerOptionsModal">×</button>
+    </div>
+
+    <div class="banner-options-grid">
+      <div class="banner-option" id="uploadBannerBtn">
+        <span class="opt-icon">📷</span>
+        <div class="opt-info">
+          <strong>Upload Photo</strong>
+          <small>Choose from gallery</small>
+        </div>
+      </div>
+
+      <div class="banner-option" id="chooseGradientBtn">
+        <span class="opt-icon">🎨</span>
+        <div class="opt-info">
+          <strong>Choose Gradient</strong>
+          <small>Pick a color theme</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BANNER GRADIENT PICKER MODAL -->
+<div id="bannerGradientModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Choose Gradient</h2>
+      <button class="close" data-close="bannerGradientModal">×</button>
+    </div>
+
+    <div class="banner-gradients" id="bannerGradientsList">
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #7c3aed, #ec4899)" style="background:linear-gradient(135deg, #7c3aed, #ec4899)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #6d28d9, #db2777)" style="background:linear-gradient(135deg, #6d28d9, #db2777)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #2563eb, #7c3aed)" style="background:linear-gradient(135deg, #2563eb, #7c3aed)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #dc2626, #ec4899)" style="background:linear-gradient(135deg, #dc2626, #ec4899)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #ea580c, #facc15)" style="background:linear-gradient(135deg, #ea580c, #facc15)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #059669, #06b6d4)" style="background:linear-gradient(135deg, #059669, #06b6d4)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #1e293b, #334155)" style="background:linear-gradient(135deg, #1e293b, #334155)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #f59e0b, #ef4444)" style="background:linear-gradient(135deg, #f59e0b, #ef4444)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #8b5cf6, #06b6d4)" style="background:linear-gradient(135deg, #8b5cf6, #06b6d4)"></div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="bannerFile" accept="image/*" class="hidden">
 
 <!-- DEEP LINK BANNER -->
 <div class="deep-link-banner" id="deepLinkBanner">
