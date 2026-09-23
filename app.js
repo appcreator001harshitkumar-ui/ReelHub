@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (With Read Status Tracking)
+   ReelHub - app.js (With Legal Links)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -261,68 +261,47 @@ function getOnlineText(uid){
   return "Active " + timeAgo(status.lastSeen);
 }
 
-/* ============================================================
-   CHAT READ STATUS - Unread Count
-============================================================ */
-
+/* CHAT READ STATUS */
 async function markChatAsRead(chatId){
   if(!currentUser || !chatId) return;
-
   try{
     const userKey = "readBy_" + currentUser.uid;
     await updateDoc(doc(db, "chats", chatId), {
       [userKey]: serverTimestamp()
     });
-
     chatLastReadCache[chatId] = Date.now();
     unreadChatsCache[chatId] = 0;
-
     updateMsgBadge();
-
-    // Update inbox UI if open
     const inbox = $("dmInboxView");
     if(inbox && !inbox.classList.contains("hidden")){
       renderDMInbox();
     }
-  }catch(e){
-    console.error("Mark read error:", e);
-  }
+  }catch(e){ console.error("Mark read error:", e); }
 }
 
 async function countUnreadMessages(chatId, lastReadTimestamp){
   if(!currentUser) return 0;
-
   try{
     const q = query(collection(db, "chats", chatId, "messages"));
     const snap = await getDocs(q);
     let unreadCount = 0;
-
     snap.forEach(d => {
       const msg = d.data();
       if(msg.userId === currentUser.uid) return;
-
       const msgTime = timeValue(msg.createdAt);
-      if(msgTime > lastReadTimestamp){
-        unreadCount++;
-      }
+      if(msgTime > lastReadTimestamp) unreadCount++;
     });
-
     return unreadCount;
-  }catch(e){
-    console.error("Unread count error:", e);
-    return 0;
-  }
+  }catch(e){ console.error("Unread count error:", e); return 0; }
 }
 
 function updateMsgBadge(){
   const badge = $("msgBadge");
   if(!badge) return;
-
   let unreadChatCount = 0;
   Object.values(unreadChatsCache).forEach(count => {
     if(count > 0) unreadChatCount++;
   });
-
   if(unreadChatCount > 0){
     badge.textContent = unreadChatCount;
     badge.classList.remove("hidden");
@@ -336,20 +315,15 @@ async function calculateAllUnread(){
     updateMsgBadge();
     return;
   }
-
   for(const chat of myChatsCache){
     try{
       const userKey = "readBy_" + currentUser.uid;
       const lastRead = timeValue(chat[userKey]);
       chatLastReadCache[chat.id] = lastRead;
-
       const unread = await countUnreadMessages(chat.id, lastRead);
       unreadChatsCache[chat.id] = unread;
-    }catch(e){
-      unreadChatsCache[chat.id] = 0;
-    }
+    }catch(e){ unreadChatsCache[chat.id] = 0; }
   }
-
   updateMsgBadge();
 }
 
@@ -513,7 +487,6 @@ async function loadProfile(){
 function updatePrivateToggleUI(){
   const toggle = $("privateAccountToggle");
   if(!toggle) return;
-
   if(currentProfile?.private){
     toggle.textContent = "ON";
     toggle.style.color = "#22c55e";
@@ -2114,7 +2087,6 @@ async function checkDeepLink(){
   if(deepLinkChecked) return;
   const vid = getVideoIdFromURL();
   if(!vid) return;
-
   deepLinkChecked = true;
   await openVideoByDeepLink(vid);
 }
@@ -2976,6 +2948,26 @@ if(localStorage.getItem("reelhubDark") === "1"){
   document.body.classList.add("dark");
 }
 
+/* ============================================================
+   LEGAL LINKS (Privacy, Terms, Delete, Contact)
+============================================================ */
+
+$("privacyPolicyBtn")?.addEventListener("click", ()=>{
+  window.location.href = "/ReelHub/privacy.html";
+});
+
+$("termsOfServiceBtn")?.addEventListener("click", ()=>{
+  window.location.href = "/ReelHub/terms.html";
+});
+
+$("deleteAccountBtn")?.addEventListener("click", ()=>{
+  window.location.href = "/ReelHub/delete-account.html";
+});
+
+$("contactUsBtn")?.addEventListener("click", ()=>{
+  window.location.href = "/ReelHub/contact.html";
+});
+
 $("logoutBtn")?.addEventListener("click", async()=>{
   if(!confirm("Logout?")) return;
   await markOffline();
@@ -3128,7 +3120,6 @@ async function openChat(uid){
   currentChatUser = p;
   currentChatId = [currentUser.uid, uid].sort().join("_");
 
-  // Mark as read after entering
   setTimeout(()=> markChatAsRead(currentChatId), 500);
 
   const avatarEl = $("dmChatAvatar");
@@ -3336,7 +3327,6 @@ async function deleteMessage(id){
 $("dmBackBtn")?.addEventListener("click", (e)=>{
   e.preventDefault();
   e.stopPropagation();
-  // Mark as read when leaving
   if(currentChatId) markChatAsRead(currentChatId);
   showDMInbox();
 });
@@ -3545,4 +3535,4 @@ setTimeout(()=>{
   }
 }, 2500);
 
-console.log("✅ ReelHub loaded with Read Status!");
+console.log("✅ ReelHub loaded with Legal Links!");
