@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (With Legal Links)
+   ReelHub - app.js (With Suspension Check)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -154,6 +154,98 @@ function formatViewsShort(num){
   if(num < 1000000000) return (num/1000000).toFixed(1).replace(".0","") + "M";
   return (num/1000000000).toFixed(1) + "B";
 }
+
+/* ============================================================
+   SUSPENSION CHECK
+============================================================ */
+
+function showSuspensionScreen(profile){
+  const screen = $("suspensionScreen");
+  if(!screen) return;
+
+  const reason = profile.suspendReason || "Violation of Terms of Service";
+  const duration = profile.suspendDuration || "Temporary";
+  const until = profile.suspendUntil ? 
+    new Date(timeValue(profile.suspendUntil)).toLocaleDateString('en-IN', {
+      day: 'numeric', month: 'short', year: 'numeric'
+    }) : "Permanent";
+  const date = profile.suspendedAt ?
+    new Date(timeValue(profile.suspendedAt)).toLocaleDateString('en-IN', {
+      day: 'numeric', month: 'short', year: 'numeric'
+    }) : "—";
+
+  const reasonEl = $("suspensionReason");
+  const durationEl = $("suspensionDuration");
+  const untilEl = $("suspensionUntil");
+  const dateEl = $("suspensionDate");
+
+  if(reasonEl) reasonEl.textContent = reason;
+  if(durationEl) durationEl.textContent = duration;
+  if(untilEl) untilEl.textContent = until;
+  if(dateEl) dateEl.textContent = date;
+
+  // Hide all other screens
+  $("loginPage")?.classList.add("hidden");
+  $("app")?.classList.add("hidden");
+  const splash = $("splashScreen");
+  if(splash) splash.classList.add("hidden");
+
+  screen.classList.remove("hidden");
+}
+
+async function checkSuspension(uid){
+  if(!uid) return false;
+
+  try{
+    const snap = await getDocs(
+      query(collection(db, "profiles"), where("uid", "==", uid))
+    );
+
+    if(snap.empty) return false;
+
+    const profileData = snap.docs[0].data();
+
+    // Not suspended
+    if(!profileData.suspended) return false;
+
+    // Check if suspension expired (auto-unsuspend)
+    if(profileData.suspendUntil){
+      const untilTime = timeValue(profileData.suspendUntil);
+      if(Date.now() > untilTime){
+        // Auto-unsuspend
+        await updateDoc(doc(db, "profiles", snap.docs[0].id), {
+          suspended: false,
+          suspendReason: "",
+          suspendDuration: "",
+          suspendUntil: null,
+          autoUnsuspendedAt: serverTimestamp()
+        });
+
+        toast("✅ Your suspension has ended");
+        return false;
+      }
+    }
+
+    // Still suspended — show screen
+    showSuspensionScreen(profileData);
+    return true;
+
+  }catch(e){
+    console.error("Suspension check error:", e);
+    return false;
+  }
+}
+
+/* Suspension logout */
+$("suspensionLogoutBtn")?.addEventListener("click", async ()=>{
+  if(!confirm("Logout?")) return;
+  try{
+    await signOut(auth);
+    window.location.reload();
+  }catch(e){
+    console.error(e);
+  }
+});
 
 /* ONLINE STATUS */
 async function updatePresence(){
@@ -427,6 +519,11 @@ async function createProfile(){
       following: 0,
       videos: 0,
       private: false,
+      suspended: false,
+      suspendReason: "",
+      suspendDuration: "",
+      suspendUntil: null,
+      suspendedAt: null,
       bannerType: "gradient",
       bannerGradient: "linear-gradient(135deg, #7c3aed, #ec4899)",
       bannerURL: "",
@@ -440,6 +537,7 @@ async function getProfile(uid){
   if(!snap.exists()){
     return { uid, name:"User", username:"user", age:"", gender:"", bio:"",
              photo:"", followers:0, following:0, videos:0, private:false,
+             suspended:false,
              bannerType:"gradient",
              bannerGradient:"linear-gradient(135deg, #7c3aed, #ec4899)",
              bannerURL:"" };
@@ -452,6 +550,7 @@ async function getProfile(uid){
     following: Number(d.following || 0),
     videos: Number(d.videos || 0),
     private: d.private === true,
+    suspended: d.suspended === true,
     bannerType: d.bannerType || "gradient",
     bannerGradient: d.bannerGradient || "linear-gradient(135deg, #7c3aed, #ec4899)",
     bannerURL: d.bannerURL || ""
@@ -530,6 +629,14 @@ async function loadMySentRequests(){
 onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
+
+    // ✅ CHECK SUSPENSION FIRST
+    const isSuspended = await checkSuspension(user.uid);
+    if(isSuspended){
+      // Don't continue - user is suspended
+      return;
+    }
+
     await createProfile();
     await loadProfile();
     await loadMyFollows();
@@ -570,6 +677,7 @@ onAuthStateChanged(auth, async user => {
 
     $("app").classList.add("hidden");
     $("loginPage").classList.remove("hidden");
+    $("suspensionScreen")?.classList.add("hidden");
   }
 });
 
@@ -2583,6 +2691,7 @@ async function openPublicProfile(uid){
     if(p.age) extra.push("Age: " + p.age);
     if(p.gender) extra.push(p.gender);
     if(p.private) extra.push("🔒 Private");
+    if(p.suspended) extra.push("🚫 Suspended");
     $("publicExtra").textContent = extra.join(" · ");
 
     $("publicFollowers").textContent = p.followers || 0;
@@ -2775,7 +2884,7 @@ async function openPeople(uid, type){
         <img class="people-open-btn" data-uid="${esc(p.uid)}"
              src="${avatar(p.photo, p.name)}">
         <div class="info people-open-btn" data-uid="${esc(p.uid)}">
-          <strong>${esc(p.name)}</strong>
+          <strong>${esc(p.name)}${p.suspended ? " 🚫" : ""}</strong>
           <small>@${esc(p.username)}</small>
         </div>
         ${!isMe && currentUser ? `
@@ -2851,8 +2960,8 @@ async function doSearch(value){
         <img class="search-open-btn" data-uid="${esc(p.uid)}"
              src="${avatar(p.photo, p.name)}">
         <div class="info search-open-btn" data-uid="${esc(p.uid)}">
-          <strong>${esc(p.name)}</strong>
-          <small>@${esc(p.username)}${p.private ? " · 🔒" : ""}</small>
+          <strong>${esc(p.name)}${p.suspended ? " 🚫" : ""}${p.private ? " 🔒" : ""}</strong>
+          <small>@${esc(p.username)}</small>
         </div>
         ${!isMe && currentUser ? `
           <button class="follow-btn ${followed?"following":""}"
@@ -2947,10 +3056,6 @@ $("darkModeBtn")?.addEventListener("click", ()=>{
 if(localStorage.getItem("reelhubDark") === "1"){
   document.body.classList.add("dark");
 }
-
-/* ============================================================
-   LEGAL LINKS (Privacy, Terms, Delete, Contact)
-============================================================ */
 
 $("privacyPolicyBtn")?.addEventListener("click", ()=>{
   window.location.href = "/ReelHub/privacy.html";
@@ -3535,4 +3640,4 @@ setTimeout(()=>{
   }
 }, 2500);
 
-console.log("✅ ReelHub loaded with Legal Links!");
+console.log("✅ ReelHub loaded with Suspension Check!");
