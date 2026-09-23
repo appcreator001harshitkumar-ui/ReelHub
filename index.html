@@ -100,6 +100,12 @@
 
   <!-- HOME -->
   <section id="homePanel" class="panel">
+
+    <!-- ✅ STORIES BAR -->
+    <div class="stories-bar" id="storiesBar">
+      <div class="stories-loading">Loading stories...</div>
+    </div>
+
     <div id="feed"></div>
   </section>
 
@@ -689,6 +695,96 @@
 </div>
 
 <input type="file" id="bannerFile" accept="image/*" class="hidden">
+
+<!-- ============================================================
+     ✅ CREATE STORY MODAL (NEW)
+============================================================ -->
+<div id="createStoryModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Add to Story</h2>
+      <button class="close" data-close="createStoryModal">×</button>
+    </div>
+
+    <!-- Upload zone -->
+    <div class="story-upload-zone" id="storyUploadZone">
+      <span class="up-icon">📷</span>
+      <div class="up-text">Tap to select photo or video</div>
+      <div class="up-sub">JPG, PNG, MP4 · Max 30MB</div>
+    </div>
+
+    <!-- Preview -->
+    <img id="storyImagePreview" class="story-preview hidden" alt="">
+    <video id="storyVideoPreview" class="story-preview hidden" controls playsinline muted></video>
+
+    <!-- Progress bar -->
+    <div class="story-upload-progress" id="storyUploadProgress">
+      <div class="story-upload-progress-bar" id="storyUploadProgressBar"></div>
+    </div>
+
+    <!-- Status -->
+    <p id="storyUploadStatus" style="font-size:13px;color:var(--muted);margin-top:10px;text-align:center"></p>
+
+    <!-- Upload button -->
+    <button class="story-upload-btn" id="storyUploadBtn" disabled>
+      Share to Story
+    </button>
+  </div>
+</div>
+
+<!-- Hidden story file input -->
+<input type="file" id="storyFile" accept="image/*,video/*" class="hidden">
+
+<!-- ============================================================
+     ✅ STORY VIEWER (NEW)
+============================================================ -->
+<div id="storyViewer">
+
+  <!-- Progress bars -->
+  <div class="story-progress-bar" id="storyProgressBar">
+    <!-- Segments JS se render honge -->
+  </div>
+
+  <!-- Header -->
+  <div class="story-header">
+    <img id="storyViewerAvatar" src="" alt="">
+    <div class="info">
+      <strong id="storyViewerName">User</strong>
+      <small id="storyViewerTime">Just now</small>
+    </div>
+    <button class="story-more-btn" id="storyMoreBtn" type="button">⋮</button>
+    <button class="close-btn" id="storyCloseBtn" type="button">✕</button>
+  </div>
+
+  <!-- Media -->
+  <div class="story-media" id="storyMedia">
+    <!-- Image/Video JS se inject hoga -->
+  </div>
+
+  <!-- Tap zones -->
+  <div class="story-nav-left" id="storyPrevZone"></div>
+  <div class="story-nav-right" id="storyNextZone"></div>
+
+  <!-- Views counter (only for own story) -->
+  <div class="story-views hidden" id="storyViewsCounter">
+    <span>👁️</span>
+    <span id="storyViewsCount">0</span>
+    <span>views</span>
+  </div>
+
+  <!-- Footer / reply -->
+  <div class="story-footer" id="storyFooter">
+    <input
+      type="text"
+      class="story-reply"
+      id="storyReplyInput"
+      placeholder="Send message..."
+      maxlength="200"
+    >
+    <button class="story-send" id="storySendBtn" type="button">Send</button>
+  </div>
+
+</div>
 
 <!-- DEEP LINK BANNER -->
 <div class="deep-link-banner" id="deepLinkBanner">
