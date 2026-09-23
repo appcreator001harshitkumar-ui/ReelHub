@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (Private Account + Photo/Video Chat)
+   ReelHub - app.js (With Splash + Banner + Private Account)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -207,7 +207,6 @@ function startPresenceListener(uids){
   if(!uids || !uids.length) return;
 
   const uniqueUids = [...new Set(uids)].filter(u => u && u !== currentUser?.uid);
-
   if(!uniqueUids.length) return;
 
   const limitedUids = uniqueUids.slice(0, 10);
@@ -366,6 +365,9 @@ async function createProfile(){
       following: 0,
       videos: 0,
       private: false,
+      bannerType: "gradient",
+      bannerGradient: "linear-gradient(135deg, #7c3aed, #ec4899)",
+      bannerURL: "",
       createdAt: serverTimestamp()
     });
   }
@@ -375,7 +377,10 @@ async function getProfile(uid){
   const snap = await getDoc(doc(db, "profiles", uid));
   if(!snap.exists()){
     return { uid, name:"User", username:"user", age:"", gender:"", bio:"",
-             photo:"", followers:0, following:0, videos:0, private:false };
+             photo:"", followers:0, following:0, videos:0, private:false,
+             bannerType:"gradient",
+             bannerGradient:"linear-gradient(135deg, #7c3aed, #ec4899)",
+             bannerURL:"" };
   }
   const d = snap.data();
   return {
@@ -384,7 +389,10 @@ async function getProfile(uid){
     followers: Number(d.followers || 0),
     following: Number(d.following || 0),
     videos: Number(d.videos || 0),
-    private: d.private === true
+    private: d.private === true,
+    bannerType: d.bannerType || "gradient",
+    bannerGradient: d.bannerGradient || "linear-gradient(135deg, #7c3aed, #ec4899)",
+    bannerURL: d.bannerURL || ""
   };
 }
 
@@ -409,6 +417,10 @@ async function loadProfile(){
   $("profileBio").textContent = currentProfile.bio || "";
   updateProfileTabCounts();
   updatePrivateToggleUI();
+
+  // Apply banner
+  applyBanner(currentProfile);
+  addBannerEditButton();
 }
 
 function updatePrivateToggleUI(){
@@ -613,7 +625,121 @@ $("publishBtn")?.addEventListener("click", async()=>{
 });
 
 /* ============================================================
-   PRIVATE ACCOUNT - VISIBILITY CHECK
+   PROFILE BANNER - UPLOAD / GRADIENT
+============================================================ */
+
+function applyBanner(profile){
+  const bannerEl = document.querySelector("#profilePanel .yt-banner");
+  if(!bannerEl || !profile) return;
+
+  if(profile.bannerType === "image" && profile.bannerURL){
+    bannerEl.style.background = `url(${profile.bannerURL}) center/cover no-repeat`;
+    bannerEl.classList.add("banner-image");
+  }else if(profile.bannerGradient){
+    bannerEl.style.background = profile.bannerGradient;
+    bannerEl.classList.remove("banner-image");
+  }
+}
+
+function addBannerEditButton(){
+  const bannerEl = document.querySelector("#profilePanel .yt-banner");
+  if(!bannerEl) return;
+
+  bannerEl.querySelector(".banner-edit-btn")?.remove();
+
+  const btn = document.createElement("button");
+  btn.className = "banner-edit-btn";
+  btn.innerHTML = "🎨 Edit";
+  btn.addEventListener("click", (e)=>{
+    e.preventDefault();
+    e.stopPropagation();
+    showModal("bannerOptionsModal");
+  });
+
+  bannerEl.style.position = "relative";
+  bannerEl.appendChild(btn);
+}
+
+$("changeBannerBtn")?.addEventListener("click", ()=>{
+  hideModal("settingsModal");
+  showModal("bannerOptionsModal");
+});
+
+$("uploadBannerBtn")?.addEventListener("click", ()=>{
+  hideModal("bannerOptionsModal");
+  $("bannerFile")?.click();
+});
+
+$("chooseGradientBtn")?.addEventListener("click", ()=>{
+  hideModal("bannerOptionsModal");
+  showModal("bannerGradientModal");
+});
+
+document.querySelectorAll(".banner-gradient-item").forEach(item => {
+  item.addEventListener("click", async () => {
+    const gradient = item.dataset.gradient;
+    if(!gradient || !currentUser) return;
+
+    try{
+      await updateDoc(doc(db, "profiles", currentUser.uid), {
+        bannerType: "gradient",
+        bannerGradient: gradient,
+        bannerURL: "",
+        updatedAt: serverTimestamp()
+      });
+
+      currentProfile.bannerType = "gradient";
+      currentProfile.bannerGradient = gradient;
+      currentProfile.bannerURL = "";
+
+      applyBanner(currentProfile);
+
+      document.querySelectorAll(".banner-gradient-item").forEach(i => i.classList.remove("selected"));
+      item.classList.add("selected");
+
+      hideModal("bannerGradientModal");
+      toast("✅ Banner updated");
+    }catch(e){
+      console.error(e);
+      toast("Failed to update banner");
+    }
+  });
+});
+
+$("bannerFile")?.addEventListener("change", async (e)=>{
+  const file = e.target.files[0];
+  if(!file || !currentUser) return;
+
+  try{
+    toast("Uploading banner...");
+
+    const url = await uploadToCloudinary(file, (pct)=>{
+      if(pct % 25 === 0) toast("Banner " + pct + "%");
+    });
+
+    await updateDoc(doc(db, "profiles", currentUser.uid), {
+      bannerType: "image",
+      bannerURL: url,
+      bannerGradient: "",
+      updatedAt: serverTimestamp()
+    });
+
+    currentProfile.bannerType = "image";
+    currentProfile.bannerURL = url;
+    currentProfile.bannerGradient = "";
+
+    applyBanner(currentProfile);
+    toast("✅ Banner updated");
+  }catch(e){
+    console.error(e);
+    toast("Failed to upload banner");
+  }finally{
+    e.target.value = "";
+  }
+});
+
+/* ============================================================
+   PRIVATE ACCOUNT
 ============================================================ */
 
 async function canViewUser(uid){
@@ -621,23 +747,14 @@ async function canViewUser(uid){
   if(uid === currentUser?.uid) return true;
 
   const profile = await getProfile(uid);
-
-  // Public account - everyone can view
   if(!profile.private) return true;
-
-  // Private account - only followers can view
   if(myFollowsCache.has(uid)) return true;
-
   return false;
 }
 
 async function canViewUserVideos(uid){
   return await canViewUser(uid);
 }
-
-/* ============================================================
-   FOLLOW REQUESTS SYSTEM
-============================================================ */
 
 async function sendFollowRequest(targetUid){
   if(!currentUser || targetUid === currentUser.uid) return;
@@ -657,7 +774,6 @@ async function sendFollowRequest(targetUid){
 
     mySentRequestsCache.add(targetUid);
 
-    // Send notification
     await addDoc(collection(db, "notifications"), {
       to: targetUid,
       from: currentUser.uid,
@@ -683,9 +799,7 @@ async function cancelFollowRequest(targetUid){
     await deleteDoc(ref);
     mySentRequestsCache.delete(targetUid);
     toast("Request cancelled");
-  }catch(e){
-    console.error(e);
-  }
+  }catch(e){ console.error(e); }
 }
 
 async function acceptFollowRequest(fromUid){
@@ -694,7 +808,6 @@ async function acceptFollowRequest(fromUid){
   const reqId = fromUid + "_" + currentUser.uid;
 
   try{
-    // Add as follower
     const followId = fromUid + "_" + currentUser.uid;
     await setDoc(doc(db, "follows", followId), {
       follower: fromUid,
@@ -702,14 +815,11 @@ async function acceptFollowRequest(fromUid){
       createdAt: serverTimestamp()
     });
 
-    // Delete request
     await deleteDoc(doc(db, "follow_requests", reqId));
 
-    // Update counts
     await syncFollowCounts(fromUid);
     await syncFollowCounts(currentUser.uid);
 
-    // Notify
     await addDoc(collection(db, "notifications"), {
       to: fromUid,
       from: currentUser.uid,
@@ -811,10 +921,6 @@ async function renderFollowRequests(){
     </div>
   `).join("");
 }
-
-/* ============================================================
-   PRIVATE TOGGLE
-============================================================ */
 
 $("privateAccountBtn")?.addEventListener("click", async()=>{
   if(!currentUser || !currentProfile) return;
@@ -1096,7 +1202,6 @@ function setupReelsObserver(){
 document.addEventListener("click", async (e)=>{
   const t = e.target;
 
-  // Accept/Reject follow request
   const acceptReq = t.closest("[data-accept-request]");
   if(acceptReq){
     e.preventDefault();
@@ -1959,10 +2064,7 @@ async function checkDeepLink(){
   await openVideoByDeepLink(vid);
 }
 
-/* ============================================================
-   VIDEO PLAYER MODAL
-============================================================ */
-
+/* VIDEO PLAYER MODAL */
 window.openVideoPlayer = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
   if(!v){
@@ -2319,10 +2421,7 @@ async function syncVideoCount(uid){
   }catch(e){ console.error(e); }
 }
 
-/* ============================================================
-   FOLLOW - WITH PRIVATE SUPPORT
-============================================================ */
-
+/* FOLLOW */
 async function toggleFollow(targetUid, btnEl){
   if(!currentUser || targetUid === currentUser.uid) return;
 
@@ -2336,27 +2435,21 @@ async function toggleFollow(targetUid, btnEl){
     const targetProfile = await getProfile(targetUid);
 
     if(snap.exists()){
-      // Unfollow
       await deleteDoc(ref);
       myFollowsCache.delete(targetUid);
       updateAllFollowButtons(targetUid, false);
       await syncFollowCounts(currentUser.uid);
       await syncFollowCounts(targetUid);
     }else{
-      // Not following yet
       if(targetProfile.private){
-        // Send request
         if(mySentRequestsCache.has(targetUid)){
-          // Cancel request
           await cancelFollowRequest(targetUid);
           updateAllFollowButtons(targetUid, "cancelled");
         }else{
-          // Send new request
           await sendFollowRequest(targetUid);
           updateAllFollowButtons(targetUid, "requested");
         }
       }else{
-        // Direct follow
         await setDoc(ref, {
           follower: currentUser.uid,
           following: targetUid,
@@ -2378,7 +2471,6 @@ async function toggleFollow(targetUid, btnEl){
       }
     }
 
-    // Update public profile button
     if($("publicProfileModal").classList.contains("show")){
       const uid = $("publicProfileModal").dataset.uid;
       if(uid === targetUid){
@@ -2452,10 +2544,7 @@ async function syncFollowCounts(uid){
   }catch(e){ console.error(e); }
 }
 
-/* ============================================================
-   PUBLIC PROFILE - WITH PRIVATE ACCOUNT
-============================================================ */
-
+/* PUBLIC PROFILE */
 async function openPublicProfile(uid){
   if(!uid){ toast("Invalid user"); return; }
 
@@ -2478,6 +2567,16 @@ async function openPublicProfile(uid){
     $("publicFollowing").textContent = p.following || 0;
     $("publicVideos").textContent = p.videos || 0;
 
+    // Apply banner on public profile
+    const publicBanner = document.querySelector("#publicProfileModal .yt-banner");
+    if(publicBanner){
+      if(p.bannerType === "image" && p.bannerURL){
+        publicBanner.style.background = `url(${p.bannerURL}) center/cover no-repeat`;
+      }else if(p.bannerGradient){
+        publicBanner.style.background = p.bannerGradient;
+      }
+    }
+
     const followBtn = $("publicFollowBtn");
     const newFollowBtn = followBtn.cloneNode(true);
     followBtn.parentNode.replaceChild(newFollowBtn, followBtn);
@@ -2486,7 +2585,6 @@ async function openPublicProfile(uid){
     const newMsgBtn = msgBtn.cloneNode(true);
     msgBtn.parentNode.replaceChild(newMsgBtn, msgBtn);
 
-    // Check if can view
     const canView = await canViewUser(uid);
 
     if(currentUser && uid === currentUser.uid){
@@ -2511,7 +2609,6 @@ async function openPublicProfile(uid){
         openChatFromProfile(uid);
       });
 
-      // Show private notice if can't view
       if(!canView && p.private){
         $("privateAccountNotice").classList.remove("hidden");
       }else{
@@ -2888,10 +2985,7 @@ function startNotifications(){
 
 $("topAlertsBtn")?.addEventListener("click", ()=> showModal("alertsModal"));
 
-/* ============================================================
-   MESSAGES (DM)
-============================================================ */
-
+/* MESSAGES */
 function startChatsListListener(){
   if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
   if(!currentUser) return;
@@ -2925,19 +3019,10 @@ function showDMInbox(){
   const inbox = $("dmInboxView");
   const chat = $("dmChatView");
   
-  if(inbox){
-    inbox.classList.remove("hidden");
-    inbox.style.display = "flex";
-  }
-  if(chat){
-    chat.classList.add("hidden");
-    chat.style.display = "none";
-  }
+  if(inbox){ inbox.classList.remove("hidden"); inbox.style.display = "flex"; }
+  if(chat){ chat.classList.add("hidden"); chat.style.display = "none"; }
 
-  if(chatUnsubscribe){ 
-    chatUnsubscribe(); 
-    chatUnsubscribe = null; 
-  }
+  if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
   currentChatId = null;
   currentChatUser = null;
 
@@ -3079,7 +3164,6 @@ function startChatListener(){
       container.innerHTML = list.map(m=>{
         const mine = m.userId === currentUser.uid;
 
-        // Shared video message
         if(m.type === "shared_video" && m.videoId){
           return `
           <div class="dm-msg ${mine?"me":"them"}">
@@ -3097,7 +3181,6 @@ function startChatListener(){
           `;
         }
 
-        // Image message
         if(m.type === "image" && m.imageURL){
           return `
           <div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">
@@ -3114,7 +3197,6 @@ function startChatListener(){
           `;
         }
 
-        // Chat video message
         if(m.type === "chat_video" && m.videoURL){
           return `
           <div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">
@@ -3133,7 +3215,6 @@ function startChatListener(){
           `;
         }
 
-        // Text message
         return `
         <div class="dm-msg ${mine?"me":"them"}">
           ${esc(m.text)}
@@ -3212,10 +3293,7 @@ $("newMsgBtn")?.addEventListener("click", ()=>{
   setTimeout(()=> $("searchInput").focus(), 100);
 });
 
-/* ============================================================
-   CHAT ATTACH - PHOTO / VIDEO
-============================================================ */
-
+/* CHAT ATTACH */
 $("dmAttachBtn")?.addEventListener("click", (e)=>{
   e.preventDefault();
   e.stopPropagation();
@@ -3223,7 +3301,6 @@ $("dmAttachBtn")?.addEventListener("click", (e)=>{
   if(menu) menu.classList.toggle("show");
 });
 
-// Close attach menu on outside click
 document.addEventListener("click", (e)=>{
   const menu = $("dmAttachMenu");
   const btn = $("dmAttachBtn");
@@ -3264,7 +3341,6 @@ $("dmVideoFile")?.addEventListener("change", async (e)=>{
 async function sendPhotoInChat(file){
   try{
     toast("Uploading photo...");
-
     const url = await uploadToCloudinary(file, (pct)=>{
       if(pct % 25 === 0) toast("Photo " + pct + "%");
     });
@@ -3293,7 +3369,6 @@ async function sendPhotoInChat(file){
 async function sendChatVideo(file){
   try{
     toast("Uploading video...");
-
     const url = await uploadToCloudinary(file, (pct)=>{
       if(pct % 25 === 0) toast("Video " + pct + "%");
     });
@@ -3408,4 +3483,13 @@ $("dmSearchInput")?.addEventListener("input", e=>{
 /* START */
 openPanel("homePanel");
 
-console.log("✅ ReelHub loaded with Private Account + Photo/Video Chat!");
+/* SPLASH SCREEN - Auto Hide */
+setTimeout(()=>{
+  const splash = $("splashScreen");
+  if(splash){
+    splash.classList.add("fade-out");
+    setTimeout(()=> splash.remove(), 500);
+  }
+}, 2500);
+
+console.log("✅ ReelHub loaded with Splash + Banner!");
