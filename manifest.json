@@ -1,0 +1,26 @@
+{
+  "name": "ReelHub",
+  "short_name": "ReelHub",
+  "description": "Watch, upload and share short videos on ReelHub",
+  "start_url": "/ReelHub/",
+  "scope": "/ReelHub/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#7c3aed",
+  "theme_color": "#7c3aed",
+  "categories": ["social", "video", "entertainment"],
+  "icons": [
+    {
+      "src": "https://ui-avatars.com/api/?name=RH&size=192&background=7c3aed&color=fff&bold=true",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://ui-avatars.com/api/?name=RH&size=512&background=7c3aed&color=fff&bold=true",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
