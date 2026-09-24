@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (LIKE/VIEW FIX + ALL FEATURES)
+   ReelHub - app.js (With Monetization + All Features)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -62,6 +62,13 @@ const VAULT_MAX_FILE_SIZE = 30 * 1024 * 1024;
 const VAULT_MAX_FILES = 100;
 const MESSAGE_COOLDOWN = 1500;
 
+/* Monetization Requirements */
+const MONETIZATION_REQUIREMENTS = {
+  followers: 10,
+  watchTime: 3600,
+  views: 50
+};
+
 /* STATE */
 let currentUser = null;
 let currentProfile = null;
@@ -115,6 +122,12 @@ let storyElapsed = 0;
 let storyUploadFile = null;
 let storyMediaType = null;
 
+/* WATCH TIME STATE */
+let currentWatchSession = {
+  videoId: null,
+  startTime: null
+};
+
 /* MODAL HISTORY */
 let modalHistoryStack = [];
 
@@ -129,7 +142,7 @@ let vaultUploading = false;
 let splashHidden = false;
 let authResolved = false;
 
-/* FIX: Duplicate prevention */
+/* Duplicate prevention */
 const processingMessages = new Set();
 let lastSentMessageTime = 0;
 const processingLikes = new Set();
@@ -342,6 +355,70 @@ $("suspensionLogoutBtn")?.addEventListener("click", async ()=>{
   }catch(e){
     console.error(e);
   }
+});
+
+/* ============================================================
+   WATCH TIME TRACKING (For Monetization)
+============================================================ */
+function startWatchTimer(videoId){
+  if(!currentUser || !videoId) return;
+  if(currentWatchSession.videoId === videoId && currentWatchSession.startTime) return;
+
+  if(currentWatchSession.videoId && currentWatchSession.startTime){
+    stopWatchTimer();
+  }
+
+  currentWatchSession = {
+    videoId: videoId,
+    startTime: Date.now()
+  };
+}
+
+async function stopWatchTimer(){
+  if(!currentWatchSession.videoId || !currentWatchSession.startTime) return;
+  if(!currentUser) return;
+
+  const elapsed = Math.floor((Date.now() - currentWatchSession.startTime) / 1000);
+  const videoId = currentWatchSession.videoId;
+  
+  currentWatchSession = { videoId: null, startTime: null };
+
+  if(elapsed < 3) return;
+
+  try{
+    const videoRef = doc(db, "videos", videoId);
+    const videoSnap = await getDoc(videoRef);
+    
+    if(!videoSnap.exists()) return;
+    
+    const videoData = videoSnap.data();
+    const ownerId = videoData.userId;
+    
+    if(ownerId === currentUser.uid) return;
+
+    await updateDoc(videoRef, {
+      watchTime: increment(elapsed)
+    });
+
+    const profileRef = doc(db, "profiles", ownerId);
+    await updateDoc(profileRef, {
+      totalWatchTime: increment(elapsed)
+    });
+
+  }catch(e){
+    console.error("Watch timer error:", e);
+  }
+}
+
+/* Pause/resume handlers */
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "hidden"){
+    stopWatchTimer();
+  }
+});
+
+window.addEventListener("beforeunload", () => {
+  stopWatchTimer();
 });
 
 /* ============================================================
@@ -1852,6 +1929,10 @@ async function createProfile(){
       bannerURL: "",
       vaultPin: "",
       vaultEnabled: false,
+      totalWatchTime: 0,
+      totalViews: 0,
+      monetizationStatus: "none",
+      upiId: "",
       createdAt: serverTimestamp()
     });
   }
@@ -1865,7 +1946,8 @@ async function getProfile(uid){
              suspended:false,
              bannerType:"gradient",
              bannerGradient:"linear-gradient(135deg, #7c3aed, #ec4899)",
-             bannerURL:"", vaultPin: "", vaultEnabled: false };
+             bannerURL:"", vaultPin: "", vaultEnabled: false,
+             totalWatchTime: 0, totalViews: 0, monetizationStatus: "none", upiId: "" };
   }
   const d = snap.data();
   return {
@@ -1880,7 +1962,11 @@ async function getProfile(uid){
     bannerGradient: d.bannerGradient || "linear-gradient(135deg, #7c3aed, #ec4899)",
     bannerURL: d.bannerURL || "",
     vaultPin: d.vaultPin || "",
-    vaultEnabled: d.vaultEnabled === true
+    vaultEnabled: d.vaultEnabled === true,
+    totalWatchTime: Number(d.totalWatchTime || 0),
+    totalViews: Number(d.totalViews || 0),
+    monetizationStatus: d.monetizationStatus || "none",
+    upiId: d.upiId || ""
   };
 }
 
@@ -2117,6 +2203,7 @@ $("publishBtn")?.addEventListener("click", async()=>{
       type: uploadType,
       likes: 0,
       views: 0,
+      watchTime: 0,
       createdAt: serverTimestamp()
     });
 
@@ -2681,6 +2768,208 @@ function setupReelsObserver(){
 
   videos.forEach(v => reelObserver.observe(v));
 }
+
+/* ✅ MONETIZATION TAB RENDER */
+async function renderMonetizationTab(){
+  const container = $("monetizationTab");
+  if(!container || !currentUser) return;
+
+  try{
+    const profile = await getProfile(currentUser.uid);
+
+    const followers = Number(profile.followers || 0);
+    const watchTime = Number(profile.totalWatchTime || 0);
+    const views = Number(profile.totalViews || 0);
+    const status = profile.monetizationStatus || "none";
+
+    const followersComplete = followers >= MONETIZATION_REQUIREMENTS.followers;
+    const watchTimeComplete = watchTime >= MONETIZATION_REQUIREMENTS.watchTime;
+    const viewsComplete = views >= MONETIZATION_REQUIREMENTS.views;
+    const allComplete = followersComplete && watchTimeComplete && viewsComplete;
+
+    let statusBadge = "";
+    let actionButton = "";
+
+    if(status === "approved"){
+      statusBadge = `<div class="monetization-status-badge approved">✅ Monetization Active</div>`;
+      actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">🎉 Congratulations! Your channel is monetized.</p>`;
+    }else if(status === "pending"){
+      statusBadge = `<div class="monetization-status-badge pending">⏳ Pending Review</div>`;
+      actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Your application is under review. Please wait for admin approval.</p>`;
+    }else if(status === "rejected"){
+      statusBadge = `<div class="monetization-status-badge rejected">❌ Rejected</div>`;
+      actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Your application was rejected. Please try again later.</p>`;
+    }else{
+      statusBadge = `<div class="monetization-status-badge none">💰 Not Applied</div>`;
+      
+      if(allComplete){
+        actionButton = `
+          <button class="monetization-apply-btn" id="openMonetizationModalBtn">
+            💰 Apply for Monetization
+          </button>
+        `;
+      }else{
+        actionButton = `
+          <button class="monetization-apply-btn" disabled>
+            🔒 Complete Requirements to Apply
+          </button>
+        `;
+      }
+    }
+
+    container.innerHTML = `
+      <div class="monetization-tab">
+        <div class="monetization-card">
+          <span class="icon">💰</span>
+          <h3>Monetize Your Channel</h3>
+          <p>Earn money from your content by enabling monetization on ReelHub.</p>
+          ${statusBadge}
+          ${actionButton}
+        </div>
+
+        <div class="req-list-tab">
+          <div class="title">📋 Requirements</div>
+          
+          <div class="req-row ${followersComplete ? 'completed' : ''}">
+            <span class="req-icon">👥</span>
+            <span class="req-text">Followers</span>
+            <span class="req-count">${followers} / ${MONETIZATION_REQUIREMENTS.followers}</span>
+            <span class="req-status">${followersComplete ? '✅' : '⏳'}</span>
+          </div>
+
+          <div class="req-row ${watchTimeComplete ? 'completed' : ''}">
+            <span class="req-icon">⏱️</span>
+            <span class="req-text">Watch Time</span>
+            <span class="req-count">${Math.floor(watchTime / 60)} min / 60 min</span>
+            <span class="req-status">${watchTimeComplete ? '✅' : '⏳'}</span>
+          </div>
+
+          <div class="req-row ${viewsComplete ? 'completed' : ''}">
+            <span class="req-icon">👁️</span>
+            <span class="req-text">Total Views</span>
+            <span class="req-count">${views} / ${MONETIZATION_REQUIREMENTS.views}</span>
+            <span class="req-status">${viewsComplete ? '✅' : '⏳'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const applyBtn = $("openMonetizationModalBtn");
+    if(applyBtn){
+      applyBtn.addEventListener("click", () => {
+        openMonetizationModal(followers, watchTime, views);
+      });
+    }
+
+  }catch(e){
+    console.error("renderMonetizationTab error:", e);
+    container.innerHTML = `<div class="yt-empty" style="padding:30px">Error loading monetization</div>`;
+  }
+}
+
+/* ✅ OPEN MONETIZATION MODAL */
+function openMonetizationModal(followers, watchTime, views){
+  const followersComplete = followers >= MONETIZATION_REQUIREMENTS.followers;
+  const watchTimeComplete = watchTime >= MONETIZATION_REQUIREMENTS.watchTime;
+  const viewsComplete = views >= MONETIZATION_REQUIREMENTS.views;
+
+  $("reqFollowersCount").textContent = followers;
+  $("reqWatchTimeCount").textContent = watchTime;
+  $("reqViewsCount").textContent = views;
+
+  $("reqFollowersStatus").textContent = followersComplete ? "✅" : "⏳";
+  $("reqWatchTimeStatus").textContent = watchTimeComplete ? "✅" : "⏳";
+  $("reqViewsStatus").textContent = viewsComplete ? "✅" : "⏳";
+
+  $("reqFollowers")?.classList.toggle("completed", followersComplete);
+  $("reqWatchTime")?.classList.toggle("completed", watchTimeComplete);
+  $("reqViews")?.classList.toggle("completed", viewsComplete);
+
+  const p1 = Math.min(100, (followers / MONETIZATION_REQUIREMENTS.followers) * 100);
+  const p2 = Math.min(100, (watchTime / MONETIZATION_REQUIREMENTS.watchTime) * 100);
+  const p3 = Math.min(100, (views / MONETIZATION_REQUIREMENTS.views) * 100);
+  const overallProgress = Math.round((p1 + p2 + p3) / 3);
+
+  $("reqProgressBar").style.width = overallProgress + "%";
+  $("reqProgressPercent").textContent = overallProgress + "%";
+
+  const upiInput = $("monetizationUpiId");
+  if(upiInput && currentProfile?.upiId){
+    upiInput.value = currentProfile.upiId;
+  }
+
+  const allComplete = followersComplete && watchTimeComplete && viewsComplete;
+  const submitBtn = $("submitMonetizationBtn");
+  if(submitBtn) submitBtn.disabled = !allComplete;
+
+  showModal("monetizationModal");
+}
+
+/* ✅ SUBMIT MONETIZATION APPLICATION */
+$("submitMonetizationBtn")?.addEventListener("click", async () => {
+  if(!currentUser) return;
+
+  const upiId = $("monetizationUpiId").value.trim();
+  const statusEl = $("monetizationStatus");
+
+  if(!upiId){
+    statusEl.textContent = "Please enter your UPI ID";
+    statusEl.style.color = "#ef4444";
+    return;
+  }
+
+  if(!upiId.includes("@") || upiId.length < 5){
+    statusEl.textContent = "Invalid UPI ID format";
+    statusEl.style.color = "#ef4444";
+    return;
+  }
+
+  const btn = $("submitMonetizationBtn");
+  btn.disabled = true;
+  btn.textContent = "Submitting...";
+  statusEl.textContent = "";
+
+  try{
+    const profile = await getProfile(currentUser.uid);
+
+    await updateDoc(doc(db, "profiles", currentUser.uid), {
+      upiId: upiId,
+      monetizationStatus: "pending",
+      monetizationRequestedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    await addDoc(collection(db, "monetization_requests"), {
+      userId: currentUser.uid,
+      userName: profile.name || "User",
+      username: profile.username || "",
+      userPhoto: profile.photo || "",
+      followers: profile.followers || 0,
+      totalWatchTime: profile.totalWatchTime || 0,
+      totalViews: profile.totalViews || 0,
+      upiId: upiId,
+      status: "pending",
+      createdAt: serverTimestamp()
+    });
+
+    statusEl.textContent = "✅ Application submitted!";
+    statusEl.style.color = "#22c55e";
+
+    currentProfile = await getProfile(currentUser.uid);
+
+    setTimeout(() => {
+      hideModal("monetizationModal");
+      renderMonetizationTab();
+    }, 1200);
+
+  }catch(e){
+    console.error(e);
+    statusEl.textContent = "Error: " + e.message;
+    statusEl.style.color = "#ef4444";
+    btn.disabled = false;
+    btn.textContent = "Submit Application";
+  }
+});
 /* GLOBAL CLICK HANDLER */
 document.addEventListener("click", async (e)=>{
   const t = e.target;
@@ -2979,9 +3268,7 @@ document.addEventListener("click", async (e)=>{
   }
 });
 
-/* ============================================================
-   FIX: VIEW COUNT (atomic + duplicate prevention)
-============================================================ */
+/* VIEW COUNT */
 async function trackView(videoId){
   if(!currentUser || !videoId) return;
   
@@ -3003,16 +3290,26 @@ async function trackView(videoId){
         views: increment(1) 
       });
 
-      // Update UI
+      // Update video owner's totalViews (for monetization)
+      try{
+        const videoSnap = await getDoc(videoRef);
+        if(videoSnap.exists()){
+          const ownerId = videoSnap.data().userId;
+          if(ownerId && ownerId !== currentUser.uid){
+            await updateDoc(doc(db, "profiles", ownerId), {
+              totalViews: increment(1)
+            });
+          }
+        }
+      }catch(err){}
+
       const freshSnap = await getDoc(videoRef);
       if(freshSnap.exists()){
         const newViews = Number(freshSnap.data().views || 0);
         
-        // Update feed card
         const viewsEl = document.querySelector(`[data-id="${videoId}"] .ig-views`);
         if(viewsEl) viewsEl.textContent = "👁️ " + formatViews(newViews);
         
-        // Update reel view
         const reelViewsEl = document.querySelector(`[data-id="${videoId}"] .reel-views`);
         if(reelViewsEl) reelViewsEl.textContent = "👁️ " + formatViewsShort(newViews);
       }
@@ -3026,16 +3323,32 @@ async function trackView(videoId){
   }
 }
 
+/* PLAY/PAUSE tracking (views + watch time) */
 document.addEventListener("play", (e)=>{
   if(e.target.tagName === "VIDEO"){
     const vid = e.target.dataset.videoId;
-    if(vid) trackView(vid);
+    if(vid){
+      trackView(vid);
+      startWatchTimer(vid);
+    }
   }
 }, true);
 
-/* ============================================================
-   FIX: LIKE (atomic + duplicate prevention)
-============================================================ */
+document.addEventListener("pause", (e)=>{
+  if(e.target.tagName === "VIDEO"){
+    const vid = e.target.dataset.videoId;
+    if(vid) stopWatchTimer();
+  }
+}, true);
+
+document.addEventListener("ended", (e)=>{
+  if(e.target.tagName === "VIDEO"){
+    const vid = e.target.dataset.videoId;
+    if(vid) stopWatchTimer();
+  }
+}, true);
+
+/* LIKE */
 async function toggleLike(videoId, btnEl, isReel=false){
   if(!currentUser){ toast("Login required"); return; }
   if(!videoId) return;
@@ -3058,7 +3371,6 @@ async function toggleLike(videoId, btnEl, isReel=false){
     const wasLiked = likeSnap.exists();
 
     if(wasLiked){
-      // Unlike
       await deleteDoc(likeRef);
       await updateDoc(videoRef, { likes: increment(-1) });
 
@@ -3068,7 +3380,6 @@ async function toggleLike(videoId, btnEl, isReel=false){
         if(icon) icon.textContent = "🤍";
       }
     }else{
-      // Like
       await setDoc(likeRef, {
         userId: currentUser.uid,
         createdAt: serverTimestamp()
@@ -3092,7 +3403,6 @@ async function toggleLike(videoId, btnEl, isReel=false){
       }
     }
 
-    // Update UI from fresh data
     const freshSnap = await getDoc(videoRef);
     if(freshSnap.exists()){
       const newCount = Math.max(0, Number(freshSnap.data().likes || 0));
@@ -3115,9 +3425,7 @@ async function toggleLike(videoId, btnEl, isReel=false){
   }
 }
 
-/* ============================================================
-   FIX: SAVE
-============================================================ */
+/* SAVE */
 async function toggleSave(videoId, btnEl){
   if(!currentUser){ toast("Login required"); return; }
   if(!videoId) return;
@@ -3192,6 +3500,7 @@ document.querySelectorAll("#profileTabs .yt-tab").forEach(tab=>{
     $("myVideos")?.classList.add("hidden");
     $("playlistsTab")?.classList.add("hidden");
     $("savedVideos")?.classList.add("hidden");
+    $("monetizationTab")?.classList.add("hidden");
     $("aboutTab")?.classList.add("hidden");
 
     if(tabName === "videos"){
@@ -3202,6 +3511,9 @@ document.querySelectorAll("#profileTabs .yt-tab").forEach(tab=>{
     }else if(tabName === "playlists"){
       $("playlistsTab")?.classList.remove("hidden");
       renderPlaylistsTab();
+    }else if(tabName === "monetization"){
+      $("monetizationTab")?.classList.remove("hidden");
+      renderMonetizationTab();
     }else if(tabName === "about"){
       $("aboutTab")?.classList.remove("hidden");
       renderAboutTab();
@@ -3841,6 +4153,8 @@ function resetVideoPlayer(){
       btn.classList.remove("active");
     }
   });
+  
+  stopWatchTimer();
 }
 
 /* SHARE */
@@ -4262,6 +4576,7 @@ async function openPublicProfile(uid){
     if(p.gender) extra.push(p.gender);
     if(p.private) extra.push("🔒 Private");
     if(p.suspended) extra.push("🚫 Suspended");
+    if(p.monetizationStatus === "approved") extra.push("💰 Monetized");
     $("publicExtra").textContent = extra.join(" · ");
 
     $("publicFollowers").textContent = p.followers || 0;
@@ -5284,4 +5599,4 @@ window.addEventListener("popstate", (e) => {
   }
 }, { passive: true });
 
-console.log("✅ ReelHub loaded — Like/View fixed!");
+console.log("✅ ReelHub loaded — With Monetization System!");
