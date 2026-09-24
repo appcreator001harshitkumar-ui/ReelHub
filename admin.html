@@ -222,6 +222,18 @@ body {
   text-transform: uppercase;
 }
 
+.admin-item .info .admin-tag {
+  display: inline-block;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
 .admin-actions {
   display: flex;
   gap: 6px;
@@ -690,13 +702,18 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+/* ✅ ADMIN EMAILS — Add more emails here if needed */
+const ADMIN_EMAILS = [
+  "appcreator001.harshitkumar@gmail.com"
+];
+
 let currentUser = null;
 let currentTab = "users";
 let allUsers = [];
 let allVideos = [];
 let suspendTargetUid = null;
 let unsuspendTargetUid = null;
-let selectedDuration = 30; // days
+let selectedDuration = 30;
 
 const $ = id => document.getElementById(id);
 
@@ -766,16 +783,15 @@ onAuthStateChanged(auth, async (user) => {
 
   currentUser = user;
 
+  // ✅ EMAIL-BASED ADMIN CHECK
+  const userEmail = (user.email || "").toLowerCase().trim();
+  if(!ADMIN_EMAILS.map(e => e.toLowerCase()).includes(userEmail)){
+    alert("❌ Access Denied!\n\nYou are not an admin.\n\nYour email: " + userEmail);
+    await signOut(auth);
+    return;
+  }
+
   try {
-    const snap = await getDoc(doc(db, "profiles", user.uid));
-    const profile = snap.exists() ? snap.data() : {};
-
-    if(!profile.isAdmin){
-      alert("❌ You are not an admin!");
-      await signOut(auth);
-      return;
-    }
-
     $("adminLogin").style.display = "none";
     $("adminApp").style.display = "block";
 
@@ -848,7 +864,6 @@ async function renderUsers(){
     const snap = await getDocs(collection(db, "profiles"));
     allUsers = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
     allUsers.sort((a, b) => {
-      // Suspended first
       if(a.suspended && !b.suspended) return -1;
       if(!a.suspended && b.suspended) return 1;
       return (b.videos || 0) - (a.videos || 0);
@@ -862,13 +877,17 @@ async function renderUsers(){
       return;
     }
 
-    content.innerHTML = allUsers.map(u => `
+    content.innerHTML = allUsers.map(u => {
+      const isAdmin = ADMIN_EMAILS.map(e => e.toLowerCase()).includes((u.email || "").toLowerCase());
+      
+      return `
       <div class="admin-item ${u.suspended ? 'suspended' : ''}">
         <img src="${avatar(u.photo, u.name)}" alt="">
         <div class="info">
-          <strong>${esc(u.name || "User")} ${u.isAdmin ? "👑" : ""}</strong>
+          <strong>${esc(u.name || "User")}</strong>
           <small>@${esc(u.username || "user")} · ${u.videos || 0} videos · ${u.followers || 0} followers</small>
           ${u.suspended ? `<span class="suspend-tag">🚫 Suspended</span>` : ''}
+          ${isAdmin ? `<span class="admin-tag">👑 Admin</span>` : ''}
         </div>
         <div class="admin-actions">
           ${u.uid === currentUser.uid
@@ -881,19 +900,17 @@ async function renderUsers(){
           }
         </div>
       </div>
-    `).join("");
+      `;
+    }).join("");
 
-    // Suspend buttons
     content.querySelectorAll("[data-suspend]").forEach(btn => {
       btn.addEventListener("click", () => openSuspendModal(btn.dataset.suspend));
     });
 
-    // Unsuspend buttons
     content.querySelectorAll("[data-unsuspend]").forEach(btn => {
       btn.addEventListener("click", () => openUnsuspendModal(btn.dataset.unsuspend));
     });
 
-    // Delete buttons
     content.querySelectorAll("[data-del-user]").forEach(btn => {
       btn.addEventListener("click", () => deleteUser(btn.dataset.delUser));
     });
@@ -919,7 +936,6 @@ function openSuspendModal(uid){
   $("suspendUserUsername").textContent = "@" + (user.username || "user");
   $("suspendReason").value = "";
 
-  // Reset duration selection
   document.querySelectorAll(".duration-option").forEach(opt => {
     opt.classList.toggle("selected", opt.dataset.days === "30");
   });
@@ -960,7 +976,6 @@ $("confirmSuspendBtn")?.addEventListener("click", async () => {
   btn.textContent = "Suspending...";
 
   try {
-    // Calculate suspendUntil
     let suspendUntil = null;
     let durationText = "";
 
@@ -974,8 +989,6 @@ $("confirmSuspendBtn")?.addEventListener("click", async () => {
       suspendUntil = Timestamp.fromDate(untilDate);
     }
 
-    const user = allUsers.find(u => u.uid === suspendTargetUid);
-
     await updateDoc(doc(db, "profiles", suspendTargetUid), {
       suspended: true,
       suspendReason: reason,
@@ -985,7 +998,6 @@ $("confirmSuspendBtn")?.addEventListener("click", async () => {
       suspendedBy: currentUser.uid
     });
 
-    // Send notification
     try {
       await addDoc(collection(db, "notifications"), {
         to: suspendTargetUid,
@@ -1053,7 +1065,6 @@ $("confirmUnsuspendBtn")?.addEventListener("click", async () => {
       unsuspendedBy: currentUser.uid
     });
 
-    // Send notification
     try {
       await addDoc(collection(db, "notifications"), {
         to: unsuspendTargetUid,
@@ -1314,7 +1325,7 @@ document.querySelectorAll(".admin-modal").forEach(modal => {
   });
 });
 
-console.log("✅ Admin Panel loaded with Suspension!");
+console.log("✅ Admin Panel loaded — Email-based admin check!");
 </script>
 
 </body>
