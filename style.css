@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - style.css (With Stories + Auth + Private Vault + Gallery Hide)
+   ReelHub - style.css (White Page Fix + All Features)
 ============================================================ */
 
 * {
@@ -30,11 +30,23 @@ body.dark {
   --border: #262626;
 }
 
+/* ✅ FIX: White flash prevention — always purple gradient initially */
+html {
+  background: linear-gradient(135deg, #6d28d9, #ec4899);
+  min-height: 100vh;
+}
+
 body {
-  background: var(--bg);
+  background: linear-gradient(135deg, #6d28d9, #ec4899);
   color: var(--text);
   min-height: 100vh;
   overscroll-behavior-y: none;
+  transition: background 0.3s ease;
+}
+
+/* When app is visible, use normal background */
+body.app-ready {
+  background: var(--bg) !important;
 }
 
 button, input, textarea, select { font: inherit; }
@@ -102,7 +114,7 @@ input, textarea { outline: none; }
   justify-content: center;
   align-items: center;
   padding: 20px;
-  background: linear-gradient(135deg, #6d28d9, #ec4899);
+  background: transparent;
 }
 
 .login-card {
@@ -706,7 +718,6 @@ input, textarea { outline: none; }
   font-size: 15px;
   margin-top: 8px;
   cursor: pointer;
-  transition: opacity 0.2s;
 }
 
 .story-upload-btn:disabled {
@@ -2426,11 +2437,7 @@ input, textarea { outline: none; }
   transform: scale(0.98);
 }
 
-/* ============================================================
-   ✅ PRIVATE VAULT STYLES (Updated with Gallery Hide)
-============================================================ */
-
-/* PIN Inputs */
+/* PRIVATE VAULT */
 #newPinInput,
 #confirmPinInput,
 #vaultPinInput {
@@ -2448,7 +2455,6 @@ input, textarea { outline: none; }
   box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15);
 }
 
-/* Vault Add Files Button */
 .vault-add-btn {
   padding: 8px 16px;
   border-radius: 20px;
@@ -2461,7 +2467,6 @@ input, textarea { outline: none; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: opacity 0.2s;
 }
 
 .vault-add-btn:active {
@@ -2469,15 +2474,10 @@ input, textarea { outline: none; }
   transform: scale(0.97);
 }
 
-/* Vault Content Grid */
 .vault-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
-}
-
-@media (max-width: 400px) {
-  .vault-grid { gap: 4px; }
 }
 
 .vault-item {
@@ -2490,9 +2490,7 @@ input, textarea { outline: none; }
   transition: transform 0.15s;
 }
 
-.vault-item:active {
-  transform: scale(0.96);
-}
+.vault-item:active { transform: scale(0.96); }
 
 .vault-item img,
 .vault-item video {
@@ -2500,18 +2498,6 @@ input, textarea { outline: none; }
   height: 100%;
   object-fit: cover;
   display: block;
-}
-
-.vault-item-overlay {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  background: rgba(0,0,0,0.7);
-  color: white;
-  font-size: 10px;
-  padding: 2px 6px;
-  border-radius: 8px;
-  backdrop-filter: blur(4px);
 }
 
 .vault-item-type {
@@ -2524,25 +2510,6 @@ input, textarea { outline: none; }
   padding: 2px 6px;
   border-radius: 8px;
   backdrop-filter: blur(4px);
-}
-
-.vault-item-menu {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: rgba(0,0,0,0.7);
-  color: white;
-  border: 0;
-  font-size: 12px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(4px);
-  z-index: 3;
 }
 
 .vault-empty {
@@ -2568,18 +2535,8 @@ input, textarea { outline: none; }
 .vault-empty p {
   font-size: 13px;
   line-height: 1.5;
-  margin-bottom: 20px;
 }
 
-/* Vault loading state */
-.vault-loading {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--muted);
-  font-size: 13px;
-}
-
-/* PIN dot animation */
 @keyframes pinShake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-8px); }
@@ -2588,20 +2545,6 @@ input, textarea { outline: none; }
 
 .pin-error {
   animation: pinShake 0.3s ease-in-out;
-}
-
-/* Vault badge */
-.vault-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  background: linear-gradient(135deg, #7c3aed, #ec4899);
-  color: white;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 700;
-  margin-left: 8px;
 }
 
 /* RESPONSIVE */
@@ -2628,7 +2571,6 @@ input, textarea { outline: none; }
   .story-nav-left, .story-nav-right { bottom: 90px; }
 }
 
-/* Landscape */
 @media (max-height: 500px) and (orientation: landscape) {
   .story-header { top: calc(10px + env(safe-area-inset-top, 0px)); }
   .story-progress-bar { top: calc(4px + env(safe-area-inset-top, 0px)); }
@@ -2636,14 +2578,12 @@ input, textarea { outline: none; }
   .story-views { bottom: 60px; }
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .story-item,
   .story-progress-fill,
   .story-upload-btn,
   .splash-icon,
   .vault-item,
-  .vault-hide-btn,
   .vault-add-btn {
     transition: none !important;
     animation: none !important;
