@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (Fixed Login Flash + Vault + Stories)
+   ReelHub - app.js (ALL FIXES — Complete)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -32,7 +32,8 @@ import {
   query,
   where,
   serverTimestamp,
-  onSnapshot
+  onSnapshot,
+  increment
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -59,6 +60,7 @@ const STORY_DURATION_VIDEO_MAX = 15000;
 const VAULT_AUTO_LOCK_MS = 5 * 60 * 1000;
 const VAULT_MAX_FILE_SIZE = 30 * 1024 * 1024;
 const VAULT_MAX_FILES = 100;
+const MESSAGE_COOLDOWN = 1500;
 
 /* STATE */
 let currentUser = null;
@@ -126,6 +128,13 @@ let vaultUploading = false;
 /* SPLASH STATE */
 let splashHidden = false;
 let authResolved = false;
+
+/* FIX: Duplicate prevention */
+const processingMessages = new Set();
+let lastSentMessageTime = 0;
+const processingLikes = new Set();
+const processingViews = new Set();
+const processingSaves = new Set();
 
 const $ = id => document.getElementById(id);
 
@@ -235,10 +244,13 @@ function formatViewsShort(num){
   return (num/1000000000).toFixed(1) + "B";
 }
 
-/* SPLASH HANDLER */
+/* FIX: Splash handler */
 function hideSplash(){
   if(splashHidden) return;
   splashHidden = true;
+  
+  document.body.classList.add("app-ready");
+  
   const splash = $("splashScreen");
   if(splash){
     splash.classList.add("fade-out");
@@ -246,7 +258,6 @@ function hideSplash(){
   }
 }
 
-/* Initially hide both screens — wait for auth */
 function prepareInitialState(){
   $("loginPage")?.classList.add("hidden");
   $("app")?.classList.add("hidden");
@@ -336,7 +347,6 @@ $("suspensionLogoutBtn")?.addEventListener("click", async ()=>{
 /* ============================================================
    STORIES SYSTEM
 ============================================================ */
-
 function startStoriesListener(){
   if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
   if(!currentUser) return;
@@ -552,24 +562,6 @@ $("storyUploadBtn")?.addEventListener("click", async ()=>{
       expiresAt: expiresAt
     });
 
-    try{
-      const followersSnap = await getDocs(
-        query(collection(db, "follows"), where("following", "==", currentUser.uid))
-      );
-      for(const d of followersSnap.docs){
-        const followerUid = d.data().follower;
-        if(followerUid && followerUid !== currentUser.uid){
-          await addDoc(collection(db, "notifications"), {
-            to: followerUid,
-            from: currentUser.uid,
-            title: "📸 New Story",
-            message: (currentProfile?.name || "Someone") + " added a new story",
-            createdAt: serverTimestamp()
-          });
-        }
-      }
-    }catch(err){ console.error("Story notify error:", err); }
-
     if(status) status.textContent = "✅ Story shared!";
     toast("✅ Story added");
 
@@ -602,9 +594,7 @@ function openStoryViewer(userIndex, storyIndex){
 function closeStoryViewer(){
   const viewer = $("storyViewer");
   if(viewer) viewer.classList.remove("show");
-
   stopStoryTimer();
-
   const media = $("storyMedia");
   if(media) media.innerHTML = "";
 }
@@ -927,9 +917,8 @@ document.addEventListener("keydown", (e)=>{
 });
 
 /* ============================================================
-   PRIVATE VAULT SYSTEM
+   PRIVATE VAULT SYSTEM — FIXED FOR GALLERY
 ============================================================ */
-
 async function saveVaultPin(pin){
   if(!currentUser) return false;
   try{
@@ -1137,12 +1126,18 @@ function renderVaultContent(){
   updateVaultFileCount();
 }
 
-$("vaultAddFilesBtn")?.addEventListener("click", () => {
+$("vaultAddFilesBtn")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
   if(vaultUploading){
     toast("Upload in progress...");
     return;
   }
-  $("vaultFileInput")?.click();
+  const input = $("vaultFileInput");
+  if(input){
+    input.value = "";
+    input.click();
+  }
 });
 
 $("vaultFileInput")?.addEventListener("change", async (e) => {
@@ -1151,6 +1146,7 @@ $("vaultFileInput")?.addEventListener("change", async (e) => {
   
   if(!currentUser){
     toast("Login required");
+    e.target.value = "";
     return;
   }
   
@@ -1273,24 +1269,6 @@ document.addEventListener("touchmove", () => {
   }
 }, { passive: true });
 
-document.addEventListener("mousedown", (e) => {
-  const vaultItem = e.target.closest("[data-vault-file]");
-  if(!vaultItem) return;
-  
-  vaultLongPressTimer = setTimeout(() => {
-    vaultLongPressTriggered = true;
-    const fileId = vaultItem.dataset.vaultFile;
-    showVaultFileMenu(fileId);
-  }, 700);
-});
-
-document.addEventListener("mouseup", () => {
-  if(vaultLongPressTimer){
-    clearTimeout(vaultLongPressTimer);
-    vaultLongPressTimer = null;
-  }
-});
-
 function showVaultFileMenu(fileId){
   const f = vaultFilesCache.find(x => x.id === fileId);
   if(!f) return;
@@ -1356,12 +1334,14 @@ function openVaultVideoPlayer(f){
   if(descEl){ descEl.textContent = ""; descEl.style.display = "none"; }
   
   const likesEl = $("videoPlayerLikes");
-  if(likesEl) likesEl.textContent = "From Vault 🔐";
+  if(likesEl) likesEl.textContent = "Vault";
   
-  const likeBtn = $("videoPlayerLikeBtn");
-  if(likeBtn) likeBtn.style.display = "none";
-  const shareBtn = $("videoPlayerShareBtn");
-  if(shareBtn) shareBtn.style.display = "none";
+  const allBtns = ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn", 
+                   "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn"];
+  allBtns.forEach(id => {
+    const btn = $(id);
+    if(btn) btn.style.display = "none";
+  });
   
   showModal("videoPlayerModal");
 }
@@ -1468,9 +1448,7 @@ document.addEventListener("visibilitychange", () => {
     }
   }
 });
-/* ============================================================
-   ONLINE STATUS
-============================================================ */
+/* ONLINE STATUS */
 async function updatePresence(){
   if(!currentUser) return;
   try{
@@ -1647,9 +1625,7 @@ async function calculateAllUnread(){
   updateMsgBadge();
 }
 
-/* ============================================================
-   EMAIL / PASSWORD AUTH
-============================================================ */
+/* EMAIL / PASSWORD AUTH */
 document.querySelectorAll(".auth-tab").forEach(tab => {
   tab.addEventListener("click", () => {
     const tabName = tab.dataset.tab;
@@ -1828,7 +1804,6 @@ function openPanel(id){
   }
 }
 
-/* LOGIN (Google) */
 $("googleLogin")?.addEventListener("click", async()=>{
   $("loginStatus").textContent = "Opening Google...";
   try{
@@ -1977,9 +1952,7 @@ async function loadMySentRequests(){
   }catch(e){ console.error(e); }
 }
 
-/* ============================================================
-   AUTH STATE — FIXED LOGIN FLASH BUG
-============================================================ */
+/* AUTH STATE — FIXED */
 onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
@@ -1987,7 +1960,6 @@ onAuthStateChanged(auth, async user => {
     const isSuspended = await checkSuspension(user.uid);
     if(isSuspended){
       authResolved = true;
-      hideSplash();
       return;
     }
 
@@ -1997,11 +1969,9 @@ onAuthStateChanged(auth, async user => {
     await loadMySaves();
     await loadMySentRequests();
 
-    // ✅ Login page HIDDEN, App SHOWN
     $("loginPage")?.classList.add("hidden");
     $("app")?.classList.remove("hidden");
     
-    // ✅ Hide splash now (user is verified logged-in)
     hideSplash();
 
     startRealtimeVideos();
@@ -2050,12 +2020,10 @@ onAuthStateChanged(auth, async user => {
     if(vaultUnsubscribe){ vaultUnsubscribe(); vaultUnsubscribe = null; }
     if(heartbeatInterval){ clearInterval(heartbeatInterval); heartbeatInterval = null; }
 
-    // ✅ App HIDDEN, Login SHOWN
     $("app")?.classList.add("hidden");
     $("loginPage")?.classList.remove("hidden");
     $("suspensionScreen")?.classList.add("hidden");
     
-    // ✅ Hide splash now (user confirmed logged-out)
     hideSplash();
     authResolved = true;
   }
@@ -2713,7 +2681,6 @@ function setupReelsObserver(){
 
   videos.forEach(v => reelObserver.observe(v));
 }
-
 /* GLOBAL CLICK HANDLER */
 document.addEventListener("click", async (e)=>{
   const t = e.target;
@@ -3012,9 +2979,12 @@ document.addEventListener("click", async (e)=>{
   }
 });
 
-/* VIEW COUNT */
+/* FIX: VIEW COUNT with duplicate prevention */
 async function trackView(videoId){
   if(!currentUser || !videoId) return;
+  
+  if(processingViews.has(videoId)) return;
+  processingViews.add(videoId);
 
   try{
     const viewRef = doc(db, "videos", videoId, "views", currentUser.uid);
@@ -3027,13 +2997,17 @@ async function trackView(videoId){
       });
 
       const videoRef = doc(db, "videos", videoId);
-      const videoSnap = await getDoc(videoRef);
-      if(videoSnap.exists()){
-        const currentViews = Number(videoSnap.data().views || 0);
-        await updateDoc(videoRef, { views: currentViews + 1 });
-      }
+      await updateDoc(videoRef, { 
+        views: increment(1) 
+      });
     }
-  }catch(e){ console.error("trackView:", e); }
+  }catch(e){ 
+    console.error("trackView:", e); 
+  } finally {
+    setTimeout(() => {
+      processingViews.delete(videoId);
+    }, 5000);
+  }
 }
 
 document.addEventListener("play", (e)=>{
@@ -3043,9 +3017,13 @@ document.addEventListener("play", (e)=>{
   }
 }, true);
 
-/* LIKE */
+/* FIX: LIKE with atomic counter and duplicate prevention */
 async function toggleLike(videoId, btnEl, isReel=false){
   if(!currentUser){ toast("Login required"); return; }
+  if(!videoId) return;
+  
+  if(processingLikes.has(videoId)) return;
+  processingLikes.add(videoId);
 
   try{
     const likeRef = doc(db,"videos",videoId,"likes",currentUser.uid);
@@ -3058,38 +3036,51 @@ async function toggleLike(videoId, btnEl, isReel=false){
 
     if(!videoSnap.exists()) return;
 
-    const currentLikes = Number(videoSnap.data().likes || 0);
     const ownerId = videoSnap.data().userId;
 
     if(likeSnap.exists()){
       await deleteDoc(likeRef);
-      await updateDoc(videoRef, { likes: Math.max(0, currentLikes - 1) });
+      await updateDoc(videoRef, { likes: increment(-1) });
 
       if(btnEl){
         btnEl.classList.remove("liked");
         const icon = btnEl.querySelector(".icon");
         if(icon) icon.textContent = "🤍";
-        const count = btnEl.querySelector(".like-count");
-        if(count) count.textContent = Math.max(0, currentLikes - 1);
       }
+
+      const freshSnap = await getDoc(videoRef);
+      const newCount = Math.max(0, Number(freshSnap.data()?.likes || 0));
+      
       const likesEl = $("likes-" + videoId);
-      if(likesEl) likesEl.textContent = Math.max(0, currentLikes - 1) + " likes";
+      if(likesEl) likesEl.textContent = newCount + " likes";
+      
+      if(btnEl){
+        const count = btnEl.querySelector(".like-count");
+        if(count) count.textContent = newCount;
+      }
     }else{
       await setDoc(likeRef, {
         userId: currentUser.uid,
         createdAt: serverTimestamp()
       });
-      await updateDoc(videoRef, { likes: currentLikes + 1 });
+      await updateDoc(videoRef, { likes: increment(1) });
 
       if(btnEl){
         btnEl.classList.add("liked");
         const icon = btnEl.querySelector(".icon");
         if(icon) icon.textContent = "❤️";
-        const count = btnEl.querySelector(".like-count");
-        if(count) count.textContent = currentLikes + 1;
       }
+
+      const freshSnap = await getDoc(videoRef);
+      const newCount = Number(freshSnap.data()?.likes || 0);
+      
       const likesEl = $("likes-" + videoId);
-      if(likesEl) likesEl.textContent = (currentLikes + 1) + " likes";
+      if(likesEl) likesEl.textContent = newCount + " likes";
+      
+      if(btnEl){
+        const count = btnEl.querySelector(".like-count");
+        if(count) count.textContent = newCount;
+      }
 
       if(ownerId !== currentUser.uid){
         await addDoc(collection(db,"notifications"), {
@@ -3104,18 +3095,23 @@ async function toggleLike(videoId, btnEl, isReel=false){
   }catch(e){
     console.error(e);
     toast("Like error");
+  } finally {
+    setTimeout(() => {
+      processingLikes.delete(videoId);
+    }, 1000);
   }
 }
 
-/* SAVE */
+/* FIX: SAVE with duplicate prevention */
 async function toggleSave(videoId, btnEl){
   if(!currentUser){ toast("Login required"); return; }
   if(!videoId) return;
 
+  if(processingSaves.has(videoId)) return;
+  processingSaves.add(videoId);
+
   const saveId = currentUser.uid + "_" + videoId;
   const saveRef = doc(db, "saves", saveId);
-
-  if(btnEl){ btnEl.disabled = true; btnEl.style.opacity = "0.6"; }
 
   try{
     const snap = await getDoc(saveRef);
@@ -3138,11 +3134,14 @@ async function toggleSave(videoId, btnEl){
 
     updateProfileTabCounts();
     renderSavedVideos();
+    updateVideoPlayerSave(videoId);
   }catch(e){
     console.error(e);
     toast("Save failed");
-  }finally{
-    if(btnEl){ btnEl.disabled = false; btnEl.style.opacity = "1"; }
+  } finally {
+    setTimeout(() => {
+      processingSaves.delete(videoId);
+    }, 1500);
   }
 }
 
@@ -3579,6 +3578,7 @@ async function checkDeepLink(){
   await openVideoByDeepLink(vid);
 }
 
+/* PROFESSIONAL VIDEO PLAYER */
 window.openVideoPlayer = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
   if(!v){ toast("Video not found"); return; }
@@ -3593,8 +3593,20 @@ window.openVideoPlayer = function(videoId){
   const videoEl = $("videoPlayerVideo");
   if(videoEl){
     videoEl.src = v.videoURL;
+    videoEl.playbackRate = 1;
     videoEl.play().catch(()=>{});
   }
+
+  document.querySelectorAll(".speed-btn").forEach(btn => {
+    const speed = Number(btn.dataset.speed);
+    if(speed === 1){
+      btn.style.background = "#7c3aed";
+      btn.classList.add("active");
+    } else {
+      btn.style.background = "rgba(255,255,255,0.15)";
+      btn.classList.remove("active");
+    }
+  });
 
   const titleEl = $("videoPlayerTitle");
   if(titleEl) titleEl.textContent = v.title || "Untitled";
@@ -3609,20 +3621,46 @@ window.openVideoPlayer = function(videoId){
   }
 
   const likesEl = $("videoPlayerLikes");
-  if(likesEl) likesEl.textContent = (v.likes || 0) + " likes";
+  if(likesEl) likesEl.textContent = (v.likes || 0);
 
   const likeBtn = $("videoPlayerLikeBtn");
   const shareBtn = $("videoPlayerShareBtn");
+  const commentBtn = $("videoPlayerCommentBtn");
+  const saveBtn = $("videoPlayerSaveBtn");
+  const playlistBtn = $("videoPlayerPlaylistBtn");
+  const speedBtn = $("videoPlayerSpeedBtn");
+
   if(likeBtn) likeBtn.style.display = "";
   if(shareBtn) shareBtn.style.display = "";
+  if(commentBtn) commentBtn.style.display = "";
+  if(saveBtn) saveBtn.style.display = "";
+  if(playlistBtn) playlistBtn.style.display = "";
+  if(speedBtn) speedBtn.style.display = "";
 
   updateVideoPlayerLike(videoId);
+  updateVideoPlayerSave(videoId);
 
   if(likeBtn){
     likeBtn.onclick = (e)=>{
       e.preventDefault();
       e.stopPropagation();
       toggleLike(videoId, likeBtn, false);
+      setTimeout(async () => {
+        const snap = await getDoc(doc(db, "videos", videoId));
+        if(snap.exists()){
+          const likesEl = $("videoPlayerLikes");
+          if(likesEl) likesEl.textContent = snap.data().likes || 0;
+        }
+      }, 500);
+    };
+  }
+
+  if(commentBtn){
+    commentBtn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      hideModal("videoPlayerModal");
+      setTimeout(() => openComments(videoId), 200);
     };
   }
 
@@ -3634,8 +3672,79 @@ window.openVideoPlayer = function(videoId){
     };
   }
 
+  if(saveBtn){
+    saveBtn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSave(videoId, saveBtn);
+    };
+  }
+
+  if(playlistBtn){
+    playlistBtn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      openAddToPlaylist(videoId);
+    };
+  }
+
+  if(speedBtn){
+    speedBtn.onclick = (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      const speedControl = $("speedControl");
+      if(speedControl){
+        speedControl.style.display = speedControl.style.display === "none" ? "block" : "none";
+      }
+    };
+  }
+
+  document.querySelectorAll(".speed-btn").forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const speed = Number(btn.dataset.speed);
+      const videoEl = $("videoPlayerVideo");
+      if(videoEl) videoEl.playbackRate = speed;
+      
+      document.querySelectorAll(".speed-btn").forEach(b => {
+        b.style.background = "rgba(255,255,255,0.15)";
+        b.classList.remove("active");
+      });
+      btn.style.background = "#7c3aed";
+      btn.classList.add("active");
+      
+      toast(`Speed: ${speed}x`);
+      
+      setTimeout(() => {
+        const speedControl = $("speedControl");
+        if(speedControl) speedControl.style.display = "none";
+      }, 800);
+    };
+  });
+
   showModal("videoPlayerModal");
 };
+
+async function updateVideoPlayerSave(videoId){
+  if(!currentUser) return;
+  const saveBtn = $("videoPlayerSaveBtn");
+  if(!saveBtn) return;
+  
+  const isSaved = mySavesCache.has(videoId);
+  const icon = saveBtn.querySelector(".icon");
+  const label = saveBtn.querySelector("small");
+  
+  if(isSaved){
+    if(icon) icon.textContent = "🔖";
+    if(label) label.textContent = "Saved";
+    saveBtn.style.color = "var(--primary)";
+  } else {
+    if(icon) icon.textContent = "📑";
+    if(label) label.textContent = "Save";
+    saveBtn.style.color = "";
+  }
+}
 
 async function updateVideoPlayerLike(videoId){
   if(!currentUser) return;
@@ -3653,6 +3762,28 @@ async function updateVideoPlayerLike(videoId){
       btn.querySelector(".icon").textContent = "🤍";
     }
   }catch(e){ console.error(e); }
+}
+
+function resetVideoPlayer(){
+  const videoEl = $("videoPlayerVideo");
+  if(videoEl){
+    videoEl.pause();
+    videoEl.playbackRate = 1;
+  }
+  
+  const speedControl = $("speedControl");
+  if(speedControl) speedControl.style.display = "none";
+  
+  document.querySelectorAll(".speed-btn").forEach(btn => {
+    const speed = Number(btn.dataset.speed);
+    if(speed === 1){
+      btn.style.background = "#7c3aed";
+      btn.classList.add("active");
+    } else {
+      btn.style.background = "rgba(255,255,255,0.15)";
+      btn.classList.remove("active");
+    }
+  });
 }
 
 /* SHARE */
@@ -4767,12 +4898,31 @@ function startChatListener(){
   );
 }
 
+/* FIX: Send DM with duplicate prevention */
 $("dmSendBtn")?.addEventListener("click", sendDM);
-$("dmInput")?.addEventListener("keydown", e=>{ if(e.key === "Enter") sendDM(); });
+$("dmInput")?.addEventListener("keydown", e=>{ 
+  if(e.key === "Enter") {
+    e.preventDefault();
+    sendDM();
+  }
+});
 
 async function sendDM(){
-  const text = $("dmInput").value.trim();
+  const input = $("dmInput");
+  if(!input) return;
+  
+  const text = input.value.trim();
   if(!text || !currentChatId) return;
+  
+  if(processingMessages.has(text)) return;
+  
+  const now = Date.now();
+  if(now - lastSentMessageTime < MESSAGE_COOLDOWN) return;
+  
+  processingMessages.add(text);
+  lastSentMessageTime = now;
+  
+  input.value = "";
 
   try{
     await addDoc(collection(db,"chats",currentChatId,"messages"), {
@@ -4787,11 +4937,14 @@ async function sendDM(){
       lastMessage: text,
       updatedAt: serverTimestamp()
     });
-
-    $("dmInput").value = "";
   }catch(e){
     console.error(e);
     toast("Send failed");
+    input.value = text;
+  }finally{
+    setTimeout(() => {
+      processingMessages.delete(text);
+    }, 2000);
   }
 }
 
@@ -4949,15 +5102,9 @@ document.querySelectorAll("[data-close]").forEach(btn=>{
     }
 
     if(id === "videoPlayerModal"){
+      resetVideoPlayer();
       const videoEl = $("videoPlayerVideo");
-      if(videoEl){
-        videoEl.pause();
-        videoEl.src = "";
-      }
-      const likeBtn = $("videoPlayerLikeBtn");
-      const shareBtn = $("videoPlayerShareBtn");
-      if(likeBtn) likeBtn.style.display = "";
-      if(shareBtn) shareBtn.style.display = "";
+      if(videoEl) videoEl.src = "";
     }
 
     if(id === "imageViewerModal"){
@@ -4987,15 +5134,9 @@ document.querySelectorAll(".modal").forEach(modal=>{
       }
 
       if(modal.id === "videoPlayerModal"){
+        resetVideoPlayer();
         const videoEl = $("videoPlayerVideo");
-        if(videoEl){
-          videoEl.pause();
-          videoEl.src = "";
-        }
-        const likeBtn = $("videoPlayerLikeBtn");
-        const shareBtn = $("videoPlayerShareBtn");
-        if(likeBtn) likeBtn.style.display = "";
-        if(shareBtn) shareBtn.style.display = "";
+        if(videoEl) videoEl.src = "";
       }
 
       if(modal.id === "imageViewerModal"){
@@ -5021,25 +5162,17 @@ $("dmSearchInput")?.addEventListener("input", e=>{
 });
 
 /* ============================================================
-   START — CRITICAL: This must run at the very end
+   START
 ============================================================ */
-
-// 1. Setup initial state — hide both login and app
 prepareInitialState();
-
-// 2. Open home panel (it will be hidden until auth resolves)
 openPanel("homePanel");
 
-// 3. Safety: force-hide splash after 4 seconds regardless
 setTimeout(() => {
   if(!splashHidden) hideSplash();
 }, 4000);
-/* ============================================================
-   BROWSER BACK BUTTON HANDLER
-============================================================ */
 
+/* BACK BUTTON */
 window.addEventListener("popstate", (e) => {
-  // 1. Story viewer
   const storyViewer = $("storyViewer");
   if(storyViewer && storyViewer.classList.contains("show")){
     closeStoryViewer();
@@ -5047,7 +5180,6 @@ window.addEventListener("popstate", (e) => {
     return;
   }
 
-  // 2. Any open modals
   const openModals = document.querySelectorAll(".modal.show");
   if(openModals.length > 0){
     const topModal = openModals[openModals.length - 1];
@@ -5065,12 +5197,9 @@ window.addEventListener("popstate", (e) => {
       currentPlaylistView = null;
     }
     if(id === "videoPlayerModal"){
+      resetVideoPlayer();
       const videoEl = $("videoPlayerVideo");
-      if(videoEl){ videoEl.pause(); videoEl.src = ""; }
-      const likeBtn = $("videoPlayerLikeBtn");
-      const shareBtn = $("videoPlayerShareBtn");
-      if(likeBtn) likeBtn.style.display = "";
-      if(shareBtn) shareBtn.style.display = "";
+      if(videoEl) videoEl.src = "";
     }
     if(id === "imageViewerModal"){
       const imgEl = $("largeChatImage");
@@ -5086,7 +5215,6 @@ window.addEventListener("popstate", (e) => {
     return;
   }
   
-  // 3. Share sheet
   const shareSheet = $("shareSheet");
   if(shareSheet && shareSheet.classList.contains("show")){
     shareSheet.classList.remove("show");
@@ -5094,7 +5222,6 @@ window.addEventListener("popstate", (e) => {
     return;
   }
   
-  // 4. DM chat view
   const dmChatView = $("dmChatView");
   if(dmChatView && !dmChatView.classList.contains("hidden")){
     if(currentChatId) markChatAsRead(currentChatId);
@@ -5104,4 +5231,4 @@ window.addEventListener("popstate", (e) => {
   }
 }, { passive: true });
 
-console.log("✅ ReelHub loaded — Fixed Login Flash + Vault + Stories + Auth!");
+console.log("✅ ReelHub loaded — All fixes applied!");
