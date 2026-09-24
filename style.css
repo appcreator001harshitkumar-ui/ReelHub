@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - style.css (White Page Fix + All Features)
+   ReelHub - style.css (ALL FIXES — Complete)
 ============================================================ */
 
 * {
@@ -30,7 +30,7 @@ body.dark {
   --border: #262626;
 }
 
-/* ✅ FIX: White flash prevention — always purple gradient initially */
+/* FIX: White flash prevention */
 html {
   background: linear-gradient(135deg, #6d28d9, #ec4899);
   min-height: 100vh;
@@ -44,8 +44,11 @@ body {
   transition: background 0.3s ease;
 }
 
-/* When app is visible, use normal background */
 body.app-ready {
+  background: var(--bg) !important;
+}
+
+body.dark.app-ready {
   background: var(--bg) !important;
 }
 
@@ -1997,6 +2000,56 @@ input, textarea { outline: none; }
 
 #videoPlayerModal .ig-action-btn.liked { color: #ed4956; }
 #videoPlayerModal .ig-action-btn.liked .icon { color: #ed4956; }
+
+/* PROFESSIONAL VIDEO PLAYER */
+.action-btn {
+  transition: all 0.15s ease;
+}
+
+.action-btn:active {
+  background: var(--bg) !important;
+  transform: scale(0.95);
+}
+
+.action-btn.liked {
+  color: #ed4956;
+}
+
+.action-btn.liked .icon {
+  color: #ed4956;
+  filter: drop-shadow(0 0 4px rgba(237, 73, 86, 0.5));
+}
+
+.speed-btn {
+  transition: all 0.15s ease;
+}
+
+.speed-btn:active {
+  transform: scale(0.9);
+}
+
+.speed-btn.active {
+  background: #7c3aed !important;
+  box-shadow: 0 0 8px rgba(124, 58, 237, 0.5);
+}
+
+#videoPlayerModal > .modal-box > div:last-child::-webkit-scrollbar {
+  display: none;
+}
+
+#videoPlayerModal > .modal-box > div:last-child {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+#speedControl {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* COMMENTS */
 .comment-item {
