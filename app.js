@@ -249,6 +249,7 @@ function hideSplash(){
   if(splashHidden) return;
   splashHidden = true;
   
+  // FIX: Remove purple gradient, show app
   document.body.classList.add("app-ready");
   
   const splash = $("splashScreen");
@@ -917,7 +918,7 @@ document.addEventListener("keydown", (e)=>{
 });
 
 /* ============================================================
-   PRIVATE VAULT SYSTEM — FIXED FOR GALLERY
+   PRIVATE VAULT SYSTEM
 ============================================================ */
 async function saveVaultPin(pin){
   if(!currentUser) return false;
@@ -1952,7 +1953,7 @@ async function loadMySentRequests(){
   }catch(e){ console.error(e); }
 }
 
-/* AUTH STATE — FIXED */
+/* AUTH STATE */
 onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
@@ -2979,7 +2980,7 @@ document.addEventListener("click", async (e)=>{
   }
 });
 
-/* FIX: VIEW COUNT with duplicate prevention */
+/* FIX: VIEW COUNT */
 async function trackView(videoId){
   if(!currentUser || !videoId) return;
   
@@ -3017,7 +3018,7 @@ document.addEventListener("play", (e)=>{
   }
 }, true);
 
-/* FIX: LIKE with atomic counter and duplicate prevention */
+/* FIX: LIKE */
 async function toggleLike(videoId, btnEl, isReel=false){
   if(!currentUser){ toast("Login required"); return; }
   if(!videoId) return;
@@ -3102,7 +3103,7 @@ async function toggleLike(videoId, btnEl, isReel=false){
   }
 }
 
-/* FIX: SAVE with duplicate prevention */
+/* FIX: SAVE */
 async function toggleSave(videoId, btnEl){
   if(!currentUser){ toast("Login required"); return; }
   if(!videoId) return;
@@ -3120,6 +3121,9 @@ async function toggleSave(videoId, btnEl){
       await deleteDoc(saveRef);
       mySavesCache.delete(videoId);
       updateAllSaveButtons(videoId, false);
+      updateProfileTabCounts();
+      renderSavedVideos();
+      updateVideoPlayerSave(videoId);
       toast("Removed from saved");
     }else{
       await setDoc(saveRef, {
@@ -3129,12 +3133,11 @@ async function toggleSave(videoId, btnEl){
       });
       mySavesCache.add(videoId);
       updateAllSaveButtons(videoId, true);
+      updateProfileTabCounts();
+      renderSavedVideos();
+      updateVideoPlayerSave(videoId);
       toast("✅ Saved");
     }
-
-    updateProfileTabCounts();
-    renderSavedVideos();
-    updateVideoPlayerSave(videoId);
   }catch(e){
     console.error(e);
     toast("Save failed");
@@ -3474,34 +3477,75 @@ async function openAddToPlaylist(videoId){
   }).join("");
 }
 
+/* FIX: PLAYLIST SAVE */
 $("saveToPlaylistBtn")?.addEventListener("click", async()=>{
-  if(!currentPlaylistVideoId) return;
+  if(!currentPlaylistVideoId){ toast("Video not found"); return; }
+  
+  const btn = $("saveToPlaylistBtn");
+  if(btn){ btn.disabled = true; btn.textContent = "Saving..."; }
+  
   try{
-    $("saveToPlaylistBtn").disabled = true;
+    let savedCount = 0;
+    let removedCount = 0;
+    
     for(const p of myPlaylistsCache){
       const itemId = p.id + "_" + currentPlaylistVideoId;
       const itemRef = doc(db, "playlists", p.id, "items", itemId);
-      const snap = await getDoc(itemRef);
+      
+      try{
+        const snap = await getDoc(itemRef);
 
-      if(selectedPlaylists.has(p.id)){
-        if(!snap.exists()){
-          await setDoc(itemRef, {
-            videoId: currentPlaylistVideoId,
-            addedAt: serverTimestamp()
-          });
+        if(selectedPlaylists.has(p.id)){
+          if(!snap.exists()){
+            await setDoc(itemRef, {
+              videoId: currentPlaylistVideoId,
+              addedAt: serverTimestamp()
+            });
+            savedCount++;
+          }
+        }else{
+          if(snap.exists()) {
+            await deleteDoc(itemRef);
+            removedCount++;
+          }
         }
-      }else{
-        if(snap.exists()) await deleteDoc(itemRef);
+      }catch(err){
+        console.error("Playlist item error:", p.id, err);
       }
     }
-    await syncAllPlaylistCounts();
+    
+    for(const p of myPlaylistsCache){
+      try{
+        const items = await getDocs(collection(db, "playlists", p.id, "items"));
+        let coverVideoURL = "";
+        if(items.size > 0){
+          const firstItem = items.docs[0].data();
+          const v = videosCache.find(x => x.id === firstItem.videoId);
+          if(v) coverVideoURL = v.videoURL;
+        }
+        await updateDoc(doc(db, "playlists", p.id), {
+          videoCount: items.size,
+          coverVideoURL: coverVideoURL
+        });
+      }catch(err){}
+    }
+    
+    await loadMyPlaylists();
+    
     hideModal("addToPlaylistModal");
-    toast("✅ Playlists updated");
+    
+    if(savedCount > 0){
+      toast(`✅ Saved to ${savedCount} playlist${savedCount > 1 ? 's' : ''}`);
+    }else if(removedCount > 0){
+      toast(`Removed from ${removedCount} playlist${removedCount > 1 ? 's' : ''}`);
+    }else{
+      toast("No changes");
+    }
   }catch(e){
     console.error(e);
     toast("Failed to update playlists");
   }finally{
-    $("saveToPlaylistBtn").disabled = false;
+    if(btn){ btn.disabled = false; btn.textContent = "Done"; }
   }
 });
 
@@ -4898,7 +4942,7 @@ function startChatListener(){
   );
 }
 
-/* FIX: Send DM with duplicate prevention */
+/* FIX: Send DM */
 $("dmSendBtn")?.addEventListener("click", sendDM);
 $("dmInput")?.addEventListener("keydown", e=>{ 
   if(e.key === "Enter") {
@@ -5161,9 +5205,7 @@ $("dmSearchInput")?.addEventListener("input", e=>{
   });
 });
 
-/* ============================================================
-   START
-============================================================ */
+/* START */
 prepareInitialState();
 openPanel("homePanel");
 
