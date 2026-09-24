@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (With Stories + Email/Password Auth + Back Button Fix)
+   ReelHub - app.js (With Stories + Auth + Private Vault + Back Fix)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -56,6 +56,7 @@ const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const STORY_DURATION_IMAGE = 5000;
 const STORY_DURATION_VIDEO_MAX = 15000;
+const VAULT_AUTO_LOCK_MS = 5 * 60 * 1000;
 
 /* STATE */
 let currentUser = null;
@@ -111,6 +112,11 @@ let storyMediaType = null;
 
 /* MODAL HISTORY */
 let modalHistoryStack = [];
+
+/* VAULT STATE */
+let vaultPinVerified = false;
+let vaultUnlockTime = 0;
+let vaultAutoLockEnabled = true;
 
 const $ = id => document.getElementById(id);
 
@@ -900,6 +906,370 @@ document.addEventListener("keydown", (e)=>{
   else if(e.key === "Escape") closeStoryViewer();
 });
 
+/* ============================================================
+   PRIVATE VAULT SYSTEM
+============================================================ */
+
+function isVaultItem(type, id) {
+  if(!currentProfile) return false;
+  const hidden = currentProfile.hiddenItems || [];
+  return hidden.includes(`${type}:${id}`);
+}
+
+function getVaultItems() {
+  if(!currentProfile) return [];
+  return currentProfile.hiddenItems || [];
+}
+
+async function hideToVault(type, id) {
+  if(!currentUser || !currentProfile) return;
+  try {
+    const current = currentProfile.hiddenItems || [];
+    const key = `${type}:${id}`;
+    if(current.includes(key)) return;
+    
+    const updated = [...current, key];
+    await updateDoc(doc(db, "profiles", currentUser.uid), {
+      hiddenItems: updated,
+      updatedAt: serverTimestamp()
+    });
+    currentProfile.hiddenItems = updated;
+    
+    toast(`🔐 Hidden to Vault`);
+  } catch(e) {
+    console.error("hideToVault:", e);
+    toast("Failed to hide");
+  }
+}
+
+async function unhideFromVault(type, id) {
+  if(!currentUser || !currentProfile) return;
+  try {
+    const current = currentProfile.hiddenItems || [];
+    const key = `${type}:${id}`;
+    const updated = current.filter(k => k !== key);
+    
+    await updateDoc(doc(db, "profiles", currentUser.uid), {
+      hiddenItems: updated,
+      updatedAt: serverTimestamp()
+    });
+    currentProfile.hiddenItems = updated;
+    
+    toast("✅ Unhidden");
+  } catch(e) {
+    console.error("unhideFromVault:", e);
+    toast("Failed to unhide");
+  }
+}
+
+async function clearAllVault() {
+  if(!currentUser || !currentProfile) return;
+  if(!confirm("Clear all vault content?\n\nAll hidden items will become visible again.")) return;
+  try {
+    await updateDoc(doc(db, "profiles", currentUser.uid), {
+      hiddenItems: [],
+      updatedAt: serverTimestamp()
+    });
+    currentProfile.hiddenItems = [];
+    toast("✅ Vault cleared");
+    closeVault();
+  } catch(e) {
+    console.error("clearAllVault:", e);
+    toast("Failed to clear");
+  }
+}
+
+async function saveVaultPin(pin) {
+  if(!currentUser) return false;
+  try {
+    const pinHash = btoa("reelhub_vault_" + pin);
+    await updateDoc(doc(db, "profiles", currentUser.uid), {
+      vaultPin: pinHash,
+      vaultEnabled: true,
+      vaultCreatedAt: serverTimestamp()
+    });
+    currentProfile.vaultPin = pinHash;
+    currentProfile.vaultEnabled = true;
+    return true;
+  } catch(e) {
+    console.error("saveVaultPin:", e);
+    return false;
+  }
+}
+
+async function hasVaultPin() {
+  if(!currentProfile) return false;
+  return !!currentProfile.vaultPin;
+}
+
+async function verifyVaultPin(pin) {
+  if(!currentProfile || !currentProfile.vaultPin) return false;
+  const hash = btoa("reelhub_vault_" + pin);
+  return currentProfile.vaultPin === hash;
+}
+
+async function openVaultFlow() {
+  if(!currentUser) return;
+  
+  currentProfile = await getProfile(currentUser.uid);
+  
+  const hasPin = await hasVaultPin();
+  
+  if(!hasPin) {
+    $("newPinInput").value = "";
+    $("confirmPinInput").value = "";
+    $("pinSetupStatus").textContent = "";
+    hideModal("settingsModal");
+    hideModal("advancedSettingsModal");
+    showModal("pinSetupModal");
+    return;
+  }
+  
+  if(vaultPinVerified && (Date.now() - vaultUnlockTime) < VAULT_AUTO_LOCK_MS) {
+    hideModal("settingsModal");
+    hideModal("advancedSettingsModal");
+    openVaultViewer();
+    return;
+  }
+  
+  vaultPinVerified = false;
+  $("vaultPinInput").value = "";
+  $("pinEntryStatus").textContent = "";
+  hideModal("settingsModal");
+  hideModal("advancedSettingsModal");
+  showModal("pinEntryModal");
+  
+  setTimeout(() => $("vaultPinInput").focus(), 300);
+}
+
+$("savePinBtn")?.addEventListener("click", async () => {
+  const pin = $("newPinInput").value.trim();
+  const confirm = $("confirmPinInput").value.trim();
+  const status = $("pinSetupStatus");
+  
+  if(!/^\d{4}$/.test(pin)) {
+    status.style.color = "#ed4956";
+    status.textContent = "PIN must be 4 digits";
+    return;
+  }
+  if(pin !== confirm) {
+    status.style.color = "#ed4956";
+    status.textContent = "PINs don't match";
+    return;
+  }
+  
+  status.style.color = "#7c3aed";
+  status.textContent = "Saving...";
+  
+  const ok = await saveVaultPin(pin);
+  if(ok) {
+    status.style.color = "#22c55e";
+    status.textContent = "✅ PIN set!";
+    vaultPinVerified = true;
+    vaultUnlockTime = Date.now();
+    
+    setTimeout(() => {
+      hideModal("pinSetupModal");
+      openVaultViewer();
+    }, 600);
+  } else {
+    status.style.color = "#ed4956";
+    status.textContent = "Failed to save PIN";
+  }
+});
+
+$("unlockVaultBtn")?.addEventListener("click", async () => {
+  const pin = $("vaultPinInput").value.trim();
+  const status = $("pinEntryStatus");
+  const input = $("vaultPinInput");
+  
+  if(!/^\d{4}$/.test(pin)) {
+    status.textContent = "Enter 4-digit PIN";
+    input.classList.add("pin-error");
+    setTimeout(() => input.classList.remove("pin-error"), 400);
+    return;
+  }
+  
+  const valid = await verifyVaultPin(pin);
+  if(valid) {
+    status.style.color = "#22c55e";
+    status.textContent = "✅ Unlocked!";
+    vaultPinVerified = true;
+    vaultUnlockTime = Date.now();
+    
+    setTimeout(() => {
+      hideModal("pinEntryModal");
+      openVaultViewer();
+    }, 400);
+  } else {
+    status.style.color = "#ed4956";
+    status.textContent = "❌ Wrong PIN";
+    input.value = "";
+    input.classList.add("pin-error");
+    setTimeout(() => input.classList.remove("pin-error"), 400);
+  }
+});
+
+$("vaultPinInput")?.addEventListener("keydown", (e) => {
+  if(e.key === "Enter") $("unlockVaultBtn")?.click();
+});
+
+function openVaultViewer() {
+  renderVaultContent();
+  showModal("vaultViewerModal");
+}
+
+function closeVault() {
+  hideModal("vaultViewerModal");
+}
+
+function renderVaultContent() {
+  const container = $("vaultContent");
+  if(!container) return;
+  
+  const hiddenKeys = getVaultItems();
+  
+  if(!hiddenKeys.length) {
+    container.innerHTML = `
+      <div class="vault-empty">
+        <span class="icon">🔐</span>
+        <h3>Vault is empty</h3>
+        <p>Hide videos by tapping the 🔒 button on them</p>
+      </div>
+    `;
+    return;
+  }
+  
+  const videoKeys = hiddenKeys.filter(k => k.startsWith("video:"));
+  
+  let html = "";
+  
+  if(videoKeys.length) {
+    html += `<div>
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text)">
+        🎬 Videos (${videoKeys.length})
+      </h3>
+      <div class="vault-grid">`;
+    
+    videoKeys.forEach(key => {
+      const vid = key.replace("video:", "");
+      const v = videosCache.find(x => x.id === vid);
+      if(v) {
+        html += `
+          <div class="vault-item" data-vault-video="${esc(vid)}">
+            <video src="${esc(v.videoURL)}" preload="metadata" muted></video>
+            <span class="vault-item-overlay">🔒</span>
+            <span class="vault-item-type">🎬</span>
+          </div>
+        `;
+      }
+    });
+    
+    html += `</div></div>`;
+  }
+  
+  container.innerHTML = html;
+}
+
+document.addEventListener("click", async (e) => {
+  const vaultVideo = e.target.closest("[data-vault-video]");
+  if(vaultVideo) {
+    const vid = vaultVideo.dataset.vaultVideo;
+    if(vid) {
+      const action = prompt("Type 1 to OPEN, 2 to UNHIDE:\n\n1 = Open video\n2 = Move out of vault");
+      if(action === "1") {
+        closeVault();
+        setTimeout(() => openVideoPlayer(vid), 200);
+      } else if(action === "2") {
+        await unhideFromVault("video", vid);
+        renderVaultContent();
+      }
+    }
+    return;
+  }
+});
+
+$("advancedSettingsBtn")?.addEventListener("click", () => {
+  hideModal("settingsModal");
+  showModal("advancedSettingsModal");
+});
+
+$("openVaultBtn")?.addEventListener("click", () => {
+  openVaultFlow();
+});
+
+$("changePinBtn")?.addEventListener("click", async () => {
+  if(!confirm("Change your vault PIN?\n\nYou'll need to set a new one.")) return;
+  hideModal("advancedSettingsModal");
+  
+  $("newPinInput").value = "";
+  $("confirmPinInput").value = "";
+  $("pinSetupStatus").textContent = "";
+  showModal("pinSetupModal");
+});
+
+$("vaultSettingsBtn")?.addEventListener("click", () => {
+  hideModal("advancedSettingsModal");
+  showModal("vaultSettingsModal");
+  updateVaultAutoLockUI();
+});
+
+function updateVaultAutoLockUI() {
+  const toggle = $("vaultAutoLockToggle");
+  if(!toggle) return;
+  toggle.textContent = vaultAutoLockEnabled ? "ON" : "OFF";
+  toggle.style.color = vaultAutoLockEnabled ? "#22c55e" : "var(--muted)";
+}
+
+$("vaultAutoLockBtn")?.addEventListener("click", () => {
+  vaultAutoLockEnabled = !vaultAutoLockEnabled;
+  localStorage.setItem("reelhubVaultAutoLock", vaultAutoLockEnabled ? "1" : "0");
+  updateVaultAutoLockUI();
+  toast(vaultAutoLockEnabled ? "Auto-lock ON" : "Auto-lock OFF");
+});
+
+if(localStorage.getItem("reelhubVaultAutoLock") === "0") {
+  vaultAutoLockEnabled = false;
+}
+
+$("hideVaultFromSearchBtn")?.addEventListener("click", () => {
+  toast("✅ Vault hidden from search");
+  hideModal("vaultSettingsModal");
+});
+
+$("clearVaultBtn")?.addEventListener("click", async () => {
+  await clearAllVault();
+});
+
+$("removeVaultBtn")?.addEventListener("click", async () => {
+  if(!confirm("Remove Vault completely?\n\nAll hidden items will become visible and PIN will be deleted.")) return;
+  try {
+    await updateDoc(doc(db, "profiles", currentUser.uid), {
+      hiddenItems: [],
+      vaultPin: "",
+      vaultEnabled: false,
+      updatedAt: serverTimestamp()
+    });
+    currentProfile.hiddenItems = [];
+    currentProfile.vaultPin = "";
+    currentProfile.vaultEnabled = false;
+    toast("✅ Vault removed");
+    hideModal("vaultSettingsModal");
+    hideModal("advancedSettingsModal");
+  } catch(e) {
+    console.error(e);
+    toast("Failed to remove vault");
+  }
+});
+
+document.addEventListener("visibilitychange", () => {
+  if(document.visibilityState === "visible" && vaultPinVerified) {
+    if(vaultAutoLockEnabled && (Date.now() - vaultUnlockTime) > VAULT_AUTO_LOCK_MS) {
+      vaultPinVerified = false;
+    }
+  }
+});
+
 /* ONLINE STATUS */
 async function updatePresence(){
   if(!currentUser) return;
@@ -1307,6 +1677,9 @@ async function createProfile(){
       bannerType: "gradient",
       bannerGradient: "linear-gradient(135deg, #7c3aed, #ec4899)",
       bannerURL: "",
+      hiddenItems: [],
+      vaultPin: "",
+      vaultEnabled: false,
       createdAt: serverTimestamp()
     });
   }
@@ -1320,7 +1693,7 @@ async function getProfile(uid){
              suspended:false,
              bannerType:"gradient",
              bannerGradient:"linear-gradient(135deg, #7c3aed, #ec4899)",
-             bannerURL:"" };
+             bannerURL:"", hiddenItems: [], vaultPin: "", vaultEnabled: false };
   }
   const d = snap.data();
   return {
@@ -1333,7 +1706,10 @@ async function getProfile(uid){
     suspended: d.suspended === true,
     bannerType: d.bannerType || "gradient",
     bannerGradient: d.bannerGradient || "linear-gradient(135deg, #7c3aed, #ec4899)",
-    bannerURL: d.bannerURL || ""
+    bannerURL: d.bannerURL || "",
+    hiddenItems: d.hiddenItems || [],
+    vaultPin: d.vaultPin || "",
+    vaultEnabled: d.vaultEnabled === true
   };
 }
 
@@ -1430,7 +1806,7 @@ onAuthStateChanged(auth, async user => {
     startFollowRequestsListener();
     startStoriesListener();
 
-    // History state setup for back button
+    // History state for back button
     try{
       window.history.replaceState({ reelhubHome: true }, "", window.location.href);
     }catch(e){}
@@ -1454,6 +1830,7 @@ onAuthStateChanged(auth, async user => {
     unreadChatsCache = {};
     chatLastReadCache = {};
     modalHistoryStack = [];
+    vaultPinVerified = false;
 
     if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
     if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
@@ -1905,7 +2282,8 @@ function renderFeed(){
 
   const list = videosCache.filter(v =>
     v.type !== "short" &&
-    (v.visibility !== "private" || v.userId === currentUser?.uid)
+    (v.visibility !== "private" || v.userId === currentUser?.uid) &&
+    !isVaultItem("video", v.id)
   );
 
   if(!list.length){
@@ -2009,7 +2387,8 @@ function renderShorts(){
 
   const list = videosCache.filter(v =>
     v.type === "short" &&
-    (v.visibility !== "private" || v.userId === currentUser?.uid)
+    (v.visibility !== "private" || v.userId === currentUser?.uid) &&
+    !isVaultItem("video", v.id)
   );
 
   if(!list.length){
@@ -2567,7 +2946,9 @@ function updateProfileTabCounts(){
   const vc = $("tabVideosCount");
   const sc = $("tabSavedCount");
   const pc = $("tabPlaylistsCount");
-  if(vc) vc.textContent = videosCache.filter(v => v.userId === currentUser?.uid).length;
+  if(vc) vc.textContent = videosCache.filter(v => 
+    v.userId === currentUser?.uid && !isVaultItem("video", v.id)
+  ).length;
   if(sc) sc.textContent = mySavesCache.size;
   if(pc) pc.textContent = myPlaylistsCache.length;
 }
@@ -3574,7 +3955,8 @@ async function loadPublicVideos(uid){
 
   const list = videosCache.filter(v =>
     v.userId === uid &&
-    (v.visibility !== "private" || uid === currentUser?.uid)
+    (v.visibility !== "private" || uid === currentUser?.uid) &&
+    !isVaultItem("video", v.id)
   );
 
   if(!list.length){
@@ -3589,11 +3971,13 @@ async function loadPublicVideos(uid){
 
 function createYTVideoItem(v, isMine){
   const views = Number(v.views || 0);
+  const isHidden = isVaultItem("video", v.id);
   return `
   <div class="yt-video-item" data-open-video="${esc(v.id)}">
     <div class="yt-video-thumb">
       <video src="${esc(v.videoURL)}" preload="metadata" muted></video>
       <div class="view-badge">👁️ ${formatViewsShort(views)}</div>
+      ${isMine ? `<button class="vault-hide-btn" data-vault-toggle="${esc(v.id)}">${isHidden ? "🔓" : "🔒"}</button>` : ""}
     </div>
     <div class="yt-video-meta">
       <h4>${esc(v.title || "Untitled")}</h4>
@@ -3610,11 +3994,37 @@ function createYTVideoItem(v, isMine){
   `;
 }
 
+/* Vault toggle click handler */
+document.addEventListener("click", async (e) => {
+  const vaultBtn = e.target.closest("[data-vault-toggle]");
+  if(vaultBtn){
+    e.preventDefault();
+    e.stopPropagation();
+    const vid = vaultBtn.dataset.vaultToggle;
+    if(!vid) return;
+    const isHidden = isVaultItem("video", vid);
+    if(isHidden) {
+      await unhideFromVault("video", vid);
+    } else {
+      await hideToVault("video", vid);
+      // Reload profile to reflect changes
+      currentProfile = await getProfile(currentUser.uid);
+    }
+    loadMyVideos();
+    renderFeed();
+    renderShorts();
+    return;
+  }
+});
+
 /* MY VIDEOS */
 async function loadMyVideos(){
   if(!currentUser) return;
 
-  const list = videosCache.filter(v => v.userId === currentUser.uid);
+  const list = videosCache.filter(v => 
+    v.userId === currentUser.uid && 
+    !isVaultItem("video", v.id)
+  );
   const container = $("myVideos");
   if(!container) return;
 
@@ -4434,7 +4844,6 @@ setTimeout(()=>{
 }, 2500);
 /* ============================================================
    BROWSER BACK BUTTON HANDLER
-   (Settings/Modal kholne pe back button se login pe na jaye)
 ============================================================ */
 
 window.addEventListener("popstate", (e) => {
@@ -4446,7 +4855,15 @@ window.addEventListener("popstate", (e) => {
     return;
   }
 
-  // 2. Open modals check
+  // 2. Vault viewer check
+  const vaultViewer = $("vaultViewerModal");
+  if(vaultViewer && vaultViewer.classList.contains("show")){
+    hideModal("vaultViewerModal");
+    try{ window.history.pushState({ reelhubModal: true }, "", window.location.href); }catch(err){}
+    return;
+  }
+
+  // 3. Any open modals
   const openModals = document.querySelectorAll(".modal.show");
   if(openModals.length > 0){
     const topModal = openModals[openModals.length - 1];
@@ -4481,7 +4898,7 @@ window.addEventListener("popstate", (e) => {
     return;
   }
   
-  // 3. Share sheet check
+  // 4. Share sheet
   const shareSheet = $("shareSheet");
   if(shareSheet && shareSheet.classList.contains("show")){
     shareSheet.classList.remove("show");
@@ -4489,7 +4906,7 @@ window.addEventListener("popstate", (e) => {
     return;
   }
   
-  // 4. DM Chat view check — inbox pe wapas jao
+  // 5. DM chat view — go back to inbox
   const dmChatView = $("dmChatView");
   if(dmChatView && !dmChatView.classList.contains("hidden")){
     if(currentChatId) markChatAsRead(currentChatId);
@@ -4497,8 +4914,6 @@ window.addEventListener("popstate", (e) => {
     try{ window.history.pushState({ reelhubModal: true }, "", window.location.href); }catch(err){}
     return;
   }
-  
-  // Kuch bhi open nahi tha — normal browser back chalega
 }, { passive: true });
 
-console.log("✅ ReelHub loaded with Email/Password Auth + Stories + Back Button Fix!");
+console.log("✅ ReelHub loaded — Vault + Stories + Auth + Back Button Fix!");
