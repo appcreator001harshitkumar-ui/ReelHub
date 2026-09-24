@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (ALL FIXES — Complete)
+   ReelHub - app.js (LIKE/VIEW FIX + ALL FEATURES)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -244,12 +244,11 @@ function formatViewsShort(num){
   return (num/1000000000).toFixed(1) + "B";
 }
 
-/* FIX: Splash handler */
+/* Splash handler */
 function hideSplash(){
   if(splashHidden) return;
   splashHidden = true;
   
-  // FIX: Remove purple gradient, show app
   document.body.classList.add("app-ready");
   
   const splash = $("splashScreen");
@@ -2980,7 +2979,9 @@ document.addEventListener("click", async (e)=>{
   }
 });
 
-/* FIX: VIEW COUNT */
+/* ============================================================
+   FIX: VIEW COUNT (atomic + duplicate prevention)
+============================================================ */
 async function trackView(videoId){
   if(!currentUser || !videoId) return;
   
@@ -3001,9 +3002,23 @@ async function trackView(videoId){
       await updateDoc(videoRef, { 
         views: increment(1) 
       });
+
+      // Update UI
+      const freshSnap = await getDoc(videoRef);
+      if(freshSnap.exists()){
+        const newViews = Number(freshSnap.data().views || 0);
+        
+        // Update feed card
+        const viewsEl = document.querySelector(`[data-id="${videoId}"] .ig-views`);
+        if(viewsEl) viewsEl.textContent = "👁️ " + formatViews(newViews);
+        
+        // Update reel view
+        const reelViewsEl = document.querySelector(`[data-id="${videoId}"] .reel-views`);
+        if(reelViewsEl) reelViewsEl.textContent = "👁️ " + formatViewsShort(newViews);
+      }
     }
   }catch(e){ 
-    console.error("trackView:", e); 
+    console.error("trackView error:", e); 
   } finally {
     setTimeout(() => {
       processingViews.delete(videoId);
@@ -3018,7 +3033,9 @@ document.addEventListener("play", (e)=>{
   }
 }, true);
 
-/* FIX: LIKE */
+/* ============================================================
+   FIX: LIKE (atomic + duplicate prevention)
+============================================================ */
 async function toggleLike(videoId, btnEl, isReel=false){
   if(!currentUser){ toast("Login required"); return; }
   if(!videoId) return;
@@ -3038,8 +3055,10 @@ async function toggleLike(videoId, btnEl, isReel=false){
     if(!videoSnap.exists()) return;
 
     const ownerId = videoSnap.data().userId;
+    const wasLiked = likeSnap.exists();
 
-    if(likeSnap.exists()){
+    if(wasLiked){
+      // Unlike
       await deleteDoc(likeRef);
       await updateDoc(videoRef, { likes: increment(-1) });
 
@@ -3048,18 +3067,8 @@ async function toggleLike(videoId, btnEl, isReel=false){
         const icon = btnEl.querySelector(".icon");
         if(icon) icon.textContent = "🤍";
       }
-
-      const freshSnap = await getDoc(videoRef);
-      const newCount = Math.max(0, Number(freshSnap.data()?.likes || 0));
-      
-      const likesEl = $("likes-" + videoId);
-      if(likesEl) likesEl.textContent = newCount + " likes";
-      
-      if(btnEl){
-        const count = btnEl.querySelector(".like-count");
-        if(count) count.textContent = newCount;
-      }
     }else{
+      // Like
       await setDoc(likeRef, {
         userId: currentUser.uid,
         createdAt: serverTimestamp()
@@ -3072,17 +3081,6 @@ async function toggleLike(videoId, btnEl, isReel=false){
         if(icon) icon.textContent = "❤️";
       }
 
-      const freshSnap = await getDoc(videoRef);
-      const newCount = Number(freshSnap.data()?.likes || 0);
-      
-      const likesEl = $("likes-" + videoId);
-      if(likesEl) likesEl.textContent = newCount + " likes";
-      
-      if(btnEl){
-        const count = btnEl.querySelector(".like-count");
-        if(count) count.textContent = newCount;
-      }
-
       if(ownerId !== currentUser.uid){
         await addDoc(collection(db,"notifications"), {
           to: ownerId,
@@ -3093,9 +3091,23 @@ async function toggleLike(videoId, btnEl, isReel=false){
         });
       }
     }
+
+    // Update UI from fresh data
+    const freshSnap = await getDoc(videoRef);
+    if(freshSnap.exists()){
+      const newCount = Math.max(0, Number(freshSnap.data().likes || 0));
+      
+      const likesEl = $("likes-" + videoId);
+      if(likesEl) likesEl.textContent = newCount + " likes";
+      
+      if(btnEl){
+        const count = btnEl.querySelector(".like-count");
+        if(count) count.textContent = newCount;
+      }
+    }
   }catch(e){
-    console.error(e);
-    toast("Like error");
+    console.error("toggleLike error:", e);
+    toast("Like error: " + e.message);
   } finally {
     setTimeout(() => {
       processingLikes.delete(videoId);
@@ -3103,7 +3115,9 @@ async function toggleLike(videoId, btnEl, isReel=false){
   }
 }
 
-/* FIX: SAVE */
+/* ============================================================
+   FIX: SAVE
+============================================================ */
 async function toggleSave(videoId, btnEl){
   if(!currentUser){ toast("Login required"); return; }
   if(!videoId) return;
@@ -3477,7 +3491,6 @@ async function openAddToPlaylist(videoId){
   }).join("");
 }
 
-/* FIX: PLAYLIST SAVE */
 $("saveToPlaylistBtn")?.addEventListener("click", async()=>{
   if(!currentPlaylistVideoId){ toast("Video not found"); return; }
   
@@ -4942,7 +4955,6 @@ function startChatListener(){
   );
 }
 
-/* FIX: Send DM */
 $("dmSendBtn")?.addEventListener("click", sendDM);
 $("dmInput")?.addEventListener("keydown", e=>{ 
   if(e.key === "Enter") {
@@ -5023,7 +5035,6 @@ $("newMsgBtn")?.addEventListener("click", ()=>{
   setTimeout(()=> $("searchInput").focus(), 100);
 });
 
-/* CHAT ATTACH */
 $("dmAttachBtn")?.addEventListener("click", (e)=>{
   e.preventDefault();
   e.stopPropagation();
@@ -5273,4 +5284,4 @@ window.addEventListener("popstate", (e) => {
   }
 }, { passive: true });
 
-console.log("✅ ReelHub loaded — All fixes applied!");
+console.log("✅ ReelHub loaded — Like/View fixed!");
