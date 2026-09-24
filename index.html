@@ -143,12 +143,9 @@
 
   <!-- HOME -->
   <section id="homePanel" class="panel">
-
-    <!-- STORIES BAR -->
     <div class="stories-bar" id="storiesBar">
       <div class="stories-loading">Loading stories...</div>
     </div>
-
     <div id="feed"></div>
   </section>
 
@@ -323,12 +320,14 @@
         <div class="yt-tab" data-tab="saved">
           Saved <span class="tab-count" id="tabSavedCount">0</span>
         </div>
+        <div class="yt-tab" data-tab="monetization">💰 Monetization</div>
         <div class="yt-tab" data-tab="about">About</div>
       </div>
 
       <div class="yt-videos-grid" id="myVideos"></div>
       <div class="playlist-tab-content hidden" id="playlistsTab"></div>
       <div class="yt-videos-grid hidden" id="savedVideos"></div>
+      <div class="yt-videos-grid hidden" id="monetizationTab"></div>
       <div class="yt-videos-grid hidden" id="aboutTab"></div>
     </div>
   </section>
@@ -988,6 +987,77 @@
         🔓 Remove Vault (delete all files)
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MONETIZATION APPLY MODAL
+============================================================ -->
+<div id="monetizationModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>💰 Apply for Monetization</h2>
+      <button class="close" data-close="monetizationModal">×</button>
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:16px;line-height:1.5">
+      Complete all requirements to apply for monetization.
+    </p>
+
+    <!-- Requirements Card -->
+    <div class="req-card">
+      <div class="req-row" id="reqFollowers">
+        <span class="req-icon">👥</span>
+        <span class="req-text">Followers</span>
+        <span class="req-count"><span id="reqFollowersCount">0</span> / 10</span>
+        <span class="req-status" id="reqFollowersStatus">⏳</span>
+      </div>
+
+      <div class="req-row" id="reqWatchTime">
+        <span class="req-icon">⏱️</span>
+        <span class="req-text">Watch Time</span>
+        <span class="req-count"><span id="reqWatchTimeCount">0</span> / 3600 sec</span>
+        <span class="req-status" id="reqWatchTimeStatus">⏳</span>
+      </div>
+
+      <div class="req-row" id="reqViews">
+        <span class="req-icon">👁️</span>
+        <span class="req-text">Total Views</span>
+        <span class="req-count"><span id="reqViewsCount">0</span> / 50</span>
+        <span class="req-status" id="reqViewsStatus">⏳</span>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div style="margin:16px 0">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px">
+        <span>Overall Progress</span>
+        <span id="reqProgressPercent">0%</span>
+      </div>
+      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+        <div id="reqProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#ec4899);transition:width 0.5s"></div>
+      </div>
+    </div>
+
+    <!-- UPI ID Input -->
+    <label class="yt-label">UPI ID (for receiving payments)</label>
+    <input 
+      type="text" 
+      id="monetizationUpiId" 
+      class="yt-input" 
+      placeholder="yourname@paytm" 
+      maxlength="50"
+      style="margin-bottom:14px">
+
+    <p style="font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:14px">
+      ⚠️ <strong>Demo Mode:</strong> Payment system coming soon. Your UPI ID will be stored securely for future use.
+    </p>
+
+    <button class="yt-publish-btn" id="submitMonetizationBtn" disabled>
+      Submit Application
+    </button>
+
+    <p id="monetizationStatus" style="text-align:center;font-size:13px;color:var(--muted);margin-top:10px;min-height:18px"></p>
   </div>
 </div>
 
