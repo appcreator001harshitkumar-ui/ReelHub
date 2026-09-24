@@ -449,6 +449,12 @@
         <span id="privateAccountToggle" style="font-size:13px;font-weight:bold;color:var(--muted)">OFF</span>
       </button>
 
+      <!-- ✅ NAYA — Advanced Settings -->
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="advancedSettingsBtn">
+        <span>⚙️ Advanced Settings</span>
+        <span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+
       <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="followRequestsBtn">
         <span>📬 Follow Requests</span>
         <span id="followRequestsBadge" style="background:var(--danger);color:white;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:bold;display:none">0</span>
@@ -753,42 +759,33 @@
       <button class="close" data-close="createStoryModal">×</button>
     </div>
 
-    <!-- Upload zone -->
     <div class="story-upload-zone" id="storyUploadZone">
       <span class="up-icon">📷</span>
       <div class="up-text">Tap to select photo or video</div>
       <div class="up-sub">JPG, PNG, MP4 · Max 30MB</div>
     </div>
 
-    <!-- Preview -->
     <img id="storyImagePreview" class="story-preview hidden" alt="">
     <video id="storyVideoPreview" class="story-preview hidden" controls playsinline muted></video>
 
-    <!-- Progress bar -->
     <div class="story-upload-progress" id="storyUploadProgress">
       <div class="story-upload-progress-bar" id="storyUploadProgressBar"></div>
     </div>
 
-    <!-- Status -->
     <p id="storyUploadStatus" style="font-size:13px;color:var(--muted);margin-top:10px;text-align:center"></p>
 
-    <!-- Upload button -->
     <button class="story-upload-btn" id="storyUploadBtn" disabled>
       Share to Story
     </button>
   </div>
 </div>
 
-<!-- Hidden story file input -->
 <input type="file" id="storyFile" accept="image/*,video/*" class="hidden">
 
 <!-- STORY VIEWER -->
 <div id="storyViewer">
-
-  <!-- Progress bars -->
   <div class="story-progress-bar" id="storyProgressBar"></div>
 
-  <!-- Header -->
   <div class="story-header">
     <img id="storyViewerAvatar" src="" alt="">
     <div class="info">
@@ -799,21 +796,17 @@
     <button class="close-btn" id="storyCloseBtn" type="button">✕</button>
   </div>
 
-  <!-- Media -->
   <div class="story-media" id="storyMedia"></div>
 
-  <!-- Tap zones -->
   <div class="story-nav-left" id="storyPrevZone"></div>
   <div class="story-nav-right" id="storyNextZone"></div>
 
-  <!-- Views counter -->
   <div class="story-views hidden" id="storyViewsCounter">
     <span>👁️</span>
     <span id="storyViewsCount">0</span>
     <span>views</span>
   </div>
 
-  <!-- Footer / reply -->
   <div class="story-footer" id="storyFooter">
     <input
       type="text"
@@ -824,7 +817,168 @@
     >
     <button class="story-send" id="storySendBtn" type="button">Send</button>
   </div>
+</div>
 
+<!-- ============================================================
+     ✅ ADVANCED SETTINGS MODAL (NEW)
+============================================================ -->
+<div id="advancedSettingsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>⚙️ Advanced Settings</h2>
+      <button class="close" data-close="advancedSettingsModal">×</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="openVaultBtn">
+        <span>🔐 Private Vault</span>
+        <span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="changePinBtn">
+        <span>🔑 Change PIN</span>
+        <span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="vaultSettingsBtn">
+        <span>⚡ Vault Settings</span>
+        <span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+
+      <p style="font-size:12px;color:var(--muted);padding:10px;line-height:1.5;text-align:center;margin-top:10px">
+        Hidden videos/photos only visible in Private Vault. PIN is required every time.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ✅ PIN SETUP MODAL (NEW)
+============================================================ -->
+<div id="pinSetupModal" class="modal">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-header">
+      <h2>🔐 Set Vault PIN</h2>
+      <button class="close" data-close="pinSetupModal">×</button>
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px">
+      Create a 4-digit PIN to lock your Private Vault.
+      <br><strong style="color:var(--danger)">Don't forget it — no recovery!</strong>
+    </p>
+
+    <label class="yt-label">Enter 4-digit PIN</label>
+    <input 
+      type="password" 
+      id="newPinInput" 
+      class="yt-input" 
+      inputmode="numeric" 
+      maxlength="4" 
+      pattern="[0-9]{4}"
+      placeholder="••••" 
+      style="text-align:center;font-size:24px;letter-spacing:12px;margin-bottom:14px">
+
+    <label class="yt-label">Confirm PIN</label>
+    <input 
+      type="password" 
+      id="confirmPinInput" 
+      class="yt-input" 
+      inputmode="numeric" 
+      maxlength="4" 
+      pattern="[0-9]{4}"
+      placeholder="••••" 
+      style="text-align:center;font-size:24px;letter-spacing:12px;margin-bottom:14px">
+
+    <p id="pinSetupStatus" style="text-align:center;font-size:13px;color:var(--danger);min-height:18px;margin-bottom:10px"></p>
+
+    <button class="yt-publish-btn" id="savePinBtn">Save PIN</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     ✅ PIN ENTRY MODAL (NEW)
+============================================================ -->
+<div id="pinEntryModal" class="modal">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-header">
+      <h2>🔐 Enter Vault PIN</h2>
+      <button class="close" data-close="pinEntryModal">×</button>
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px">
+      Enter your 4-digit PIN to unlock the vault.
+    </p>
+
+    <input 
+      type="password" 
+      id="vaultPinInput" 
+      class="yt-input" 
+      inputmode="numeric" 
+      maxlength="4" 
+      pattern="[0-9]{4}"
+      placeholder="••••" 
+      autofocus
+      style="text-align:center;font-size:32px;letter-spacing:16px;margin-bottom:14px">
+
+    <p id="pinEntryStatus" style="text-align:center;font-size:13px;color:var(--danger);min-height:18px;margin-bottom:10px"></p>
+
+    <button class="yt-publish-btn" id="unlockVaultBtn">Unlock</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     ✅ VAULT VIEWER MODAL (NEW)
+============================================================ -->
+<div id="vaultViewerModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden">
+    <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
+      <h2>🔐 Private Vault</h2>
+      <button class="close" data-close="vaultViewerModal">×</button>
+    </div>
+
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
+      <p style="font-size:12.5px;color:var(--muted);text-align:center">
+        Hidden content — tap to open, tap 🔓 to unhide
+      </p>
+    </div>
+
+    <div id="vaultContent" style="padding:14px;max-height:65vh;overflow-y:auto">
+      <!-- Vault items rendered here -->
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ✅ VAULT SETTINGS MODAL (NEW)
+============================================================ -->
+<div id="vaultSettingsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>⚡ Vault Settings</h2>
+      <button class="close" data-close="vaultSettingsModal">×</button>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="vaultAutoLockBtn">
+        <span>⏱️ Auto-lock after 5 min</span>
+        <span id="vaultAutoLockToggle" style="font-size:13px;font-weight:bold;color:var(--muted)">ON</span>
+      </button>
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="hideVaultFromSearchBtn">
+        🕵️ Hide vault from search suggestions
+      </button>
+
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left;margin-top:12px" id="clearVaultBtn">
+        🗑️ Clear all vault content
+      </button>
+
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left" id="removeVaultBtn">
+        🔓 Remove Vault (unhide all)
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- DEEP LINK BANNER -->
