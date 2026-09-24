@@ -143,9 +143,12 @@
 
   <!-- HOME -->
   <section id="homePanel" class="panel">
+
+    <!-- STORIES BAR -->
     <div class="stories-bar" id="storiesBar">
       <div class="stories-loading">Loading stories...</div>
     </div>
+
     <div id="feed"></div>
   </section>
 
@@ -628,8 +631,20 @@
     <button class="close" data-close="videoPlayerModal"
             style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:white;z-index:10">×</button>
 
-    <video id="videoPlayerVideo" controls playsinline webkit-playsinline
-           style="width:100%;max-height:70vh;background:#000;display:block"></video>
+    <div style="position:relative;background:#000">
+      <video id="videoPlayerVideo" controls playsinline webkit-playsinline
+             style="width:100%;max-height:70vh;background:#000;display:block"></video>
+      
+      <div id="speedControl" style="position:absolute;top:10px;left:10px;z-index:11;display:none">
+        <div style="background:rgba(0,0,0,0.8);border-radius:20px;padding:6px 12px;display:flex;gap:6px;align-items:center">
+          <span style="color:white;font-size:11px;font-weight:600">Speed:</span>
+          <button class="speed-btn" data-speed="0.5" style="background:rgba(255,255,255,0.15);border:0;color:white;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer">0.5x</button>
+          <button class="speed-btn active" data-speed="1" style="background:#7c3aed;border:0;color:white;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer">1x</button>
+          <button class="speed-btn" data-speed="1.5" style="background:rgba(255,255,255,0.15);border:0;color:white;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer">1.5x</button>
+          <button class="speed-btn" data-speed="2" style="background:rgba(255,255,255,0.15);border:0;color:white;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer">2x</button>
+        </div>
+      </div>
+    </div>
 
     <div style="padding:14px 16px">
       <h3 id="videoPlayerTitle" style="font-size:16px;font-weight:600;margin-bottom:8px"></h3>
@@ -637,14 +652,35 @@
       <div id="videoPlayerDesc" style="font-size:13.5px;line-height:1.4;color:var(--text)"></div>
     </div>
 
-    <div style="display:flex;gap:14px;padding:10px 16px;border-top:1px solid var(--border);align-items:center">
-      <button class="ig-action-btn" id="videoPlayerLikeBtn">
-        <span class="icon">🤍</span>
+    <div style="display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--border);align-items:center;overflow-x:auto">
+      <button class="action-btn" id="videoPlayerLikeBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">🤍</span>
+        <small id="videoPlayerLikes" style="font-size:10px;color:var(--muted);font-weight:600">0</small>
       </button>
-      <span id="videoPlayerLikes" style="font-size:13px;color:var(--muted)">0 likes</span>
-      <div style="flex:1"></div>
-      <button class="ig-action-btn" id="videoPlayerShareBtn">
-        <span class="icon">📤</span>
+
+      <button class="action-btn" id="videoPlayerCommentBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">💬</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Comment</small>
+      </button>
+
+      <button class="action-btn" id="videoPlayerShareBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">📤</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Share</small>
+      </button>
+
+      <button class="action-btn" id="videoPlayerSaveBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">📑</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Save</small>
+      </button>
+
+      <button class="action-btn" id="videoPlayerPlaylistBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">➕</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Playlist</small>
+      </button>
+
+      <button class="action-btn" id="videoPlayerSpeedBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">⚡</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Speed</small>
       </button>
     </div>
   </div>
@@ -804,7 +840,7 @@
 </div>
 
 <!-- ============================================================
-     ✅ ADVANCED SETTINGS MODAL
+     ADVANCED SETTINGS MODAL
 ============================================================ -->
 <div id="advancedSettingsModal" class="modal">
   <div class="modal-box">
@@ -838,7 +874,7 @@
 </div>
 
 <!-- ============================================================
-     ✅ PIN SETUP MODAL
+     PIN SETUP MODAL
 ============================================================ -->
 <div id="pinSetupModal" class="modal">
   <div class="modal-box" style="max-width:400px">
@@ -871,7 +907,7 @@
 </div>
 
 <!-- ============================================================
-     ✅ PIN ENTRY MODAL
+     PIN ENTRY MODAL
 ============================================================ -->
 <div id="pinEntryModal" class="modal">
   <div class="modal-box" style="max-width:400px">
@@ -896,7 +932,7 @@
 </div>
 
 <!-- ============================================================
-     ✅ VAULT VIEWER MODAL (Updated with Add Files)
+     VAULT VIEWER MODAL
 ============================================================ -->
 <div id="vaultViewerModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden">
@@ -905,7 +941,6 @@
       <button class="close" data-close="vaultViewerModal">×</button>
     </div>
 
-    <!-- Add Files Bar -->
     <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
       <button class="vault-add-btn" id="vaultAddFilesBtn">
         ➕ Add Files
@@ -913,10 +948,8 @@
       <span id="vaultFileCount" style="font-size:12px;color:var(--muted);margin-left:auto">0 files</span>
     </div>
 
-    <!-- Hidden file input - multiple -->
     <input type="file" id="vaultFileInput" accept="image/*,video/*" multiple class="hidden">
 
-    <!-- Upload Progress -->
     <div id="vaultUploadProgress" style="display:none;padding:12px 14px;border-bottom:1px solid var(--border)">
       <div style="font-size:12px;color:var(--muted);margin-bottom:6px" id="vaultUploadLabel">Uploading...</div>
       <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">
@@ -924,7 +957,6 @@
       </div>
     </div>
 
-    <!-- Vault content -->
     <div id="vaultContent" style="padding:14px;max-height:60vh;overflow-y:auto">
       <!-- Files rendered here -->
     </div>
@@ -932,7 +964,7 @@
 </div>
 
 <!-- ============================================================
-     ✅ VAULT SETTINGS MODAL
+     VAULT SETTINGS MODAL
 ============================================================ -->
 <div id="vaultSettingsModal" class="modal">
   <div class="modal-box">
