@@ -125,6 +125,79 @@ body {
   letter-spacing: 0.5px;
 }
 
+/* GLOBAL MONETIZATION TOGGLE */
+.global-toggle-card {
+  margin: 0 16px 16px;
+  background: #1a1a22;
+  border: 2px solid #2a2a35;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.global-toggle-card.active {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.global-toggle-card.inactive {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.global-toggle-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.global-toggle-info h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: #fff;
+}
+
+.global-toggle-info p {
+  font-size: 11.5px;
+  color: #888;
+  line-height: 1.4;
+}
+
+.toggle-switch {
+  width: 56px;
+  height: 32px;
+  background: #2a2a35;
+  border-radius: 16px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.toggle-switch.on {
+  background: #22c55e;
+}
+
+.toggle-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.3s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.toggle-switch.on::after {
+  transform: translateX(24px);
+}
+
 .admin-tabs {
   display: flex;
   gap: 8px;
@@ -148,6 +221,7 @@ body {
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.2s;
+  position: relative;
 }
 
 .admin-tab.active {
@@ -162,7 +236,7 @@ body {
   font-size: 10px;
   padding: 2px 6px;
   border-radius: 10px;
-  margin-left: 4px;
+  margin-left: 6px;
   font-weight: 700;
 }
 
@@ -184,6 +258,16 @@ body {
 .admin-item.suspended {
   border-color: #ef4444;
   background: rgba(239, 68, 68, 0.05);
+}
+
+.admin-item.pending-monetization {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.admin-item.approved-monetization {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.05);
 }
 
 .admin-item img {
@@ -242,6 +326,51 @@ body {
   border-radius: 8px;
   margin-top: 4px;
   text-transform: uppercase;
+}
+
+.admin-item .info .pending-tag {
+  display: inline-block;
+  background: #f59e0b;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.admin-item .info .approved-tag {
+  display: inline-block;
+  background: #22c55e;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.admin-item .info .rejected-tag {
+  display: inline-block;
+  background: #ef4444;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.admin-item .info .upi-id {
+  display: block;
+  font-size: 11px;
+  color: #a78bfa;
+  margin-top: 4px;
+  font-weight: 600;
+  font-family: monospace;
 }
 
 .admin-actions {
@@ -307,6 +436,7 @@ body {
   margin-bottom: 12px;
 }
 
+/* MODAL */
 .admin-modal {
   position: fixed;
   inset: 0;
@@ -549,6 +679,45 @@ body {
 #adminApp {
   display: none;
 }
+
+/* MONETIZATION DETAILS */
+.monetization-details {
+  background: #0a0a0f;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+  border: 1px solid #2a2a35;
+}
+
+.monetization-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 13px;
+  border-bottom: 1px solid #1a1a22;
+}
+
+.monetization-detail-row:last-child {
+  border-bottom: 0;
+}
+
+.monetization-detail-row .label {
+  color: #888;
+  font-weight: 500;
+}
+
+.monetization-detail-row .value {
+  color: #fff;
+  font-weight: 700;
+  text-align: right;
+}
+
+.monetization-detail-row .value.upi {
+  color: #a78bfa;
+  font-family: monospace;
+  font-size: 12px;
+}
 </style>
 </head>
 <body>
@@ -585,14 +754,27 @@ body {
       <div class="lbl">❤️ Likes</div>
     </div>
     <div class="stat-card">
-      <div class="num" id="statSuspended">0</div>
-      <div class="lbl">🚫 Suspended</div>
+      <div class="num" id="statPendingMon">0</div>
+      <div class="lbl">💰 Pending</div>
     </div>
+  </div>
+
+  <!-- GLOBAL MONETIZATION TOGGLE -->
+  <div class="global-toggle-card" id="globalMonetizationCard">
+    <div class="global-toggle-info">
+      <h3>💰 Global Monetization</h3>
+      <p id="globalToggleDesc">Enable or disable monetization for all users</p>
+    </div>
+    <div class="toggle-switch" id="globalMonetizationToggle"></div>
   </div>
 
   <div class="admin-tabs">
     <div class="admin-tab active" data-tab="users">👥 Users</div>
     <div class="admin-tab" data-tab="videos">🎬 Videos</div>
+    <div class="admin-tab" data-tab="monetization">
+      💰 Monetization
+      <span class="tab-badge hidden" id="monetizationBadge">0</span>
+    </div>
     <div class="admin-tab" data-tab="reports">⚠️ Reports</div>
     <div class="admin-tab" data-tab="broadcast">📢 Broadcast</div>
   </div>
@@ -601,6 +783,7 @@ body {
 
 </div>
 
+<!-- SUSPEND MODAL -->
 <div id="suspendModal" class="admin-modal">
   <div class="admin-modal-box">
     <div class="admin-modal-header">
@@ -637,6 +820,7 @@ body {
   </div>
 </div>
 
+<!-- UNSUSPEND MODAL -->
 <div id="unsuspendModal" class="admin-modal">
   <div class="admin-modal-box">
     <div class="admin-modal-header">
@@ -665,6 +849,61 @@ body {
   </div>
 </div>
 
+<!-- MONETIZATION APPROVE MODAL -->
+<div id="monetizationModal" class="admin-modal">
+  <div class="admin-modal-box">
+    <div class="admin-modal-header">
+      <h2 id="monetizationModalTitle">💰 Monetization Request</h2>
+      <button class="admin-modal-close" id="monetizationModalClose">×</button>
+    </div>
+
+    <div class="admin-user-preview">
+      <img id="monetizationUserPhoto" src="" alt="">
+      <div>
+        <strong id="monetizationUserName">User</strong>
+        <small id="monetizationUserUsername">@user</small>
+      </div>
+    </div>
+
+    <div class="monetization-details">
+      <div class="monetization-detail-row">
+        <span class="label">👥 Followers</span>
+        <span class="value" id="monetizationFollowers">0</span>
+      </div>
+      <div class="monetization-detail-row">
+        <span class="label">⏱️ Watch Time</span>
+        <span class="value" id="monetizationWatchTime">0 min</span>
+      </div>
+      <div class="monetization-detail-row">
+        <span class="label">👁️ Total Views</span>
+        <span class="value" id="monetizationViews">0</span>
+      </div>
+      <div class="monetization-detail-row">
+        <span class="label">💳 UPI ID</span>
+        <span class="value upi" id="monetizationUpiId">—</span>
+      </div>
+      <div class="monetization-detail-row">
+        <span class="label">📅 Applied</span>
+        <span class="value" id="monetizationDate">—</span>
+      </div>
+    </div>
+
+    <p style="color:#f59e0b;font-size:12px;line-height:1.5;margin-bottom:14px;padding:10px;background:rgba(245,158,11,0.1);border-radius:8px">
+      ⚠️ <strong>Demo Mode:</strong> Payment is disabled. Approving will only mark the channel as monetized.
+    </p>
+
+    <button class="admin-submit-btn success" id="approveMonetizationBtn">
+      ✅ Approve Monetization
+    </button>
+    <button class="admin-submit-btn" id="rejectMonetizationBtn" style="margin-top:8px">
+      ❌ Reject
+    </button>
+    <button class="admin-cancel-btn" id="cancelMonetizationBtn">
+      Cancel
+    </button>
+  </div>
+</div>
+
 <div class="admin-toast" id="adminToast"></div>
 
 <script type="module">
@@ -686,10 +925,12 @@ import {
   deleteDoc,
   addDoc,
   updateDoc,
+  setDoc,
   query,
   where,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -707,7 +948,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-/* ✅ ADMIN EMAILS — Dono emails added */
+/* ✅ ADMIN EMAILS */
 const ADMIN_EMAILS = [
   "appcreator001.harshitkumar@gmail.com",
   "satender8510815609@gmail.com"
@@ -717,9 +958,16 @@ let currentUser = null;
 let currentTab = "users";
 let allUsers = [];
 let allVideos = [];
+let allMonetizationRequests = [];
+let globalMonetizationEnabled = true;
+
 let suspendTargetUid = null;
 let unsuspendTargetUid = null;
 let selectedDuration = 30;
+let currentMonetizationRequestId = null;
+let currentMonetizationUserId = null;
+
+let monetizationUnsubscribe = null;
 
 const $ = id => document.getElementById(id);
 
@@ -763,6 +1011,14 @@ function timeAgo(v){
   return Math.floor(day / 7) + "w";
 }
 
+function formatDate(v){
+  if(!v) return "—";
+  const t = typeof v.toMillis === "function" ? v.toMillis() : new Date(v).getTime();
+  return new Date(t).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+  });
+}
+
 /* LOGIN */
 $("adminLoginBtn")?.addEventListener("click", async () => {
   $("adminLoginStatus").textContent = "Opening Google...";
@@ -789,7 +1045,6 @@ onAuthStateChanged(auth, async (user) => {
 
   currentUser = user;
 
-  // ✅ EMAIL-BASED ADMIN CHECK
   const userEmail = (user.email || "").toLowerCase().trim();
   const allowedEmails = ADMIN_EMAILS.map(e => e.toLowerCase());
   
@@ -803,7 +1058,9 @@ onAuthStateChanged(auth, async (user) => {
     $("adminLogin").style.display = "none";
     $("adminApp").style.display = "block";
 
+    await loadGlobalSettings();
     await loadStats();
+    startMonetizationListener();
     await renderTab("users");
 
   } catch(e) {
@@ -812,6 +1069,115 @@ onAuthStateChanged(auth, async (user) => {
     await signOut(auth);
   }
 });
+
+/* ✅ LOAD GLOBAL SETTINGS */
+async function loadGlobalSettings(){
+  try{
+    const ref = doc(db, "admin_settings", "global");
+    const snap = await getDoc(ref);
+
+    if(snap.exists()){
+      globalMonetizationEnabled = snap.data().monetizationEnabled !== false;
+    }else{
+      await setDoc(ref, {
+        monetizationEnabled: true,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    updateGlobalToggleUI();
+
+  }catch(e){
+    console.error("loadGlobalSettings error:", e);
+  }
+}
+
+function updateGlobalToggleUI(){
+  const toggle = $("globalMonetizationToggle");
+  const card = $("globalMonetizationCard");
+  const desc = $("globalToggleDesc");
+
+  if(!toggle || !card) return;
+
+  if(globalMonetizationEnabled){
+    toggle.classList.add("on");
+    card.classList.add("active");
+    card.classList.remove("inactive");
+    if(desc) desc.textContent = "Monetization is currently ENABLED for all users";
+  }else{
+    toggle.classList.remove("on");
+    card.classList.add("inactive");
+    card.classList.remove("active");
+    if(desc) desc.textContent = "Monetization is currently DISABLED for all users";
+  }
+}
+
+/* ✅ GLOBAL TOGGLE */
+$("globalMonetizationToggle")?.addEventListener("click", async () => {
+  const newValue = !globalMonetizationEnabled;
+
+  const confirmMsg = newValue
+    ? "Enable monetization globally?\n\nAll monetized users will be able to earn."
+    : "Disable monetization globally?\n\nAll users will stop earning.";
+
+  if(!confirm(confirmMsg)) return;
+
+  try{
+    await setDoc(doc(db, "admin_settings", "global"), {
+      monetizationEnabled: newValue,
+      updatedAt: serverTimestamp(),
+      updatedBy: currentUser.uid
+    });
+
+    globalMonetizationEnabled = newValue;
+    updateGlobalToggleUI();
+
+    showToast(newValue ? "✅ Monetization ENABLED" : "❌ Monetization DISABLED");
+
+  }catch(e){
+    console.error(e);
+    showToast("Failed to update: " + e.message, true);
+  }
+});
+
+/* ✅ MONETIZATION LISTENER */
+function startMonetizationListener(){
+  if(monetizationUnsubscribe){
+    monetizationUnsubscribe();
+    monetizationUnsubscribe = null;
+  }
+
+  monetizationUnsubscribe = onSnapshot(
+    collection(db, "monetization_requests"),
+    snapshot=>{
+      allMonetizationRequests = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      allMonetizationRequests.sort((a,b)=> {
+        const ta = a.createdAt?.toMillis?.() || 0;
+        const tb = b.createdAt?.toMillis?.() || 0;
+        return tb - ta;
+      });
+
+      // Count pending
+      const pendingCount = allMonetizationRequests.filter(r => r.status === "pending").length;
+      const badge = $("monetizationBadge");
+      if(badge){
+        if(pendingCount > 0){
+          badge.textContent = pendingCount;
+          badge.classList.remove("hidden");
+        }else{
+          badge.classList.add("hidden");
+        }
+      }
+      $("statPendingMon").textContent = pendingCount;
+
+      // Re-render if on monetization tab
+      if(currentTab === "monetization"){
+        renderMonetization();
+      }
+    },
+    error=>console.error("Monetization listener error:", error)
+  );
+}
 
 /* STATS */
 async function loadStats(){
@@ -822,11 +1188,6 @@ async function loadStats(){
     ]);
 
     let totalLikes = 0;
-    let suspendedCount = 0;
-
-    usersSnap.forEach(d => {
-      if(d.data().suspended) suspendedCount++;
-    });
 
     videosSnap.forEach(d => {
       totalLikes += Number(d.data().likes || 0);
@@ -835,7 +1196,6 @@ async function loadStats(){
     $("statUsers").textContent = usersSnap.size;
     $("statVideos").textContent = videosSnap.size;
     $("statLikes").textContent = totalLikes;
-    $("statSuspended").textContent = suspendedCount;
   } catch(e) {
     console.error(e);
   }
@@ -860,6 +1220,7 @@ async function renderTab(tab){
 
   if(tab === "users") await renderUsers();
   else if(tab === "videos") await renderVideos();
+  else if(tab === "monetization") renderMonetization();
   else if(tab === "reports") await renderReports();
   else if(tab === "broadcast") await renderBroadcast();
 }
@@ -887,15 +1248,17 @@ async function renderUsers(){
 
     content.innerHTML = allUsers.map(u => {
       const isAdmin = ADMIN_EMAILS.map(e => e.toLowerCase()).includes((u.email || "").toLowerCase());
-      
+      const isMonetized = u.monetizationStatus === "approved";
+
       return `
-      <div class="admin-item ${u.suspended ? 'suspended' : ''}">
+      <div class="admin-item ${u.suspended ? 'suspended' : ''} ${isMonetized ? 'approved-monetization' : ''}">
         <img src="${avatar(u.photo, u.name)}" alt="">
         <div class="info">
           <strong>${esc(u.name || "User")}</strong>
           <small>@${esc(u.username || "user")} · ${u.videos || 0} videos · ${u.followers || 0} followers</small>
           ${u.suspended ? `<span class="suspend-tag">🚫 Suspended</span>` : ''}
           ${isAdmin ? `<span class="admin-tag">👑 Admin</span>` : ''}
+          ${isMonetized ? `<span class="approved-tag">💰 Monetized</span>` : ''}
         </div>
         <div class="admin-actions">
           ${u.uid === currentUser.uid
@@ -930,6 +1293,196 @@ async function renderUsers(){
     </div>`;
   }
 }
+
+/* ✅ MONETIZATION TAB */
+function renderMonetization(){
+  const content = $("adminContent");
+
+  if(!allMonetizationRequests.length){
+    content.innerHTML = `<div class="admin-empty">
+      <span class="icon">💰</span>
+      <h3 style="font-size:16px;margin-bottom:8px;color:#fff">No monetization requests</h3>
+      <div>Requests will appear here</div>
+    </div>`;
+    return;
+  }
+
+  // Sort: pending first, then approved, then rejected
+  const sorted = [...allMonetizationRequests].sort((a, b) => {
+    const statusOrder = { pending: 0, approved: 1, rejected: 2 };
+    const aOrder = statusOrder[a.status] ?? 3;
+    const bOrder = statusOrder[b.status] ?? 3;
+    if(aOrder !== bOrder) return aOrder - bOrder;
+    const ta = a.createdAt?.toMillis?.() || 0;
+    const tb = b.createdAt?.toMillis?.() || 0;
+    return tb - ta;
+  });
+
+  content.innerHTML = sorted.map(r => {
+    const isPending = r.status === "pending";
+    const isApproved = r.status === "approved";
+    const isRejected = r.status === "rejected";
+
+    let statusTag = "";
+    if(isPending) statusTag = `<span class="pending-tag">⏳ Pending</span>`;
+    else if(isApproved) statusTag = `<span class="approved-tag">✅ Approved</span>`;
+    else if(isRejected) statusTag = `<span class="rejected-tag">❌ Rejected</span>`;
+
+    return `
+      <div class="admin-item ${isPending ? 'pending-monetization' : ''} ${isApproved ? 'approved-monetization' : ''}">
+        <img src="${avatar(r.userPhoto, r.userName)}" alt="">
+        <div class="info">
+          <strong>${esc(r.userName || "User")}</strong>
+          <small>@${esc(r.username || "user")} · 👥${r.followers || 0} · ⏱️${Math.floor((r.totalWatchTime || 0) / 60)}min · 👁️${r.totalViews || 0}</small>
+          <span class="upi-id">💳 ${esc(r.upiId || "No UPI")}</span>
+          ${statusTag}
+        </div>
+        <div class="admin-actions">
+          ${isPending ? `
+            <button class="admin-btn view" data-view-mon="${esc(r.id)}">👁️ View</button>
+          ` : isApproved ? `
+            <button class="admin-btn success" disabled>✅ Approved</button>
+          ` : `
+            <button class="admin-btn danger" disabled>❌ Rejected</button>
+          `}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  content.querySelectorAll("[data-view-mon]").forEach(btn => {
+    btn.addEventListener("click", () => openMonetizationModal(btn.dataset.viewMon));
+  });
+}
+
+/* ✅ MONETIZATION MODAL */
+function openMonetizationModal(requestId){
+  const req = allMonetizationRequests.find(r => r.id === requestId);
+  if(!req) return;
+
+  currentMonetizationRequestId = requestId;
+  currentMonetizationUserId = req.userId;
+
+  $("monetizationUserPhoto").src = avatar(req.userPhoto, req.userName);
+  $("monetizationUserName").textContent = req.userName || "User";
+  $("monetizationUserUsername").textContent = "@" + (req.username || "user");
+
+  $("monetizationFollowers").textContent = req.followers || 0;
+  $("monetizationWatchTime").textContent = Math.floor((req.totalWatchTime || 0) / 60) + " min";
+  $("monetizationViews").textContent = req.totalViews || 0;
+  $("monetizationUpiId").textContent = req.upiId || "—";
+  $("monetizationDate").textContent = formatDate(req.createdAt);
+
+  $("monetizationModal").classList.add("show");
+}
+
+$("monetizationModalClose")?.addEventListener("click", () => {
+  $("monetizationModal").classList.remove("show");
+  currentMonetizationRequestId = null;
+  currentMonetizationUserId = null;
+});
+
+$("cancelMonetizationBtn")?.addEventListener("click", () => {
+  $("monetizationModal").classList.remove("show");
+  currentMonetizationRequestId = null;
+  currentMonetizationUserId = null;
+});
+
+/* ✅ APPROVE MONETIZATION */
+$("approveMonetizationBtn")?.addEventListener("click", async () => {
+  if(!currentMonetizationRequestId || !currentMonetizationUserId) return;
+
+  if(!globalMonetizationEnabled){
+    if(!confirm("⚠️ Global monetization is DISABLED.\n\nStill approve this user?")) return;
+  }
+
+  const btn = $("approveMonetizationBtn");
+  btn.disabled = true;
+  btn.textContent = "Approving...";
+
+  try{
+    // Update request
+    await updateDoc(doc(db, "monetization_requests", currentMonetizationRequestId), {
+      status: "approved",
+      reviewedAt: serverTimestamp(),
+      reviewedBy: currentUser.uid
+    });
+
+    // Update user profile
+    await updateDoc(doc(db, "profiles", currentMonetizationUserId), {
+      monetizationStatus: "approved",
+      monetizationApprovedAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    // Send notification
+    try{
+      await addDoc(collection(db, "notifications"), {
+        to: currentMonetizationUserId,
+        from: currentUser.uid,
+        title: "🎉 Monetization Approved",
+        message: "Congratulations! Your channel is now monetized.",
+        createdAt: serverTimestamp()
+      });
+    }catch(e){}
+
+    showToast("✅ Monetization approved!");
+    $("monetizationModal").classList.remove("show");
+
+  }catch(e){
+    console.error(e);
+    showToast("Failed: " + e.message, true);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = "✅ Approve Monetization";
+  }
+});
+
+/* ✅ REJECT MONETIZATION */
+$("rejectMonetizationBtn")?.addEventListener("click", async () => {
+  if(!currentMonetizationRequestId || !currentMonetizationUserId) return;
+
+  const reason = prompt("Rejection reason (optional):", "Requirements not met");
+  if(reason === null) return;
+
+  const btn = $("rejectMonetizationBtn");
+  btn.disabled = true;
+  btn.textContent = "Rejecting...";
+
+  try{
+    await updateDoc(doc(db, "monetization_requests", currentMonetizationRequestId), {
+      status: "rejected",
+      rejectionReason: reason,
+      reviewedAt: serverTimestamp(),
+      reviewedBy: currentUser.uid
+    });
+
+    await updateDoc(doc(db, "profiles", currentMonetizationUserId), {
+      monetizationStatus: "rejected",
+      updatedAt: serverTimestamp()
+    });
+
+    try{
+      await addDoc(collection(db, "notifications"), {
+        to: currentMonetizationUserId,
+        from: currentUser.uid,
+        title: "❌ Monetization Rejected",
+        message: reason || "Your application was rejected.",
+        createdAt: serverTimestamp()
+      });
+    }catch(e){}
+
+    showToast("❌ Monetization rejected");
+    $("monetizationModal").classList.remove("show");
+
+  }catch(e){
+    console.error(e);
+    showToast("Failed: " + e.message, true);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = "❌ Reject";
+  }
+});
 
 /* SUSPEND MODAL */
 function openSuspendModal(uid){
@@ -1333,7 +1886,7 @@ document.querySelectorAll(".admin-modal").forEach(modal => {
   });
 });
 
-console.log("✅ Admin Panel loaded with 2 admin emails!");
+console.log("✅ Admin Panel loaded with Monetization!");
 </script>
 
 </body>
