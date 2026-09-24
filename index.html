@@ -74,13 +74,11 @@
     <div class="logo">ReelHub</div>
     <p>Watch · Upload · Share</p>
 
-    <!-- Tabs: Login / Signup -->
     <div class="auth-tabs">
       <button class="auth-tab active" data-tab="login" type="button">Login</button>
       <button class="auth-tab" data-tab="signup" type="button">Sign Up</button>
     </div>
 
-    <!-- Login Form -->
     <form id="loginForm" class="auth-form">
       <input type="email" id="loginEmail" class="yt-input" 
              placeholder="Email" style="margin-bottom:10px" required autocomplete="email">
@@ -96,7 +94,6 @@
       </button>
     </form>
 
-    <!-- Signup Form -->
     <form id="signupForm" class="auth-form hidden">
       <input type="text" id="signupName" class="yt-input" 
              placeholder="Full Name" style="margin-bottom:10px" required autocomplete="name">
@@ -111,17 +108,14 @@
       </button>
     </form>
 
-    <!-- Divider -->
     <div class="auth-divider">
       <span>OR</span>
     </div>
 
-    <!-- Google Button -->
     <button class="google-btn" id="googleLogin" type="button">
       <span style="margin-right:8px">🔵</span> Continue with Google
     </button>
 
-    <!-- Status Message -->
     <p id="loginStatus" style="margin-top:15px;font-size:13px;color:#ed4956;min-height:18px"></p>
 
     <p style="margin-top:20px;font-size:11px;color:#888;line-height:1.5">
@@ -149,12 +143,9 @@
 
   <!-- HOME -->
   <section id="homePanel" class="panel">
-
-    <!-- STORIES BAR -->
     <div class="stories-bar" id="storiesBar">
       <div class="stories-loading">Loading stories...</div>
     </div>
-
     <div id="feed"></div>
   </section>
 
@@ -449,7 +440,6 @@
         <span id="privateAccountToggle" style="font-size:13px;font-weight:bold;color:var(--muted)">OFF</span>
       </button>
 
-      <!-- ✅ NAYA — Advanced Settings -->
       <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="advancedSettingsBtn">
         <span>⚙️ Advanced Settings</span>
         <span style="font-size:13px;color:var(--muted)">›</span>
@@ -808,19 +798,13 @@
   </div>
 
   <div class="story-footer" id="storyFooter">
-    <input
-      type="text"
-      class="story-reply"
-      id="storyReplyInput"
-      placeholder="Send message..."
-      maxlength="200"
-    >
+    <input type="text" class="story-reply" id="storyReplyInput" placeholder="Send message..." maxlength="200">
     <button class="story-send" id="storySendBtn" type="button">Send</button>
   </div>
 </div>
 
 <!-- ============================================================
-     ✅ ADVANCED SETTINGS MODAL (NEW)
+     ✅ ADVANCED SETTINGS MODAL
 ============================================================ -->
 <div id="advancedSettingsModal" class="modal">
   <div class="modal-box">
@@ -847,14 +831,14 @@
       </button>
 
       <p style="font-size:12px;color:var(--muted);padding:10px;line-height:1.5;text-align:center;margin-top:10px">
-        Hidden videos/photos only visible in Private Vault. PIN is required every time.
+        Hidden files only visible in Private Vault. PIN is required every time.
       </p>
     </div>
   </div>
 </div>
 
 <!-- ============================================================
-     ✅ PIN SETUP MODAL (NEW)
+     ✅ PIN SETUP MODAL
 ============================================================ -->
 <div id="pinSetupModal" class="modal">
   <div class="modal-box" style="max-width:400px">
@@ -869,26 +853,16 @@
     </p>
 
     <label class="yt-label">Enter 4-digit PIN</label>
-    <input 
-      type="password" 
-      id="newPinInput" 
-      class="yt-input" 
-      inputmode="numeric" 
-      maxlength="4" 
-      pattern="[0-9]{4}"
-      placeholder="••••" 
-      style="text-align:center;font-size:24px;letter-spacing:12px;margin-bottom:14px">
+    <input type="password" id="newPinInput" class="yt-input" 
+           inputmode="numeric" maxlength="4" pattern="[0-9]{4}"
+           placeholder="••••" 
+           style="text-align:center;font-size:24px;letter-spacing:12px;margin-bottom:14px">
 
     <label class="yt-label">Confirm PIN</label>
-    <input 
-      type="password" 
-      id="confirmPinInput" 
-      class="yt-input" 
-      inputmode="numeric" 
-      maxlength="4" 
-      pattern="[0-9]{4}"
-      placeholder="••••" 
-      style="text-align:center;font-size:24px;letter-spacing:12px;margin-bottom:14px">
+    <input type="password" id="confirmPinInput" class="yt-input" 
+           inputmode="numeric" maxlength="4" pattern="[0-9]{4}"
+           placeholder="••••" 
+           style="text-align:center;font-size:24px;letter-spacing:12px;margin-bottom:14px">
 
     <p id="pinSetupStatus" style="text-align:center;font-size:13px;color:var(--danger);min-height:18px;margin-bottom:10px"></p>
 
@@ -897,7 +871,7 @@
 </div>
 
 <!-- ============================================================
-     ✅ PIN ENTRY MODAL (NEW)
+     ✅ PIN ENTRY MODAL
 ============================================================ -->
 <div id="pinEntryModal" class="modal">
   <div class="modal-box" style="max-width:400px">
@@ -910,16 +884,10 @@
       Enter your 4-digit PIN to unlock the vault.
     </p>
 
-    <input 
-      type="password" 
-      id="vaultPinInput" 
-      class="yt-input" 
-      inputmode="numeric" 
-      maxlength="4" 
-      pattern="[0-9]{4}"
-      placeholder="••••" 
-      autofocus
-      style="text-align:center;font-size:32px;letter-spacing:16px;margin-bottom:14px">
+    <input type="password" id="vaultPinInput" class="yt-input" 
+           inputmode="numeric" maxlength="4" pattern="[0-9]{4}"
+           placeholder="••••" autofocus
+           style="text-align:center;font-size:32px;letter-spacing:16px;margin-bottom:14px">
 
     <p id="pinEntryStatus" style="text-align:center;font-size:13px;color:var(--danger);min-height:18px;margin-bottom:10px"></p>
 
@@ -928,7 +896,7 @@
 </div>
 
 <!-- ============================================================
-     ✅ VAULT VIEWER MODAL (NEW)
+     ✅ VAULT VIEWER MODAL (Updated with Add Files)
 ============================================================ -->
 <div id="vaultViewerModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden">
@@ -937,20 +905,34 @@
       <button class="close" data-close="vaultViewerModal">×</button>
     </div>
 
-    <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
-      <p style="font-size:12.5px;color:var(--muted);text-align:center">
-        Hidden content — tap to open, tap 🔓 to unhide
-      </p>
+    <!-- Add Files Bar -->
+    <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
+      <button class="vault-add-btn" id="vaultAddFilesBtn">
+        ➕ Add Files
+      </button>
+      <span id="vaultFileCount" style="font-size:12px;color:var(--muted);margin-left:auto">0 files</span>
     </div>
 
-    <div id="vaultContent" style="padding:14px;max-height:65vh;overflow-y:auto">
-      <!-- Vault items rendered here -->
+    <!-- Hidden file input - multiple -->
+    <input type="file" id="vaultFileInput" accept="image/*,video/*" multiple class="hidden">
+
+    <!-- Upload Progress -->
+    <div id="vaultUploadProgress" style="display:none;padding:12px 14px;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px" id="vaultUploadLabel">Uploading...</div>
+      <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+        <div id="vaultUploadBar" style="height:100%;width:0;background:linear-gradient(90deg,#7c3aed,#ec4899);transition:width 0.3s"></div>
+      </div>
+    </div>
+
+    <!-- Vault content -->
+    <div id="vaultContent" style="padding:14px;max-height:60vh;overflow-y:auto">
+      <!-- Files rendered here -->
     </div>
   </div>
 </div>
 
 <!-- ============================================================
-     ✅ VAULT SETTINGS MODAL (NEW)
+     ✅ VAULT SETTINGS MODAL
 ============================================================ -->
 <div id="vaultSettingsModal" class="modal">
   <div class="modal-box">
@@ -966,16 +948,12 @@
         <span id="vaultAutoLockToggle" style="font-size:13px;font-weight:bold;color:var(--muted)">ON</span>
       </button>
 
-      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="hideVaultFromSearchBtn">
-        🕵️ Hide vault from search suggestions
-      </button>
-
       <button class="yt-mini-btn danger" style="padding:14px;text-align:left;margin-top:12px" id="clearVaultBtn">
         🗑️ Clear all vault content
       </button>
 
       <button class="yt-mini-btn danger" style="padding:14px;text-align:left" id="removeVaultBtn">
-        🔓 Remove Vault (unhide all)
+        🔓 Remove Vault (delete all files)
       </button>
     </div>
   </div>
