@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (With Stories + Auth + Private Vault + Back Fix)
+   ReelHub - app.js (Fixed Login Flash + Vault + Stories)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -57,6 +57,8 @@ const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const STORY_DURATION_IMAGE = 5000;
 const STORY_DURATION_VIDEO_MAX = 15000;
 const VAULT_AUTO_LOCK_MS = 5 * 60 * 1000;
+const VAULT_MAX_FILE_SIZE = 30 * 1024 * 1024;
+const VAULT_MAX_FILES = 100;
 
 /* STATE */
 let currentUser = null;
@@ -78,6 +80,7 @@ let playlistsUnsubscribe = null;
 let presenceUnsubscribe = null;
 let followRequestsUnsubscribe = null;
 let storiesUnsubscribe = null;
+let vaultUnsubscribe = null;
 let heartbeatInterval = null;
 
 let onlineUsersCache = {};
@@ -117,6 +120,12 @@ let modalHistoryStack = [];
 let vaultPinVerified = false;
 let vaultUnlockTime = 0;
 let vaultAutoLockEnabled = true;
+let vaultFilesCache = [];
+let vaultUploading = false;
+
+/* SPLASH STATE */
+let splashHidden = false;
+let authResolved = false;
 
 const $ = id => document.getElementById(id);
 
@@ -130,7 +139,7 @@ function esc(v){
     .replaceAll("'","&#039;");
 }
 
-/* MODAL MANAGEMENT WITH BACK BUTTON */
+/* MODAL MANAGEMENT */
 function showModal(id){
   const el = $(id);
   if(!el) return;
@@ -226,7 +235,24 @@ function formatViewsShort(num){
   return (num/1000000000).toFixed(1) + "B";
 }
 
-/* SUSPENSION CHECK */
+/* SPLASH HANDLER */
+function hideSplash(){
+  if(splashHidden) return;
+  splashHidden = true;
+  const splash = $("splashScreen");
+  if(splash){
+    splash.classList.add("fade-out");
+    setTimeout(()=> splash.remove(), 500);
+  }
+}
+
+/* Initially hide both screens — wait for auth */
+function prepareInitialState(){
+  $("loginPage")?.classList.add("hidden");
+  $("app")?.classList.add("hidden");
+}
+
+/* SUSPENSION */
 function showSuspensionScreen(profile){
   const screen = $("suspensionScreen");
   if(!screen) return;
@@ -254,8 +280,7 @@ function showSuspensionScreen(profile){
 
   $("loginPage")?.classList.add("hidden");
   $("app")?.classList.add("hidden");
-  const splash = $("splashScreen");
-  if(splash) splash.classList.add("hidden");
+  hideSplash();
 
   screen.classList.remove("hidden");
 }
@@ -548,9 +573,7 @@ $("storyUploadBtn")?.addEventListener("click", async ()=>{
     if(status) status.textContent = "✅ Story shared!";
     toast("✅ Story added");
 
-    setTimeout(()=>{
-      hideModal("createStoryModal");
-    }, 500);
+    setTimeout(()=>{ hideModal("createStoryModal"); }, 500);
 
   }catch(err){
     console.error("Story upload error:", err);
@@ -561,7 +584,6 @@ $("storyUploadBtn")?.addEventListener("click", async ()=>{
   }
 });
 
-/* STORY VIEWER */
 function openStoryViewer(userIndex, storyIndex){
   if(!groupedStories.length) return;
 
@@ -690,12 +712,10 @@ function renderStoryProgress(total, current){
 
 function startStoryTimer(duration){
   stopStoryTimer();
-
   storyDuration = duration;
   storyStartTime = Date.now();
   storyElapsed = 0;
   storyPaused = false;
-
   updateStoryProgressLoop();
 }
 
@@ -910,78 +930,9 @@ document.addEventListener("keydown", (e)=>{
    PRIVATE VAULT SYSTEM
 ============================================================ */
 
-function isVaultItem(type, id) {
-  if(!currentProfile) return false;
-  const hidden = currentProfile.hiddenItems || [];
-  return hidden.includes(`${type}:${id}`);
-}
-
-function getVaultItems() {
-  if(!currentProfile) return [];
-  return currentProfile.hiddenItems || [];
-}
-
-async function hideToVault(type, id) {
-  if(!currentUser || !currentProfile) return;
-  try {
-    const current = currentProfile.hiddenItems || [];
-    const key = `${type}:${id}`;
-    if(current.includes(key)) return;
-    
-    const updated = [...current, key];
-    await updateDoc(doc(db, "profiles", currentUser.uid), {
-      hiddenItems: updated,
-      updatedAt: serverTimestamp()
-    });
-    currentProfile.hiddenItems = updated;
-    
-    toast(`🔐 Hidden to Vault`);
-  } catch(e) {
-    console.error("hideToVault:", e);
-    toast("Failed to hide");
-  }
-}
-
-async function unhideFromVault(type, id) {
-  if(!currentUser || !currentProfile) return;
-  try {
-    const current = currentProfile.hiddenItems || [];
-    const key = `${type}:${id}`;
-    const updated = current.filter(k => k !== key);
-    
-    await updateDoc(doc(db, "profiles", currentUser.uid), {
-      hiddenItems: updated,
-      updatedAt: serverTimestamp()
-    });
-    currentProfile.hiddenItems = updated;
-    
-    toast("✅ Unhidden");
-  } catch(e) {
-    console.error("unhideFromVault:", e);
-    toast("Failed to unhide");
-  }
-}
-
-async function clearAllVault() {
-  if(!currentUser || !currentProfile) return;
-  if(!confirm("Clear all vault content?\n\nAll hidden items will become visible again.")) return;
-  try {
-    await updateDoc(doc(db, "profiles", currentUser.uid), {
-      hiddenItems: [],
-      updatedAt: serverTimestamp()
-    });
-    currentProfile.hiddenItems = [];
-    toast("✅ Vault cleared");
-    closeVault();
-  } catch(e) {
-    console.error("clearAllVault:", e);
-    toast("Failed to clear");
-  }
-}
-
-async function saveVaultPin(pin) {
+async function saveVaultPin(pin){
   if(!currentUser) return false;
-  try {
+  try{
     const pinHash = btoa("reelhub_vault_" + pin);
     await updateDoc(doc(db, "profiles", currentUser.uid), {
       vaultPin: pinHash,
@@ -991,31 +942,50 @@ async function saveVaultPin(pin) {
     currentProfile.vaultPin = pinHash;
     currentProfile.vaultEnabled = true;
     return true;
-  } catch(e) {
+  }catch(e){
     console.error("saveVaultPin:", e);
     return false;
   }
 }
 
-async function hasVaultPin() {
+async function hasVaultPin(){
   if(!currentProfile) return false;
   return !!currentProfile.vaultPin;
 }
 
-async function verifyVaultPin(pin) {
+async function verifyVaultPin(pin){
   if(!currentProfile || !currentProfile.vaultPin) return false;
   const hash = btoa("reelhub_vault_" + pin);
   return currentProfile.vaultPin === hash;
 }
 
-async function openVaultFlow() {
+function startVaultListener(){
+  if(vaultUnsubscribe){ vaultUnsubscribe(); vaultUnsubscribe = null; }
+  if(!currentUser) return;
+
+  vaultUnsubscribe = onSnapshot(
+    query(collection(db, "vault_files"), where("userId", "==", currentUser.uid)),
+    snapshot=>{
+      vaultFilesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      vaultFilesCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
+      
+      const vaultModal = $("vaultViewerModal");
+      if(vaultModal && vaultModal.classList.contains("show")){
+        renderVaultContent();
+      }
+    },
+    error=>console.error("Vault listener error:", error)
+  );
+}
+
+async function openVaultFlow(){
   if(!currentUser) return;
   
   currentProfile = await getProfile(currentUser.uid);
   
   const hasPin = await hasVaultPin();
   
-  if(!hasPin) {
+  if(!hasPin){
     $("newPinInput").value = "";
     $("confirmPinInput").value = "";
     $("pinSetupStatus").textContent = "";
@@ -1025,7 +995,7 @@ async function openVaultFlow() {
     return;
   }
   
-  if(vaultPinVerified && (Date.now() - vaultUnlockTime) < VAULT_AUTO_LOCK_MS) {
+  if(vaultPinVerified && (Date.now() - vaultUnlockTime) < VAULT_AUTO_LOCK_MS){
     hideModal("settingsModal");
     hideModal("advancedSettingsModal");
     openVaultViewer();
@@ -1114,80 +1084,287 @@ $("vaultPinInput")?.addEventListener("keydown", (e) => {
   if(e.key === "Enter") $("unlockVaultBtn")?.click();
 });
 
-function openVaultViewer() {
+function openVaultViewer(){
   renderVaultContent();
+  updateVaultFileCount();
   showModal("vaultViewerModal");
+  startVaultListener();
 }
 
-function closeVault() {
-  hideModal("vaultViewerModal");
+function updateVaultFileCount(){
+  const countEl = $("vaultFileCount");
+  if(countEl) countEl.textContent = vaultFilesCache.length + " file" + (vaultFilesCache.length === 1 ? "" : "s");
 }
 
-function renderVaultContent() {
+function renderVaultContent(){
   const container = $("vaultContent");
   if(!container) return;
   
-  const hiddenKeys = getVaultItems();
-  
-  if(!hiddenKeys.length) {
+  if(!vaultFilesCache.length){
     container.innerHTML = `
       <div class="vault-empty">
         <span class="icon">🔐</span>
         <h3>Vault is empty</h3>
-        <p>Hide videos by tapping the 🔒 button on them</p>
+        <p>Tap "Add Files" to add photos/videos from your gallery</p>
       </div>
     `;
+    updateVaultFileCount();
     return;
   }
   
-  const videoKeys = hiddenKeys.filter(k => k.startsWith("video:"));
+  let html = `<div class="vault-grid">`;
   
-  let html = "";
+  vaultFilesCache.forEach(f => {
+    if(f.mediaType === "video"){
+      html += `
+        <div class="vault-item" data-vault-file="${esc(f.id)}">
+          <video src="${esc(f.mediaURL)}" preload="metadata" muted></video>
+          <span class="vault-item-type">🎬</span>
+        </div>
+      `;
+    }else{
+      html += `
+        <div class="vault-item" data-vault-file="${esc(f.id)}">
+          <img src="${esc(f.mediaURL)}" alt="">
+          <span class="vault-item-type">📷</span>
+        </div>
+      `;
+    }
+  });
   
-  if(videoKeys.length) {
-    html += `<div>
-      <h3 style="font-size:14px;font-weight:600;margin-bottom:10px;color:var(--text)">
-        🎬 Videos (${videoKeys.length})
-      </h3>
-      <div class="vault-grid">`;
-    
-    videoKeys.forEach(key => {
-      const vid = key.replace("video:", "");
-      const v = videosCache.find(x => x.id === vid);
-      if(v) {
-        html += `
-          <div class="vault-item" data-vault-video="${esc(vid)}">
-            <video src="${esc(v.videoURL)}" preload="metadata" muted></video>
-            <span class="vault-item-overlay">🔒</span>
-            <span class="vault-item-type">🎬</span>
-          </div>
-        `;
-      }
-    });
-    
-    html += `</div></div>`;
-  }
-  
+  html += `</div>`;
   container.innerHTML = html;
+  updateVaultFileCount();
 }
 
-document.addEventListener("click", async (e) => {
-  const vaultVideo = e.target.closest("[data-vault-video]");
-  if(vaultVideo) {
-    const vid = vaultVideo.dataset.vaultVideo;
-    if(vid) {
-      const action = prompt("Type 1 to OPEN, 2 to UNHIDE:\n\n1 = Open video\n2 = Move out of vault");
-      if(action === "1") {
-        closeVault();
-        setTimeout(() => openVideoPlayer(vid), 200);
-      } else if(action === "2") {
-        await unhideFromVault("video", vid);
-        renderVaultContent();
-      }
+$("vaultAddFilesBtn")?.addEventListener("click", () => {
+  if(vaultUploading){
+    toast("Upload in progress...");
+    return;
+  }
+  $("vaultFileInput")?.click();
+});
+
+$("vaultFileInput")?.addEventListener("change", async (e) => {
+  const files = Array.from(e.target.files || []);
+  if(!files.length) return;
+  
+  if(!currentUser){
+    toast("Login required");
+    return;
+  }
+  
+  if(vaultFilesCache.length + files.length > VAULT_MAX_FILES){
+    toast(`Max ${VAULT_MAX_FILES} files allowed`);
+    e.target.value = "";
+    return;
+  }
+  
+  for(const f of files){
+    if(f.size > VAULT_MAX_FILE_SIZE){
+      toast(`"${f.name}" is too large (max 30MB)`);
+      e.target.value = "";
+      return;
+    }
+  }
+  
+  vaultUploading = true;
+  
+  const progressWrap = $("vaultUploadProgress");
+  const progressBar = $("vaultUploadBar");
+  const progressLabel = $("vaultUploadLabel");
+  
+  if(progressWrap) progressWrap.style.display = "block";
+  
+  let completed = 0;
+  let failed = 0;
+  
+  for(let i = 0; i < files.length; i++){
+    const file = files[i];
+    const mediaType = file.type.startsWith("video/") ? "video" : "image";
+    
+    if(progressLabel){
+      progressLabel.textContent = `Uploading ${i + 1}/${files.length}: ${file.name}`;
+    }
+    
+    try{
+      const url = await uploadToCloudinary(file, (pct)=>{
+        if(progressBar) progressBar.style.width = pct + "%";
+      });
+      
+      await addDoc(collection(db, "vault_files"), {
+        userId: currentUser.uid,
+        mediaURL: url,
+        mediaType: mediaType,
+        fileName: file.name,
+        fileSize: file.size,
+        createdAt: serverTimestamp()
+      });
+      
+      completed++;
+    }catch(err){
+      console.error("Vault upload error:", file.name, err);
+      failed++;
+    }
+  }
+  
+  vaultUploading = false;
+  
+  if(progressBar) progressBar.style.width = "0%";
+  if(progressWrap) progressWrap.style.display = "none";
+  
+  e.target.value = "";
+  
+  if(completed > 0 && failed === 0){
+    toast(`✅ ${completed} file${completed > 1 ? "s" : ""} added to vault`);
+  }else if(completed > 0 && failed > 0){
+    toast(`✅ ${completed} added · ${failed} failed`);
+  }else{
+    toast("❌ Upload failed");
+  }
+});
+
+document.addEventListener("click", (e) => {
+  const vaultItem = e.target.closest("[data-vault-file]");
+  if(vaultItem){
+    e.preventDefault();
+    e.stopPropagation();
+    const fileId = vaultItem.dataset.vaultFile;
+    const f = vaultFilesCache.find(x => x.id === fileId);
+    if(!f) return;
+    
+    if(f.mediaType === "video"){
+      openVaultVideoPlayer(f);
+    }else{
+      const imgEl = $("largeChatImage");
+      if(imgEl) imgEl.src = f.mediaURL;
+      showModal("imageViewerModal");
     }
     return;
   }
 });
+
+let vaultLongPressTimer = null;
+let vaultLongPressTriggered = false;
+
+document.addEventListener("touchstart", (e) => {
+  const vaultItem = e.target.closest("[data-vault-file]");
+  if(!vaultItem) return;
+  
+  vaultLongPressTriggered = false;
+  vaultLongPressTimer = setTimeout(() => {
+    vaultLongPressTriggered = true;
+    const fileId = vaultItem.dataset.vaultFile;
+    showVaultFileMenu(fileId);
+  }, 700);
+}, { passive: true });
+
+document.addEventListener("touchend", () => {
+  if(vaultLongPressTimer){
+    clearTimeout(vaultLongPressTimer);
+    vaultLongPressTimer = null;
+  }
+});
+
+document.addEventListener("touchmove", () => {
+  if(vaultLongPressTimer){
+    clearTimeout(vaultLongPressTimer);
+    vaultLongPressTimer = null;
+  }
+}, { passive: true });
+
+document.addEventListener("mousedown", (e) => {
+  const vaultItem = e.target.closest("[data-vault-file]");
+  if(!vaultItem) return;
+  
+  vaultLongPressTimer = setTimeout(() => {
+    vaultLongPressTriggered = true;
+    const fileId = vaultItem.dataset.vaultFile;
+    showVaultFileMenu(fileId);
+  }, 700);
+});
+
+document.addEventListener("mouseup", () => {
+  if(vaultLongPressTimer){
+    clearTimeout(vaultLongPressTimer);
+    vaultLongPressTimer = null;
+  }
+});
+
+function showVaultFileMenu(fileId){
+  const f = vaultFilesCache.find(x => x.id === fileId);
+  if(!f) return;
+  
+  const action = prompt(
+    "Choose action:\n\n1 = Open\n2 = Download\n3 = Delete\n\nEnter number:"
+  );
+  
+  if(action === "1"){
+    if(f.mediaType === "video"){
+      openVaultVideoPlayer(f);
+    }else{
+      const imgEl = $("largeChatImage");
+      if(imgEl) imgEl.src = f.mediaURL;
+      showModal("imageViewerModal");
+    }
+  }else if(action === "2"){
+    try{
+      const a = document.createElement("a");
+      a.href = f.mediaURL;
+      a.download = f.fileName || "vault_file";
+      a.target = "_blank";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toast("Downloading...");
+    }catch(err){
+      toast("Download failed");
+    }
+  }else if(action === "3"){
+    if(confirm("Delete this file permanently?")){
+      deleteVaultFile(fileId);
+    }
+  }
+}
+
+async function deleteVaultFile(fileId){
+  try{
+    await deleteDoc(doc(db, "vault_files", fileId));
+    toast("🗑️ File deleted");
+  }catch(e){
+    console.error("deleteVaultFile:", e);
+    toast("Delete failed");
+  }
+}
+
+function openVaultVideoPlayer(f){
+  hideModal("vaultViewerModal");
+  
+  const videoEl = $("videoPlayerVideo");
+  if(videoEl){
+    videoEl.src = f.mediaURL;
+    videoEl.play().catch(()=>{});
+  }
+  
+  const titleEl = $("videoPlayerTitle");
+  if(titleEl) titleEl.textContent = f.fileName || "Vault Video";
+  
+  const metaEl = $("videoPlayerMeta");
+  if(metaEl) metaEl.textContent = timeAgo(f.createdAt);
+  
+  const descEl = $("videoPlayerDesc");
+  if(descEl){ descEl.textContent = ""; descEl.style.display = "none"; }
+  
+  const likesEl = $("videoPlayerLikes");
+  if(likesEl) likesEl.textContent = "From Vault 🔐";
+  
+  const likeBtn = $("videoPlayerLikeBtn");
+  if(likeBtn) likeBtn.style.display = "none";
+  const shareBtn = $("videoPlayerShareBtn");
+  if(shareBtn) shareBtn.style.display = "none";
+  
+  showModal("videoPlayerModal");
+}
 
 $("advancedSettingsBtn")?.addEventListener("click", () => {
   hideModal("settingsModal");
@@ -1214,7 +1391,7 @@ $("vaultSettingsBtn")?.addEventListener("click", () => {
   updateVaultAutoLockUI();
 });
 
-function updateVaultAutoLockUI() {
+function updateVaultAutoLockUI(){
   const toggle = $("vaultAutoLockToggle");
   if(!toggle) return;
   toggle.textContent = vaultAutoLockEnabled ? "ON" : "OFF";
@@ -1228,49 +1405,72 @@ $("vaultAutoLockBtn")?.addEventListener("click", () => {
   toast(vaultAutoLockEnabled ? "Auto-lock ON" : "Auto-lock OFF");
 });
 
-if(localStorage.getItem("reelhubVaultAutoLock") === "0") {
+if(localStorage.getItem("reelhubVaultAutoLock") === "0"){
   vaultAutoLockEnabled = false;
 }
 
-$("hideVaultFromSearchBtn")?.addEventListener("click", () => {
-  toast("✅ Vault hidden from search");
-  hideModal("vaultSettingsModal");
-});
-
 $("clearVaultBtn")?.addEventListener("click", async () => {
-  await clearAllVault();
+  if(!vaultFilesCache.length){
+    toast("Vault is already empty");
+    return;
+  }
+  if(!confirm(`Delete all ${vaultFilesCache.length} vault files permanently?`)) return;
+  
+  try{
+    let count = 0;
+    for(const f of vaultFilesCache){
+      try{
+        await deleteDoc(doc(db, "vault_files", f.id));
+        count++;
+      }catch(e){}
+    }
+    toast(`🗑️ ${count} files deleted`);
+    hideModal("vaultSettingsModal");
+  }catch(e){
+    console.error(e);
+    toast("Failed to clear");
+  }
 });
 
 $("removeVaultBtn")?.addEventListener("click", async () => {
-  if(!confirm("Remove Vault completely?\n\nAll hidden items will become visible and PIN will be deleted.")) return;
-  try {
+  if(!confirm("Remove Vault completely?\n\nAll files will be DELETED and PIN will be reset.")) return;
+  
+  try{
+    for(const f of vaultFilesCache){
+      try{ await deleteDoc(doc(db, "vault_files", f.id)); }catch(e){}
+    }
+    
     await updateDoc(doc(db, "profiles", currentUser.uid), {
-      hiddenItems: [],
       vaultPin: "",
       vaultEnabled: false,
       updatedAt: serverTimestamp()
     });
-    currentProfile.hiddenItems = [];
+    
     currentProfile.vaultPin = "";
     currentProfile.vaultEnabled = false;
+    vaultFilesCache = [];
+    vaultPinVerified = false;
+    
     toast("✅ Vault removed");
     hideModal("vaultSettingsModal");
     hideModal("advancedSettingsModal");
-  } catch(e) {
+    hideModal("vaultViewerModal");
+  }catch(e){
     console.error(e);
     toast("Failed to remove vault");
   }
 });
 
 document.addEventListener("visibilitychange", () => {
-  if(document.visibilityState === "visible" && vaultPinVerified) {
-    if(vaultAutoLockEnabled && (Date.now() - vaultUnlockTime) > VAULT_AUTO_LOCK_MS) {
+  if(document.visibilityState === "visible" && vaultPinVerified){
+    if(vaultAutoLockEnabled && (Date.now() - vaultUnlockTime) > VAULT_AUTO_LOCK_MS){
       vaultPinVerified = false;
     }
   }
 });
-
-/* ONLINE STATUS */
+/* ============================================================
+   ONLINE STATUS
+============================================================ */
 async function updatePresence(){
   if(!currentUser) return;
   try{
@@ -1382,7 +1582,6 @@ function getOnlineText(uid){
   return "";
 }
 
-/* CHAT READ STATUS */
 async function markChatAsRead(chatId){
   if(!currentUser || !chatId) return;
   try{
@@ -1451,7 +1650,6 @@ async function calculateAllUnread(){
 /* ============================================================
    EMAIL / PASSWORD AUTH
 ============================================================ */
-
 document.querySelectorAll(".auth-tab").forEach(tab => {
   tab.addEventListener("click", () => {
     const tabName = tab.dataset.tab;
@@ -1677,7 +1875,6 @@ async function createProfile(){
       bannerType: "gradient",
       bannerGradient: "linear-gradient(135deg, #7c3aed, #ec4899)",
       bannerURL: "",
-      hiddenItems: [],
       vaultPin: "",
       vaultEnabled: false,
       createdAt: serverTimestamp()
@@ -1693,7 +1890,7 @@ async function getProfile(uid){
              suspended:false,
              bannerType:"gradient",
              bannerGradient:"linear-gradient(135deg, #7c3aed, #ec4899)",
-             bannerURL:"", hiddenItems: [], vaultPin: "", vaultEnabled: false };
+             bannerURL:"", vaultPin: "", vaultEnabled: false };
   }
   const d = snap.data();
   return {
@@ -1707,7 +1904,6 @@ async function getProfile(uid){
     bannerType: d.bannerType || "gradient",
     bannerGradient: d.bannerGradient || "linear-gradient(135deg, #7c3aed, #ec4899)",
     bannerURL: d.bannerURL || "",
-    hiddenItems: d.hiddenItems || [],
     vaultPin: d.vaultPin || "",
     vaultEnabled: d.vaultEnabled === true
   };
@@ -1781,13 +1977,19 @@ async function loadMySentRequests(){
   }catch(e){ console.error(e); }
 }
 
-/* AUTH STATE */
+/* ============================================================
+   AUTH STATE — FIXED LOGIN FLASH BUG
+============================================================ */
 onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
 
     const isSuspended = await checkSuspension(user.uid);
-    if(isSuspended){ return; }
+    if(isSuspended){
+      authResolved = true;
+      hideSplash();
+      return;
+    }
 
     await createProfile();
     await loadProfile();
@@ -1795,8 +1997,12 @@ onAuthStateChanged(auth, async user => {
     await loadMySaves();
     await loadMySentRequests();
 
-    $("loginPage").classList.add("hidden");
-    $("app").classList.remove("hidden");
+    // ✅ Login page HIDDEN, App SHOWN
+    $("loginPage")?.classList.add("hidden");
+    $("app")?.classList.remove("hidden");
+    
+    // ✅ Hide splash now (user is verified logged-in)
+    hideSplash();
 
     startRealtimeVideos();
     startNotifications();
@@ -1805,8 +2011,8 @@ onAuthStateChanged(auth, async user => {
     startPresenceHeartbeat();
     startFollowRequestsListener();
     startStoriesListener();
+    startVaultListener();
 
-    // History state for back button
     try{
       window.history.replaceState({ reelhubHome: true }, "", window.location.href);
     }catch(e){}
@@ -1815,6 +2021,7 @@ onAuthStateChanged(auth, async user => {
     }catch(e){}
 
     setTimeout(checkDeepLink, 1500);
+    authResolved = true;
   }else{
     if(currentUser) await markOffline();
 
@@ -1823,6 +2030,7 @@ onAuthStateChanged(auth, async user => {
     videosCache = [];
     storiesCache = [];
     groupedStories = [];
+    vaultFilesCache = [];
     myFollowsCache.clear();
     mySavesCache.clear();
     mySentRequestsCache.clear();
@@ -1839,11 +2047,17 @@ onAuthStateChanged(auth, async user => {
     if(presenceUnsubscribe){ presenceUnsubscribe(); presenceUnsubscribe = null; }
     if(followRequestsUnsubscribe){ followRequestsUnsubscribe(); followRequestsUnsubscribe = null; }
     if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
+    if(vaultUnsubscribe){ vaultUnsubscribe(); vaultUnsubscribe = null; }
     if(heartbeatInterval){ clearInterval(heartbeatInterval); heartbeatInterval = null; }
 
-    $("app").classList.add("hidden");
-    $("loginPage").classList.remove("hidden");
+    // ✅ App HIDDEN, Login SHOWN
+    $("app")?.classList.add("hidden");
+    $("loginPage")?.classList.remove("hidden");
     $("suspensionScreen")?.classList.add("hidden");
+    
+    // ✅ Hide splash now (user confirmed logged-out)
+    hideSplash();
+    authResolved = true;
   }
 });
 
@@ -1875,7 +2089,8 @@ function uploadToCloudinary(file, onProgress){
     xhr.send(form);
   });
 }
-/* UPLOAD */
+
+/* UPLOAD VIDEO */
 $("dropzone")?.addEventListener("click", ()=> $("videoFile").click());
 
 $("videoFile")?.addEventListener("change", e=>{
@@ -2282,8 +2497,7 @@ function renderFeed(){
 
   const list = videosCache.filter(v =>
     v.type !== "short" &&
-    (v.visibility !== "private" || v.userId === currentUser?.uid) &&
-    !isVaultItem("video", v.id)
+    (v.visibility !== "private" || v.userId === currentUser?.uid)
   );
 
   if(!list.length){
@@ -2387,8 +2601,7 @@ function renderShorts(){
 
   const list = videosCache.filter(v =>
     v.type === "short" &&
-    (v.visibility !== "private" || v.userId === currentUser?.uid) &&
-    !isVaultItem("video", v.id)
+    (v.visibility !== "private" || v.userId === currentUser?.uid)
   );
 
   if(!list.length){
@@ -2946,9 +3159,7 @@ function updateProfileTabCounts(){
   const vc = $("tabVideosCount");
   const sc = $("tabSavedCount");
   const pc = $("tabPlaylistsCount");
-  if(vc) vc.textContent = videosCache.filter(v => 
-    v.userId === currentUser?.uid && !isVaultItem("video", v.id)
-  ).length;
+  if(vc) vc.textContent = videosCache.filter(v => v.userId === currentUser?.uid).length;
   if(sc) sc.textContent = mySavesCache.size;
   if(pc) pc.textContent = myPlaylistsCache.length;
 }
@@ -3368,7 +3579,6 @@ async function checkDeepLink(){
   await openVideoByDeepLink(vid);
 }
 
-/* VIDEO PLAYER */
 window.openVideoPlayer = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
   if(!v){ toast("Video not found"); return; }
@@ -3401,9 +3611,13 @@ window.openVideoPlayer = function(videoId){
   const likesEl = $("videoPlayerLikes");
   if(likesEl) likesEl.textContent = (v.likes || 0) + " likes";
 
+  const likeBtn = $("videoPlayerLikeBtn");
+  const shareBtn = $("videoPlayerShareBtn");
+  if(likeBtn) likeBtn.style.display = "";
+  if(shareBtn) shareBtn.style.display = "";
+
   updateVideoPlayerLike(videoId);
 
-  const likeBtn = $("videoPlayerLikeBtn");
   if(likeBtn){
     likeBtn.onclick = (e)=>{
       e.preventDefault();
@@ -3412,7 +3626,6 @@ window.openVideoPlayer = function(videoId){
     };
   }
 
-  const shareBtn = $("videoPlayerShareBtn");
   if(shareBtn){
     shareBtn.onclick = (e)=>{
       e.preventDefault();
@@ -3955,8 +4168,7 @@ async function loadPublicVideos(uid){
 
   const list = videosCache.filter(v =>
     v.userId === uid &&
-    (v.visibility !== "private" || uid === currentUser?.uid) &&
-    !isVaultItem("video", v.id)
+    (v.visibility !== "private" || uid === currentUser?.uid)
   );
 
   if(!list.length){
@@ -3971,13 +4183,11 @@ async function loadPublicVideos(uid){
 
 function createYTVideoItem(v, isMine){
   const views = Number(v.views || 0);
-  const isHidden = isVaultItem("video", v.id);
   return `
   <div class="yt-video-item" data-open-video="${esc(v.id)}">
     <div class="yt-video-thumb">
       <video src="${esc(v.videoURL)}" preload="metadata" muted></video>
       <div class="view-badge">👁️ ${formatViewsShort(views)}</div>
-      ${isMine ? `<button class="vault-hide-btn" data-vault-toggle="${esc(v.id)}">${isHidden ? "🔓" : "🔒"}</button>` : ""}
     </div>
     <div class="yt-video-meta">
       <h4>${esc(v.title || "Untitled")}</h4>
@@ -3994,37 +4204,10 @@ function createYTVideoItem(v, isMine){
   `;
 }
 
-/* Vault toggle click handler */
-document.addEventListener("click", async (e) => {
-  const vaultBtn = e.target.closest("[data-vault-toggle]");
-  if(vaultBtn){
-    e.preventDefault();
-    e.stopPropagation();
-    const vid = vaultBtn.dataset.vaultToggle;
-    if(!vid) return;
-    const isHidden = isVaultItem("video", vid);
-    if(isHidden) {
-      await unhideFromVault("video", vid);
-    } else {
-      await hideToVault("video", vid);
-      // Reload profile to reflect changes
-      currentProfile = await getProfile(currentUser.uid);
-    }
-    loadMyVideos();
-    renderFeed();
-    renderShorts();
-    return;
-  }
-});
-
-/* MY VIDEOS */
 async function loadMyVideos(){
   if(!currentUser) return;
 
-  const list = videosCache.filter(v => 
-    v.userId === currentUser.uid && 
-    !isVaultItem("video", v.id)
-  );
+  const list = videosCache.filter(v => v.userId === currentUser.uid);
   const container = $("myVideos");
   if(!container) return;
 
@@ -4041,7 +4224,6 @@ async function loadMyVideos(){
   updateProfileTabCounts();
 }
 
-/* PEOPLE */
 async function openPeople(uid, type){
   if(!uid) return;
 
@@ -4772,6 +4954,10 @@ document.querySelectorAll("[data-close]").forEach(btn=>{
         videoEl.pause();
         videoEl.src = "";
       }
+      const likeBtn = $("videoPlayerLikeBtn");
+      const shareBtn = $("videoPlayerShareBtn");
+      if(likeBtn) likeBtn.style.display = "";
+      if(shareBtn) shareBtn.style.display = "";
     }
 
     if(id === "imageViewerModal"){
@@ -4806,6 +4992,10 @@ document.querySelectorAll(".modal").forEach(modal=>{
           videoEl.pause();
           videoEl.src = "";
         }
+        const likeBtn = $("videoPlayerLikeBtn");
+        const shareBtn = $("videoPlayerShareBtn");
+        if(likeBtn) likeBtn.style.display = "";
+        if(shareBtn) shareBtn.style.display = "";
       }
 
       if(modal.id === "imageViewerModal"){
@@ -4822,7 +5012,6 @@ $("shareSheet")?.addEventListener("click", e=>{
   }
 });
 
-/* DM SEARCH */
 $("dmSearchInput")?.addEventListener("input", e=>{
   const val = e.target.value.toLowerCase().trim();
   document.querySelectorAll("#dmInboxList .dm-inbox-item").forEach(item=>{
@@ -4831,23 +5020,26 @@ $("dmSearchInput")?.addEventListener("input", e=>{
   });
 });
 
-/* START */
+/* ============================================================
+   START — CRITICAL: This must run at the very end
+============================================================ */
+
+// 1. Setup initial state — hide both login and app
+prepareInitialState();
+
+// 2. Open home panel (it will be hidden until auth resolves)
 openPanel("homePanel");
 
-/* SPLASH SCREEN */
-setTimeout(()=>{
-  const splash = $("splashScreen");
-  if(splash){
-    splash.classList.add("fade-out");
-    setTimeout(()=> splash.remove(), 500);
-  }
-}, 2500);
+// 3. Safety: force-hide splash after 4 seconds regardless
+setTimeout(() => {
+  if(!splashHidden) hideSplash();
+}, 4000);
 /* ============================================================
    BROWSER BACK BUTTON HANDLER
 ============================================================ */
 
 window.addEventListener("popstate", (e) => {
-  // 1. Story viewer check
+  // 1. Story viewer
   const storyViewer = $("storyViewer");
   if(storyViewer && storyViewer.classList.contains("show")){
     closeStoryViewer();
@@ -4855,15 +5047,7 @@ window.addEventListener("popstate", (e) => {
     return;
   }
 
-  // 2. Vault viewer check
-  const vaultViewer = $("vaultViewerModal");
-  if(vaultViewer && vaultViewer.classList.contains("show")){
-    hideModal("vaultViewerModal");
-    try{ window.history.pushState({ reelhubModal: true }, "", window.location.href); }catch(err){}
-    return;
-  }
-
-  // 3. Any open modals
+  // 2. Any open modals
   const openModals = document.querySelectorAll(".modal.show");
   if(openModals.length > 0){
     const topModal = openModals[openModals.length - 1];
@@ -4883,6 +5067,10 @@ window.addEventListener("popstate", (e) => {
     if(id === "videoPlayerModal"){
       const videoEl = $("videoPlayerVideo");
       if(videoEl){ videoEl.pause(); videoEl.src = ""; }
+      const likeBtn = $("videoPlayerLikeBtn");
+      const shareBtn = $("videoPlayerShareBtn");
+      if(likeBtn) likeBtn.style.display = "";
+      if(shareBtn) shareBtn.style.display = "";
     }
     if(id === "imageViewerModal"){
       const imgEl = $("largeChatImage");
@@ -4898,7 +5086,7 @@ window.addEventListener("popstate", (e) => {
     return;
   }
   
-  // 4. Share sheet
+  // 3. Share sheet
   const shareSheet = $("shareSheet");
   if(shareSheet && shareSheet.classList.contains("show")){
     shareSheet.classList.remove("show");
@@ -4906,7 +5094,7 @@ window.addEventListener("popstate", (e) => {
     return;
   }
   
-  // 5. DM chat view — go back to inbox
+  // 4. DM chat view
   const dmChatView = $("dmChatView");
   if(dmChatView && !dmChatView.classList.contains("hidden")){
     if(currentChatId) markChatAsRead(currentChatId);
@@ -4916,4 +5104,4 @@ window.addEventListener("popstate", (e) => {
   }
 }, { passive: true });
 
-console.log("✅ ReelHub loaded — Vault + Stories + Auth + Back Button Fix!");
+console.log("✅ ReelHub loaded — Fixed Login Flash + Vault + Stories + Auth!");
