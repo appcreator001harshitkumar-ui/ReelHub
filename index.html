@@ -69,7 +69,8 @@
 </div>
 
 <!-- ============ LOGIN ============ -->
-<div id="loginPage">
+<!-- ✅ CHANGE: class="hidden" add kiya — bar bar login flash fix -->
+<div id="loginPage" class="hidden">
   <div class="login-card">
     <div class="logo">ReelHub</div>
     <p>Watch · Upload · Share</p>
@@ -141,15 +142,13 @@
     </div>
   </header>
 
-  <!-- ============================================================
-       HOME — YouTube Style Video Grid
-  ============================================================ -->
+  <!-- HOME -->
   <section id="homePanel" class="panel">
     <div class="stories-bar" id="storiesBar">
       <div class="stories-loading">Loading stories...</div>
     </div>
 
-    <!-- Category Chips (YouTube style) -->
+    <!-- Category Chips -->
     <div class="category-chips" id="categoryChips">
       <button class="chip active" data-cat="all">All</button>
       <button class="chip" data-cat="music">Music</button>
@@ -1021,7 +1020,6 @@
       Complete all requirements to apply for monetization.
     </p>
 
-    <!-- Requirements Card -->
     <div class="req-card">
       <div class="req-row" id="reqFollowers">
         <span class="req-icon">👥</span>
@@ -1045,7 +1043,6 @@
       </div>
     </div>
 
-    <!-- Progress Bar -->
     <div style="margin:16px 0">
       <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px">
         <span>Overall Progress</span>
@@ -1056,7 +1053,6 @@
       </div>
     </div>
 
-    <!-- UPI ID Input -->
     <label class="yt-label">UPI ID (for receiving payments)</label>
     <input 
       type="text" 
