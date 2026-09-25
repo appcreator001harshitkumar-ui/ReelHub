@@ -508,6 +508,7 @@ body {
   color: #fff;
   font-size: 14px;
   outline: none;
+  font-family: inherit;
 }
 
 .admin-form-input:focus {
@@ -630,6 +631,7 @@ body {
   font-size: 14px;
   margin-bottom: 10px;
   outline: none;
+  font-family: inherit;
 }
 
 .broadcast-form textarea {
@@ -718,6 +720,252 @@ body {
   font-family: monospace;
   font-size: 12px;
 }
+
+/* ============================================================
+   ✅ SONG LIBRARY STYLES (NEW)
+============================================================ */
+.song-library-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 0 14px;
+  gap: 10px;
+}
+
+.song-library-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.song-library-header .count {
+  font-size: 12px;
+  color: #888;
+  font-weight: 600;
+}
+
+.song-add-btn {
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  border: 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.song-library-item {
+  background: #1a1a22;
+  border: 1px solid #2a2a35;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.song-library-item .song-thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: white;
+  flex-shrink: 0;
+}
+
+.song-library-item .song-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.song-library-item .song-info strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-bottom: 3px;
+}
+
+.song-library-item .song-info small {
+  font-size: 11.5px;
+  color: #888;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.song-library-item .song-info .category-tag {
+  display: inline-block;
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 8px;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.song-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.song-actions button {
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 0;
+  white-space: nowrap;
+}
+
+.song-actions .play-btn {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid #22c55e;
+}
+
+.song-actions .edit-btn {
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+  border: 1px solid #7c3aed;
+}
+
+.song-actions .delete-btn {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.song-upload-zone {
+  border: 2px dashed #2a2a35;
+  border-radius: 12px;
+  padding: 30px 20px;
+  text-align: center;
+  cursor: pointer;
+  background: #0a0a0f;
+  transition: all 0.2s;
+  margin-bottom: 14px;
+}
+
+.song-upload-zone:hover,
+.song-upload-zone:active {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.song-upload-zone .icon {
+  font-size: 44px;
+  margin-bottom: 10px;
+  display: block;
+}
+
+.song-upload-zone .text {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.song-upload-zone .sub {
+  font-size: 12px;
+  color: #888;
+}
+
+.song-file-selected {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #0a0a0f;
+  border: 1px solid #2a2a35;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  font-size: 13px;
+}
+
+.song-file-selected .icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.song-file-selected .name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+  font-weight: 600;
+}
+
+.song-file-selected .remove-btn {
+  color: #ef4444;
+  font-size: 18px;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.song-upload-progress {
+  height: 6px;
+  background: #2a2a35;
+  border-radius: 3px;
+  overflow: hidden;
+  margin: 12px 0;
+  display: none;
+}
+
+.song-upload-progress.active {
+  display: block;
+}
+
+.song-upload-progress-bar {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  transition: width 0.3s;
+}
+
+.song-library-empty {
+  text-align: center;
+  padding: 50px 20px;
+  color: #666;
+}
+
+.song-library-empty .icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.song-library-empty h3 {
+  font-size: 15px;
+  color: #fff;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.song-library-empty p {
+  font-size: 13px;
+}
 </style>
 </head>
 <body>
@@ -775,6 +1023,7 @@ body {
       💰 Monetization
       <span class="tab-badge hidden" id="monetizationBadge">0</span>
     </div>
+    <div class="admin-tab" data-tab="songs">🎵 Songs</div>
     <div class="admin-tab" data-tab="reports">⚠️ Reports</div>
     <div class="admin-tab" data-tab="broadcast">📢 Broadcast</div>
   </div>
@@ -904,6 +1153,63 @@ body {
   </div>
 </div>
 
+<!-- ✅ ADD / EDIT SONG MODAL -->
+<div id="addSongModal" class="admin-modal">
+  <div class="admin-modal-box">
+    <div class="admin-modal-header">
+      <h2 id="addSongTitle">➕ Add Song</h2>
+      <button class="admin-modal-close" id="addSongModalClose">×</button>
+    </div>
+
+    <input type="hidden" id="editingSongId">
+
+    <label class="admin-form-label">Song Name *</label>
+    <input id="songName" class="admin-form-input" maxlength="100" 
+           placeholder="e.g. Kesariya">
+
+    <label class="admin-form-label">Artist</label>
+    <input id="songArtist" class="admin-form-input" maxlength="100" 
+           placeholder="e.g. Arijit Singh">
+
+    <label class="admin-form-label">Category</label>
+    <select id="songCategory" class="admin-form-input">
+      <option value="Bollywood">Bollywood</option>
+      <option value="English">English</option>
+      <option value="Punjabi">Punjabi</option>
+      <option value="Instrumental">Instrumental</option>
+      <option value="Trending">Trending</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <label class="admin-form-label">Song File (MP3, WAV, M4A) *</label>
+    <div class="song-upload-zone" id="songUploadZone">
+      <span class="icon">🎵</span>
+      <div class="text">Tap to select audio file</div>
+      <div class="sub">Max 100MB · MP3, WAV, M4A, AAC</div>
+    </div>
+    <input type="file" id="songFile" accept="audio/*" style="display:none">
+
+    <div id="songFileSelected" class="song-file-selected" style="display:none">
+      <span class="icon">🎵</span>
+      <span class="name" id="songFileName"></span>
+      <button class="remove-btn" id="songFileRemoveBtn">✕</button>
+    </div>
+
+    <div class="song-upload-progress" id="songUploadProgress">
+      <div class="song-upload-progress-bar" id="songUploadProgressBar"></div>
+    </div>
+
+    <p id="songUploadStatus" style="text-align:center;font-size:13px;color:#888;min-height:18px;margin:10px 0"></p>
+
+    <button class="admin-submit-btn success" id="saveSongBtn">
+      ✅ Save Song
+    </button>
+    <button class="admin-cancel-btn" id="cancelSongBtn">
+      Cancel
+    </button>
+  </div>
+</div>
+
 <div class="admin-toast" id="adminToast"></div>
 
 <script type="module">
@@ -948,6 +1254,9 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+const CLOUDINARY_CLOUD_NAME = "s3eresx6";
+const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
+
 /* ✅ ADMIN EMAILS */
 const ADMIN_EMAILS = [
   "appcreator001.harshitkumar@gmail.com",
@@ -959,6 +1268,7 @@ let currentTab = "users";
 let allUsers = [];
 let allVideos = [];
 let allMonetizationRequests = [];
+let allSongs = [];
 let globalMonetizationEnabled = true;
 
 let suspendTargetUid = null;
@@ -966,8 +1276,12 @@ let unsuspendTargetUid = null;
 let selectedDuration = 30;
 let currentMonetizationRequestId = null;
 let currentMonetizationUserId = null;
-
 let monetizationUnsubscribe = null;
+let songLibraryUnsubscribe = null;
+
+let editingSongId = null;
+let pendingSongFile = null;
+let previewAudio = null;
 
 const $ = id => document.getElementById(id);
 
@@ -1061,6 +1375,7 @@ onAuthStateChanged(auth, async (user) => {
     await loadGlobalSettings();
     await loadStats();
     startMonetizationListener();
+    startSongLibraryListener();
     await renderTab("users");
 
   } catch(e) {
@@ -1157,7 +1472,6 @@ function startMonetizationListener(){
         return tb - ta;
       });
 
-      // Count pending
       const pendingCount = allMonetizationRequests.filter(r => r.status === "pending").length;
       const badge = $("monetizationBadge");
       if(badge){
@@ -1170,12 +1484,36 @@ function startMonetizationListener(){
       }
       $("statPendingMon").textContent = pendingCount;
 
-      // Re-render if on monetization tab
       if(currentTab === "monetization"){
         renderMonetization();
       }
     },
     error=>console.error("Monetization listener error:", error)
+  );
+}
+
+/* ✅ SONG LIBRARY LISTENER */
+function startSongLibraryListener(){
+  if(songLibraryUnsubscribe){
+    songLibraryUnsubscribe();
+    songLibraryUnsubscribe = null;
+  }
+
+  songLibraryUnsubscribe = onSnapshot(
+    collection(db, "song_library"),
+    snapshot=>{
+      allSongs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      allSongs.sort((a, b) => {
+        const ta = a.createdAt?.toMillis?.() || 0;
+        const tb = b.createdAt?.toMillis?.() || 0;
+        return tb - ta;
+      });
+
+      if(currentTab === "songs"){
+        renderSongs();
+      }
+    },
+    error=>console.error("Song library listener error:", error)
   );
 }
 
@@ -1221,6 +1559,7 @@ async function renderTab(tab){
   if(tab === "users") await renderUsers();
   else if(tab === "videos") await renderVideos();
   else if(tab === "monetization") renderMonetization();
+  else if(tab === "songs") renderSongs();
   else if(tab === "reports") await renderReports();
   else if(tab === "broadcast") await renderBroadcast();
 }
@@ -1294,6 +1633,293 @@ async function renderUsers(){
   }
 }
 
+/* ✅ SONGS TAB */
+function renderSongs(){
+  const content = $("adminContent");
+
+  content.innerHTML = `
+    <div class="song-library-header">
+      <div>
+        <h3>🎵 Song Library</h3>
+        <div class="count" id="songCount">${allSongs.length} songs</div>
+      </div>
+      <button class="song-add-btn" id="addSongBtn">➕ Add Song</button>
+    </div>
+
+    <div id="songLibraryList"></div>
+  `;
+
+  const list = $("songLibraryList");
+
+  if(!allSongs.length){
+    list.innerHTML = `
+      <div class="song-library-empty">
+        <span class="icon">🎵</span>
+        <h3>No songs yet</h3>
+        <p>Tap "Add Song" to add your first song</p>
+      </div>
+    `;
+  }else{
+    list.innerHTML = allSongs.map(s => `
+      <div class="song-library-item">
+        <div class="song-thumb">🎵</div>
+        <div class="song-info">
+          <strong>${esc(s.name || "Untitled")}</strong>
+          <small>${esc(s.artist || "Unknown")}</small>
+          <span class="category-tag">${esc(s.category || "Other")}</span>
+        </div>
+        <div class="song-actions">
+          <button class="play-btn" data-play-song="${esc(s.id)}">▶</button>
+          <button class="edit-btn" data-edit-song="${esc(s.id)}">✏️</button>
+          <button class="delete-btn" data-delete-song="${esc(s.id)}">🗑️</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  $("addSongBtn")?.addEventListener("click", openAddSongModal);
+
+  list.querySelectorAll("[data-play-song]").forEach(btn => {
+    btn.addEventListener("click", () => playSongPreview(btn.dataset.playSong));
+  });
+
+  list.querySelectorAll("[data-edit-song]").forEach(btn => {
+    btn.addEventListener("click", () => openEditSongModal(btn.dataset.editSong));
+  });
+
+  list.querySelectorAll("[data-delete-song]").forEach(btn => {
+    btn.addEventListener("click", () => deleteSong(btn.dataset.deleteSong));
+  });
+}
+
+/* ✅ ADD SONG MODAL */
+function openAddSongModal(){
+  editingSongId = null;
+  pendingSongFile = null;
+
+  $("addSongTitle").textContent = "➕ Add Song";
+  $("songName").value = "";
+  $("songArtist").value = "";
+  $("songCategory").value = "Bollywood";
+  $("songFile").value = "";
+  $("songFileSelected").style.display = "none";
+  $("songUploadStatus").textContent = "";
+  $("songUploadProgress").classList.remove("active");
+  $("songUploadProgressBar").style.width = "0%";
+
+  $("addSongModal").classList.add("show");
+}
+
+/* ✅ EDIT SONG MODAL */
+function openEditSongModal(songId){
+  const song = allSongs.find(s => s.id === songId);
+  if(!song) return;
+
+  editingSongId = songId;
+  pendingSongFile = null;
+
+  $("addSongTitle").textContent = "✏️ Edit Song";
+  $("songName").value = song.name || "";
+  $("songArtist").value = song.artist || "";
+  $("songCategory").value = song.category || "Bollywood";
+  $("songFile").value = "";
+
+  $("songFileName").textContent = song.name + " (current)";
+  $("songFileSelected").style.display = "flex";
+
+  $("songUploadStatus").textContent = "";
+  $("songUploadProgress").classList.remove("active");
+
+  $("addSongModal").classList.add("show");
+}
+
+/* SONG FILE SELECT */
+$("songUploadZone")?.addEventListener("click", () => {
+  $("songFile")?.click();
+});
+
+$("songFile")?.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+
+  if(file.size > 100 * 1024 * 1024){
+    showToast("File too large (max 100MB)", true);
+    e.target.value = "";
+    return;
+  }
+
+  pendingSongFile = file;
+  $("songFileName").textContent = file.name;
+  $("songFileSelected").style.display = "flex";
+});
+
+$("songFileRemoveBtn")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  pendingSongFile = null;
+  $("songFile").value = "";
+  $("songFileSelected").style.display = "none";
+});
+
+/* SAVE SONG */
+$("saveSongBtn")?.addEventListener("click", async () => {
+  const name = $("songName").value.trim();
+  const artist = $("songArtist").value.trim();
+  const category = $("songCategory").value;
+  const status = $("songUploadStatus");
+
+  if(!name){
+    status.style.color = "#ef4444";
+    status.textContent = "Song name required";
+    return;
+  }
+
+  if(!editingSongId && !pendingSongFile){
+    status.style.color = "#ef4444";
+    status.textContent = "Please select a song file";
+    return;
+  }
+
+  const btn = $("saveSongBtn");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  status.style.color = "#a78bfa";
+  status.textContent = "Saving...";
+
+  try {
+    let audioURL = "";
+
+    if(pendingSongFile){
+      status.textContent = "Uploading audio...";
+      $("songUploadProgress").classList.add("active");
+
+      audioURL = await uploadAudioToCloudinary(pendingSongFile, (pct) => {
+        $("songUploadProgressBar").style.width = pct + "%";
+        status.textContent = "Uploading " + pct + "%";
+      });
+    } else if(editingSongId){
+      const existing = allSongs.find(s => s.id === editingSongId);
+      audioURL = existing?.audioURL || "";
+    }
+
+    if(editingSongId){
+      await updateDoc(doc(db, "song_library", editingSongId), {
+        name,
+        artist,
+        category,
+        audioURL,
+        updatedAt: serverTimestamp()
+      });
+      showToast("✅ Song updated");
+    } else {
+      await addDoc(collection(db, "song_library"), {
+        name,
+        artist,
+        category,
+        audioURL,
+        createdBy: currentUser.uid,
+        createdByName: currentUser.displayName || "Admin",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      showToast("✅ Song added");
+    }
+
+    status.style.color = "#22c55e";
+    status.textContent = "✅ Saved!";
+
+    setTimeout(() => {
+      $("addSongModal").classList.remove("show");
+    }, 700);
+
+  } catch(err) {
+    console.error(err);
+    status.style.color = "#ef4444";
+    status.textContent = "Error: " + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✅ Save Song";
+    $("songUploadProgress").classList.remove("active");
+  }
+});
+
+$("addSongModalClose")?.addEventListener("click", () => {
+  $("addSongModal").classList.remove("show");
+});
+
+$("cancelSongBtn")?.addEventListener("click", () => {
+  $("addSongModal").classList.remove("show");
+});
+
+/* UPLOAD AUDIO */
+function uploadAudioToCloudinary(file, onProgress){
+  return new Promise((resolve, reject) => {
+    const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+
+    xhr.onload = () => {
+      if(xhr.status >= 200 && xhr.status < 300){
+        try {
+          const data = JSON.parse(xhr.responseText);
+          resolve(data.secure_url);
+        } catch(e) { reject(e); }
+      } else {
+        reject(new Error("Upload failed: " + xhr.status));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error("Network error"));
+
+    xhr.upload.onprogress = e => {
+      if(e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100));
+    };
+
+    const form = new FormData();
+    form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    form.append("resource_type", "video");
+    form.append("file", file);
+
+    xhr.send(form);
+  });
+}
+
+/* PLAY SONG PREVIEW */
+function playSongPreview(songId){
+  const song = allSongs.find(s => s.id === songId);
+  if(!song || !song.audioURL){ showToast("No audio"); return; }
+
+  if(previewAudio){ previewAudio.pause(); previewAudio = null; }
+
+  previewAudio = new Audio(song.audioURL);
+  previewAudio.play().then(() => {
+    showToast("▶ Playing: " + song.name);
+  }).catch(() => {
+    showToast("Play failed", true);
+  });
+
+  previewAudio.onended = () => {
+    showToast("⏹ Stopped");
+    previewAudio = null;
+  };
+}
+
+/* DELETE SONG */
+async function deleteSong(songId){
+  const song = allSongs.find(s => s.id === songId);
+  if(!song) return;
+
+  if(!confirm(`Delete "${song.name}"?`)) return;
+
+  try {
+    await deleteDoc(doc(db, "song_library", songId));
+    showToast("🗑️ Song deleted");
+  } catch(e) {
+    console.error(e);
+    showToast("Delete failed", true);
+  }
+}
+
 /* ✅ MONETIZATION TAB */
 function renderMonetization(){
   const content = $("adminContent");
@@ -1307,7 +1933,6 @@ function renderMonetization(){
     return;
   }
 
-  // Sort: pending first, then approved, then rejected
   const sorted = [...allMonetizationRequests].sort((a, b) => {
     const statusOrder = { pending: 0, approved: 1, rejected: 2 };
     const aOrder = statusOrder[a.status] ?? 3;
@@ -1401,21 +2026,18 @@ $("approveMonetizationBtn")?.addEventListener("click", async () => {
   btn.textContent = "Approving...";
 
   try{
-    // Update request
     await updateDoc(doc(db, "monetization_requests", currentMonetizationRequestId), {
       status: "approved",
       reviewedAt: serverTimestamp(),
       reviewedBy: currentUser.uid
     });
 
-    // Update user profile
     await updateDoc(doc(db, "profiles", currentMonetizationUserId), {
       monetizationStatus: "approved",
       monetizationApprovedAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
 
-    // Send notification
     try{
       await addDoc(collection(db, "notifications"), {
         to: currentMonetizationUserId,
@@ -1886,7 +2508,7 @@ document.querySelectorAll(".admin-modal").forEach(modal => {
   });
 });
 
-console.log("✅ Admin Panel loaded with Monetization!");
+console.log("✅ Admin Panel loaded with Song Library!");
 </script>
 
 </body>
