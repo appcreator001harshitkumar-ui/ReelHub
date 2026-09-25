@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (With Monetization + All Features)
+   ReelHub - app.js (With Monetization + YouTube Video Grid)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -241,6 +241,25 @@ function timeAgoShort(v){
   return Math.floor(hr/24) + "d";
 }
 
+function timeAgoYouTube(v){
+  const t = timeValue(v);
+  if(!t) return "";
+  const diff = Date.now() - t;
+  const sec = Math.floor(diff/1000);
+  if(sec < 60) return "just now";
+  const min = Math.floor(sec/60);
+  if(min < 60) return min + " minutes ago";
+  const hr = Math.floor(min/60);
+  if(hr < 24) return hr + " hours ago";
+  const day = Math.floor(hr/24);
+  if(day < 7) return day + " days ago";
+  const wk = Math.floor(day/7);
+  if(wk < 4) return wk + " weeks ago";
+  const mo = Math.floor(day/30);
+  if(mo < 12) return mo + " months ago";
+  return Math.floor(day/365) + " years ago";
+}
+
 function formatViews(num){
   num = Number(num || 0);
   if(num < 1000) return num + " views";
@@ -255,6 +274,18 @@ function formatViewsShort(num){
   if(num < 1000000) return (num/1000).toFixed(1).replace(".0","") + "K";
   if(num < 1000000000) return (num/1000000).toFixed(1).replace(".0","") + "M";
   return (num/1000000000).toFixed(1) + "B";
+}
+
+function formatDuration(seconds){
+  if(!seconds || isNaN(seconds)) return "0:00";
+  const s = Math.floor(seconds);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if(h > 0){
+    return h + ":" + String(m).padStart(2,"0") + ":" + String(sec).padStart(2,"0");
+  }
+  return m + ":" + String(sec).padStart(2,"0");
 }
 
 /* Splash handler */
@@ -1525,6 +1556,7 @@ document.addEventListener("visibilitychange", () => {
     }
   }
 });
+
 /* ONLINE STATUS */
 async function updatePresence(){
   if(!currentUser) return;
@@ -2522,7 +2554,103 @@ $("followRequestsBtn")?.addEventListener("click", ()=>{
   renderFollowRequests();
 });
 
-/* VIDEOS */
+/* ============================================================
+   ✅ YOUTUBE STYLE VIDEO CARD (NEW)
+============================================================ */
+function createVideoCard(v){
+  const isSaved = mySavesCache.has(v.id);
+  const views = Number(v.views || 0);
+  const mine = currentUser && v.userId === currentUser.uid;
+
+  return `
+  <div class="video-card" data-id="${esc(v.id)}" data-open-video="${esc(v.id)}">
+    <div class="thumbnail">
+      <video src="${esc(v.videoURL)}#t=0.5" preload="metadata" muted playsinline></video>
+      <span class="duration" data-duration-for="${esc(v.id)}">0:00</span>
+    </div>
+    <div class="video-info">
+      <img class="channel-avatar post-open-user" data-uid="${esc(v.userId)}"
+           src="${avatar(v.userPhoto, v.userName)}" alt="${esc(v.userName)}">
+      <div class="video-details">
+        <h3 class="video-title">${esc(v.title || "Untitled")}</h3>
+        <p class="channel-name">
+          ${esc(v.username || v.userName || "User")}
+          <span class="verified">✓</span>
+        </p>
+        <p class="video-meta">
+          ${formatViewsShort(views)} views
+          <span class="dot">•</span>
+          ${timeAgoYouTube(v.createdAt)}
+        </p>
+      </div>
+      ${mine ? `<button class="video-more" data-edit-video="${esc(v.id)}" 
+                       onclick="event.stopPropagation()">⋮</button>` : ""}
+    </div>
+  </div>
+  `;
+}
+
+/* ============================================================
+   ✅ RENDER FEED — YouTube Style Video Grid
+============================================================ */
+function renderFeed(){
+  const feed = $("feed");
+  if(!feed) return;
+
+  const list = videosCache.filter(v =>
+    v.type !== "short" &&
+    (v.visibility !== "private" || v.userId === currentUser?.uid)
+  );
+
+  if(!list.length){
+    feed.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <span class="icon">📹</span>
+        <h3>No videos yet</h3>
+        <p>Upload your first video or follow creators to see their content</p>
+      </div>
+    `;
+    return;
+  }
+
+  feed.innerHTML = list.map(v => createVideoCard(v)).join("");
+
+  // Load durations for each thumbnail
+  list.forEach(v => {
+    loadVideoDuration(v.id, v.videoURL);
+  });
+
+  // Update save button states
+  list.forEach(v => updateLikeUI(v.id));
+}
+
+/* ============================================================
+   ✅ LOAD VIDEO DURATION (for duration badge)
+============================================================ */
+function loadVideoDuration(videoId, videoURL){
+  if(!videoURL) return;
+
+  const tempVideo = document.createElement("video");
+  tempVideo.preload = "metadata";
+  tempVideo.src = videoURL;
+
+  tempVideo.addEventListener("loadedmetadata", () => {
+    const duration = formatDuration(tempVideo.duration);
+    const badge = document.querySelector(`[data-duration-for="${videoId}"]`);
+    if(badge) badge.textContent = duration;
+    tempVideo.src = "";
+  });
+
+  tempVideo.addEventListener("error", () => {
+    const badge = document.querySelector(`[data-duration-for="${videoId}"]`);
+    if(badge) badge.textContent = "0:00";
+  });
+}
+
+/* ============================================================
+   REST OF THE CODE — VIDEOS, LIKES, SHORTS, ETC.
+============================================================ */
+
 function startRealtimeVideos(){
   if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
 
@@ -2546,92 +2674,6 @@ function startRealtimeVideos(){
   });
 }
 
-function renderFeed(){
-  const feed = $("feed");
-  if(!feed) return;
-
-  const list = videosCache.filter(v =>
-    v.type !== "short" &&
-    (v.visibility !== "private" || v.userId === currentUser?.uid)
-  );
-
-  if(!list.length){
-    feed.innerHTML = `<div class="yt-empty">
-      <div style="font-size:56px;margin-bottom:14px">📹</div>
-      <h3 style="font-size:17px;margin-bottom:6px">No videos yet</h3>
-      <p>Follow people or upload your first video</p>
-    </div>`;
-    return;
-  }
-
-  feed.innerHTML = list.map(v => createIGPost(v)).join("");
-  list.forEach(v => updateLikeUI(v.id));
-}
-
-function createIGPost(v){
-  const mine = currentUser && v.userId === currentUser.uid;
-  const isFollowing = myFollowsCache.has(v.userId);
-  const isSaved = mySavesCache.has(v.id);
-  const views = Number(v.views || 0);
-
-  return `
-  <article class="ig-post" data-id="${esc(v.id)}">
-    <div class="ig-post-head">
-      <img class="ig-avatar post-open-user" data-uid="${esc(v.userId)}"
-           src="${avatar(v.userPhoto, v.userName)}">
-      <div class="ig-post-user post-open-user" data-uid="${esc(v.userId)}">
-        <strong>${esc(v.username || v.userName || "User")}</strong>
-        <small>${esc(v.title || "")}</small>
-      </div>
-      ${!mine && currentUser ? `
-        <button class="follow-btn ${isFollowing?"following":""}"
-                data-follow-uid="${esc(v.userId)}"
-                data-action="follow"
-                style="padding:6px 14px;font-size:12px;border-radius:8px">
-          ${isFollowing ? "Following" : "Follow"}
-        </button>
-      ` : ""}
-      ${mine ? `<button class="more-btn" data-edit-video="${esc(v.id)}">⋯</button>` : ""}
-    </div>
-
-    <div class="ig-media" style="position:relative">
-      <video src="${esc(v.videoURL)}" controls preload="metadata"
-             playsinline webkit-playsinline data-video-id="${esc(v.id)}"></video>
-    </div>
-
-    <div class="ig-actions">
-      <button class="ig-action-btn like-btn" id="like-${esc(v.id)}"
-              data-like-video="${esc(v.id)}">
-        <span class="icon">🤍</span>
-      </button>
-      <button class="ig-action-btn" data-comment-video="${esc(v.id)}">
-        <span class="icon">💬</span>
-      </button>
-      <button class="ig-action-btn" data-share-video="${esc(v.id)}">
-        <span class="icon">📤</span>
-      </button>
-      <button class="ig-action-btn save-btn ${isSaved?"saved":""}"
-              data-save-video="${esc(v.id)}">
-        <span class="icon">${isSaved ? "🔖" : "📑"}</span>
-      </button>
-      <div class="spacer"></div>
-      ${mine ? `<button class="ig-action-btn" data-delete-video="${esc(v.id)}" style="color:var(--danger)">
-        <span class="icon">🗑️</span>
-      </button>` : ""}
-    </div>
-
-    <div class="ig-likes" id="likes-${esc(v.id)}">${v.likes || 0} likes</div>
-    <div class="ig-views">👁️ ${formatViews(views)}</div>
-
-    ${v.description ? `<div class="ig-caption">
-      <strong>${esc(v.username || v.userName || "User")}</strong>${esc(v.description)}
-    </div>` : ""}
-
-    <div class="ig-time">${timeAgo(v.createdAt)}</div>
-  </article>
-  `;
-}
-
 async function updateLikeUI(videoId){
   if(!currentUser) return;
   try{
@@ -2650,6 +2692,7 @@ async function updateLikeUI(videoId){
   }catch(e){ console.error(e); }
 }
 
+/* SHORTS (unchanged) */
 function renderShorts(){
   const container = $("reelsContainer");
   if(!container) return;
@@ -2769,7 +2812,7 @@ function setupReelsObserver(){
   videos.forEach(v => reelObserver.observe(v));
 }
 
-/* ✅ MONETIZATION TAB RENDER */
+/* MONETIZATION */
 async function renderMonetizationTab(){
   const container = $("monetizationTab");
   if(!container || !currentUser) return;
@@ -2867,7 +2910,6 @@ async function renderMonetizationTab(){
   }
 }
 
-/* ✅ OPEN MONETIZATION MODAL */
 function openMonetizationModal(followers, watchTime, views){
   const followersComplete = followers >= MONETIZATION_REQUIREMENTS.followers;
   const watchTimeComplete = watchTime >= MONETIZATION_REQUIREMENTS.watchTime;
@@ -2905,7 +2947,6 @@ function openMonetizationModal(followers, watchTime, views){
   showModal("monetizationModal");
 }
 
-/* ✅ SUBMIT MONETIZATION APPLICATION */
 $("submitMonetizationBtn")?.addEventListener("click", async () => {
   if(!currentUser) return;
 
@@ -2970,6 +3011,7 @@ $("submitMonetizationBtn")?.addEventListener("click", async () => {
     btn.textContent = "Submit Application";
   }
 });
+
 /* GLOBAL CLICK HANDLER */
 document.addEventListener("click", async (e)=>{
   const t = e.target;
@@ -3062,6 +3104,23 @@ document.addEventListener("click", async (e)=>{
     e.stopPropagation();
     const vid = editBtn.dataset.editVideo;
     if(vid) openEditVideo(vid);
+    return;
+  }
+
+  // ✅ VIDEO CARD OPEN
+  const openVideoBtn = t.closest("[data-open-video]");
+  if(openVideoBtn){
+    const insideStop = t.closest("[data-stop-propagation]");
+    if(!insideStop){
+      e.preventDefault();
+      e.stopPropagation();
+      const vid = openVideoBtn.dataset.openVideo;
+      if(vid){
+        hideModal("playlistDetailModal");
+        hideModal("publicProfileModal");
+        setTimeout(()=> openVideoPlayer(vid), 100);
+      }
+    }
     return;
   }
 
@@ -3243,22 +3302,6 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  const openVideoBtn = t.closest("[data-open-video]");
-  if(openVideoBtn){
-    const insideStop = t.closest("[data-stop-propagation]");
-    if(!insideStop){
-      e.preventDefault();
-      e.stopPropagation();
-      const vid = openVideoBtn.dataset.openVideo;
-      if(vid){
-        hideModal("playlistDetailModal");
-        hideModal("publicProfileModal");
-        setTimeout(()=> openVideoPlayer(vid), 100);
-      }
-    }
-    return;
-  }
-
   const chip = t.closest("[data-share-user]");
   if(chip){
     e.preventDefault();
@@ -3290,7 +3333,6 @@ async function trackView(videoId){
         views: increment(1) 
       });
 
-      // Update video owner's totalViews (for monetization)
       try{
         const videoSnap = await getDoc(videoRef);
         if(videoSnap.exists()){
@@ -3323,7 +3365,7 @@ async function trackView(videoId){
   }
 }
 
-/* PLAY/PAUSE tracking (views + watch time) */
+/* PLAY/PAUSE tracking */
 document.addEventListener("play", (e)=>{
   if(e.target.tagName === "VIDEO"){
     const vid = e.target.dataset.videoId;
@@ -3947,7 +3989,7 @@ async function checkDeepLink(){
   await openVideoByDeepLink(vid);
 }
 
-/* PROFESSIONAL VIDEO PLAYER */
+/* VIDEO PLAYER */
 window.openVideoPlayer = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
   if(!v){ toast("Video not found"); return; }
@@ -5599,4 +5641,4 @@ window.addEventListener("popstate", (e) => {
   }
 }, { passive: true });
 
-console.log("✅ ReelHub loaded — With Monetization System!");
+console.log("✅ ReelHub loaded — With YouTube Video Grid + Monetization!");
