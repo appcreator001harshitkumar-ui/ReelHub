@@ -1,5 +1,6 @@
 /* ============================================================
-   ReelHub - app.js (With Monetization + YouTube Video Grid)
+   ReelHub - app.js (With YouTube Video Grid + Monetization)
+   ✅ Fixed: Bar bar login bug | Splash 1 sec
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -62,7 +63,6 @@ const VAULT_MAX_FILE_SIZE = 30 * 1024 * 1024;
 const VAULT_MAX_FILES = 100;
 const MESSAGE_COOLDOWN = 1500;
 
-/* Monetization Requirements */
 const MONETIZATION_REQUIREMENTS = {
   followers: 10,
   watchTime: 3600,
@@ -302,9 +302,11 @@ function hideSplash(){
   }
 }
 
+/* ✅ FIX 1: prepareInitialState — app-ready remove */
 function prepareInitialState(){
   $("loginPage")?.classList.add("hidden");
   $("app")?.classList.add("hidden");
+  document.body.classList.remove("app-ready");
 }
 
 /* SUSPENSION */
@@ -389,7 +391,7 @@ $("suspensionLogoutBtn")?.addEventListener("click", async ()=>{
 });
 
 /* ============================================================
-   WATCH TIME TRACKING (For Monetization)
+   WATCH TIME TRACKING
 ============================================================ */
 function startWatchTimer(videoId){
   if(!currentUser || !videoId) return;
@@ -441,7 +443,6 @@ async function stopWatchTimer(){
   }
 }
 
-/* Pause/resume handlers */
 document.addEventListener("visibilitychange", () => {
   if(document.visibilityState === "hidden"){
     stopWatchTimer();
@@ -2070,11 +2071,17 @@ async function loadMySentRequests(){
   }catch(e){ console.error(e); }
 }
 
-/* AUTH STATE */
+/* ✅ FIX 2: onAuthStateChanged — turant app dikhao */
 onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
 
+    // ✅ TURANT app dikhao + splash hatao
+    $("loginPage")?.classList.add("hidden");
+    $("app")?.classList.remove("hidden");
+    hideSplash();
+
+    // Ab background me suspension check karo
     const isSuspended = await checkSuspension(user.uid);
     if(isSuspended){
       authResolved = true;
@@ -2086,11 +2093,6 @@ onAuthStateChanged(auth, async user => {
     await loadMyFollows();
     await loadMySaves();
     await loadMySentRequests();
-
-    $("loginPage")?.classList.add("hidden");
-    $("app")?.classList.remove("hidden");
-    
-    hideSplash();
 
     startRealtimeVideos();
     startNotifications();
@@ -2555,7 +2557,7 @@ $("followRequestsBtn")?.addEventListener("click", ()=>{
 });
 
 /* ============================================================
-   ✅ YOUTUBE STYLE VIDEO CARD (NEW)
+   ✅ YOUTUBE STYLE VIDEO CARD
 ============================================================ */
 function createVideoCard(v){
   const isSaved = mySavesCache.has(v.id);
@@ -2590,9 +2592,7 @@ function createVideoCard(v){
   `;
 }
 
-/* ============================================================
-   ✅ RENDER FEED — YouTube Style Video Grid
-============================================================ */
+/* RENDER FEED */
 function renderFeed(){
   const feed = $("feed");
   if(!feed) return;
@@ -2615,18 +2615,13 @@ function renderFeed(){
 
   feed.innerHTML = list.map(v => createVideoCard(v)).join("");
 
-  // Load durations for each thumbnail
   list.forEach(v => {
     loadVideoDuration(v.id, v.videoURL);
+    updateLikeUI(v.id);
   });
-
-  // Update save button states
-  list.forEach(v => updateLikeUI(v.id));
 }
 
-/* ============================================================
-   ✅ LOAD VIDEO DURATION (for duration badge)
-============================================================ */
+/* LOAD VIDEO DURATION */
 function loadVideoDuration(videoId, videoURL){
   if(!videoURL) return;
 
@@ -2646,10 +2641,6 @@ function loadVideoDuration(videoId, videoURL){
     if(badge) badge.textContent = "0:00";
   });
 }
-
-/* ============================================================
-   REST OF THE CODE — VIDEOS, LIKES, SHORTS, ETC.
-============================================================ */
 
 function startRealtimeVideos(){
   if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
@@ -2692,7 +2683,7 @@ async function updateLikeUI(videoId){
   }catch(e){ console.error(e); }
 }
 
-/* SHORTS (unchanged) */
+/* SHORTS */
 function renderShorts(){
   const container = $("reelsContainer");
   if(!container) return;
@@ -3107,7 +3098,7 @@ document.addEventListener("click", async (e)=>{
     return;
   }
 
-  // ✅ VIDEO CARD OPEN
+  // VIDEO CARD OPEN
   const openVideoBtn = t.closest("[data-open-video]");
   if(openVideoBtn){
     const insideStop = t.closest("[data-stop-propagation]");
@@ -3365,7 +3356,6 @@ async function trackView(videoId){
   }
 }
 
-/* PLAY/PAUSE tracking */
 document.addEventListener("play", (e)=>{
   if(e.target.tagName === "VIDEO"){
     const vid = e.target.dataset.videoId;
@@ -5573,13 +5563,25 @@ $("dmSearchInput")?.addEventListener("input", e=>{
   });
 });
 
-/* START */
+/* ✅ START — 1 sec splash + fallback */
 prepareInitialState();
 openPanel("homePanel");
 
+// ✅ Splash 1 second
 setTimeout(() => {
   if(!splashHidden) hideSplash();
-}, 4000);
+}, 1000);
+
+// ✅ Fallback — 3 sec baad auth resolve nahi hua toh login page dikhao
+setTimeout(() => {
+  if(!authResolved){
+    hideSplash();
+    if(!currentUser){
+      $("loginPage")?.classList.remove("hidden");
+      $("app")?.classList.add("hidden");
+    }
+  }
+}, 3000);
 
 /* BACK BUTTON */
 window.addEventListener("popstate", (e) => {
@@ -5641,4 +5643,4 @@ window.addEventListener("popstate", (e) => {
   }
 }, { passive: true });
 
-console.log("✅ ReelHub loaded — With YouTube Video Grid + Monetization!");
+console.log("✅ ReelHub loaded — Bar bar login bug fixed + Splash 1 sec!");
