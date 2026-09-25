@@ -1,5 +1,5 @@
 /* ============================================================
-   ReelHub - app.js (CLEAN FULL VERSION)
+   ReelHub - app.js (Full Clean Version)
    PART 1/2
 ============================================================ */
 
@@ -151,11 +151,11 @@ let pendingVideoTrim = { start: 0, end: 0, applied: false };
 let pendingVideoRotation = 0;
 let pendingVideoMuted = false;
 
-/* Trim state */
+/* Trim */
 let trimVideoElement = null;
 let trimVideoDuration = 0;
 
-/* Group State */
+/* Group */
 let myGroupsCache = [];
 let currentGroupId = null;
 let currentGroupData = null;
@@ -165,7 +165,7 @@ let myGroupsUnsubscribe = null;
 let groupRequestsUnsubscribe = null;
 let groupChatUnsubscribe = null;
 
-/* Song Library */
+/* Song */
 let songLibraryCache = [];
 let songLibraryUnsubscribe = null;
 let selectedSongForApply = null;
@@ -353,7 +353,6 @@ function hideModal(id){
   const idx = modalHistoryStack.indexOf(id);
   if(idx > -1) modalHistoryStack.splice(idx, 1);
 
-  // Video player cleanup
   if(id === "videoPlayerModal"){
     const videoEl = $("videoPlayerVideo");
     if(videoEl){
@@ -395,7 +394,7 @@ function prepareInitialState(){
 function showSuspensionScreen(profile){
   const screen = $("suspensionScreen");
   if(!screen) return;
-  const reason = profile.suspendReason || "Violation of Terms of Service";
+  const reason = profile.suspendReason || "Violation of Terms";
   const duration = profile.suspendDuration || "Temporary";
   const until = profile.suspendUntil ? 
     new Date(timeValue(profile.suspendUntil)).toLocaleDateString('en-IN', {
@@ -429,13 +428,10 @@ async function checkSuspension(uid){
       const untilTime = timeValue(profileData.suspendUntil);
       if(Date.now() > untilTime){
         await updateDoc(doc(db, "profiles", snap.docs[0].id), {
-          suspended: false,
-          suspendReason: "",
-          suspendDuration: "",
-          suspendUntil: null,
-          autoUnsuspendedAt: serverTimestamp()
+          suspended: false, suspendReason: "", suspendDuration: "",
+          suspendUntil: null, autoUnsuspendedAt: serverTimestamp()
         });
-        toast("✅ Your suspension has ended");
+        toast("✅ Suspension ended");
         return false;
       }
     }
@@ -456,7 +452,7 @@ $("suspensionLogoutBtn")?.addEventListener("click", async ()=>{
 });
 
 /* ============================================================
-   WATCH TIME TRACKING
+   WATCH TIME
 ============================================================ */
 let currentWatchSession = { videoId: null, startTime: null };
 
@@ -543,7 +539,7 @@ function uploadAudioToCloudinary(file, onProgress){
 }
 
 /* ============================================================
-   AUTH — Login/Signup
+   AUTH
 ============================================================ */
 document.querySelectorAll(".auth-tab").forEach(tab => {
   tab.addEventListener("click", () => {
@@ -673,29 +669,12 @@ async function createProfile(){
       name: displayName,
       username: displayName.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,20) ||
         "user" + Date.now().toString().slice(-5),
-      age: "",
-      gender: "",
-      bio: "",
-      photo: currentUser.photoURL || "",
-      followers: 0,
-      following: 0,
-      videos: 0,
-      private: false,
-      suspended: false,
-      suspendReason: "",
-      suspendDuration: "",
-      suspendUntil: null,
-      suspendedAt: null,
-      bannerType: "gradient",
-      bannerGradient: "linear-gradient(135deg, #7c3aed, #ec4899)",
-      bannerURL: "",
-      vaultPin: "",
-      vaultEnabled: false,
-      totalWatchTime: 0,
-      totalViews: 0,
-      monetizationStatus: "none",
-      upiId: "",
-      createdAt: serverTimestamp()
+      age: "", gender: "", bio: "", photo: currentUser.photoURL || "",
+      followers: 0, following: 0, videos: 0, private: false, suspended: false,
+      suspendReason: "", suspendDuration: "", suspendUntil: null, suspendedAt: null,
+      bannerType: "gradient", bannerGradient: "linear-gradient(135deg, #7c3aed, #ec4899)", bannerURL: "",
+      vaultPin: "", vaultEnabled: false, totalWatchTime: 0, totalViews: 0,
+      monetizationStatus: "none", upiId: "", createdAt: serverTimestamp()
     });
   }
 }
@@ -705,16 +684,14 @@ async function getProfile(uid){
   if(!snap.exists()){
     return { uid, name:"User", username:"user", age:"", gender:"", bio:"",
              photo:"", followers:0, following:0, videos:0, private:false,
-             suspended:false,
-             bannerType:"gradient",
+             suspended:false, bannerType:"gradient",
              bannerGradient:"linear-gradient(135deg, #7c3aed, #ec4899)",
              bannerURL:"", vaultPin: "", vaultEnabled: false,
              totalWatchTime: 0, totalViews: 0, monetizationStatus: "none", upiId: "" };
   }
   const d = snap.data();
   return {
-    uid,
-    ...d,
+    uid, ...d,
     followers: Number(d.followers || 0),
     following: Number(d.following || 0),
     videos: Number(d.videos || 0),
@@ -793,7 +770,7 @@ async function loadMySentRequests(){
 }
 
 /* ============================================================
-   AUTH STATE — Main
+   AUTH STATE
 ============================================================ */
 onAuthStateChanged(auth, async user => {
   if(user){
@@ -830,7 +807,6 @@ onAuthStateChanged(auth, async user => {
     authResolved = true;
   }else{
     if(currentUser) await markOffline();
-
     currentUser = null;
     currentProfile = null;
     videosCache = [];
@@ -874,7 +850,6 @@ onAuthStateChanged(auth, async user => {
    VIDEO CARD
 ============================================================ */
 function createVideoCard(v){
-  const isSaved = mySavesCache.has(v.id);
   const views = Number(v.views || 0);
   const mine = currentUser && v.userId === currentUser.uid;
   const isAdmin = isAdminUser();
@@ -883,7 +858,6 @@ function createVideoCard(v){
   if(v.song && v.song.name){
     songBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(124,58,237,0.15);color:var(--primary);font-size:10px;font-weight:600;border-radius:8px;margin-top:4px">🎵 ${esc(v.song.name)}</span>`;
   }
-
   let stickerBadge = "";
   if(v.sticker){
     const icon = v.sticker.type === "emoji" ? v.sticker.icon : v.sticker.text;
@@ -908,15 +882,8 @@ function createVideoCard(v){
            src="${avatar(v.userPhoto, v.userName)}" alt="${esc(v.userName)}">
       <div class="video-details">
         <h3 class="video-title">${esc(v.title || "Untitled")}</h3>
-        <p class="channel-name">
-          ${esc(v.username || v.userName || "User")}
-          <span class="verified">✓</span>
-        </p>
-        <p class="video-meta">
-          ${formatViewsShort(views)} views
-          <span class="dot">•</span>
-          ${timeAgoYouTube(v.createdAt)}
-        </p>
+        <p class="channel-name">${esc(v.username || v.userName || "User")} <span class="verified">✓</span></p>
+        <p class="video-meta">${formatViewsShort(views)} views <span class="dot">•</span> ${timeAgoYouTube(v.createdAt)}</p>
         ${songBadge || stickerBadge ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${songBadge}${stickerBadge}</div>` : ""}
       </div>
       ${mine || isAdmin ? `<button class="video-more" onclick="event.stopPropagation();event.preventDefault();openVideoMenu('${esc(v.id)}')">⋮</button>` : ""}
@@ -939,7 +906,7 @@ function renderFeed(){
       <div class="empty-state" style="grid-column:1/-1">
         <span class="icon">📹</span>
         <h3>No videos yet</h3>
-        <p>Upload your first video or follow creators to see their content</p>
+        <p>Upload your first video or follow creators</p>
       </div>
     `;
     return;
@@ -1045,16 +1012,13 @@ function createReel(v){
         <small class="like-count">${v.likes || 0}</small>
       </div>
       <div class="reel-action" data-comment-video="${esc(v.id)}">
-        <span class="icon">💬</span>
-        <small>Comment</small>
+        <span class="icon">💬</span><small>Comment</small>
       </div>
       <div class="reel-action" data-share-video="${esc(v.id)}">
-        <span class="icon">📤</span>
-        <small>Share</small>
+        <span class="icon">📤</span><small>Share</small>
       </div>
       <div class="reel-action save-btn ${isSaved?"saved":""}" data-save-video="${esc(v.id)}">
-        <span class="icon">${isSaved ? "🔖" : "📑"}</span>
-        <small>Save</small>
+        <span class="icon">${isSaved ? "🔖" : "📑"}</span><small>Save</small>
       </div>
     </div>
   </div>
@@ -1310,7 +1274,6 @@ function closeStoryViewer(){
   if(viewer) viewer.classList.remove("show");
   stopStoryTimer();
 
-  // Stop audio
   if(window.__storyAudio){
     window.__storyAudio.pause();
     window.__storyAudio = null;
@@ -1357,7 +1320,6 @@ function loadCurrentStory(){
       const vid = document.createElement("video");
       vid.src = story.mediaURL;
       vid.autoplay = true; vid.playsInline = true; vid.muted = false; vid.preload = "auto";
-      vid.setAttribute("data-story-id", story.id);
 
       vid.addEventListener("loadedmetadata", ()=>{
         const dur = Math.min((vid.duration || 5) * 1000, STORY_DURATION_VIDEO_MAX);
@@ -1366,9 +1328,7 @@ function loadCurrentStory(){
         if(story.trimStart && story.trimEnd){
           vid.currentTime = story.trimStart;
           vid.addEventListener("timeupdate", ()=>{
-            if(vid.currentTime >= story.trimEnd){
-              vid.currentTime = story.trimStart;
-            }
+            if(vid.currentTime >= story.trimEnd){ vid.currentTime = story.trimStart; }
           });
         }
       });
@@ -1387,7 +1347,7 @@ function loadCurrentStory(){
     }
   }
 
-  // Display Song
+  // Song
   const songOverlay = $("storySongOverlay");
   if(songOverlay){
     if(story.song && story.song.audioURL){
@@ -1399,12 +1359,10 @@ function loadCurrentStory(){
       window.__storyAudio.loop = true;
       window.__storyAudio.volume = 0.5;
       window.__storyAudio.play().catch(()=>{});
-    }else{
-      songOverlay.classList.add("hidden");
-    }
+    }else songOverlay.classList.add("hidden");
   }
 
-  // Display Sticker
+  // Sticker
   const stickerOverlay = $("storyStickerOverlay");
   if(stickerOverlay){
     if(story.sticker){
@@ -1450,11 +1408,7 @@ function renderStoryProgress(total, current){
   let html = "";
   for(let i = 0; i < total; i++){
     let fillClass = i < current ? "complete" : "";
-    html += `
-      <div class="story-progress-segment">
-        <div class="story-progress-fill ${fillClass}" data-seg="${i}"></div>
-      </div>
-    `;
+    html += `<div class="story-progress-segment"><div class="story-progress-fill ${fillClass}" data-seg="${i}"></div></div>`;
   }
   bar.innerHTML = html;
 }
@@ -1596,22 +1550,18 @@ document.addEventListener("keydown", (e)=>{
 });
 
 /* ============================================================
-   STORY MENU — Edit + Delete
+   STORY MENU
 ============================================================ */
 $("storyMoreBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault();
-  e.stopPropagation();
-
+  e.preventDefault(); e.stopPropagation();
   const group = groupedStories[currentStoryUserIndex];
   if(!group) return;
   const story = group.stories[currentStoryIndex];
   if(!story) return;
-
   if(story.userId !== currentUser?.uid && !isAdminUser()){
     toast("You can only manage your own story");
     return;
   }
-
   currentStoryId = story.id;
   currentStoryData = story;
   pauseStoryTimer();
@@ -1620,7 +1570,7 @@ $("storyMoreBtn")?.addEventListener("click", (e)=>{
 
 $("storyMenuEditBtn")?.addEventListener("click", async (e)=>{
   e.preventDefault(); e.stopPropagation();
-  if(!currentStoryId){ toast("Story not loaded"); return; }
+  if(!currentStoryId) return;
   hideModal("storyMenuModal");
   await openEditStoryModal(currentStoryId);
 });
@@ -1645,12 +1595,10 @@ async function openEditStoryModal(storyId){
     $("editStoryCaption").value = story.caption || "";
     window.__editingStorySong = story.song || null;
     window.__editingStorySticker = story.sticker || null;
-
     $("editStoryStatus").textContent = "";
-
     updateEditStoryButtons();
     showModal("editStoryModal");
-  }catch(e){ console.error(e); toast("Failed to open"); }
+  }catch(e){ toast("Failed to open"); }
 }
 
 function updateEditStoryButtons(){
@@ -1666,7 +1614,6 @@ function updateEditStoryButtons(){
       songBtn.style.color = "";
     }
   }
-
   const stickerBtn = $("editStoryChangeStickerBtn");
   if(stickerBtn){
     if(window.__editingStorySticker){
@@ -1698,7 +1645,6 @@ $("saveStoryEditBtn")?.addEventListener("click", async ()=>{
       sticker: window.__editingStorySticker || null,
       updatedAt: serverTimestamp()
     });
-
     status.textContent = "✅ Saved!";
     status.style.color = "#22c55e";
     toast("✅ Story updated");
@@ -1710,7 +1656,6 @@ $("saveStoryEditBtn")?.addEventListener("click", async ()=>{
       startStoriesListener();
     }, 700);
   }catch(err){
-    console.error(err);
     status.textContent = "Error: " + err.message;
     status.style.color = "#ed4956";
   }finally{
@@ -1720,19 +1665,18 @@ $("saveStoryEditBtn")?.addEventListener("click", async ()=>{
 
 $("storyMenuDeleteBtn")?.addEventListener("click", async (e)=>{
   e.preventDefault(); e.stopPropagation();
-  if(!currentStoryId){ toast("Story not loaded"); return; }
+  if(!currentStoryId) return;
   if(!confirm("Delete this story permanently?")) return;
-
   try{
     await deleteDoc(doc(db, "stories", currentStoryId));
     hideModal("storyMenuModal");
     closeStoryViewer();
     toast("🗑️ Story deleted");
-  }catch(e){ console.error(e); toast("Failed to delete"); }
+  }catch(e){ toast("Failed to delete"); }
 });
 
 /* ============================================================
-   SONG LIBRARY LISTENER
+   SONG LIBRARY
 ============================================================ */
 function startSongLibraryListener(){
   if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
@@ -1752,9 +1696,6 @@ function updateAdminVisibility(){
   adminBtn.style.display = isAdminUser() ? "flex" : "none";
 }
 
-/* ============================================================
-   SONG PICKER
-============================================================ */
 function openSongPicker(context){
   songPickerContext = context || "story";
   selectedSongForApply = null;
@@ -1778,13 +1719,7 @@ function renderSongPickerList(searchText){
   }
 
   if(!list.length){
-    container.innerHTML = `
-      <div class="song-library-empty">
-        <span class="icon">🎵</span>
-        <h3>No songs ${q ? "found" : "yet"}</h3>
-        <p>${q ? "Try another search" : "Admin will add songs soon"}</p>
-      </div>
-    `;
+    container.innerHTML = `<div class="song-library-empty"><span class="icon">🎵</span><h3>No songs ${q ? "found" : "yet"}</h3><p>${q ? "Try another search" : "Admin will add songs soon"}</p></div>`;
     return;
   }
 
@@ -1809,24 +1744,20 @@ document.addEventListener("click", (e)=>{
   if(pickerItem){
     e.preventDefault(); e.stopPropagation();
     const songId = pickerItem.dataset.pickSong;
-
     document.querySelectorAll("#songPickerList .song-picker-item").forEach(el => {
       el.classList.remove("selected");
       const check = el.querySelector(".check-icon");
       if(check) check.textContent = "";
     });
-
     pickerItem.classList.add("selected");
     const check = pickerItem.querySelector(".check-icon");
     if(check) check.textContent = "✓";
-
     selectedSongForApply = songLibraryCache.find(s => s.id === songId) || null;
   }
 });
 
 $("confirmSongBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
-
   if(!selectedSongForApply){ toast("Select a song first"); return; }
 
   if(songPickerContext === "story") applySongToStory(selectedSongForApply);
@@ -1838,22 +1769,16 @@ $("confirmSongBtn")?.addEventListener("click", (e)=>{
 
 $("removeSongBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
-
   if(songPickerContext === "story") removeSongFromStory();
   else if(songPickerContext === "video") removeSongFromVideo();
   else if(songPickerContext === "story_edit") removeSongFromStoryEdit();
-
   hideModal("songPickerModal");
 });
 
 function applySongToStory(song){
   pendingStorySong = song;
   const btn = $("storyAddSongBtn");
-  if(btn){
-    btn.innerHTML = `🎵 ${esc(song.name).slice(0, 12)} ✓`;
-    btn.style.borderColor = "var(--primary)";
-    btn.style.color = "var(--primary)";
-  }
+  if(btn){ btn.innerHTML = `🎵 ${esc(song.name).slice(0, 12)} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; }
   toast("🎵 Song added");
 }
 
@@ -1869,11 +1794,7 @@ function applySongToVideo(song){
   const status = $("videoEditStatus");
   if(status) status.textContent = "🎵 " + song.name + " selected";
   const btn = $("editVideoSongBtn");
-  if(btn){
-    btn.innerHTML = `🎵 ${esc(song.name).slice(0, 10)} ✓`;
-    btn.style.borderColor = "var(--primary)";
-    btn.style.color = "var(--primary)";
-  }
+  if(btn){ btn.innerHTML = `🎵 ${esc(song.name).slice(0, 10)} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; }
   toast("🎵 Song selected");
 }
 
@@ -1914,11 +1835,7 @@ function openStickerPicker(context){
   $("stickerEmojiTab")?.classList.remove("hidden");
   $("stickerTextTab")?.classList.add("hidden");
 
-  document.querySelectorAll(".sticker-item").forEach(el=>{
-    el.style.background = "";
-    el.style.color = "";
-  });
-
+  document.querySelectorAll(".sticker-item").forEach(el=>{ el.style.background = ""; el.style.color = ""; });
   if($("textStickerInput")) $("textStickerInput").value = "";
 
   showModal("stickerPickerModal");
@@ -1993,11 +1910,7 @@ $("removeStickerBtn")?.addEventListener("click", (e)=>{
 function applyStickerToStory(sticker){
   pendingStorySticker = sticker;
   const btn = $("storyAddStickerBtn");
-  if(btn){
-    btn.innerHTML = `${sticker.icon || "😀"} ✓`;
-    btn.style.borderColor = "var(--primary)";
-    btn.style.color = "var(--primary)";
-  }
+  if(btn){ btn.innerHTML = `${sticker.icon || "😀"} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; }
   toast("😀 Sticker added");
 }
 
@@ -2013,11 +1926,7 @@ function applyStickerToVideo(sticker){
   const status = $("videoEditStatus");
   if(status) status.textContent = `${sticker.icon || "😀"} Sticker selected`;
   const btn = $("editVideoStickerBtn");
-  if(btn){
-    btn.innerHTML = `${sticker.icon || "😀"} ✓`;
-    btn.style.borderColor = "var(--primary)";
-    btn.style.color = "var(--primary)";
-  }
+  if(btn){ btn.innerHTML = `${sticker.icon || "😀"} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; }
   toast("😀 Sticker selected");
 }
 
@@ -2049,7 +1958,6 @@ function removeStickerFromStoryEdit(){
 ============================================================ */
 $("storyAddSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("story"); });
 $("storyAddStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openStickerPicker("story"); });
-
 $("editVideoSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("video"); });
 $("editVideoStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openStickerPicker("video"); });
 
@@ -2058,15 +1966,10 @@ $("editStoryChangeSongBtn")?.addEventListener("click", (e)=>{
   selectedSongForApply = window.__editingStorySong;
   hideModal("editStoryModal");
   openSongPicker("story_edit");
-
   setTimeout(()=>{
     if(window.__editingStorySong){
       const item = document.querySelector(`[data-pick-song="${window.__editingStorySong.id}"]`);
-      if(item){
-        item.classList.add("selected");
-        const check = item.querySelector(".check-icon");
-        if(check) check.textContent = "✓";
-      }
+      if(item){ item.classList.add("selected"); const check = item.querySelector(".check-icon"); if(check) check.textContent = "✓"; }
     }
   }, 300);
 });
@@ -2075,7 +1978,6 @@ $("editStoryChangeStickerBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   hideModal("editStoryModal");
   openStickerPicker("story_edit");
-
   setTimeout(()=>{
     if(window.__editingStorySticker){
       if(window.__editingStorySticker.type === "emoji"){
@@ -2095,17 +1997,15 @@ $("editStoryChangeStickerBtn")?.addEventListener("click", (e)=>{
 });
 
 /* ============================================================
-   VIDEO EDITOR — Rotate / Mute / Preview
+   VIDEO EDITOR
 ============================================================ */
 $("editVideoRotateBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   const videoEl = $("uploadPreview");
   if(!videoEl || !videoEl.src){ toast("Select a video first"); return; }
-
   pendingVideoRotation = (pendingVideoRotation + 90) % 360;
   videoEl.style.transform = `rotate(${pendingVideoRotation}deg)`;
   videoEl.style.transition = "transform 0.3s ease";
-
   const btn = $("editVideoRotateBtn");
   if(btn){
     btn.innerHTML = `🔄 ${pendingVideoRotation}°`;
@@ -2121,10 +2021,8 @@ $("editVideoMuteBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   const videoEl = $("uploadPreview");
   if(!videoEl || !videoEl.src){ toast("Select a video first"); return; }
-
   pendingVideoMuted = !pendingVideoMuted;
   videoEl.muted = pendingVideoMuted;
-
   const btn = $("editVideoMuteBtn");
   if(btn){
     if(pendingVideoMuted){ btn.innerHTML = "🔇 Muted"; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; }
@@ -2165,25 +2063,22 @@ $("editVideoPreviewBtn")?.addEventListener("click", (e)=>{
       metaEl.textContent = info.join(" · ") || "Original video";
     }
 
-    const descEl = $("videoPlayerDesc");
-    if(descEl){ descEl.textContent = $("videoTitle")?.value || ""; descEl.style.display = descEl.textContent ? "block" : "none"; }
+    if($("videoPlayerDesc")){
+      $("videoPlayerDesc").textContent = $("videoTitle")?.value || "";
+      $("videoPlayerDesc").style.display = $("videoPlayerDesc").textContent ? "block" : "none";
+    }
 
     setTimeout(()=>{ playerVideo.play().catch(()=>{}); }, 300);
     showModal("videoPlayerModal");
   }
 });
 
-/* ============================================================
-   VIDEO TRIM MODAL
-============================================================ */
 function openVideoTrimModal(videoEl){
   if(!videoEl || !videoEl.src){ toast("No video selected"); return; }
   trimVideoElement = videoEl;
-
   const trimPreview = $("trimPreviewVideo");
   trimPreview.src = videoEl.src;
   trimPreview.load();
-
   trimPreview.addEventListener("loadedmetadata", ()=>{
     trimVideoDuration = trimPreview.duration || 0;
     $("trimStartRange").max = trimVideoDuration;
@@ -2192,7 +2087,6 @@ function openVideoTrimModal(videoEl){
     $("trimEndRange").value = trimVideoDuration;
     updateTrimLabels();
   }, { once: true });
-
   showModal("videoTrimModal");
 }
 
@@ -2223,7 +2117,6 @@ $("trimCancelBtn")?.addEventListener("click", ()=>{ hideModal("videoTrimModal");
 $("trimSaveBtn")?.addEventListener("click", ()=>{
   const start = Number($("trimStartRange").value) || 0;
   const end = Number($("trimEndRange").value) || 0;
-
   if(end - start < 1){ toast("Minimum 1 second required"); return; }
 
   const trimData = { start, end, applied: true, duration: end - start };
@@ -2244,12 +2137,7 @@ $("trimSaveBtn")?.addEventListener("click", ()=>{
   trimVideoElement = null;
 });
 
-$("editVideoTrimBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  window.__trimContext = "video";
-  openVideoTrimModal($("uploadPreview"));
-});
-
+$("editVideoTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); window.__trimContext = "video"; openVideoTrimModal($("uploadPreview")); });
 $("storyTrimBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   if(storyMediaType !== "video"){ toast("Trim only for videos"); return; }
@@ -2268,17 +2156,17 @@ $("videoFile")?.addEventListener("change", ()=>{
 });
 
 /* ============================================================
-   PART 1 END — PART 2 CONTINUE
+   END OF PART 1
 ============================================================ */
 
-console.log("✅ ReelHub app.js PART 1/2 loaded!");
+console.log("✅ app.js PART 1/2 loaded!");
 /* ============================================================
-   ReelHub - app.js (CLEAN FULL VERSION)
+   ReelHub - app.js
    PART 2/2
 ============================================================ */
 
 /* ============================================================
-   VIDEO MENU (⋮ button)
+   VIDEO MENU (⋮)
 ============================================================ */
 window.openVideoMenu = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
@@ -2413,7 +2301,6 @@ window.openVideoPlayer = function(videoId){
     videoEl.play().catch(()=>{});
   }
 
-  // Play song if exists
   if(v.song && v.song.audioURL){
     if(window.__videoAudio) window.__videoAudio.pause();
     window.__videoAudio = new Audio(v.song.audioURL);
@@ -2436,7 +2323,6 @@ window.openVideoPlayer = function(videoId){
     if(v.song) extraInfo.push(`🎵 ${v.song.name}`);
     if(v.muted) extraInfo.push("🔇 Muted");
     if(v.rotation) extraInfo.push(`🔄 ${v.rotation}°`);
-
     const baseMeta = formatViews(v.views) + " · " + timeAgo(v.createdAt);
     if(extraInfo.length){
       metaEl.innerHTML = `${baseMeta}<br><span style="font-size:11px;color:var(--primary)">${extraInfo.join(" · ")}</span>`;
@@ -2761,10 +2647,7 @@ function renderPlaylistsTab(){
       return `
       <div class="playlist-card" data-open-playlist="${esc(p.id)}">
         <div class="playlist-cover">${firstVideo ? `<video src="${esc(firstVideo)}" preload="metadata" muted></video><span class="cover-icon">▶️</span>` : `<span class="cover-icon">🎵</span>`}</div>
-        <div class="playlist-info">
-          <h4>${esc(p.name || "Untitled")}</h4>
-          <div class="meta">${count} ${count === 1 ? "video" : "videos"}</div>
-        </div>
+        <div class="playlist-info"><h4>${esc(p.name || "Untitled")}</h4><div class="meta">${count} ${count === 1 ? "video" : "videos"}</div></div>
         <div class="playlist-actions"><button class="playlist-delete-btn" data-delete-playlist="${esc(p.id)}">Delete</button></div>
       </div>`;
     }).join("")}
@@ -2796,10 +2679,7 @@ async function renderPlaylistDetail(playlistId){
     container.innerHTML = `
       <div class="playlist-detail-header">
         <div class="playlist-detail-cover">${firstVideo ? `<video src="${esc(firstVideo.videoURL)}" preload="metadata" muted></video>` : `🎵`}</div>
-        <div class="playlist-detail-info">
-          <h3>${esc(playlist.name)}</h3>
-          <div class="meta">${videos.length} ${videos.length === 1 ? "video" : "videos"}</div>
-        </div>
+        <div class="playlist-detail-info"><h3>${esc(playlist.name)}</h3><div class="meta">${videos.length} ${videos.length === 1 ? "video" : "videos"}</div></div>
       </div>
       ${videos.length === 0 
         ? `<div class="playlist-empty" style="padding:30px"><span class="icon">📭</span><p>No videos</p></div>`
@@ -2989,7 +2869,6 @@ $("publishBtn")?.addEventListener("click", async()=>{
     $("uploadStatus").textContent = "";
     $("videoEditBar").style.display = "none";
 
-    // Reset video edits
     pendingVideoSong = null;
     pendingVideoSticker = null;
     pendingVideoTrim = { start: 0, end: 0, applied: false };
@@ -3208,7 +3087,7 @@ $("privateAccountBtn")?.addEventListener("click", async()=>{
 $("followRequestsBtn")?.addEventListener("click", ()=>{ hideModal("settingsModal"); showModal("followRequestsModal"); renderFollowRequests(); });
 
 /* ============================================================
-   TOGGLE FOLLOW / FOLLOW COUNT
+   TOGGLE FOLLOW
 ============================================================ */
 async function toggleFollow(targetUid, btnEl){
   if(!currentUser || targetUid === currentUser.uid) return;
@@ -3882,7 +3761,6 @@ async function sendDM(){
 }
 
 $("dmBackBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(currentChatId) markChatAsRead(currentChatId); showDMInbox(); });
-
 $("newMsgBtn")?.addEventListener("click", ()=>{ showModal("searchModal"); setTimeout(()=> $("searchInput").focus(), 100); });
 
 $("dmAttachBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("dmAttachMenu")?.classList.toggle("show"); });
@@ -4070,10 +3948,7 @@ function renderGroupsList(){
     const badge = g.type === "public" ? `<span class="group-type-badge public">🌍 Public</span>` : `<span class="group-type-badge private">🔒 Private</span>`;
     return `<div class="group-inbox-item" data-open-group="${esc(g.id)}">
       <img src="${avatar(g.photo, g.name)}" alt="">
-      <div class="group-inbox-info">
-        <strong>${esc(g.name)} ${badge}</strong>
-        <small>${esc(g.lastMessage || "No messages")}</small>
-      </div>
+      <div class="group-inbox-info"><strong>${esc(g.name)} ${badge}</strong><small>${esc(g.lastMessage || "No messages")}</small></div>
       <div class="group-inbox-time">${timeAgo(g.lastMessageAt || g.createdAt)}</div>
     </div>`;
   }).join("");
@@ -4126,7 +4001,6 @@ async function openGroupView(groupId){
     $("groupInfoDate").textContent = new Date(timeValue(currentGroupData.createdAt)).toLocaleDateString();
     $("groupInfoId").textContent = groupId;
 
-    // Show/hide edit button
     const editBtn = $("editGroupBtn");
     if(editBtn) editBtn.style.display = (isAdmin || currentGroupData.createdBy === currentUser.uid) ? "flex" : "none";
 
@@ -4150,9 +4024,7 @@ async function loadGroupMembers(groupId){
     const snap = await getDocs(collection(db, "groups", groupId, "members"));
     const members = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     if(!members.length){ container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No members</div>`; return; }
-
     const isAdmin = currentGroupData?.admins?.includes(currentUser.uid);
-
     container.innerHTML = members.map(m => {
       const isMemAdmin = currentGroupData?.admins?.includes(m.userId);
       return `<div class="group-member-item">
@@ -4263,7 +4135,6 @@ async function acceptGroupJoinRequest(reqId){
     if(!reqSnap.exists()) return;
     const req = reqSnap.data();
     const groupId = req.groupId;
-
     const groupSnap = await getDoc(doc(db, "groups", groupId));
     if(!groupSnap.exists()) return;
     const group = groupSnap.data();
@@ -4372,7 +4243,6 @@ async function removeGroupMember(groupId, memberUid){
   }catch(e){ toast("Failed"); }
 }
 
-/* Edit Group */
 async function openEditGroupModal(){
   if(!currentGroupId || !currentGroupData){ toast("Group not loaded"); return; }
   const isAdmin = currentGroupData.admins?.includes(currentUser.uid);
@@ -4451,12 +4321,11 @@ $("saveGroupEditBtn")?.addEventListener("click", async ()=>{
 
     setTimeout(() => { hideModal("editGroupModal"); openGroupView(currentGroupId); }, 700);
   }catch(err){
-    console.error(err);
     status.style.color = "#ed4956"; status.textContent = "Error: " + err.message;
   }finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Save Changes"; } }
 });
 
-/* Group click handlers */
+/* Group Click Handlers */
 document.addEventListener("click", async (e)=>{
   const t = e.target;
 
@@ -4653,7 +4522,7 @@ async function sendGroupPhoto(file){
 }
 
 async function sendGroupVideo(file){
-  if(file.size > GROUP_MAX_VIDEO_SIZE){ toast("Video too large (100MB)"); return; }
+  if(file.size > GROUP_MAX_VIDEO_SIZE){ toast("Video too large"); return; }
   try{
     toast("Uploading video...");
     const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("Video " + pct + "%"); });
@@ -4668,7 +4537,7 @@ async function sendGroupVideo(file){
 }
 
 async function sendGroupPdf(file){
-  if(file.size > GROUP_MAX_PDF_SIZE){ toast("File too large (50MB)"); return; }
+  if(file.size > GROUP_MAX_PDF_SIZE){ toast("File too large"); return; }
   try{
     toast("Uploading file...");
     const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("File " + pct + "%"); });
@@ -4884,7 +4753,7 @@ async function openVideoByDeepLink(videoId){
   await trackView(videoId);
   const banner = $("deepLinkBanner");
   if(banner){ banner.classList.add("show"); setTimeout(()=> banner.classList.remove("show"), 3000); }
-  openVideoPlayer(videoId);
+  window.openVideoPlayer(videoId);
 }
 
 async function checkDeepLink(){
@@ -4914,7 +4783,6 @@ async function renderMonetizationTab(){
     const allComplete = followersComplete && watchTimeComplete && viewsComplete;
 
     let statusBadge = "", actionButton = "";
-
     if(status === "approved"){
       statusBadge = `<div class="monetization-status-badge approved">✅ Active</div>`;
       actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">🎉 Monetized!</p>`;
@@ -4923,7 +4791,7 @@ async function renderMonetizationTab(){
       actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Under review.</p>`;
     }else if(status === "rejected"){
       statusBadge = `<div class="monetization-status-badge rejected">❌ Rejected</div>`;
-      actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Try again later.</p>`;
+      actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Try again.</p>`;
     }else{
       statusBadge = `<div class="monetization-status-badge none">💰 Not Applied</div>`;
       actionButton = allComplete 
@@ -5265,6 +5133,193 @@ $("removeVaultBtn")?.addEventListener("click", async () => {
 });
 
 /* ============================================================
+   ADMIN — SONG LIBRARY
+============================================================ */
+function openAdminSongLibrary(){
+  if(!isAdminUser()){ toast("Only admin"); return; }
+  hideModal("advancedSettingsModal");
+  showModal("adminSongLibraryModal");
+  renderAdminSongLibrary();
+  startSongLibraryListener();
+}
+
+let editingSongId = null;
+let pendingSongFile = null;
+
+function renderAdminSongLibrary(){
+  const container = $("songLibraryList");
+  if(!container) return;
+  const countEl = $("songCount");
+  if(countEl) countEl.textContent = songLibraryCache.length + " songs";
+
+  if(!songLibraryCache.length){
+    container.innerHTML = `<div class="song-library-empty"><span class="icon">🎵</span><h3>No songs yet</h3><p>Tap "Add New Song" to add</p></div>`;
+    return;
+  }
+
+  container.innerHTML = songLibraryCache.map(s => `
+    <div class="song-library-item">
+      <div class="song-thumb">🎵</div>
+      <div class="song-info">
+        <strong>${esc(s.name || "Untitled")}</strong>
+        <small>${esc(s.artist || "Unknown")} · ${esc(s.category || "Other")}</small>
+      </div>
+      <div class="song-actions">
+        <button class="play-btn" data-play-song="${esc(s.id)}">▶</button>
+        <button class="edit-btn" data-edit-song="${esc(s.id)}">✏️</button>
+        <button class="delete-btn" data-delete-song="${esc(s.id)}">🗑️</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function openAddSongModal(){
+  editingSongId = null;
+  pendingSongFile = null;
+  $("addSongTitle").textContent = "➕ Add Song";
+  $("songName").value = "";
+  $("songArtist").value = "";
+  $("songCategory").value = "Bollywood";
+  $("songFile").value = "";
+  $("songFileSelected").style.display = "none";
+  $("songUploadStatus").textContent = "";
+  $("songUploadProgress").classList.remove("active");
+  $("songUploadProgressBar").style.width = "0%";
+  hideModal("adminSongLibraryModal");
+  showModal("addSongModal");
+}
+
+function openEditSongModal(songId){
+  const song = songLibraryCache.find(s => s.id === songId);
+  if(!song) return;
+  editingSongId = songId;
+  pendingSongFile = null;
+  $("addSongTitle").textContent = "✏️ Edit Song";
+  $("songName").value = song.name || "";
+  $("songArtist").value = song.artist || "";
+  $("songCategory").value = song.category || "Bollywood";
+  $("songFile").value = "";
+  $("songFileName").textContent = song.name + " (current)";
+  $("songFileSelected").style.display = "flex";
+  $("songUploadStatus").textContent = "";
+  hideModal("adminSongLibraryModal");
+  showModal("addSongModal");
+}
+
+$("songUploadZone")?.addEventListener("click", () => { $("songFile")?.click(); });
+
+$("songFile")?.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 100 * 1024 * 1024){ toast("File too large"); e.target.value = ""; return; }
+  pendingSongFile = file;
+  $("songFileName").textContent = file.name;
+  $("songFileSelected").style.display = "flex";
+});
+
+$("songFileRemoveBtn")?.addEventListener("click", (e) => {
+  e.preventDefault(); e.stopPropagation();
+  pendingSongFile = null;
+  $("songFile").value = "";
+  $("songFileSelected").style.display = "none";
+});
+
+$("saveSongBtn")?.addEventListener("click", async () => {
+  const name = $("songName").value.trim();
+  const artist = $("songArtist").value.trim();
+  const category = $("songCategory").value;
+  const status = $("songUploadStatus");
+
+  if(!name){ status.style.color = "#ef4444"; status.textContent = "Name required"; return; }
+  if(!editingSongId && !pendingSongFile){ status.style.color = "#ef4444"; status.textContent = "Select file"; return; }
+
+  const btn = $("saveSongBtn");
+  btn.disabled = true;
+  btn.textContent = "Saving...";
+  status.style.color = "#a78bfa";
+  status.textContent = "Saving...";
+
+  try{
+    let audioURL = "";
+    if(pendingSongFile){
+      status.textContent = "Uploading...";
+      $("songUploadProgress").classList.add("active");
+      audioURL = await uploadAudioToCloudinary(pendingSongFile, (pct) => {
+        $("songUploadProgressBar").style.width = pct + "%";
+        status.textContent = "Uploading " + pct + "%";
+      });
+    } else if(editingSongId){
+      const existing = songLibraryCache.find(s => s.id === editingSongId);
+      audioURL = existing?.audioURL || "";
+    }
+
+    if(editingSongId){
+      await updateDoc(doc(db, "song_library", editingSongId), { name, artist, category, audioURL, updatedAt: serverTimestamp() });
+      toast("✅ Updated");
+    } else {
+      await addDoc(collection(db, "song_library"), {
+        name, artist, category, audioURL,
+        createdBy: currentUser.uid,
+        createdByName: currentProfile?.name || "Admin",
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
+      });
+      toast("✅ Song added");
+    }
+
+    status.style.color = "#22c55e";
+    status.textContent = "✅ Saved!";
+
+    setTimeout(() => { hideModal("addSongModal"); showModal("adminSongLibraryModal"); }, 700);
+  } catch(err) {
+    console.error(err);
+    status.style.color = "#ef4444";
+    status.textContent = "Error: " + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "✅ Save Song";
+    $("songUploadProgress").classList.remove("active");
+  }
+});
+
+$("addSongModalClose")?.addEventListener("click", () => { hideModal("addSongModal"); });
+$("cancelSongBtn")?.addEventListener("click", () => { hideModal("addSongModal"); });
+
+function playSongPreview(songId){
+  const song = songLibraryCache.find(s => s.id === songId);
+  if(!song || !song.audioURL){ toast("No audio"); return; }
+  if(previewAudio){ previewAudio.pause(); previewAudio = null; }
+  previewAudio = new Audio(song.audioURL);
+  previewAudio.play().then(() => toast("▶ " + song.name)).catch(() => toast("Play failed"));
+  previewAudio.onended = () => { previewAudio = null; };
+}
+
+async function deleteSong(songId){
+  const song = songLibraryCache.find(s => s.id === songId);
+  if(!song) return;
+  if(!confirm(`Delete "${song.name}"?`)) return;
+  try{ await deleteDoc(doc(db, "song_library", songId)); toast("🗑️ Deleted"); }
+  catch(e){ toast("Failed"); }
+}
+
+document.addEventListener("click", (e)=>{
+  const t = e.target;
+  const adminBtn = t.closest("#adminSongLibraryBtn");
+  if(adminBtn){ e.preventDefault(); e.stopPropagation(); openAdminSongLibrary(); return; }
+
+  const addBtn = t.closest("#addSongBtn");
+  if(addBtn){ e.preventDefault(); e.stopPropagation(); openAddSongModal(); return; }
+
+  const playBtn = t.closest("[data-play-song]");
+  if(playBtn){ e.preventDefault(); e.stopPropagation(); playSongPreview(playBtn.dataset.playSong); return; }
+
+  const editBtn = t.closest("[data-edit-song]");
+  if(editBtn){ e.preventDefault(); e.stopPropagation(); openEditSongModal(editBtn.dataset.editSong); return; }
+
+  const delBtn = t.closest("[data-delete-song]");
+  if(delBtn){ e.preventDefault(); e.stopPropagation(); await deleteSong(delBtn.dataset.deleteSong); return; }
+});
+
+/* ============================================================
    GLOBAL CLICK HANDLER
 ============================================================ */
 document.addEventListener("click", async (e)=>{
@@ -5471,193 +5526,6 @@ function openPanel(id){
     showDMInbox();
   }
 }
-
-/* ============================================================
-   ADMIN — Song Library
-============================================================ */
-function openAdminSongLibrary(){
-  if(!isAdminUser()){ toast("Only admin"); return; }
-  hideModal("advancedSettingsModal");
-  showModal("adminSongLibraryModal");
-  renderAdminSongLibrary();
-  startSongLibraryListener();
-}
-
-function renderAdminSongLibrary(){
-  const container = $("songLibraryList");
-  if(!container) return;
-  const countEl = $("songCount");
-  if(countEl) countEl.textContent = songLibraryCache.length + " songs";
-
-  if(!songLibraryCache.length){
-    container.innerHTML = `<div class="song-library-empty"><span class="icon">🎵</span><h3>No songs yet</h3><p>Tap "Add New Song" to add</p></div>`;
-    return;
-  }
-
-  container.innerHTML = songLibraryCache.map(s => `
-    <div class="song-library-item">
-      <div class="song-thumb">🎵</div>
-      <div class="song-info">
-        <strong>${esc(s.name || "Untitled")}</strong>
-        <small>${esc(s.artist || "Unknown")} · ${esc(s.category || "Other")}</small>
-      </div>
-      <div class="song-actions">
-        <button class="play-btn" data-play-song="${esc(s.id)}">▶</button>
-        <button class="edit-btn" data-edit-song="${esc(s.id)}">✏️</button>
-        <button class="delete-btn" data-delete-song="${esc(s.id)}">🗑️</button>
-      </div>
-    </div>
-  `).join("");
-}
-
-function openAddSongModal(){
-  editingSongId = null;
-  pendingSongFile = null;
-  $("addSongTitle").textContent = "➕ Add Song";
-  $("songName").value = "";
-  $("songArtist").value = "";
-  $("songCategory").value = "Bollywood";
-  $("songFile").value = "";
-  $("songFileSelected").style.display = "none";
-  $("songUploadStatus").textContent = "";
-  $("songUploadProgress").classList.remove("active");
-  $("songUploadProgressBar").style.width = "0%";
-  hideModal("adminSongLibraryModal");
-  showModal("addSongModal");
-}
-
-function openEditSongModal(songId){
-  const song = songLibraryCache.find(s => s.id === songId);
-  if(!song) return;
-  editingSongId = songId;
-  pendingSongFile = null;
-  $("addSongTitle").textContent = "✏️ Edit Song";
-  $("songName").value = song.name || "";
-  $("songArtist").value = song.artist || "";
-  $("songCategory").value = song.category || "Bollywood";
-  $("songFile").value = "";
-  $("songFileName").textContent = song.name + " (current)";
-  $("songFileSelected").style.display = "flex";
-  $("songUploadStatus").textContent = "";
-  hideModal("adminSongLibraryModal");
-  showModal("addSongModal");
-}
-
-let editingSongId = null;
-let pendingSongFile = null;
-
-$("songUploadZone")?.addEventListener("click", () => { $("songFile")?.click(); });
-
-$("songFile")?.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if(!file) return;
-  if(file.size > 100 * 1024 * 1024){ toast("File too large"); e.target.value = ""; return; }
-  pendingSongFile = file;
-  $("songFileName").textContent = file.name;
-  $("songFileSelected").style.display = "flex";
-});
-
-$("songFileRemoveBtn")?.addEventListener("click", (e) => {
-  e.preventDefault(); e.stopPropagation();
-  pendingSongFile = null;
-  $("songFile").value = "";
-  $("songFileSelected").style.display = "none";
-});
-
-$("saveSongBtn")?.addEventListener("click", async () => {
-  const name = $("songName").value.trim();
-  const artist = $("songArtist").value.trim();
-  const category = $("songCategory").value;
-  const status = $("songUploadStatus");
-
-  if(!name){ status.style.color = "#ef4444"; status.textContent = "Name required"; return; }
-  if(!editingSongId && !pendingSongFile){ status.style.color = "#ef4444"; status.textContent = "Select file"; return; }
-
-  const btn = $("saveSongBtn");
-  btn.disabled = true;
-  btn.textContent = "Saving...";
-  status.style.color = "#a78bfa";
-  status.textContent = "Saving...";
-
-  try{
-    let audioURL = "";
-    if(pendingSongFile){
-      status.textContent = "Uploading...";
-      $("songUploadProgress").classList.add("active");
-      audioURL = await uploadAudioToCloudinary(pendingSongFile, (pct) => {
-        $("songUploadProgressBar").style.width = pct + "%";
-        status.textContent = "Uploading " + pct + "%";
-      });
-    } else if(editingSongId){
-      const existing = songLibraryCache.find(s => s.id === editingSongId);
-      audioURL = existing?.audioURL || "";
-    }
-
-    if(editingSongId){
-      await updateDoc(doc(db, "song_library", editingSongId), { name, artist, category, audioURL, updatedAt: serverTimestamp() });
-      toast("✅ Updated");
-    } else {
-      await addDoc(collection(db, "song_library"), {
-        name, artist, category, audioURL,
-        createdBy: currentUser.uid,
-        createdByName: currentProfile?.name || "Admin",
-        createdAt: serverTimestamp(), updatedAt: serverTimestamp()
-      });
-      toast("✅ Song added");
-    }
-
-    status.style.color = "#22c55e";
-    status.textContent = "✅ Saved!";
-
-    setTimeout(() => { hideModal("addSongModal"); showModal("adminSongLibraryModal"); }, 700);
-  } catch(err) {
-    console.error(err);
-    status.style.color = "#ef4444";
-    status.textContent = "Error: " + err.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = "✅ Save Song";
-    $("songUploadProgress").classList.remove("active");
-  }
-});
-
-$("addSongModalClose")?.addEventListener("click", () => { hideModal("addSongModal"); });
-$("cancelSongBtn")?.addEventListener("click", () => { hideModal("addSongModal"); });
-
-function playSongPreview(songId){
-  const song = songLibraryCache.find(s => s.id === songId);
-  if(!song || !song.audioURL){ toast("No audio"); return; }
-  if(previewAudio){ previewAudio.pause(); previewAudio = null; }
-  previewAudio = new Audio(song.audioURL);
-  previewAudio.play().then(() => toast("▶ " + song.name)).catch(() => toast("Play failed"));
-  previewAudio.onended = () => { previewAudio = null; };
-}
-
-async function deleteSong(songId){
-  const song = songLibraryCache.find(s => s.id === songId);
-  if(!song) return;
-  if(!confirm(`Delete "${song.name}"?`)) return;
-  try{ await deleteDoc(doc(db, "song_library", songId)); toast("🗑️ Deleted"); }
-  catch(e){ toast("Failed"); }
-}
-
-document.addEventListener("click", (e)=>{
-  const t = e.target;
-  const adminBtn = t.closest("#adminSongLibraryBtn");
-  if(adminBtn){ e.preventDefault(); e.stopPropagation(); openAdminSongLibrary(); return; }
-
-  const addBtn = t.closest("#addSongBtn");
-  if(addBtn){ e.preventDefault(); e.stopPropagation(); openAddSongModal(); return; }
-
-  const playBtn = t.closest("[data-play-song]");
-  if(playBtn){ e.preventDefault(); e.stopPropagation(); playSongPreview(playBtn.dataset.playSong); return; }
-
-  const editBtn = t.closest("[data-edit-song]");
-  if(editBtn){ e.preventDefault(); e.stopPropagation(); openEditSongModal(editBtn.dataset.editSong); return; }
-
-  const delBtn = t.closest("[data-delete-song]");
-  if(delBtn){ e.preventDefault(); e.stopPropagation(); await deleteSong(delBtn.dataset.deleteSong); return; }
-});
 
 /* ============================================================
    START / INIT
