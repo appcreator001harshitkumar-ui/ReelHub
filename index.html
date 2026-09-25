@@ -25,9 +25,7 @@
   <div class="splash-footer">Powered by ReelHub</div>
 </div>
 
-<!-- ============================================================
-     SUSPENSION SCREEN
-============================================================ -->
+<!-- SUSPENSION SCREEN -->
 <div id="suspensionScreen" class="hidden">
   <div class="suspension-card">
     <div class="suspension-icon">🚫</div>
@@ -75,32 +73,17 @@
     </div>
 
     <form id="loginForm" class="auth-form">
-      <input type="email" id="loginEmail" class="yt-input" 
-             placeholder="Email" style="margin-bottom:10px" required autocomplete="email">
-      <input type="password" id="loginPassword" class="yt-input" 
-             placeholder="Password" style="margin-bottom:14px" required autocomplete="current-password">
-      <button type="submit" class="google-btn" 
-              style="background:linear-gradient(90deg,#7c3aed,#ec4899)">
-        Login
-      </button>
-      <button type="button" id="forgotPasswordBtn" 
-              style="background:none;color:#7c3aed;font-size:13px;margin-top:12px;font-weight:600;padding:8px">
-        Forgot Password?
-      </button>
+      <input type="email" id="loginEmail" class="yt-input" placeholder="Email" style="margin-bottom:10px" required autocomplete="email">
+      <input type="password" id="loginPassword" class="yt-input" placeholder="Password" style="margin-bottom:14px" required autocomplete="current-password">
+      <button type="submit" class="google-btn" style="background:linear-gradient(90deg,#7c3aed,#ec4899)">Login</button>
+      <button type="button" id="forgotPasswordBtn" style="background:none;color:#7c3aed;font-size:13px;margin-top:12px;font-weight:600;padding:8px">Forgot Password?</button>
     </form>
 
     <form id="signupForm" class="auth-form hidden">
-      <input type="text" id="signupName" class="yt-input" 
-             placeholder="Full Name" style="margin-bottom:10px" required autocomplete="name">
-      <input type="email" id="signupEmail" class="yt-input" 
-             placeholder="Email" style="margin-bottom:10px" required autocomplete="email">
-      <input type="password" id="signupPassword" class="yt-input" 
-             placeholder="Password (min 6 characters)" 
-             style="margin-bottom:14px" minlength="6" required autocomplete="new-password">
-      <button type="submit" class="google-btn" 
-              style="background:linear-gradient(90deg,#7c3aed,#ec4899)">
-        Create Account
-      </button>
+      <input type="text" id="signupName" class="yt-input" placeholder="Full Name" style="margin-bottom:10px" required autocomplete="name">
+      <input type="email" id="signupEmail" class="yt-input" placeholder="Email" style="margin-bottom:10px" required autocomplete="email">
+      <input type="password" id="signupPassword" class="yt-input" placeholder="Password (min 6 characters)" style="margin-bottom:14px" minlength="6" required autocomplete="new-password">
+      <button type="submit" class="google-btn" style="background:linear-gradient(90deg,#7c3aed,#ec4899)">Create Account</button>
     </form>
 
     <div class="auth-divider"><span>OR</span></div>
@@ -151,19 +134,8 @@
       <button class="chip" data-cat="learning">Learning</button>
     </div>
 
-    <!-- 🎯 AD SLOT: Banner (Home Feed top) -->
-    <div id="adSlotHomeBanner" class="ad-slot ad-slot-banner" data-ad-type="banner" style="display:none">
-      <div class="ad-label">Sponsored</div>
-      <div id="adContainerHomeBanner"></div>
-    </div>
-
+    <!-- 🎯 HOME FEED -->
     <div id="feed" class="video-grid"></div>
-
-    <!-- 🎯 AD SLOT: Banner (Home Feed bottom) -->
-    <div id="adSlotHomeBottom" class="ad-slot ad-slot-banner" data-ad-type="banner" style="display:none">
-      <div class="ad-label">Sponsored</div>
-      <div id="adContainerHomeBottom"></div>
-    </div>
   </section>
 
   <!-- SHORTS -->
@@ -203,11 +175,9 @@
       <div class="yt-card">
         <div class="yt-card-title">📝 Details</div>
         <label class="yt-label">Title *</label>
-        <input id="videoTitle" class="yt-input" maxlength="100"
-               placeholder="Enter an engaging title" style="margin-bottom:14px">
+        <input id="videoTitle" class="yt-input" maxlength="100" placeholder="Enter an engaging title" style="margin-bottom:14px">
         <label class="yt-label">Description</label>
-        <textarea id="videoDescription" class="yt-textarea"
-                  placeholder="Tell viewers about your video"></textarea>
+        <textarea id="videoDescription" class="yt-textarea" placeholder="Tell viewers about your video"></textarea>
       </div>
 
       <div class="yt-card">
@@ -382,8 +352,7 @@
     </button>
     <button class="nav-btn" data-panel="profilePanel">
       <span class="nav-icon">
-        <img id="navProfileAvatar" class="avatar-mini"
-             src="https://ui-avatars.com/api/?name=U&background=7c3aed&color=fff" alt="">
+        <img id="navProfileAvatar" class="avatar-mini" src="https://ui-avatars.com/api/?name=U&background=7c3aed&color=fff" alt="">
       </span>
       <span class="nav-label">Profile</span>
     </button>
@@ -486,8 +455,7 @@
   <div class="modal-box" style="padding:0;overflow:hidden">
     <div style="position:relative">
       <div class="yt-banner"></div>
-      <button class="close" data-close="publicProfileModal"
-              style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:white">×</button>
+      <button class="close" data-close="publicProfileModal" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:white">×</button>
     </div>
     <div style="padding:0 16px">
       <div class="yt-profile-head" style="margin-top:-45px">
@@ -616,12 +584,10 @@
 <!-- VIDEO PLAYER MODAL -->
 <div id="videoPlayerModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden;max-width:560px">
-    <button class="close" data-close="videoPlayerModal"
-            style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:white;z-index:10">×</button>
+    <button class="close" data-close="videoPlayerModal" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:white;z-index:10">×</button>
 
     <div style="position:relative;background:#000">
-      <video id="videoPlayerVideo" controls playsinline webkit-playsinline
-             style="width:100%;max-height:70vh;background:#000;display:block"></video>
+      <video id="videoPlayerVideo" controls playsinline webkit-playsinline style="width:100%;max-height:70vh;background:#000;display:block"></video>
       
       <div id="speedControl" style="position:absolute;top:10px;left:10px;z-index:11;display:none">
         <div style="background:rgba(0,0,0,0.8);border-radius:20px;padding:6px 12px;display:flex;gap:6px;align-items:center">
@@ -667,8 +633,8 @@
       </button>
     </div>
 
-    <!-- 🎯 AD SLOT: Video Player bottom (video type) -->
-    <div id="adSlotVideoPlayer" class="ad-slot ad-slot-banner" data-ad-type="video" style="display:none;margin:10px 16px 14px">
+    <!-- 🎯 AD SLOT: Video Player bottom (ek ad per video) -->
+    <div id="adSlotVideoPlayer" class="ad-slot ad-slot-video" data-ad-type="video" style="display:none;margin:10px 16px 14px">
       <div class="ad-label">Sponsored</div>
       <div id="adContainerVideoPlayer"></div>
     </div>
@@ -701,8 +667,7 @@
 <!-- IMAGE VIEWER MODAL -->
 <div id="imageViewerModal" class="modal">
   <div class="modal-box" style="padding:0;background:#000;max-width:100%;text-align:center">
-    <button class="close" data-close="imageViewerModal"
-            style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);color:white;z-index:10">×</button>
+    <button class="close" data-close="imageViewerModal" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);color:white;z-index:10">×</button>
     <img id="largeChatImage" src="" alt="" style="width:100%;max-height:85vh;object-fit:contain;display:block">
   </div>
 </div>
@@ -954,18 +919,6 @@
       <div class="sticker-item" data-sticker="💪" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💪</div>
       <div class="sticker-item" data-sticker="🙏" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🙏</div>
       <div class="sticker-item" data-sticker="✨" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">✨</div>
-      <div class="sticker-item" data-sticker="💕" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💕</div>
-      <div class="sticker-item" data-sticker="😢" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😢</div>
-      <div class="sticker-item" data-sticker="😡" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😡</div>
-      <div class="sticker-item" data-sticker="🤔" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🤔</div>
-      <div class="sticker-item" data-sticker="👏" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">👏</div>
-      <div class="sticker-item" data-sticker="🎵" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🎵</div>
-      <div class="sticker-item" data-sticker="⭐" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">⭐</div>
-      <div class="sticker-item" data-sticker="💫" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💫</div>
-      <div class="sticker-item" data-sticker="🌈" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🌈</div>
-      <div class="sticker-item" data-sticker="☀️" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">☀️</div>
-      <div class="sticker-item" data-sticker="🍕" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🍕</div>
-      <div class="sticker-item" data-sticker="🎂" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🎂</div>
     </div>
     <div id="stickerTextTab" class="hidden">
       <label class="yt-label">Enter text (max 20 chars)</label>
@@ -1286,8 +1239,7 @@
 
 <div id="groupPhotoViewerModal" class="modal">
   <div class="modal-box" style="padding:0;background:#000;max-width:100%;text-align:center">
-    <button class="close" data-close="groupPhotoViewerModal"
-            style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);color:white;z-index:10">×</button>
+    <button class="close" data-close="groupPhotoViewerModal" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);color:white;z-index:10">×</button>
     <img id="largeGroupPhoto" src="" alt="" style="width:100%;max-height:85vh;object-fit:contain;display:block">
   </div>
 </div>
@@ -1329,12 +1281,10 @@
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
 
-<!-- ============================================================
-     AD SLOT STYLES (INLINE — kyunki style.css mein nahi hai)
-============================================================ -->
+<!-- AD SLOT STYLES -->
 <style>
   .ad-slot {
-    margin: 14px 0;
+    margin: 14px 16px;
     padding: 12px;
     background: var(--card, #1a1a22);
     border: 1px solid var(--border, #2a2a35);
@@ -1356,11 +1306,6 @@
     padding: 2px 6px;
     border-radius: 4px;
   }
-  .ad-slot-banner {
-    min-height: 100px;
-  }
-  .ad-slot #adContainerHomeBanner,
-  .ad-slot #adContainerHomeBottom,
   .ad-slot #adContainerVideoPlayer {
     min-height: 50px;
     display: flex;
@@ -1378,103 +1323,47 @@
 <script type="module" src="app.js"></script>
 
 <!-- ============================================================
-     🎛️ AD CONTROL SYSTEM — LOADER
-     app.js ke showMyAd() ke through ads render karta hai
+   🎛️ AD SYSTEM — SIRF VIDEO PLAYER KE LIYE (ek ad per video)
 ============================================================ -->
 <script>
 (function(){
   "use strict";
 
-  // Ads ke sources (aapki di hui scripts)
-  const AD_SOURCES = {
-    banner: {
-      invoke: "https://pl31503866.profitableratecpmnetwork.com/1fe6d8ff04cda98725422466b9ea6b14/invoke.js",
-      containerId: "container-1fe6d8ff04cda98725422466b9ea6b14"
-    },
-    popup: {
-      social: "https://pl31503867.profitableratecpmnetwork.com/d9/9a/d2/d99ad2d380150ac462b91a18530b10d9.js"
-    },
-    video: {
-      pounder: "https://pl31503868.profitableratecpmnetwork.com/cf/d0/ed/cfd0edbe231c0f6240271057001d998c.js"
-    }
-  };
+  // ✅ Sirf yahi 1 script chahiye (video ads ke liye)
+  const VIDEO_AD_SCRIPT = "https://pl31503868.profitableratecpmnetwork.com/cf/d0/ed/cfd0edbe231c0f6240271057001d998c.js";
 
-  // Ek baar load hone ke baad dubara na ho
-  const loadedAds = new Set();
+  let videoAdLoaded = false;
 
   /**
-   * Ek ad script inject karta hai (agar pehle se load na hua ho)
+   * Video player ad render
+   * — Sirf jab video open ho
+   * — Har video pe ek baar
    */
-  function injectScript(src, attrs){
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    if(attrs){
-      Object.keys(attrs).forEach(k => script.setAttribute(k, attrs[k]));
-    }
-    document.body.appendChild(script);
-  }
+  function renderVideoAd(){
+    if(videoAdLoaded) return;  // ek baar hi load
 
-  /**
-   * Banner ad render — ad slot ke andar
-   */
-  function renderBannerAd(slotId, containerId){
-    if(loadedAds.has("banner_" + slotId)) return;
+    const slot = document.getElementById("adSlotVideoPlayer");
+    const container = document.getElementById("adContainerVideoPlayer");
+    if(!slot || !container) return;
 
-    const slot = document.getElementById(slotId);
-    if(!slot) return;
-
-    const container = document.getElementById(containerId);
-    if(!container) return;
-
-    // Container empty karo
+    // Container saaf karo
     container.innerHTML = "";
 
-    // Ad container div
-    const adDiv = document.createElement("div");
-    adDiv.id = "container-1fe6d8ff04cda98725422466b9ea6b14";
-    container.appendChild(adDiv);
-
-    // Invoke script
-    injectScript(AD_SOURCES.banner.invoke, { "data-cfasync": "false" });
+    // Video ad script inject
+    const script = document.createElement("script");
+    script.src = VIDEO_AD_SCRIPT;
+    script.async = true;
+    container.appendChild(script);
 
     // Slot dikhao
     slot.style.display = "block";
+    videoAdLoaded = true;
 
-    loadedAds.add("banner_" + slotId);
-    console.log("✅ Banner ad rendered in", slotId);
+    console.log("✅ Video ad rendered in video player");
   }
 
   /**
-   * Popup ad render (script body pe load hoga — global)
-   */
-  function renderPopupAd(){
-    if(loadedAds.has("popup")) return;
-    injectScript(AD_SOURCES.popup.social);
-    loadedAds.add("popup");
-    console.log("✅ Popup/Social ad script injected");
-  }
-
-  /**
-   * Video/Pounder ad render
-   */
-  function renderVideoAd(slotId, containerId){
-    if(loadedAds.has("video")) return;
-
-    // Pounder script
-    injectScript(AD_SOURCES.video.pounder);
-
-    // Slot dikhao (agar video player ke andar hai)
-    const slot = document.getElementById(slotId);
-    if(slot) slot.style.display = "block";
-
-    loadedAds.add("video");
-    console.log("✅ Video/Pounder ad script injected");
-  }
-
-  /**
-   * Ad system ready hone ka wait karta hai
-   * (app.js load hone ke baad showMyAd available hoga)
+   * Ad system ready hone ka wait
    */
   function waitForAdSystem(callback, maxTries){
     maxTries = maxTries || 50;
@@ -1486,53 +1375,43 @@
         callback();
       } else if(tries >= maxTries){
         clearInterval(interval);
-        console.warn("⚠️ Ad system not loaded after 5s — ads skipped");
+        console.warn("⚠️ Ad system not loaded after 5s");
       }
     }, 100);
   }
 
   /**
-   * Saare ads load karo (showMyAd ke through)
+   * Har video ke open hone pe ad dikhao
    */
-  function loadAllAds(){
+  window.addEventListener("videoPlayerOpened", function(){
     const uid = window.currentUser?.uid || null;
 
-    // 1. Home banner top
-    window.showMyAd("banner", uid, function(){
-      renderBannerAd("adSlotHomeBanner", "adContainerHomeBanner");
-    });
+    // Reset flag (naya video = naya ad)
+    // Note: Agar aap chahte ho ki ek session mein sirf ek ad dikhe,
+    // toh ye line hatao
+    // videoAdLoaded = false;
 
-    // 2. Home banner bottom
-    window.showMyAd("banner", uid, function(){
-      renderBannerAd("adSlotHomeBottom", "adContainerHomeBottom");
+    window.showMyAd("video", uid, function(){
+      renderVideoAd();
     });
-
-    // 3. Popup (global — user ne popup type on rakha ho)
-    window.showMyAd("popup", uid, function(){
-      renderPopupAd();
-    });
-
-    // 4. Video ad (jab video player khule)
-    // Ye event-driven hai — video player open hone pe trigger hoga
-    window.addEventListener("videoPlayerOpened", function(){
-      window.showMyAd("video", uid, function(){
-        renderVideoAd("adSlotVideoPlayer", "adContainerVideoPlayer");
-      });
-    });
-  }
-
-  // App.js load hone ke baad ads load karo
-  window.addEventListener("load", function(){
-    waitForAdSystem(loadAllAds);
   });
 
-  // Manual trigger ke liye global function
+  // Pehli baar jab app load ho — turant ad system ready hone ka wait
+  window.addEventListener("load", function(){
+    waitForAdSystem(function(){
+      console.log("✅ Ad Control Loader initialized (video-only mode)");
+    });
+  });
+
+  // Manual reload (agar chahiye)
   window.reloadAds = function(){
-    loadedAds.clear();
-    loadAllAds();
+    videoAdLoaded = false;
+    const slot = document.getElementById("adSlotVideoPlayer");
+    if(slot) slot.style.display = "none";
+    console.log("🔄 Ads reset — agle video pe naya ad aayega");
   };
 
-  console.log("✅ Ad Control Loader initialized");
+  console.log("✅ Ad System: Video-player only mode (Social bar REMOVED)");
 })();
 </script>
 
@@ -1541,14 +1420,12 @@
   setTimeout(function() {
     var splash = document.getElementById("splashScreen");
     if (splash && splash.style.display !== "none" && !splash.classList.contains("fade-out")) {
-      console.log("🚨 Emergency: Hiding splash");
       splash.style.display = "none";
     }
     var login = document.getElementById("loginPage");
     var app = document.getElementById("app");
     if (login && app) {
       if (login.classList.contains("hidden") && app.classList.contains("hidden")) {
-        console.log("🚨 Emergency: Showing login");
         login.classList.remove("hidden");
       }
     }
@@ -1562,7 +1439,7 @@
     console.error("🚨 PROMISE ERROR:", e.reason);
   });
 
-  console.log("✅ index.html emergency script loaded");
+  console.log("✅ index.html loaded");
 </script>
 
 </body>
