@@ -185,6 +185,20 @@
         <input type="file" id="videoFile" accept="video/*" class="hidden">
       </div>
 
+      <!-- ✅ VIDEO EDIT BAR -->
+      <div class="yt-card" id="videoEditBar" style="display:none">
+        <div class="yt-card-title">🎬 Video Tools</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="yt-mini-btn" id="editVideoTrimBtn">✂️ Trim</button>
+          <button class="yt-mini-btn" id="editVideoRotateBtn">🔄 Rotate</button>
+          <button class="yt-mini-btn" id="editVideoMuteBtn">🔇 Mute</button>
+          <button class="yt-mini-btn" id="editVideoSongBtn">🎵 Song</button>
+          <button class="yt-mini-btn" id="editVideoStickerBtn">😀 Sticker</button>
+          <button class="yt-mini-btn" id="editVideoPreviewBtn">👁️ Preview</button>
+        </div>
+        <div id="videoEditStatus" style="font-size:12px;color:var(--muted);margin-top:10px;text-align:center"></div>
+      </div>
+
       <div class="yt-card">
         <div class="yt-card-title">📝 Details</div>
         <label class="yt-label">Title *</label>
@@ -250,7 +264,6 @@
           </div>
         </div>
 
-        <!-- Tabs: Chats / Groups -->
         <div class="dm-tabs" id="dmTabs">
           <button class="dm-tab active" data-dmtab="chats">💬 Chats</button>
           <button class="dm-tab" data-dmtab="groups">👥 Groups</button>
@@ -823,6 +836,16 @@
     <img id="storyImagePreview" class="story-preview hidden" alt="">
     <video id="storyVideoPreview" class="story-preview hidden" controls playsinline muted></video>
 
+    <!-- ✅ STORY EDITOR TOOLS -->
+    <div id="storyEditorTools" class="hidden" style="margin-bottom:14px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="yt-mini-btn" id="storyAddSongBtn">🎵 Song</button>
+        <button class="yt-mini-btn" id="storyAddStickerBtn">😀 Sticker</button>
+        <button class="yt-mini-btn" id="storyTrimBtn">✂️ Trim</button>
+      </div>
+      <div id="storySelectedMedia" style="font-size:12px;color:var(--muted);text-align:center"></div>
+    </div>
+
     <div class="story-upload-progress" id="storyUploadProgress">
       <div class="story-upload-progress-bar" id="storyUploadProgressBar"></div>
     </div>
@@ -852,6 +875,19 @@
   </div>
 
   <div class="story-media" id="storyMedia"></div>
+
+  <!-- ✅ STORY SONG OVERLAY -->
+  <div id="storySongOverlay" class="hidden" style="position:absolute;bottom:80px;left:12px;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.6);padding:8px 14px;border-radius:20px;backdrop-filter:blur(8px);z-index:15;max-width:60%">
+    <span style="font-size:16px">🎵</span>
+    <div style="flex:1;min-width:0">
+      <div id="storySongTitle" style="color:white;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Song</div>
+      <div id="storySongArtist" style="color:rgba(255,255,255,0.75);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Artist</div>
+    </div>
+  </div>
+
+  <!-- ✅ STORY STICKER OVERLAY -->
+  <div id="storyStickerOverlay" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:80px;pointer-events:none;z-index:16;display:none">
+  </div>
 
   <div class="story-nav-left" id="storyPrevZone"></div>
   <div class="story-nav-right" id="storyNextZone"></div>
@@ -905,6 +941,12 @@
         <span style="font-size:13px;color:var(--muted)">›</span>
       </button>
 
+      <!-- ✅ SONG LIBRARY (ADMIN ONLY) -->
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:none;justify-content:space-between;align-items:center" id="adminSongLibraryBtn">
+        <span>🎵 Song Library (Admin)</span>
+        <span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+
       <p style="font-size:12px;color:var(--muted);padding:10px;line-height:1.5;text-align:center;margin-top:10px">
         Hidden files only visible in Private Vault. PIN is required every time.
       </p>
@@ -913,7 +955,274 @@
 </div>
 
 <!-- ============================================================
-     PIN SETUP MODAL
+     ✅ ADMIN SONG LIBRARY MODAL
+============================================================ -->
+<div id="adminSongLibraryModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden">
+    <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
+      <h2>🎵 Song Library</h2>
+      <button class="close" data-close="adminSongLibraryModal">×</button>
+    </div>
+
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
+      <button class="yt-publish-btn" id="addSongBtn" style="margin:0;flex:1;padding:10px;font-size:14px">
+        ➕ Add New Song
+      </button>
+      <span id="songCount" style="font-size:12px;color:var(--muted)">0 songs</span>
+    </div>
+
+    <div id="songLibraryList" style="padding:10px 14px;max-height:60vh;overflow-y:auto">
+      <!-- Songs rendered here -->
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ✅ ADD / EDIT SONG MODAL
+============================================================ -->
+<div id="addSongModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="addSongTitle">➕ Add Song</h2>
+      <button class="close" data-close="addSongModal">×</button>
+    </div>
+
+    <input type="hidden" id="editingSongId">
+
+    <label class="yt-label">Song Name *</label>
+    <input id="songName" class="yt-input" maxlength="100" 
+           placeholder="e.g. Kesariya" style="margin-bottom:14px">
+
+    <label class="yt-label">Artist</label>
+    <input id="songArtist" class="yt-input" maxlength="100" 
+           placeholder="e.g. Arijit Singh" style="margin-bottom:14px">
+
+    <label class="yt-label">Category</label>
+    <select id="songCategory" class="yt-input" style="margin-bottom:14px">
+      <option value="Bollywood">Bollywood</option>
+      <option value="English">English</option>
+      <option value="Punjabi">Punjabi</option>
+      <option value="Instrumental">Instrumental</option>
+      <option value="Trending">Trending</option>
+      <option value="Other">Other</option>
+    </select>
+
+    <label class="yt-label">Song File (MP3, WAV, M4A) *</label>
+    <div class="story-upload-zone" id="songUploadZone" style="padding:24px 20px">
+      <span class="up-icon">🎵</span>
+      <div class="up-text">Tap to select audio file</div>
+      <div class="up-sub">Max 100MB · MP3, WAV, M4A, AAC</div>
+    </div>
+    <input type="file" id="songFile" accept="audio/*" class="hidden">
+    <div id="songFileSelected" class="hidden" style="padding:10px;background:var(--bg);border-radius:10px;margin-bottom:14px;font-size:13px;display:flex;align-items:center;gap:8px">
+      <span>🎵</span>
+      <span id="songFileName" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button id="songFileRemoveBtn" style="color:var(--danger);font-size:16px;cursor:pointer">✕</button>
+    </div>
+
+    <div class="yt-progress" id="songUploadProgress">
+      <div class="yt-progress-bar" id="songUploadProgressBar"></div>
+    </div>
+
+    <p id="songUploadStatus" style="text-align:center;font-size:13px;color:var(--muted);min-height:18px;margin-bottom:10px"></p>
+
+    <button class="yt-publish-btn" id="saveSongBtn">✅ Save Song</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     ✅ SONG PICKER MODAL
+============================================================ -->
+<div id="songPickerModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden">
+    <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
+      <h2>🎵 Choose Song</h2>
+      <button class="close" data-close="songPickerModal">×</button>
+    </div>
+
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+      <input id="songSearchInput" class="yt-input" placeholder="Search songs..." style="padding:8px 12px;font-size:13px">
+    </div>
+
+    <div id="songPickerList" style="padding:10px 14px;max-height:60vh;overflow-y:auto">
+      <!-- Songs rendered here -->
+    </div>
+
+    <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px">
+      <button class="yt-btn yt-btn-gray" id="removeSongBtn" style="flex:1;justify-content:center">
+        🔇 Remove Song
+      </button>
+      <button class="yt-btn yt-btn-primary" id="confirmSongBtn" style="flex:1;justify-content:center">
+        ✅ Use Song
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ✅ STICKER PICKER MODAL
+============================================================ -->
+<div id="stickerPickerModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>😀 Choose Sticker</h2>
+      <button class="close" data-close="stickerPickerModal">×</button>
+    </div>
+
+    <div class="yt-tabs" id="stickerTabs" style="margin:0 -20px 14px;padding:0 20px">
+      <div class="yt-tab active" data-stab="emoji">😀 Emoji</div>
+      <div class="yt-tab" data-stab="text">📝 Text</div>
+    </div>
+
+    <!-- Emoji Stickers -->
+    <div id="stickerEmojiTab" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-height:50vh;overflow-y:auto;padding:4px">
+      <div class="sticker-item" data-sticker="❤️" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">❤️</div>
+      <div class="sticker-item" data-sticker="😂" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😂</div>
+      <div class="sticker-item" data-sticker="🔥" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🔥</div>
+      <div class="sticker-item" data-sticker="💯" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💯</div>
+      <div class="sticker-item" data-sticker="🎉" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🎉</div>
+      <div class="sticker-item" data-sticker="😍" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😍</div>
+      <div class="sticker-item" data-sticker="😎" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😎</div>
+      <div class="sticker-item" data-sticker="🤩" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🤩</div>
+      <div class="sticker-item" data-sticker="🥰" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🥰</div>
+      <div class="sticker-item" data-sticker="💪" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💪</div>
+      <div class="sticker-item" data-sticker="🙏" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🙏</div>
+      <div class="sticker-item" data-sticker="✨" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">✨</div>
+      <div class="sticker-item" data-sticker="💕" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💕</div>
+      <div class="sticker-item" data-sticker="😢" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😢</div>
+      <div class="sticker-item" data-sticker="😡" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😡</div>
+      <div class="sticker-item" data-sticker="🤔" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🤔</div>
+      <div class="sticker-item" data-sticker="👏" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">👏</div>
+      <div class="sticker-item" data-sticker="🎵" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🎵</div>
+      <div class="sticker-item" data-sticker="⭐" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">⭐</div>
+      <div class="sticker-item" data-sticker="💫" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💫</div>
+      <div class="sticker-item" data-sticker="🌈" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🌈</div>
+      <div class="sticker-item" data-sticker="☀️" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">☀️</div>
+      <div class="sticker-item" data-sticker="🍕" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🍕</div>
+      <div class="sticker-item" data-sticker="🎂" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🎂</div>
+    </div>
+
+    <!-- Text Stickers -->
+    <div id="stickerTextTab" class="hidden">
+      <label class="yt-label">Enter text (max 20 chars)</label>
+      <input id="textStickerInput" class="yt-input" maxlength="20" 
+             placeholder="e.g. WOW, Best Friend..." style="margin-bottom:14px">
+      
+      <label class="yt-label">Text Color</label>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <div class="text-sticker-color selected" data-color="#ffffff" style="width:36px;height:36px;border-radius:50%;background:#ffffff;border:2px solid #ccc;cursor:pointer"></div>
+        <div class="text-sticker-color" data-color="#000000" style="width:36px;height:36px;border-radius:50%;background:#000000;border:2px solid #ccc;cursor:pointer"></div>
+        <div class="text-sticker-color" data-color="#ed4956" style="width:36px;height:36px;border-radius:50%;background:#ed4956;cursor:pointer"></div>
+        <div class="text-sticker-color" data-color="#7c3aed" style="width:36px;height:36px;border-radius:50%;background:#7c3aed;cursor:pointer"></div>
+        <div class="text-sticker-color" data-color="#0095f6" style="width:36px;height:36px;border-radius:50%;background:#0095f6;cursor:pointer"></div>
+        <div class="text-sticker-color" data-color="#22c55e" style="width:36px;height:36px;border-radius:50%;background:#22c55e;cursor:pointer"></div>
+        <div class="text-sticker-color" data-color="#f59e0b" style="width:36px;height:36px;border-radius:50%;background:#f59e0b;cursor:pointer"></div>
+        <div class="text-sticker-color" data-color="#ec4899" style="width:36px;height:36px;border-radius:50%;background:#ec4899;cursor:pointer"></div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="yt-btn yt-btn-gray" id="removeStickerBtn" style="flex:1;justify-content:center">
+        🗑️ Remove
+      </button>
+      <button class="yt-btn yt-btn-primary" id="confirmStickerBtn" style="flex:1;justify-content:center">
+        ✅ Apply
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ✅ VIDEO TRIM MODAL
+============================================================ -->
+<div id="videoTrimModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>✂️ Trim Video</h2>
+      <button class="close" data-close="videoTrimModal">×</button>
+    </div>
+
+    <video id="trimPreviewVideo" controls playsinline 
+           style="width:100%;max-height:300px;background:#000;border-radius:12px;margin-bottom:14px"></video>
+
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px">
+      <span>Start: <span id="trimStartLabel">0:00</span></span>
+      <span>End: <span id="trimEndLabel">0:00</span></span>
+    </div>
+
+    <label class="yt-label">Start Time</label>
+    <input type="range" id="trimStartRange" min="0" max="100" value="0" step="0.1" 
+           style="width:100%;margin-bottom:14px">
+
+    <label class="yt-label">End Time</label>
+    <input type="range" id="trimEndRange" min="0" max="100" value="100" step="0.1" 
+           style="width:100%;margin-bottom:14px">
+
+    <p style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:14px">
+      Selected: <span id="trimDurationLabel">0:00</span>
+    </p>
+
+    <div style="display:flex;gap:8px">
+      <button class="yt-btn yt-btn-gray" id="trimCancelBtn" style="flex:1;justify-content:center">
+        Cancel
+      </button>
+      <button class="yt-btn yt-btn-primary" id="trimSaveBtn" style="flex:1;justify-content:center">
+        ✅ Apply
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ✅ STORY MENU (3-dot)
+============================================================ -->
+<div id="storyMenuModal" class="modal">
+  <div class="modal-box" style="max-width:340px">
+    <div class="modal-header">
+      <h2>Story Options</h2>
+      <button class="close" data-close="storyMenuModal">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="storyMenuEditBtn">
+        ✏️ Edit Story
+      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="storyMenuDeleteBtn">
+        🗑️ Delete Story
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     ✅ EDIT STORY MODAL
+============================================================ -->
+<div id="editStoryModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>✏️ Edit Story</h2>
+      <button class="close" data-close="editStoryModal">×</button>
+    </div>
+
+    <img id="editStoryPreview" class="story-preview" alt="">
+    <video id="editStoryVideoPreview" class="story-preview hidden" controls playsinline muted></video>
+
+    <label class="yt-label">Caption / Text</label>
+    <textarea id="editStoryCaption" class="yt-textarea" maxlength="200"
+              placeholder="Add caption..." style="margin-bottom:14px"></textarea>
+
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="yt-mini-btn" id="editStoryChangeSongBtn" style="flex:1">🎵 Song</button>
+      <button class="yt-mini-btn" id="editStoryChangeStickerBtn" style="flex:1">😀 Sticker</button>
+    </div>
+
+    <p id="editStoryStatus" style="text-align:center;font-size:13px;color:var(--muted);min-height:18px;margin-bottom:10px"></p>
+
+    <button class="yt-publish-btn" id="saveStoryEditBtn">✅ Save Changes</button>
+  </div>
+</div>
+
+<!-- ============================================================
+     PIN SETUP / ENTRY / VAULT / MONETIZATION — (Same as before)
 ============================================================ -->
 <div id="pinSetupModal" class="modal">
   <div class="modal-box" style="max-width:400px">
@@ -945,9 +1254,6 @@
   </div>
 </div>
 
-<!-- ============================================================
-     PIN ENTRY MODAL
-============================================================ -->
 <div id="pinEntryModal" class="modal">
   <div class="modal-box" style="max-width:400px">
     <div class="modal-header">
@@ -970,9 +1276,6 @@
   </div>
 </div>
 
-<!-- ============================================================
-     VAULT VIEWER MODAL
-============================================================ -->
 <div id="vaultViewerModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden">
     <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
@@ -981,9 +1284,7 @@
     </div>
 
     <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
-      <button class="vault-add-btn" id="vaultAddFilesBtn">
-        ➕ Add Files
-      </button>
+      <button class="vault-add-btn" id="vaultAddFilesBtn">➕ Add Files</button>
       <span id="vaultFileCount" style="font-size:12px;color:var(--muted);margin-left:auto">0 files</span>
     </div>
 
@@ -996,15 +1297,10 @@
       </div>
     </div>
 
-    <div id="vaultContent" style="padding:14px;max-height:60vh;overflow-y:auto">
-      <!-- Files rendered here -->
-    </div>
+    <div id="vaultContent" style="padding:14px;max-height:60vh;overflow-y:auto"></div>
   </div>
 </div>
 
-<!-- ============================================================
-     VAULT SETTINGS MODAL
-============================================================ -->
 <div id="vaultSettingsModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1013,7 +1309,6 @@
     </div>
 
     <div style="display:flex;flex-direction:column;gap:8px">
-
       <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="vaultAutoLockBtn">
         <span>⏱️ Auto-lock after 5 min</span>
         <span id="vaultAutoLockToggle" style="font-size:13px;font-weight:bold;color:var(--muted)">ON</span>
@@ -1030,9 +1325,6 @@
   </div>
 </div>
 
-<!-- ============================================================
-     MONETIZATION APPLY MODAL
-============================================================ -->
 <div id="monetizationModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1078,17 +1370,8 @@
     </div>
 
     <label class="yt-label">UPI ID (for receiving payments)</label>
-    <input 
-      type="text" 
-      id="monetizationUpiId" 
-      class="yt-input" 
-      placeholder="yourname@paytm" 
-      maxlength="50"
-      style="margin-bottom:14px">
-
-    <p style="font-size:11.5px;color:var(--muted);line-height:1.5;margin-bottom:14px">
-      ⚠️ <strong>Demo Mode:</strong> Payment system coming soon. Your UPI ID will be stored securely for future use.
-    </p>
+    <input type="text" id="monetizationUpiId" class="yt-input" placeholder="yourname@paytm" 
+           maxlength="50" style="margin-bottom:14px">
 
     <button class="yt-publish-btn" id="submitMonetizationBtn" disabled>
       Submit Application
@@ -1098,20 +1381,10 @@
   </div>
 </div>
 
-<!-- DEEP LINK BANNER -->
-<div class="deep-link-banner" id="deepLinkBanner">
-  <span>📹</span>
-  <span>Opening shared video...</span>
-</div>
-
-<!-- TOAST -->
-<div id="toast" class="toast"></div>
-
 <!-- ============================================================
      ✅ GROUP SYSTEM MODALS
 ============================================================ -->
 
-<!-- CREATE GROUP MODAL -->
 <div id="createGroupModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1161,7 +1434,6 @@
   </div>
 </div>
 
-<!-- GROUP VIEW MODAL -->
 <div id="groupViewModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden">
     <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
@@ -1184,15 +1456,9 @@
       <div id="groupViewDesc" style="font-size:13px;color:var(--text);line-height:1.5;padding:10px;background:var(--bg);border-radius:8px;margin-bottom:14px"></div>
 
       <div style="display:flex;gap:8px;margin-bottom:14px">
-        <button class="yt-btn yt-btn-primary" id="groupJoinBtn" style="flex:1">
-          Join Group
-        </button>
-        <button class="yt-btn yt-btn-gray" id="groupOpenChatBtn" style="flex:1;display:none">
-          💬 Open Chat
-        </button>
-        <button class="yt-btn yt-btn-gray" id="groupLeaveBtn" style="flex:1;display:none;color:var(--danger)">
-          🚪 Leave
-        </button>
+        <button class="yt-btn yt-btn-primary" id="groupJoinBtn" style="flex:1">Join Group</button>
+        <button class="yt-btn yt-btn-gray" id="groupOpenChatBtn" style="flex:1;display:none">💬 Open Chat</button>
+        <button class="yt-btn yt-btn-gray" id="groupLeaveBtn" style="flex:1;display:none;color:var(--danger)">🚪 Leave</button>
       </div>
 
       <div class="yt-tabs" id="groupTabs" style="margin:0 -16px;padding:0 16px">
@@ -1214,16 +1480,20 @@
           <div style="font-size:11px;color:var(--muted)">Created on</div>
           <div id="groupInfoDate" style="font-size:14px;margin-top:2px">-</div>
         </div>
-        <div style="padding:10px 0">
+        <div style="padding:10px 0;border-bottom:1px solid var(--border)">
           <div style="font-size:11px;color:var(--muted)">Group ID</div>
           <div id="groupInfoId" style="font-size:12px;font-family:monospace;margin-top:2px;word-break:break-all">-</div>
         </div>
+
+        <button id="editGroupBtn" class="yt-btn yt-btn-primary" 
+                style="width:100%;margin-top:16px;justify-content:center;display:none">
+          ✏️ Edit Group
+        </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- GROUP CHAT MODAL -->
 <div id="groupChatModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:90vh;height:90vh">
     
@@ -1245,7 +1515,6 @@
       <button id="groupChatSendBtn">Send</button>
     </div>
 
-    <!-- Group Attachment Menu -->
     <div class="dm-attach-menu" id="groupAttachMenu">
       <div class="dm-attach-option" id="groupAttachPhotoBtn">
         <span class="icon">📷</span>
@@ -1261,14 +1530,12 @@
       </div>
     </div>
 
-    <!-- Hidden File Inputs -->
     <input type="file" id="groupPhotoFile2" accept="image/*" class="hidden">
     <input type="file" id="groupVideoFile2" accept="video/*" class="hidden">
     <input type="file" id="groupPdfFile" accept=".pdf,.doc,.docx,.txt,.zip,.ppt,.pptx,.xls,.xlsx" class="hidden">
   </div>
 </div>
 
-<!-- GROUP MENU MODAL -->
 <div id="groupMenuModal" class="modal">
   <div class="modal-box" style="max-width:340px">
     <div class="modal-header">
@@ -1276,20 +1543,13 @@
       <button class="close" data-close="groupMenuModal">×</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="groupMenuOpenBtn">
-        💬 Open Chat
-      </button>
-      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="groupMenuInfoBtn">
-        ℹ️ View Info
-      </button>
-      <button class="yt-mini-btn danger" style="padding:14px;text-align:left" id="groupMenuDeleteBtn">
-        🗑️ Delete Group
-      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="groupMenuOpenBtn">💬 Open Chat</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="groupMenuInfoBtn">ℹ️ View Info</button>
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left" id="groupMenuDeleteBtn">🗑️ Delete Group</button>
     </div>
   </div>
 </div>
 
-<!-- GROUP PHOTO VIEWER -->
 <div id="groupPhotoViewerModal" class="modal">
   <div class="modal-box" style="padding:0;background:#000;max-width:100%;text-align:center">
     <button class="close" data-close="groupPhotoViewerModal"
@@ -1298,6 +1558,62 @@
          style="width:100%;max-height:85vh;object-fit:contain;display:block">
   </div>
 </div>
+
+<div id="editGroupModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>✏️ Edit Group</h2>
+      <button class="close" data-close="editGroupModal">×</button>
+    </div>
+
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="position:relative;display:inline-block">
+        <img id="editGroupPhotoPreview" 
+             src="https://ui-avatars.com/api/?name=G&size=200&background=7c3aed&color=fff"
+             style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--border)">
+        <button id="editGroupPhotoPick" 
+                style="position:absolute;bottom:0;right:0;width:32px;height:32px;border-radius:50%;background:#7c3aed;color:white;border:3px solid var(--card);font-size:16px;cursor:pointer">
+          📷
+        </button>
+      </div>
+      <input type="file" id="editGroupPhotoFile" accept="image/*" class="hidden">
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Change Group Photo</p>
+    </div>
+
+    <label class="yt-label">Group Name *</label>
+    <input id="editGroupName" class="yt-input" maxlength="50" style="margin-bottom:14px">
+
+    <label class="yt-label">Description</label>
+    <textarea id="editGroupDescription" class="yt-textarea" maxlength="200" style="margin-bottom:14px"></textarea>
+
+    <label class="yt-label">Group Type</label>
+    <div class="yt-radio-group" id="editGroupTypeGroup" style="margin-bottom:16px">
+      <div class="yt-radio" data-value="public">
+        <span class="r-icon">🌍</span>
+        <div class="r-title">Public</div>
+        <div class="r-sub">Anyone can join</div>
+      </div>
+      <div class="yt-radio" data-value="private">
+        <span class="r-icon">🔒</span>
+        <div class="r-title">Private</div>
+        <div class="r-sub">Admin approval needed</div>
+      </div>
+    </div>
+
+    <p id="editGroupStatus" style="text-align:center;font-size:13px;color:var(--danger);min-height:18px;margin-bottom:10px"></p>
+
+    <button class="yt-publish-btn" id="saveGroupEditBtn">✅ Save Changes</button>
+  </div>
+</div>
+
+<!-- DEEP LINK BANNER -->
+<div class="deep-link-banner" id="deepLinkBanner">
+  <span>📹</span>
+  <span>Opening shared video...</span>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
 
 <!-- APP SCRIPT -->
 <script type="module" src="app.js"></script>
