@@ -269,6 +269,11 @@ body {
   background: rgba(34, 197, 94, 0.05);
 }
 
+.admin-item.ads-blocked {
+  border-color: #a78bfa;
+  background: rgba(167, 139, 250, 0.05);
+}
+
 .admin-item img {
   width: 48px;
   height: 48px;
@@ -301,6 +306,23 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.admin-item .info .uid-text {
+  font-family: monospace;
+  font-size: 10px;
+  color: #a78bfa;
+  margin-top: 3px;
+  word-break: break-all;
+  cursor: pointer;
+  background: rgba(124, 58, 237, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.admin-item .info .uid-text:active {
+  background: rgba(124, 58, 237, 0.3);
 }
 
 .admin-item .info .suspend-tag {
@@ -363,6 +385,19 @@ body {
   text-transform: uppercase;
 }
 
+.admin-item .info .ads-off-tag {
+  display: inline-block;
+  background: #a78bfa;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  margin-top: 4px;
+  margin-left: 4px;
+  text-transform: uppercase;
+}
+
 .admin-item .info .upi-id {
   display: block;
   font-size: 11px;
@@ -378,6 +413,7 @@ body {
   flex-shrink: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
+  max-width: 200px;
 }
 
 .admin-btn {
@@ -388,6 +424,11 @@ body {
   cursor: pointer;
   border: 0;
   white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.admin-btn:active {
+  transform: scale(0.95);
 }
 
 .admin-btn.danger {
@@ -412,6 +453,18 @@ body {
   background: rgba(124, 58, 237, 0.15);
   color: #a78bfa;
   border: 1px solid #7c3aed;
+}
+
+.admin-btn.ads-btn {
+  background: rgba(124, 58, 237, 0.15);
+  color: #a78bfa;
+  border: 1px solid #7c3aed;
+}
+
+.admin-btn.ads-btn.blocked {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid #22c55e;
 }
 
 .video-thumb-admin {
@@ -963,7 +1016,7 @@ body {
 }
 
 /* ============================================================
-   🎛️ AD CONTROL PANEL STYLES (NEW)
+   AD CONTROL PANEL STYLES
 ============================================================ */
 .ad-control-wrap {
   padding: 4px 0 20px;
@@ -994,6 +1047,7 @@ body {
   justify-content: space-between;
   gap: 12px;
   transition: all 0.2s;
+  cursor: pointer;
 }
 
 .ad-card.active {
@@ -1408,7 +1462,7 @@ let editingSongId = null;
 let pendingSongFile = null;
 let previewAudio = null;
 
-/* ✅ AD CONTROL STATE (NEW) */
+/* ✅ AD CONTROL STATE */
 let adSettings = {
   masterDisabled: false,
   typeDisabled: { banner: false, popup: false, video: false }
@@ -1416,6 +1470,9 @@ let adSettings = {
 let adSettingsUnsubscribe = null;
 let userAdsUnsubscribe = null;
 let adUserSearchStatus = { uid: null, disabled: false, loading: false };
+
+/* ✅ NEW: User ads status cache (per user ke saath button ke liye) */
+let adUserStatusCache = {};
 
 const $ = id => document.getElementById(id);
 
@@ -1510,7 +1567,7 @@ onAuthStateChanged(auth, async (user) => {
     await loadStats();
     startMonetizationListener();
     startSongLibraryListener();
-    startAdSettingsListener();      // ✅ NEW
+    startAdSettingsListener();
     await renderTab("users");
 
   } catch(e) {
@@ -1590,7 +1647,7 @@ $("globalMonetizationToggle")?.addEventListener("click", async () => {
 });
 
 /* ✅ ============================================================
-   AD SETTINGS LISTENERS (NEW)
+   AD SETTINGS LISTENERS
    ============================================================ */
 function startAdSettingsListener(){
   if(adSettingsUnsubscribe){ adSettingsUnsubscribe(); adSettingsUnsubscribe = null; }
@@ -1615,17 +1672,25 @@ function startAdSettingsListener(){
   userAdsUnsubscribe = onSnapshot(
     collection(db, "ad_settings", "global", "users"),
     snap => {
+      // ✅ Status cache update
+      const map = {};
+      snap.forEach(d => { 
+        map[d.id] = d.data().disabled === true; 
+      });
+      adUserStatusCache = map;
+
       if(adUserSearchStatus.uid){
         const userDoc = snap.docs.find(d => d.id === adUserSearchStatus.uid);
         adUserSearchStatus.disabled = userDoc ? userDoc.data().disabled === true : false;
       }
       if(currentTab === "ads") renderAds();
+      if(currentTab === "users") renderUsers();
     },
     error => console.error("User ads listener error:", error)
   );
 }
 
-/* ✅ RENDER ADS TAB (NEW) */
+/* ✅ RENDER ADS TAB */
 function renderAds(){
   const content = $("adminContent");
 
@@ -1677,7 +1742,7 @@ function renderAds(){
         </div>
       </div>
 
-      <div class="ad-section-title">👤 Per User Control</div>
+      <div class="ad-section-title">👤 Per User Control (Manual)</div>
       <div class="ad-user-search">
         <input id="adUserIdInput" placeholder="User ka UID daalo..." value="${adUserSearchStatus.uid || ''}">
         <button id="adUserSearchBtn">Check</button>
@@ -1689,7 +1754,7 @@ function renderAds(){
           <button class="admin-btn ${adUserSearchStatus.disabled ? 'success' : 'danger'}" id="adUserToggleBtn" style="margin-top:8px">
             ${adUserSearchStatus.disabled ? '✅ Unblock Ads' : '🚫 Block Ads'}
           </button>
-        ` : 'UID daal ke Check karo'}
+        ` : 'UID daal ke Check karo — ya 👥 Users tab se direct button click karo'}
       </div>
 
       <div class="ad-section-title">📊 Info</div>
@@ -1706,13 +1771,12 @@ function renderAds(){
 
       <p style="font-size:11.5px;color:#888;text-align:center;line-height:1.5;margin-top:16px">
         ℹ️ Ye settings Firebase <code style="color:#a78bfa">ad_settings</code> collection mein save hoti hain.<br>
-        App.js mein <code style="color:#a78bfa">showMyAd()</code> function se ads check hote hain.
+        👥 <strong>Users tab</strong> se har user ke saath direct "Ads OFF" button bhi hai.
       </p>
 
     </div>
   `;
 
-  /* Attach toggle handlers */
   content.querySelectorAll("[data-toggle]").forEach(card => {
     card.addEventListener("click", async () => {
       const type = card.dataset.toggle;
@@ -1720,13 +1784,11 @@ function renderAds(){
     });
   });
 
-  /* Attach user search handler */
   $("adUserSearchBtn")?.addEventListener("click", searchAdUser);
   $("adUserIdInput")?.addEventListener("keydown", (e) => {
     if(e.key === "Enter") searchAdUser();
   });
 
-  /* Attach user toggle handler */
   $("adUserToggleBtn")?.addEventListener("click", async () => {
     if(!adUserSearchStatus.uid) return;
     await toggleUserAds(adUserSearchStatus.uid);
@@ -1798,7 +1860,7 @@ async function toggleUserAds(uid){
 
     adUserSearchStatus.disabled = !cur;
     renderAds();
-    showToast(!cur ? `🚫 User ${uid} ads BLOCKED` : `✅ User ${uid} ads ACTIVE`);
+    showToast(!cur ? `🚫 User ${uid} ads BLOCKED` : `✅ User ${uid} ads ENABLED`);
   }catch(e){
     console.error(e);
     showToast("Failed: " + e.message, true);
@@ -1910,12 +1972,14 @@ async function renderTab(tab){
   else if(tab === "videos") await renderVideos();
   else if(tab === "monetization") renderMonetization();
   else if(tab === "songs") renderSongs();
-  else if(tab === "ads") renderAds();           /* ✅ NEW */
+  else if(tab === "ads") renderAds();
   else if(tab === "reports") await renderReports();
   else if(tab === "broadcast") await renderBroadcast();
 }
 
-/* USERS */
+/* ============================================================
+   ✅ USERS TAB — With Ads OFF Button + UID Display
+   ============================================================ */
 async function renderUsers(){
   const content = $("adminContent");
 
@@ -1939,31 +2003,44 @@ async function renderUsers(){
     content.innerHTML = allUsers.map(u => {
       const isAdmin = ADMIN_EMAILS.map(e => e.toLowerCase()).includes((u.email || "").toLowerCase());
       const isMonetized = u.monetizationStatus === "approved";
+      const adsBlocked = adUserStatusCache[u.uid] === true;
 
       return `
-      <div class="admin-item ${u.suspended ? 'suspended' : ''} ${isMonetized ? 'approved-monetization' : ''}">
+      <div class="admin-item ${u.suspended ? 'suspended' : ''} ${isMonetized ? 'approved-monetization' : ''} ${adsBlocked ? 'ads-blocked' : ''}">
         <img src="${avatar(u.photo, u.name)}" alt="">
         <div class="info">
           <strong>${esc(u.name || "User")}</strong>
           <small>@${esc(u.username || "user")} · ${u.videos || 0} videos · ${u.followers || 0} followers</small>
-          ${u.suspended ? `<span class="suspend-tag">🚫 Suspended</span>` : ''}
-          ${isAdmin ? `<span class="admin-tag">👑 Admin</span>` : ''}
-          ${isMonetized ? `<span class="approved-tag">💰 Monetized</span>` : ''}
+          <small class="uid-text" data-copy-uid="${esc(u.uid)}" title="Click to copy UID">UID: ${esc(u.uid)}</small>
+          <div style="margin-top:4px;display:flex;flex-wrap:wrap;gap:4px">
+            ${u.suspended ? `<span class="suspend-tag">🚫 Suspended</span>` : ''}
+            ${isAdmin ? `<span class="admin-tag">👑 Admin</span>` : ''}
+            ${isMonetized ? `<span class="approved-tag">💰 Monetized</span>` : ''}
+            ${adsBlocked ? `<span class="ads-off-tag">🚫 Ads OFF</span>` : ''}
+          </div>
         </div>
         <div class="admin-actions">
           ${u.uid === currentUser.uid
             ? `<span style="font-size:11px;color:#22c55e;font-weight:700">YOU</span>`
-            : u.suspended
-              ? `<button class="admin-btn success" data-unsuspend="${esc(u.uid)}">✅ Unsuspend</button>
-                 <button class="admin-btn danger" data-del-user="${esc(u.uid)}">🗑️ Delete</button>`
-              : `<button class="admin-btn warning" data-suspend="${esc(u.uid)}">🚫 Suspend</button>
-                 <button class="admin-btn danger" data-del-user="${esc(u.uid)}">🗑️ Delete</button>`
+            : `
+              <button class="admin-btn ads-btn ${adsBlocked ? 'blocked' : ''}" 
+                      data-toggle-user-ad="${esc(u.uid)}" 
+                      data-ad-status="${adsBlocked ? 'blocked' : 'active'}">
+                ${adsBlocked ? '✅ Ads ON' : '🚫 Ads OFF'}
+              </button>
+              ${u.suspended
+                ? `<button class="admin-btn success" data-unsuspend="${esc(u.uid)}">✅ Unsuspend</button>`
+                : `<button class="admin-btn warning" data-suspend="${esc(u.uid)}">🚫 Suspend</button>`
+              }
+              <button class="admin-btn danger" data-del-user="${esc(u.uid)}">🗑️ Delete</button>
+            `
           }
         </div>
       </div>
       `;
     }).join("");
 
+    // Suspend/Unsuspend/Delete handlers
     content.querySelectorAll("[data-suspend]").forEach(btn => {
       btn.addEventListener("click", () => openSuspendModal(btn.dataset.suspend));
     });
@@ -1974,6 +2051,53 @@ async function renderUsers(){
 
     content.querySelectorAll("[data-del-user]").forEach(btn => {
       btn.addEventListener("click", () => deleteUser(btn.dataset.delUser));
+    });
+
+    // ✅ NEW: Ads OFF/ON button handler
+    content.querySelectorAll("[data-toggle-user-ad]").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const uid = btn.dataset.toggleUserAd;
+        if(!uid) return;
+        
+        const wasBlocked = btn.dataset.adStatus === "blocked";
+        const newBlocked = !wasBlocked;
+        const userRef = doc(db, "ad_settings", "global", "users", uid);
+        
+        try{
+          await setDoc(userRef, { 
+            disabled: newBlocked, 
+            updatedAt: serverTimestamp() 
+          }, { merge: true });
+          
+          adUserStatusCache[uid] = newBlocked;
+          btn.dataset.adStatus = newBlocked ? "blocked" : "active";
+          btn.textContent = newBlocked ? "✅ Ads ON" : "🚫 Ads OFF";
+          btn.className = "admin-btn ads-btn" + (newBlocked ? " blocked" : "");
+          
+          showToast(newBlocked ? `🚫 ${uid.slice(0,8)}... ads BLOCKED` : `✅ ${uid.slice(0,8)}... ads ENABLED`);
+        }catch(err){
+          console.error(err);
+          showToast("Failed: " + err.message, true);
+        }
+      });
+    });
+
+    // ✅ NEW: UID copy handler
+    content.querySelectorAll("[data-copy-uid]").forEach(el => {
+      el.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const uid = el.dataset.copyUid;
+        try{
+          await navigator.clipboard.writeText(uid);
+          const original = el.textContent;
+          el.textContent = "✅ Copied!";
+          showToast("✅ UID copied");
+          setTimeout(() => { el.textContent = original; }, 1200);
+        }catch(err){
+          showToast("Copy failed", true);
+        }
+      });
     });
 
   } catch(e) {
@@ -2847,7 +2971,7 @@ document.querySelectorAll(".admin-modal").forEach(modal => {
   });
 });
 
-console.log("✅ Admin Panel loaded with Song Library + Ad Control!");
+console.log("✅ Admin Panel loaded with Song Library + Ad Control + Per-User Ads Toggle!");
 </script>
 
 </body>
