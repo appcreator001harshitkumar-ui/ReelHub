@@ -141,12 +141,29 @@
     </div>
   </header>
 
-  <!-- HOME -->
+  <!-- ============================================================
+       HOME — YouTube Style Video Grid
+  ============================================================ -->
   <section id="homePanel" class="panel">
     <div class="stories-bar" id="storiesBar">
       <div class="stories-loading">Loading stories...</div>
     </div>
-    <div id="feed"></div>
+
+    <!-- Category Chips (YouTube style) -->
+    <div class="category-chips" id="categoryChips">
+      <button class="chip active" data-cat="all">All</button>
+      <button class="chip" data-cat="music">Music</button>
+      <button class="chip" data-cat="gaming">Gaming</button>
+      <button class="chip" data-cat="news">News</button>
+      <button class="chip" data-cat="live">Live</button>
+      <button class="chip" data-cat="movies">Movies</button>
+      <button class="chip" data-cat="comedy">Comedy</button>
+      <button class="chip" data-cat="sports">Sports</button>
+      <button class="chip" data-cat="learning">Learning</button>
+    </div>
+
+    <!-- Video Grid Feed -->
+    <div id="feed" class="video-grid"></div>
   </section>
 
   <!-- SHORTS -->
