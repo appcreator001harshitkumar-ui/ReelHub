@@ -1,6 +1,6 @@
 /* ============================================================
    ReelHub - app.js (Full Clean Version)
-   PART 1/2
+   PART A — Imports + Config + State + Helpers + Auth + Profile
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -55,6 +55,9 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
+/* ============================================================
+   CONSTANTS
+============================================================ */
 const CLOUDINARY_CLOUD_NAME = "s3eresx6";
 const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
 
@@ -176,6 +179,10 @@ let selectedStickerEmoji = null;
 let selectedStickerText = null;
 let previewAudio = null;
 
+/* ✅ Song Editor Variables (ONLY ONCE) */
+let editingSongId = null;
+let pendingSongFile = null;
+
 /* Modals */
 let modalHistoryStack = [];
 
@@ -196,6 +203,9 @@ let lastSentMessageTime = 0;
 const processingLikes = new Set();
 const processingViews = new Set();
 const processingSaves = new Set();
+
+/* Watch session */
+let currentWatchSession = { videoId: null, startTime: null };
 
 /* ============================================================
    HELPERS
@@ -454,8 +464,6 @@ $("suspensionLogoutBtn")?.addEventListener("click", async ()=>{
 /* ============================================================
    WATCH TIME
 ============================================================ */
-let currentWatchSession = { videoId: null, startTime: null };
-
 function startWatchTimer(videoId){
   if(!currentUser || !videoId) return;
   if(currentWatchSession.videoId === videoId && currentWatchSession.startTime) return;
@@ -539,7 +547,7 @@ function uploadAudioToCloudinary(file, onProgress){
 }
 
 /* ============================================================
-   AUTH
+   AUTH — Email/Password/Google
 ============================================================ */
 document.querySelectorAll(".auth-tab").forEach(tab => {
   tab.addEventListener("click", () => {
@@ -642,18 +650,40 @@ function getAuthError(code){
   return errors[code] || "Something went wrong. Please try again";
 }
 
-$("googleLogin")?.addEventListener("click", async()=>{
-  $("loginStatus").textContent = "Opening Google...";
-  try{ await signInWithPopup(auth, provider); }
-  catch(error){
+/* ============================================================
+   GOOGLE LOGIN — IMPROVED
+============================================================ */
+$("googleLogin")?.addEventListener("click", async ()=>{
+  const status = $("loginStatus");
+  if(status){ status.textContent = "Opening Google..."; status.style.color = "#7c3aed"; }
+
+  try{
+    const result = await signInWithPopup(auth, provider);
+    console.log("✅ Google login success:", result.user?.email);
+    if(status){ status.textContent = "✅ Login successful!"; status.style.color = "#22c55e"; }
+  }catch(error){
+    console.error("❌ Google login error:", error.code, error.message);
+
+    if(status){
+      status.textContent = "❌ " + (error.code || "error") + ": " + (error.message || "Login failed");
+      status.style.color = "#ed4956";
+    }
+
     if(error.code === "auth/popup-blocked" || error.code === "auth/popup-closed-by-user"){
-      try{ await signInWithRedirect(auth, provider); }
-      catch(e){ $("loginStatus").textContent = e.message; }
-    }else $("loginStatus").textContent = error.message;
+      try{
+        await signInWithRedirect(auth, provider);
+      }catch(e){
+        if(status){ status.textContent = "Redirect error: " + e.message; status.style.color = "#ed4956"; }
+      }
+    }
   }
 });
 
-getRedirectResult(auth).catch(console.error);
+getRedirectResult(auth).then(result => {
+  if(result && result.user){
+    console.log("✅ Google redirect login:", result.user.email);
+  }
+}).catch(err => console.error("Redirect result error:", err));
 
 /* ============================================================
    PROFILE
@@ -788,25 +818,26 @@ onAuthStateChanged(auth, async user => {
     await loadMySaves();
     await loadMySentRequests();
 
-    startRealtimeVideos();
-    startNotifications();
-    startChatsListListener();
-    startPlaylistsListener();
-    startPresenceHeartbeat();
-    startFollowRequestsListener();
-    startStoriesListener();
-    startVaultListener();
-    startMyGroupsListener();
-    startSongLibraryListener();
-    updateAdminVisibility();
+    // Start listeners (defined in Part B and C)
+    if(typeof startRealtimeVideos === "function") startRealtimeVideos();
+    if(typeof startNotifications === "function") startNotifications();
+    if(typeof startChatsListListener === "function") startChatsListListener();
+    if(typeof startPlaylistsListener === "function") startPlaylistsListener();
+    if(typeof startPresenceHeartbeat === "function") startPresenceHeartbeat();
+    if(typeof startFollowRequestsListener === "function") startFollowRequestsListener();
+    if(typeof startStoriesListener === "function") startStoriesListener();
+    if(typeof startVaultListener === "function") startVaultListener();
+    if(typeof startMyGroupsListener === "function") startMyGroupsListener();
+    if(typeof startSongLibraryListener === "function") startSongLibraryListener();
+    if(typeof updateAdminVisibility === "function") updateAdminVisibility();
 
     try{ window.history.replaceState({ reelhubHome: true }, "", window.location.href); }catch(e){}
     try{ window.history.pushState({ reelhubApp: true }, "", window.location.href); }catch(e){}
 
-    setTimeout(checkDeepLink, 1500);
+    setTimeout(() => { if(typeof checkDeepLink === "function") checkDeepLink(); }, 1500);
     authResolved = true;
   }else{
-    if(currentUser) await markOffline();
+    if(currentUser && typeof markOffline === "function") await markOffline();
     currentUser = null;
     currentProfile = null;
     videosCache = [];
@@ -845,6 +876,16 @@ onAuthStateChanged(auth, async user => {
     authResolved = true;
   }
 });
+
+/* ============================================================
+   PART A COMPLETE
+============================================================ */
+
+console.log("✅ app.js PART A loaded — Auth + Profile ready!");
+/* ============================================================
+   ReelHub - app.js
+   PART B — Videos + Shorts + Stories + Story Editor + Video Editor
+============================================================ */
 
 /* ============================================================
    VIDEO CARD
@@ -1042,7 +1083,7 @@ function setupReelsObserver(){
 }
 
 /* ============================================================
-   STORIES
+   STORIES LISTENER
 ============================================================ */
 function startStoriesListener(){
   if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
@@ -1134,6 +1175,9 @@ document.addEventListener("click", (e)=>{
   }
 });
 
+/* ============================================================
+   CREATE STORY MODAL
+============================================================ */
 function openCreateStoryModal(){
   storyUploadFile = null;
   storyMediaType = null;
@@ -1550,7 +1594,7 @@ document.addEventListener("keydown", (e)=>{
 });
 
 /* ============================================================
-   STORY MENU
+   STORY MENU — Edit/Delete
 ============================================================ */
 $("storyMoreBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
@@ -1676,7 +1720,7 @@ $("storyMenuDeleteBtn")?.addEventListener("click", async (e)=>{
 });
 
 /* ============================================================
-   SONG LIBRARY
+   SONG LIBRARY LISTENER
 ============================================================ */
 function startSongLibraryListener(){
   if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
@@ -1696,6 +1740,9 @@ function updateAdminVisibility(){
   adminBtn.style.display = isAdminUser() ? "flex" : "none";
 }
 
+/* ============================================================
+   SONG PICKER
+============================================================ */
 function openSongPicker(context){
   songPickerContext = context || "story";
   selectedSongForApply = null;
@@ -1997,7 +2044,7 @@ $("editStoryChangeStickerBtn")?.addEventListener("click", (e)=>{
 });
 
 /* ============================================================
-   VIDEO EDITOR
+   VIDEO EDITOR — Rotate / Mute / Preview
 ============================================================ */
 $("editVideoRotateBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
@@ -2073,6 +2120,9 @@ $("editVideoPreviewBtn")?.addEventListener("click", (e)=>{
   }
 });
 
+/* ============================================================
+   VIDEO TRIM MODAL
+============================================================ */
 function openVideoTrimModal(videoEl){
   if(!videoEl || !videoEl.src){ toast("No video selected"); return; }
   trimVideoElement = videoEl;
@@ -2156,17 +2206,17 @@ $("videoFile")?.addEventListener("change", ()=>{
 });
 
 /* ============================================================
-   END OF PART 1
+   PART B COMPLETE
 ============================================================ */
 
-console.log("✅ app.js PART 1/2 loaded!");
+console.log("✅ app.js PART B loaded — Videos + Shorts + Stories ready!");
 /* ============================================================
    ReelHub - app.js
-   PART 2/2
+   PART C — Upload + Playlists + Comments + DM + Groups + Vault + Admin + Init
 ============================================================ */
 
 /* ============================================================
-   VIDEO MENU (⋮)
+   VIDEO MENU (⋮) — Edit + Delete
 ============================================================ */
 window.openVideoMenu = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
@@ -2191,14 +2241,13 @@ window.openVideoMenu = function(videoId){
 };
 
 /* ============================================================
-   DELETE VIDEO — User (own) + Admin (any)
+   DELETE VIDEO
 ============================================================ */
 window.deleteVideo = async function(videoId){
   if(!currentUser) return;
 
   const ref = doc(db, "videos", videoId);
   const snap = await getDoc(ref);
-
   if(!snap.exists()){ toast("Video not found"); return; }
 
   const videoData = snap.data();
@@ -2207,16 +2256,13 @@ window.deleteVideo = async function(videoId){
   const isAdmin = isAdminUser();
 
   if(!isOwnerUser && !isAdmin){ toast("You can't delete this video"); return; }
-
   if(!confirm(isAdmin && !isOwnerUser ? "ADMIN: Delete this video?" : "Delete this video?")) return;
 
   try{
     const comments = await getDocs(collection(db, "videos", videoId, "comments"));
     for(const c of comments.docs) await deleteDoc(c.ref);
-
     const likes = await getDocs(collection(db, "videos", videoId, "likes"));
     for(const l of likes.docs) await deleteDoc(l.ref);
-
     const views = await getDocs(collection(db, "videos", videoId, "views"));
     for(const v of views.docs) await deleteDoc(v.ref);
 
@@ -2227,10 +2273,7 @@ window.deleteVideo = async function(videoId){
     await updateDoc(doc(db, "profiles", ownerId), { videos: ownerVideos.size });
 
     toast(isAdmin && !isOwnerUser ? "🗑️ Video deleted (admin)" : "🗑️ Video deleted");
-  }catch(e){
-    console.error("deleteVideo error:", e);
-    toast("Failed: " + e.message);
-  }
+  }catch(e){ console.error("deleteVideo error:", e); toast("Failed: " + e.message); }
 };
 
 /* ============================================================
@@ -2297,7 +2340,6 @@ window.openVideoPlayer = function(videoId){
     }else{
       videoEl.style.transform = "";
     }
-
     videoEl.play().catch(()=>{});
   }
 
@@ -2410,7 +2452,7 @@ function resetVideoPlayer(){
 }
 
 /* ============================================================
-   VIEW COUNT / LIKE / SAVE
+   TRACK VIEW / LIKE / SAVE
 ============================================================ */
 async function trackView(videoId){
   if(!currentUser || !videoId) return;
@@ -2602,7 +2644,7 @@ function renderSavedVideos(){
 }
 
 /* ============================================================
-   PLAYLIST
+   PLAYLISTS
 ============================================================ */
 async function loadMyPlaylists(){
   if(!currentUser) return;
@@ -3086,9 +3128,6 @@ $("privateAccountBtn")?.addEventListener("click", async()=>{
 
 $("followRequestsBtn")?.addEventListener("click", ()=>{ hideModal("settingsModal"); showModal("followRequestsModal"); renderFollowRequests(); });
 
-/* ============================================================
-   TOGGLE FOLLOW
-============================================================ */
 async function toggleFollow(targetUid, btnEl){
   if(!currentUser || targetUid === currentUser.uid) return;
   if(btnEl){ btnEl.disabled = true; btnEl.style.opacity = "0.6"; }
@@ -5134,6 +5173,7 @@ $("removeVaultBtn")?.addEventListener("click", async () => {
 
 /* ============================================================
    ADMIN — SONG LIBRARY
+   ⚠️ NOTE: editingSongId and pendingSongFile are declared in PART A
 ============================================================ */
 function openAdminSongLibrary(){
   if(!isAdminUser()){ toast("Only admin"); return; }
@@ -5142,9 +5182,6 @@ function openAdminSongLibrary(){
   renderAdminSongLibrary();
   startSongLibraryListener();
 }
-
-let editingSongId = null;
-let pendingSongFile = null;
 
 function renderAdminSongLibrary(){
   const container = $("songLibraryList");
