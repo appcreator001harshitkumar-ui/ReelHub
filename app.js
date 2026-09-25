@@ -179,7 +179,7 @@ let selectedStickerEmoji = null;
 let selectedStickerText = null;
 let previewAudio = null;
 
-/* ✅ Song Editor Variables (ONLY ONCE) */
+/* Song Editor */
 let editingSongId = null;
 let pendingSongFile = null;
 
@@ -197,7 +197,7 @@ let vaultUploading = false;
 let splashHidden = false;
 let authResolved = false;
 
-/* ✅ Presence listeners map (FIX 3) */
+/* Presence listeners map */
 const presenceListenersMap = new Map();
 
 /* Prevention */
@@ -209,6 +209,17 @@ const processingSaves = new Set();
 
 /* Watch session */
 let currentWatchSession = { videoId: null, startTime: null };
+
+/* ============================================================
+   ✅ AD CONTROL STATE (NEW)
+============================================================ */
+let adSettings = {
+  masterDisabled: false,
+  typeDisabled: { banner: false, popup: false, video: false },
+  userDisabled: {}
+};
+let adSettingsUnsubscribe = null;
+let userAdsUnsubscribe = null;
 
 /* ============================================================
    HELPERS
@@ -342,6 +353,52 @@ function getFileIcon(fileName, fileType){
 
 function isAdminUser(){
   return currentUser && ADMIN_EMAILS.includes(currentUser.email);
+}
+
+/* ============================================================
+   ✅ AD CONTROL — Check + Render + Listener (NEW)
+============================================================ */
+function canShowAd(adType, userId){
+  if(adSettings.masterDisabled === true) return false;
+  if(userId && adSettings.userDisabled[userId] === true) return false;
+  if(adType && adSettings.typeDisabled[adType] === true) return false;
+  return true;
+}
+
+window.showMyAd = function(adType, targetUserId, adCallback){
+  if(!canShowAd(adType, targetUserId || currentUser?.uid)){
+    console.log("🚫 Ad blocked:", adType, "for:", targetUserId || "all");
+    return;
+  }
+  if(typeof adCallback === "function") adCallback();
+};
+
+function startAdSettingsListener(){
+  if(adSettingsUnsubscribe){ adSettingsUnsubscribe(); adSettingsUnsubscribe = null; }
+  if(userAdsUnsubscribe){ userAdsUnsubscribe(); userAdsUnsubscribe = null; }
+
+  adSettingsUnsubscribe = onSnapshot(
+    doc(db, "ad_settings", "global"),
+    snap => {
+      if(snap.exists()){
+        const d = snap.data();
+        adSettings.masterDisabled = d.masterDisabled === true;
+        adSettings.typeDisabled = d.typeDisabled || { banner: false, popup: false, video: false };
+        console.log("📢 Ad settings:", adSettings.masterDisabled ? "ALL BLOCKED" : "ACTIVE");
+      }
+    },
+    error => console.error("Ad settings listener error:", error)
+  );
+
+  userAdsUnsubscribe = onSnapshot(
+    collection(db, "ad_settings", "global", "users"),
+    snap => {
+      const map = {};
+      snap.forEach(d => { map[d.id] = d.data().disabled === true; });
+      adSettings.userDisabled = map;
+    },
+    error => console.error("User ads listener error:", error)
+  );
 }
 
 /* ============================================================
@@ -499,7 +556,7 @@ document.addEventListener("visibilitychange", () => {
 window.addEventListener("beforeunload", () => { stopWatchTimer(); });
 
 /* ============================================================
-   CLOUDINARY UPLOAD  —  ✅ FIX 1: PDF/raw support + timeout
+   CLOUDINARY UPLOAD
 ============================================================ */
 function uploadToCloudinary(file, onProgress){
   return new Promise((resolve,reject)=>{
@@ -529,7 +586,6 @@ function uploadToCloudinary(file, onProgress){
   });
 }
 
-/* ✅ FIX 8: timeout added */
 function uploadAudioToCloudinary(file, onProgress){
   return new Promise((resolve, reject)=>{
     const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
@@ -810,14 +866,13 @@ async function loadMySentRequests(){
   }catch(e){ console.error(e); }
 }
 
-/* ✅ FIX 3: stop all presence listeners on logout */
 function stopAllPresenceListeners(){
   presenceListenersMap.forEach(unsub => { try{ unsub(); }catch(e){} });
   presenceListenersMap.clear();
 }
 
 /* ============================================================
-   AUTH STATE  —  ✅ FIX 7: splash timing
+   AUTH STATE
 ============================================================ */
 onAuthStateChanged(auth, async user => {
   if(user){
@@ -828,7 +883,7 @@ onAuthStateChanged(auth, async user => {
     const isSuspended = await checkSuspension(user.uid);
     if(isSuspended){ hideSplash(); authResolved = true; return; }
 
-    hideSplash();   // ✅ after suspension check
+    hideSplash();
 
     await createProfile();
     await loadProfile();
@@ -836,7 +891,7 @@ onAuthStateChanged(auth, async user => {
     await loadMySaves();
     await loadMySentRequests();
 
-    // Start listeners (defined in Part B and C)
+    // Start listeners
     if(typeof startRealtimeVideos === "function") startRealtimeVideos();
     if(typeof startNotifications === "function") startNotifications();
     if(typeof startChatsListListener === "function") startChatsListListener();
@@ -848,6 +903,9 @@ onAuthStateChanged(auth, async user => {
     if(typeof startMyGroupsListener === "function") startMyGroupsListener();
     if(typeof startSongLibraryListener === "function") startSongLibraryListener();
     if(typeof updateAdminVisibility === "function") updateAdminVisibility();
+
+    // ✅ AD SETTINGS LISTENER START
+    if(typeof startAdSettingsListener === "function") startAdSettingsListener();
 
     try{ window.history.replaceState({ reelhubHome: true }, "", window.location.href); }catch(e){}
     try{ window.history.pushState({ reelhubApp: true }, "", window.location.href); }catch(e){}
@@ -887,10 +945,17 @@ onAuthStateChanged(auth, async user => {
     if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
     if(heartbeatInterval){ clearInterval(heartbeatInterval); heartbeatInterval = null; }
 
-    // ✅ FIX 3: kill all presence listeners
+    // ✅ AD SETTINGS LISTENER STOP
+    if(adSettingsUnsubscribe){ adSettingsUnsubscribe(); adSettingsUnsubscribe = null; }
+    if(userAdsUnsubscribe){ userAdsUnsubscribe(); userAdsUnsubscribe = null; }
+    adSettings = {
+      masterDisabled: false,
+      typeDisabled: { banner: false, popup: false, video: false },
+      userDisabled: {}
+    };
+
     stopAllPresenceListeners();
 
-    // ✅ clear processing sets
     processingLikes.clear();
     processingSaves.clear();
     processingViews.clear();
@@ -904,11 +969,7 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-/* ============================================================
-   PART A COMPLETE
-============================================================ */
-
-console.log("✅ app.js PART A loaded — Auth + Profile ready!");
+console.log("✅ app.js PART A loaded — Auth + Profile + Ad System ready!");
 /* ============================================================
    ReelHub - app.js
    PART B — Videos + Shorts + Stories + Story Editor + Video Editor
@@ -1003,7 +1064,6 @@ function loadVideoDuration(videoId, videoURL){
   });
 }
 
-/* ✅ FIX 4: error callback added */
 function startRealtimeVideos(){
   if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
 
@@ -1115,7 +1175,7 @@ function setupReelsObserver(){
 }
 
 /* ============================================================
-   STORIES LISTENER  —  ✅ FIX 4: error callback
+   STORIES LISTENER
 ============================================================ */
 function startStoriesListener(){
   if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
@@ -1427,7 +1487,6 @@ function loadCurrentStory(){
     }
   }
 
-  // Song
   const songOverlay = $("storySongOverlay");
   if(songOverlay){
     if(story.song && story.song.audioURL){
@@ -1442,7 +1501,6 @@ function loadCurrentStory(){
     }else songOverlay.classList.add("hidden");
   }
 
-  // Sticker
   const stickerOverlay = $("storyStickerOverlay");
   if(stickerOverlay){
     if(story.sticker){
@@ -1756,7 +1814,7 @@ $("storyMenuDeleteBtn")?.addEventListener("click", async (e)=>{
 });
 
 /* ============================================================
-   SONG LIBRARY LISTENER  —  ✅ FIX 4: error callback
+   SONG LIBRARY LISTENER
 ============================================================ */
 function startSongLibraryListener(){
   if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
@@ -2241,10 +2299,6 @@ $("videoFile")?.addEventListener("change", ()=>{
   }, 200);
 });
 
-/* ============================================================
-   PART B COMPLETE
-============================================================ */
-
 console.log("✅ app.js PART B loaded — Videos + Shorts + Stories ready!");
 /* ============================================================
    ReelHub - app.js
@@ -2453,6 +2507,11 @@ window.openVideoPlayer = function(videoId){
   });
 
   showModal("videoPlayerModal");
+
+  // ✅ Trigger ad system for video player
+  try{
+    window.dispatchEvent(new Event("videoPlayerOpened"));
+  }catch(e){}
 };
 
 async function updateVideoPlayerSave(videoId){
@@ -2694,7 +2753,6 @@ async function loadMyPlaylists(){
   }catch(e){ console.error("loadMyPlaylists:", e); }
 }
 
-/* ✅ FIX 4: error callback */
 function startPlaylistsListener(){
   if(playlistsUnsubscribe){ playlistsUnsubscribe(); playlistsUnsubscribe = null; }
   if(!currentUser) return;
@@ -3085,7 +3143,6 @@ async function cancelFollowRequest(targetUid){
   }catch(e){}
 }
 
-/* ✅ FIX 5: refresh caches after accept */
 async function acceptFollowRequest(fromUid){
   if(!currentUser) return;
   try{
@@ -3096,7 +3153,6 @@ async function acceptFollowRequest(fromUid){
     await syncFollowCounts(fromUid);
     await syncFollowCounts(currentUser.uid);
 
-    // ✅ refresh caches
     myFollowsCache.add(fromUid);
     mySentRequestsCache.delete(fromUid);
     updateAllFollowButtons(fromUid, true);
@@ -3120,7 +3176,6 @@ async function rejectFollowRequest(fromUid){
   }catch(e){ toast("Failed"); }
 }
 
-/* ✅ FIX 4: error callback */
 function startFollowRequestsListener(){
   if(followRequestsUnsubscribe){ followRequestsUnsubscribe(); followRequestsUnsubscribe = null; }
   if(!currentUser) return;
@@ -3527,7 +3582,7 @@ $("shareAppBtn")?.addEventListener("click", async()=>{
 });
 
 /* ============================================================
-   NOTIFICATIONS  —  ✅ FIX 4: error callback
+   NOTIFICATIONS
 ============================================================ */
 function startNotifications(){
   if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
@@ -3592,14 +3647,13 @@ function startPresenceHeartbeat(){
   window.addEventListener("beforeunload", markOffline);
 }
 
-/* ✅ FIX 3: Multiple user listeners via Map */
 function startPresenceListener(uids){
   if(!uids || !uids.length) return;
   const uniqueUids = [...new Set(uids)].filter(u => u && u !== currentUser?.uid);
   if(!uniqueUids.length) return;
 
   uniqueUids.forEach(uid => {
-    if(presenceListenersMap.has(uid)) return;  // already listening
+    if(presenceListenersMap.has(uid)) return;
 
     const unsub = onSnapshot(
       doc(db, "presence", uid),
@@ -3685,7 +3739,7 @@ async function calculateAllUnread(){
 }
 
 /* ============================================================
-   DM CHAT  —  ✅ FIX 4: error callbacks
+   DM CHAT
 ============================================================ */
 function startChatsListListener(){
   if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
@@ -3797,7 +3851,6 @@ function openChatFromProfile(uid){
   setTimeout(()=> openChat(uid), 200);
 }
 
-/* ✅ FIX 4: error callback */
 function startChatListener(){
   if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
   if(!currentChatId) return;
@@ -3927,7 +3980,6 @@ $("dmSearchInput")?.addEventListener("input", e=>{
     item.style.display = name.includes(val) ? "" : "none";
   });
 });
-
 /* ============================================================
    GROUPS
 ============================================================ */
@@ -4021,7 +4073,6 @@ $("createGroupBtn")?.addEventListener("click", async ()=>{
   }finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Create Group"; } }
 });
 
-/* ✅ FIX 4: error callback */
 function startMyGroupsListener(){
   if(myGroupsUnsubscribe){ myGroupsUnsubscribe(); myGroupsUnsubscribe = null; }
   if(!currentUser) return;
@@ -4196,7 +4247,6 @@ async function sendGroupJoinRequest(groupId){
   }catch(e){ toast("Failed"); }
 }
 
-/* ✅ FIX 4: error callback */
 function startGroupRequestsListener(groupId){
   if(groupRequestsUnsubscribe){ groupRequestsUnsubscribe(); groupRequestsUnsubscribe = null; }
   if(!groupId) return;
@@ -4516,7 +4566,6 @@ async function openGroupChat(groupId){
   }catch(e){ toast("Error"); }
 }
 
-/* ✅ FIX 4: error callback */
 function startGroupChatListener(groupId){
   if(groupChatUnsubscribe){ groupChatUnsubscribe(); groupChatUnsubscribe = null; }
   if(!groupId) return;
@@ -4711,7 +4760,7 @@ document.addEventListener("click", (e)=>{
 });
 
 /* ============================================================
-   COMMENTS  —  ✅ FIX 4: error callback
+   COMMENTS
 ============================================================ */
 function openComments(videoId){
   currentCommentVideoId = videoId;
@@ -4775,7 +4824,6 @@ async function sendComment(){
   }catch(e){ toast("Comment failed"); }
 }
 
-/* ✅ FIX 6: try/catch added */
 async function deleteComment(videoId, commentId){
   try{
     const ref = doc(db,"videos",videoId,"comments",commentId);
@@ -4993,7 +5041,7 @@ $("submitMonetizationBtn")?.addEventListener("click", async () => {
 });
 
 /* ============================================================
-   VAULT  —  ✅ FIX 4: error callback
+   VAULT
 ============================================================ */
 async function saveVaultPin(pin){
   if(!currentUser) return false;
@@ -5415,7 +5463,6 @@ async function deleteSong(songId){
   catch(e){ toast("Failed"); }
 }
 
-/* ✅ FIX 2: `await` removed from non-async handler */
 document.addEventListener("click", (e)=>{
   const t = e.target;
   const adminBtn = t.closest("#adminSongLibraryBtn");
@@ -5691,6 +5738,19 @@ window.addEventListener("unhandledrejection", (e) => {
 });
 
 /* ============================================================
+   ✅ AD SYSTEM — AUTO INIT
+============================================================ */
+window.addEventListener("load", function(){
+  // Agar user already logged in hai, aur ad system ready hai
+  setTimeout(function(){
+    if(typeof window.showMyAd === "function" && typeof window.reloadAds === "function"){
+      window.reloadAds();
+      console.log("✅ Ads reloaded after page load");
+    }
+  }, 2000);
+});
+
+/* ============================================================
    FINAL LOG
 ============================================================ */
 console.log("✅ ReelHub app.js FULL loaded!");
@@ -5703,6 +5763,7 @@ console.log("  ✅ Group Chat (text + photo + video + PDF)");
 console.log("  ✅ Song Library (Admin)");
 console.log("  ✅ Video Editor (Trim/Rotate/Mute)");
 console.log("  ✅ Vault + Monetization + Notifications");
+console.log("  ✅ Ad Control System (Master + Ad Type + Per User)");
 console.log("🔧 FIXES APPLIED:");
 console.log("  ✅ FIX 1: Cloudinary PDF/raw support + XHR timeout");
 console.log("  ✅ FIX 2: Removed `await` from non-async song delete handler");
@@ -5712,3 +5773,7 @@ console.log("  ✅ FIX 5: Follow requests cache refresh on accept");
 console.log("  ✅ FIX 6: try/catch added to deleteComment");
 console.log("  ✅ FIX 7: Splash hidden only after suspension check");
 console.log("  ✅ FIX 8: Audio upload timeout added");
+console.log("🎛️ AD SYSTEM:");
+console.log("  ✅ showMyAd(adType, uid, callback) — global helper");
+console.log("  ✅ canShowAd(adType, uid) — priority check");
+console.log("  ✅ startAdSettingsListener() — live Firebase sync");
