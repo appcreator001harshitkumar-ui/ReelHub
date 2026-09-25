@@ -197,6 +197,9 @@ let vaultUploading = false;
 let splashHidden = false;
 let authResolved = false;
 
+/* ✅ Presence listeners map (FIX 3) */
+const presenceListenersMap = new Map();
+
 /* Prevention */
 const processingMessages = new Set();
 let lastSentMessageTime = 0;
@@ -308,7 +311,7 @@ function formatViewsShort(num){
 }
 
 function formatDuration(seconds){
-  if(!seconds || isNaN(seconds)) return "0:00";
+  if(!seconds || isNaN(seconds) || !isFinite(seconds)) return "0:00";
   const s = Math.floor(seconds);
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
@@ -496,14 +499,18 @@ document.addEventListener("visibilitychange", () => {
 window.addEventListener("beforeunload", () => { stopWatchTimer(); });
 
 /* ============================================================
-   CLOUDINARY UPLOAD
+   CLOUDINARY UPLOAD  —  ✅ FIX 1: PDF/raw support + timeout
 ============================================================ */
 function uploadToCloudinary(file, onProgress){
   return new Promise((resolve,reject)=>{
-    const resource = file.type.startsWith("video/") ? "video" : "image";
+    let resource = "image";
+    if(file.type.startsWith("video/")) resource = "video";
+    else if(!file.type.startsWith("image/")) resource = "raw";
+
     const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resource}/upload`;
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
+    xhr.timeout = 5 * 60 * 1000;
 
     xhr.onload = ()=>{
       if(xhr.status >= 200 && xhr.status < 300){
@@ -512,6 +519,7 @@ function uploadToCloudinary(file, onProgress){
       }else reject(new Error("Upload failed: " + xhr.status));
     };
     xhr.onerror = ()=> reject(new Error("Network error"));
+    xhr.ontimeout = ()=> reject(new Error("Upload timeout"));
     xhr.upload.onprogress = e=>{ if(e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100)); };
 
     const form = new FormData();
@@ -521,11 +529,13 @@ function uploadToCloudinary(file, onProgress){
   });
 }
 
+/* ✅ FIX 8: timeout added */
 function uploadAudioToCloudinary(file, onProgress){
   return new Promise((resolve, reject)=>{
     const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
+    xhr.timeout = 5 * 60 * 1000;
 
     xhr.onload = ()=>{
       if(xhr.status >= 200 && xhr.status < 300){
@@ -536,6 +546,7 @@ function uploadAudioToCloudinary(file, onProgress){
       }else reject(new Error("Upload failed: " + xhr.status));
     };
     xhr.onerror = ()=> reject(new Error("Network error"));
+    xhr.ontimeout = ()=> reject(new Error("Audio upload timeout"));
     xhr.upload.onprogress = e=>{ if(e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100)); };
 
     const form = new FormData();
@@ -651,7 +662,7 @@ function getAuthError(code){
 }
 
 /* ============================================================
-   GOOGLE LOGIN — IMPROVED
+   GOOGLE LOGIN
 ============================================================ */
 $("googleLogin")?.addEventListener("click", async ()=>{
   const status = $("loginStatus");
@@ -799,18 +810,25 @@ async function loadMySentRequests(){
   }catch(e){ console.error(e); }
 }
 
+/* ✅ FIX 3: stop all presence listeners on logout */
+function stopAllPresenceListeners(){
+  presenceListenersMap.forEach(unsub => { try{ unsub(); }catch(e){} });
+  presenceListenersMap.clear();
+}
+
 /* ============================================================
-   AUTH STATE
+   AUTH STATE  —  ✅ FIX 7: splash timing
 ============================================================ */
 onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
     $("loginPage")?.classList.add("hidden");
     $("app")?.classList.remove("hidden");
-    hideSplash();
 
     const isSuspended = await checkSuspension(user.uid);
-    if(isSuspended){ authResolved = true; return; }
+    if(isSuspended){ hideSplash(); authResolved = true; return; }
+
+    hideSplash();   // ✅ after suspension check
 
     await createProfile();
     await loadProfile();
@@ -868,6 +886,15 @@ onAuthStateChanged(auth, async user => {
     if(groupChatUnsubscribe){ groupChatUnsubscribe(); groupChatUnsubscribe = null; }
     if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
     if(heartbeatInterval){ clearInterval(heartbeatInterval); heartbeatInterval = null; }
+
+    // ✅ FIX 3: kill all presence listeners
+    stopAllPresenceListeners();
+
+    // ✅ clear processing sets
+    processingLikes.clear();
+    processingSaves.clear();
+    processingViews.clear();
+    processingMessages.clear();
 
     $("app")?.classList.add("hidden");
     $("loginPage")?.classList.remove("hidden");
@@ -976,27 +1003,32 @@ function loadVideoDuration(videoId, videoURL){
   });
 }
 
+/* ✅ FIX 4: error callback added */
 function startRealtimeVideos(){
   if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
 
-  videosUnsubscribe = onSnapshot(collection(db,"videos"), snapshot=>{
-    videosCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    videosCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
+  videosUnsubscribe = onSnapshot(
+    collection(db,"videos"),
+    snapshot=>{
+      videosCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      videosCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
 
-    renderFeed();
-    renderShorts();
-    loadMyVideos();
+      renderFeed();
+      renderShorts();
+      loadMyVideos();
 
-    if(mySavesCache.size > 0){
-      renderSavedVideos();
-      updateProfileTabCounts();
-    }
+      if(mySavesCache.size > 0){
+        renderSavedVideos();
+        updateProfileTabCounts();
+      }
 
-    if($("publicProfileModal")?.classList.contains("show")){
-      const uid = $("publicProfileModal").dataset.uid;
-      if(uid) loadPublicVideos(uid);
-    }
-  });
+      if($("publicProfileModal")?.classList.contains("show")){
+        const uid = $("publicProfileModal").dataset.uid;
+        if(uid) loadPublicVideos(uid);
+      }
+    },
+    error => console.error("Videos listener error:", error)
+  );
 }
 
 /* ============================================================
@@ -1083,19 +1115,23 @@ function setupReelsObserver(){
 }
 
 /* ============================================================
-   STORIES LISTENER
+   STORIES LISTENER  —  ✅ FIX 4: error callback
 ============================================================ */
 function startStoriesListener(){
   if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
   if(!currentUser) return;
-  storiesUnsubscribe = onSnapshot(collection(db, "stories"), snapshot=>{
-    const now = Date.now();
-    storiesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
-      .filter(s => (now - timeValue(s.createdAt)) < STORY_LIFETIME_MS);
-    storiesCache.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
-    groupStories();
-    renderStoriesBar();
-  }, error=>console.error("Stories listener error:", error));
+  storiesUnsubscribe = onSnapshot(
+    collection(db, "stories"),
+    snapshot=>{
+      const now = Date.now();
+      storiesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
+        .filter(s => (now - timeValue(s.createdAt)) < STORY_LIFETIME_MS);
+      storiesCache.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
+      groupStories();
+      renderStoriesBar();
+    },
+    error=>console.error("Stories listener error:", error)
+  );
 }
 
 function groupStories(){
@@ -1720,7 +1756,7 @@ $("storyMenuDeleteBtn")?.addEventListener("click", async (e)=>{
 });
 
 /* ============================================================
-   SONG LIBRARY LISTENER
+   SONG LIBRARY LISTENER  —  ✅ FIX 4: error callback
 ============================================================ */
 function startSongLibraryListener(){
   if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
@@ -2658,6 +2694,7 @@ async function loadMyPlaylists(){
   }catch(e){ console.error("loadMyPlaylists:", e); }
 }
 
+/* ✅ FIX 4: error callback */
 function startPlaylistsListener(){
   if(playlistsUnsubscribe){ playlistsUnsubscribe(); playlistsUnsubscribe = null; }
   if(!currentUser) return;
@@ -2669,7 +2706,8 @@ function startPlaylistsListener(){
       updateProfileTabCounts();
       renderPlaylistsTab();
       if(currentPlaylistView) renderPlaylistDetail(currentPlaylistView);
-    }
+    },
+    error=>console.error("Playlists listener error:", error)
   );
 }
 
@@ -3047,6 +3085,7 @@ async function cancelFollowRequest(targetUid){
   }catch(e){}
 }
 
+/* ✅ FIX 5: refresh caches after accept */
 async function acceptFollowRequest(fromUid){
   if(!currentUser) return;
   try{
@@ -3056,6 +3095,12 @@ async function acceptFollowRequest(fromUid){
     await deleteDoc(doc(db, "follow_requests", fromUid + "_" + currentUser.uid));
     await syncFollowCounts(fromUid);
     await syncFollowCounts(currentUser.uid);
+
+    // ✅ refresh caches
+    myFollowsCache.add(fromUid);
+    mySentRequestsCache.delete(fromUid);
+    updateAllFollowButtons(fromUid, true);
+
     await addDoc(collection(db, "notifications"), {
       to: fromUid, from: currentUser.uid, title: "✅ Request Accepted",
       message: (currentProfile?.name || "User") + " accepted your follow request",
@@ -3075,6 +3120,7 @@ async function rejectFollowRequest(fromUid){
   }catch(e){ toast("Failed"); }
 }
 
+/* ✅ FIX 4: error callback */
 function startFollowRequestsListener(){
   if(followRequestsUnsubscribe){ followRequestsUnsubscribe(); followRequestsUnsubscribe = null; }
   if(!currentUser) return;
@@ -3087,7 +3133,8 @@ function startFollowRequestsListener(){
         if(myFollowRequestsCache.length > 0){ badge.textContent = myFollowRequestsCache.length; badge.style.display = "inline"; }
         else badge.style.display = "none";
       }
-    }
+    },
+    error=>console.error("Follow requests listener error:", error)
   );
 }
 
@@ -3480,7 +3527,7 @@ $("shareAppBtn")?.addEventListener("click", async()=>{
 });
 
 /* ============================================================
-   NOTIFICATIONS
+   NOTIFICATIONS  —  ✅ FIX 4: error callback
 ============================================================ */
 function startNotifications(){
   if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
@@ -3505,7 +3552,8 @@ function startNotifications(){
           <p style="font-size:13px;color:var(--muted);margin-top:4px">${esc(n.message || "")}</p>
           <div style="font-size:11px;color:var(--muted);margin-top:4px">${timeAgo(n.createdAt)}</div>
         </div>`).join("");
-    }
+    },
+    error=>console.error("Notifications listener error:", error)
   );
 }
 
@@ -3544,22 +3592,28 @@ function startPresenceHeartbeat(){
   window.addEventListener("beforeunload", markOffline);
 }
 
+/* ✅ FIX 3: Multiple user listeners via Map */
 function startPresenceListener(uids){
-  if(presenceUnsubscribe){ presenceUnsubscribe(); presenceUnsubscribe = null; }
   if(!uids || !uids.length) return;
   const uniqueUids = [...new Set(uids)].filter(u => u && u !== currentUser?.uid);
   if(!uniqueUids.length) return;
-  const limitedUids = uniqueUids.slice(0, 10);
-  presenceUnsubscribe = onSnapshot(
-    query(collection(db, "presence"), where("userId", "in", limitedUids)),
-    snapshot=>{
-      snapshot.docs.forEach(d=>{
-        const data = d.data();
-        onlineUsersCache[data.userId] = { online: data.online, lastSeen: data.lastSeen };
-      });
-      updateOnlineIndicators();
-    }
-  );
+
+  uniqueUids.forEach(uid => {
+    if(presenceListenersMap.has(uid)) return;  // already listening
+
+    const unsub = onSnapshot(
+      doc(db, "presence", uid),
+      snap=>{
+        if(snap.exists()){
+          const data = snap.data();
+          onlineUsersCache[uid] = { online: data.online, lastSeen: data.lastSeen };
+          updateOnlineIndicators();
+        }
+      },
+      error => console.error("Presence listener error:", error)
+    );
+    presenceListenersMap.set(uid, unsub);
+  });
 }
 
 function updateOnlineIndicators(){
@@ -3631,7 +3685,7 @@ async function calculateAllUnread(){
 }
 
 /* ============================================================
-   DM CHAT
+   DM CHAT  —  ✅ FIX 4: error callbacks
 ============================================================ */
 function startChatsListListener(){
   if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
@@ -3646,7 +3700,8 @@ function startChatsListListener(){
       if(inbox && !inbox.classList.contains("hidden")) renderDMInbox();
       const chatUids = myChatsCache.map(c => c.members.find(uid => uid !== currentUser.uid));
       if(chatUids.length) startPresenceListener(chatUids);
-    }
+    },
+    error=>console.error("Chats list listener error:", error)
   );
 }
 
@@ -3742,37 +3797,42 @@ function openChatFromProfile(uid){
   setTimeout(()=> openChat(uid), 200);
 }
 
+/* ✅ FIX 4: error callback */
 function startChatListener(){
   if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
   if(!currentChatId) return;
-  chatUnsubscribe = onSnapshot(collection(db,"chats",currentChatId,"messages"), snapshot=>{
-    const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
-    const container = $("dmMessages");
-    if(!container) return;
-    if(!list.length){
-      container.innerHTML = `<div class="yt-empty" style="padding:40px 20px;color:var(--muted)"><p style="font-size:13px">No messages yet. Say hi! 👋</p></div>`;
-      return;
-    }
-    container.innerHTML = list.map(m=>{
-      const mine = m.userId === currentUser.uid;
-      if(m.type === "shared_video" && m.videoId){
-        return `<div class="dm-msg ${mine?"me":"them"}"><div class="dm-shared-video" data-open-shared="${esc(m.videoId)}"><video src="${esc(m.videoURL || "")}" muted preload="metadata"></video><div class="info"><strong>${esc(m.videoTitle || "Video")}</strong></div></div><small>${timeAgo(m.createdAt)}</small></div>`;
+  chatUnsubscribe = onSnapshot(
+    collection(db,"chats",currentChatId,"messages"),
+    snapshot=>{
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
+      const container = $("dmMessages");
+      if(!container) return;
+      if(!list.length){
+        container.innerHTML = `<div class="yt-empty" style="padding:40px 20px;color:var(--muted)"><p style="font-size:13px">No messages yet. Say hi! 👋</p></div>`;
+        return;
       }
-      if(m.type === "image" && m.imageURL){
-        return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent"><div class="dm-msg-image" data-open-image="${esc(m.imageURL)}"><img src="${esc(m.imageURL)}" alt="Photo"></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
-      }
-      if(m.type === "chat_video" && m.videoURL){
-        return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent"><div class="dm-msg-image"><video src="${esc(m.videoURL)}" controls playsinline preload="metadata" style="width:100%;display:block;border-radius:12px;max-height:280px;background:#000"></video></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
-      }
-      if(m.type === "file" && m.fileURL){
-        const fInfo = getFileIcon(m.fileName, m.fileType);
-        return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent"><div class="group-msg-file" data-open-file="${esc(m.fileURL)}" data-file-name="${esc(m.fileName)}"><div class="file-icon ${fInfo.cls}">${fInfo.icon}</div><div class="file-info"><strong>${esc(m.fileName || "File")}</strong><small>${formatFileSize(m.fileSize || 0)}</small></div><div class="file-download">⬇️</div></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
-      }
-      return `<div class="dm-msg ${mine?"me":"them"}">${esc(m.text)}<small>${timeAgo(m.createdAt)}</small></div>`;
-    }).join("");
-    container.scrollTop = container.scrollHeight;
-  });
+      container.innerHTML = list.map(m=>{
+        const mine = m.userId === currentUser.uid;
+        if(m.type === "shared_video" && m.videoId){
+          return `<div class="dm-msg ${mine?"me":"them"}"><div class="dm-shared-video" data-open-shared="${esc(m.videoId)}"><video src="${esc(m.videoURL || "")}" muted preload="metadata"></video><div class="info"><strong>${esc(m.videoTitle || "Video")}</strong></div></div><small>${timeAgo(m.createdAt)}</small></div>`;
+        }
+        if(m.type === "image" && m.imageURL){
+          return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent"><div class="dm-msg-image" data-open-image="${esc(m.imageURL)}"><img src="${esc(m.imageURL)}" alt="Photo"></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
+        }
+        if(m.type === "chat_video" && m.videoURL){
+          return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent"><div class="dm-msg-image"><video src="${esc(m.videoURL)}" controls playsinline preload="metadata" style="width:100%;display:block;border-radius:12px;max-height:280px;background:#000"></video></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
+        }
+        if(m.type === "file" && m.fileURL){
+          const fInfo = getFileIcon(m.fileName, m.fileType);
+          return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent"><div class="group-msg-file" data-open-file="${esc(m.fileURL)}" data-file-name="${esc(m.fileName)}"><div class="file-icon ${fInfo.cls}">${fInfo.icon}</div><div class="file-info"><strong>${esc(m.fileName || "File")}</strong><small>${formatFileSize(m.fileSize || 0)}</small></div><div class="file-download">⬇️</div></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
+        }
+        return `<div class="dm-msg ${mine?"me":"them"}">${esc(m.text)}<small>${timeAgo(m.createdAt)}</small></div>`;
+      }).join("");
+      container.scrollTop = container.scrollHeight;
+    },
+    error=>console.error("Chat messages listener error:", error)
+  );
 }
 
 $("dmSendBtn")?.addEventListener("click", sendDM);
@@ -3961,6 +4021,7 @@ $("createGroupBtn")?.addEventListener("click", async ()=>{
   }finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Create Group"; } }
 });
 
+/* ✅ FIX 4: error callback */
 function startMyGroupsListener(){
   if(myGroupsUnsubscribe){ myGroupsUnsubscribe(); myGroupsUnsubscribe = null; }
   if(!currentUser) return;
@@ -3970,7 +4031,8 @@ function startMyGroupsListener(){
       myGroupsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       myGroupsCache.sort((a,b)=> timeValue(b.lastMessageAt || b.createdAt) - timeValue(a.lastMessageAt || a.createdAt));
       renderGroupsList();
-    }
+    },
+    error=>console.error("My groups listener error:", error)
   );
 }
 
@@ -4134,6 +4196,7 @@ async function sendGroupJoinRequest(groupId){
   }catch(e){ toast("Failed"); }
 }
 
+/* ✅ FIX 4: error callback */
 function startGroupRequestsListener(groupId){
   if(groupRequestsUnsubscribe){ groupRequestsUnsubscribe(); groupRequestsUnsubscribe = null; }
   if(!groupId) return;
@@ -4145,7 +4208,8 @@ function startGroupRequestsListener(groupId){
       const badge = $("groupRequestsCount");
       if(badge) badge.textContent = groupJoinRequestsCache.length ? `(${groupJoinRequestsCache.length})` : "";
       renderGroupRequests();
-    }
+    },
+    error=>console.error("Group requests listener error:", error)
   );
 }
 
@@ -4452,6 +4516,7 @@ async function openGroupChat(groupId){
   }catch(e){ toast("Error"); }
 }
 
+/* ✅ FIX 4: error callback */
 function startGroupChatListener(groupId){
   if(groupChatUnsubscribe){ groupChatUnsubscribe(); groupChatUnsubscribe = null; }
   if(!groupId) return;
@@ -4461,7 +4526,8 @@ function startGroupChatListener(groupId){
       const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
       renderGroupMessages(list);
-    }
+    },
+    error=>console.error("Group chat listener error:", error)
   );
 }
 
@@ -4645,7 +4711,7 @@ document.addEventListener("click", (e)=>{
 });
 
 /* ============================================================
-   COMMENTS
+   COMMENTS  —  ✅ FIX 4: error callback
 ============================================================ */
 function openComments(videoId){
   currentCommentVideoId = videoId;
@@ -4655,28 +4721,32 @@ function openComments(videoId){
 
 function loadComments(videoId){
   if(commentsUnsubscribe){ commentsUnsubscribe(); commentsUnsubscribe = null; }
-  commentsUnsubscribe = onSnapshot(collection(db,"videos",videoId,"comments"), snapshot=>{
-    const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-    list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
-    if(!list.length){
-      $("commentsList").innerHTML = `<div class="yt-empty"><div style="font-size:42px;margin-bottom:10px">💬</div><p>No comments yet</p></div>`;
-      return;
-    }
-    $("commentsList").innerHTML = list.map(c=>{
-      const mine = currentUser && c.userId === currentUser.uid;
-      return `<div class="comment-item">
-        <img src="${avatar(c.userPhoto, c.userName)}">
-        <div class="comment-content">
-          <div class="name">${esc(c.userName || "User")}</div>
-          <div class="text">${esc(c.text)}</div>
-          <div class="actions">
-            <span style="font-size:11px;color:var(--muted)">${timeAgo(c.createdAt)}</span>
-            ${mine || isAdminUser() ? `<button data-delete-comment="${esc(videoId)}|${esc(c.id)}">Delete</button>` : ""}
+  commentsUnsubscribe = onSnapshot(
+    collection(db,"videos",videoId,"comments"),
+    snapshot=>{
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
+      if(!list.length){
+        $("commentsList").innerHTML = `<div class="yt-empty"><div style="font-size:42px;margin-bottom:10px">💬</div><p>No comments yet</p></div>`;
+        return;
+      }
+      $("commentsList").innerHTML = list.map(c=>{
+        const mine = currentUser && c.userId === currentUser.uid;
+        return `<div class="comment-item">
+          <img src="${avatar(c.userPhoto, c.userName)}">
+          <div class="comment-content">
+            <div class="name">${esc(c.userName || "User")}</div>
+            <div class="text">${esc(c.text)}</div>
+            <div class="actions">
+              <span style="font-size:11px;color:var(--muted)">${timeAgo(c.createdAt)}</span>
+              ${mine || isAdminUser() ? `<button data-delete-comment="${esc(videoId)}|${esc(c.id)}">Delete</button>` : ""}
+            </div>
           </div>
-        </div>
-      </div>`;
-    }).join("");
-  });
+        </div>`;
+      }).join("");
+    },
+    error=>console.error("Comments listener error:", error)
+  );
 }
 
 $("sendCommentBtn")?.addEventListener("click", sendComment);
@@ -4705,13 +4775,20 @@ async function sendComment(){
   }catch(e){ toast("Comment failed"); }
 }
 
+/* ✅ FIX 6: try/catch added */
 async function deleteComment(videoId, commentId){
-  const ref = doc(db,"videos",videoId,"comments",commentId);
-  const snap = await getDoc(ref);
-  if(!snap.exists()) return;
-  if(snap.data().userId !== currentUser.uid && !isAdminUser()) return;
-  if(!confirm("Delete comment?")) return;
-  await deleteDoc(ref);
+  try{
+    const ref = doc(db,"videos",videoId,"comments",commentId);
+    const snap = await getDoc(ref);
+    if(!snap.exists()) return;
+    if(snap.data().userId !== currentUser.uid && !isAdminUser()) return;
+    if(!confirm("Delete comment?")) return;
+    await deleteDoc(ref);
+    toast("🗑️ Comment deleted");
+  }catch(e){
+    console.error("deleteComment error:", e);
+    toast("Delete failed");
+  }
 }
 
 /* ============================================================
@@ -4916,7 +4993,7 @@ $("submitMonetizationBtn")?.addEventListener("click", async () => {
 });
 
 /* ============================================================
-   VAULT
+   VAULT  —  ✅ FIX 4: error callback
 ============================================================ */
 async function saveVaultPin(pin){
   if(!currentUser) return false;
@@ -4946,7 +5023,8 @@ function startVaultListener(){
       vaultFilesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       vaultFilesCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
       if($("vaultViewerModal")?.classList.contains("show")) renderVaultContent();
-    }
+    },
+    error=>console.error("Vault listener error:", error)
   );
 }
 
@@ -5173,7 +5251,6 @@ $("removeVaultBtn")?.addEventListener("click", async () => {
 
 /* ============================================================
    ADMIN — SONG LIBRARY
-   ⚠️ NOTE: editingSongId and pendingSongFile are declared in PART A
 ============================================================ */
 function openAdminSongLibrary(){
   if(!isAdminUser()){ toast("Only admin"); return; }
@@ -5338,6 +5415,7 @@ async function deleteSong(songId){
   catch(e){ toast("Failed"); }
 }
 
+/* ✅ FIX 2: `await` removed from non-async handler */
 document.addEventListener("click", (e)=>{
   const t = e.target;
   const adminBtn = t.closest("#adminSongLibraryBtn");
@@ -5353,7 +5431,7 @@ document.addEventListener("click", (e)=>{
   if(editBtn){ e.preventDefault(); e.stopPropagation(); openEditSongModal(editBtn.dataset.editSong); return; }
 
   const delBtn = t.closest("[data-delete-song]");
-  if(delBtn){ e.preventDefault(); e.stopPropagation(); await deleteSong(delBtn.dataset.deleteSong); return; }
+  if(delBtn){ e.preventDefault(); e.stopPropagation(); deleteSong(delBtn.dataset.deleteSong); return; }
 });
 
 /* ============================================================
@@ -5495,7 +5573,7 @@ document.querySelectorAll("[data-close]").forEach(btn=>{
     hideModal(id);
 
     if(id === "commentsModal"){ currentCommentVideoId = null; if(commentsUnsubscribe){ commentsUnsubscribe(); commentsUnsubscribe = null; } }
-    if(id === "publicProfileModal"){ delete $("publicProfileModal").dataset.uid; $("privateAccountNotice")?.classList.add("hidden"); }
+    if(id === "publicProfileModal"){ delete $("publicProfileModal").dataset.uid; $("privateAccountNotice")?.classList.add("hidden"); viewingProfileUid = null; }
     if(id === "playlistDetailModal") currentPlaylistView = null;
     if(id === "videoPlayerModal") resetVideoPlayer();
     if(id === "imageViewerModal"){ if($("largeChatImage")) $("largeChatImage").src = ""; }
@@ -5508,7 +5586,7 @@ document.querySelectorAll(".modal").forEach(modal=>{
     if(e.target === modal){
       modal.classList.remove("show");
       if(modal.id === "commentsModal"){ currentCommentVideoId = null; if(commentsUnsubscribe){ commentsUnsubscribe(); commentsUnsubscribe = null; } }
-      if(modal.id === "publicProfileModal"){ delete $("publicProfileModal").dataset.uid; $("privateAccountNotice")?.classList.add("hidden"); }
+      if(modal.id === "publicProfileModal"){ delete $("publicProfileModal").dataset.uid; $("privateAccountNotice")?.classList.add("hidden"); viewingProfileUid = null; }
       if(modal.id === "playlistDetailModal") currentPlaylistView = null;
       if(modal.id === "videoPlayerModal") resetVideoPlayer();
       if(modal.id === "imageViewerModal"){ if($("largeChatImage")) $("largeChatImage").src = ""; }
@@ -5625,3 +5703,12 @@ console.log("  ✅ Group Chat (text + photo + video + PDF)");
 console.log("  ✅ Song Library (Admin)");
 console.log("  ✅ Video Editor (Trim/Rotate/Mute)");
 console.log("  ✅ Vault + Monetization + Notifications");
+console.log("🔧 FIXES APPLIED:");
+console.log("  ✅ FIX 1: Cloudinary PDF/raw support + XHR timeout");
+console.log("  ✅ FIX 2: Removed `await` from non-async song delete handler");
+console.log("  ✅ FIX 3: Presence listeners via Map (multi-user support)");
+console.log("  ✅ FIX 4: Error callbacks on all onSnapshot listeners");
+console.log("  ✅ FIX 5: Follow requests cache refresh on accept");
+console.log("  ✅ FIX 6: try/catch added to deleteComment");
+console.log("  ✅ FIX 7: Splash hidden only after suspension check");
+console.log("  ✅ FIX 8: Audio upload timeout added");
