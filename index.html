@@ -69,7 +69,6 @@
 </div>
 
 <!-- ============ LOGIN ============ -->
-<!-- ✅ CHANGE: class="hidden" add kiya — bar bar login flash fix -->
 <div id="loginPage" class="hidden">
   <div class="login-card">
     <div class="logo">ReelHub</div>
@@ -148,7 +147,6 @@
       <div class="stories-loading">Loading stories...</div>
     </div>
 
-    <!-- Category Chips -->
     <div class="category-chips" id="categoryChips">
       <button class="chip active" data-cat="all">All</button>
       <button class="chip" data-cat="music">Music</button>
@@ -161,7 +159,6 @@
       <button class="chip" data-cat="learning">Learning</button>
     </div>
 
-    <!-- Video Grid Feed -->
     <div id="feed" class="video-grid"></div>
   </section>
 
@@ -247,12 +244,24 @@
       <div id="dmInboxView">
         <div class="dm-header">
           <h2>Messages</h2>
-          <button class="icon-btn" id="newMsgBtn">✏️</button>
+          <div style="display:flex;gap:8px">
+            <button class="icon-btn" id="newGroupBtn" title="New Group">👥</button>
+            <button class="icon-btn" id="newMsgBtn">✏️</button>
+          </div>
         </div>
+
+        <!-- Tabs: Chats / Groups -->
+        <div class="dm-tabs" id="dmTabs">
+          <button class="dm-tab active" data-dmtab="chats">💬 Chats</button>
+          <button class="dm-tab" data-dmtab="groups">👥 Groups</button>
+        </div>
+
         <div class="dm-search">
-          <input id="dmSearchInput" placeholder="Search messages...">
+          <input id="dmSearchInput" placeholder="Search...">
         </div>
+
         <div id="dmInboxList"></div>
+        <div id="dmGroupsList" class="hidden"></div>
       </div>
 
       <div id="dmChatView" class="hidden">
@@ -266,7 +275,7 @@
           <button class="icon-btn" id="dmChatProfileBtn">ℹ️</button>
         </div>
         <div class="dm-messages" id="dmMessages"></div>
-        <div class="dm-input-bar">
+        <div class="dm-input-bar" style="position:relative">
           <button class="dm-attach-btn" id="dmAttachBtn" type="button">📎</button>
           <input id="dmInput" placeholder="Message...">
           <button id="dmSendBtn">Send</button>
@@ -281,10 +290,15 @@
             <span class="icon">🎥</span>
             <span>Video</span>
           </div>
+          <div class="dm-attach-option" id="attachPdfBtn">
+            <span class="icon">📄</span>
+            <span>PDF / Document</span>
+          </div>
         </div>
 
         <input type="file" id="dmPhotoFile" accept="image/*" class="hidden">
         <input type="file" id="dmVideoFile" accept="video/*" class="hidden">
+        <input type="file" id="dmPdfFile" accept=".pdf,.doc,.docx,.txt,.zip,.ppt,.pptx,.xls,.xlsx" class="hidden">
       </div>
 
     </div>
@@ -881,6 +895,16 @@
         <span style="font-size:13px;color:var(--muted)">›</span>
       </button>
 
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="createGroupFromSettingsBtn">
+        <span>👥 Create Group</span>
+        <span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="myGroupsBtn">
+        <span>📋 My Groups</span>
+        <span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+
       <p style="font-size:12px;color:var(--muted);padding:10px;line-height:1.5;text-align:center;margin-top:10px">
         Hidden files only visible in Private Vault. PIN is required every time.
       </p>
@@ -1082,6 +1106,198 @@
 
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
+
+<!-- ============================================================
+     ✅ GROUP SYSTEM MODALS
+============================================================ -->
+
+<!-- CREATE GROUP MODAL -->
+<div id="createGroupModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>👥 Create Group</h2>
+      <button class="close" data-close="createGroupModal">×</button>
+    </div>
+
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="position:relative;display:inline-block">
+        <img id="groupPhotoPreview" 
+             src="https://ui-avatars.com/api/?name=G&size=200&background=7c3aed&color=fff"
+             style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--border)">
+        <button id="groupPhotoPick" 
+                style="position:absolute;bottom:0;right:0;width:32px;height:32px;border-radius:50%;background:#7c3aed;color:white;border:3px solid var(--card);font-size:16px;cursor:pointer">
+          📷
+        </button>
+      </div>
+      <input type="file" id="groupPhotoFile" accept="image/*" class="hidden">
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Group Photo (optional)</p>
+    </div>
+
+    <label class="yt-label">Group Name *</label>
+    <input id="groupName" class="yt-input" maxlength="50" 
+           placeholder="e.g. College Friends" style="margin-bottom:14px">
+
+    <label class="yt-label">Description</label>
+    <textarea id="groupDescription" class="yt-textarea" maxlength="200"
+              placeholder="What's this group about?" style="margin-bottom:14px"></textarea>
+
+    <label class="yt-label">Group Type *</label>
+    <div class="yt-radio-group" id="groupTypeGroup" style="margin-bottom:16px">
+      <div class="yt-radio selected" data-value="public">
+        <span class="r-icon">🌍</span>
+        <div class="r-title">Public</div>
+        <div class="r-sub">Anyone can join</div>
+      </div>
+      <div class="yt-radio" data-value="private">
+        <span class="r-icon">🔒</span>
+        <div class="r-title">Private</div>
+        <div class="r-sub">Admin approval needed</div>
+      </div>
+    </div>
+
+    <p id="createGroupStatus" style="text-align:center;font-size:13px;color:var(--danger);min-height:18px;margin-bottom:10px"></p>
+
+    <button class="yt-publish-btn" id="createGroupBtn">✅ Create Group</button>
+  </div>
+</div>
+
+<!-- GROUP VIEW MODAL -->
+<div id="groupViewModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden">
+    <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
+      <h2 id="groupViewTitle">Group</h2>
+      <button class="close" data-close="groupViewModal">×</button>
+    </div>
+
+    <div style="padding:14px 16px">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+        <img id="groupViewPhoto" 
+             src="https://ui-avatars.com/api/?name=G&size=100&background=7c3aed&color=fff"
+             style="width:64px;height:64px;border-radius:50%;object-fit:cover">
+        <div style="flex:1;min-width:0">
+          <h3 id="groupViewName" style="font-size:16px;font-weight:600;margin-bottom:4px">Group Name</h3>
+          <div id="groupViewMeta" style="font-size:12px;color:var(--muted)">0 members</div>
+          <div id="groupViewType" style="font-size:11px;color:var(--muted);margin-top:2px">🌍 Public</div>
+        </div>
+      </div>
+
+      <div id="groupViewDesc" style="font-size:13px;color:var(--text);line-height:1.5;padding:10px;background:var(--bg);border-radius:8px;margin-bottom:14px"></div>
+
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="yt-btn yt-btn-primary" id="groupJoinBtn" style="flex:1">
+          Join Group
+        </button>
+        <button class="yt-btn yt-btn-gray" id="groupOpenChatBtn" style="flex:1;display:none">
+          💬 Open Chat
+        </button>
+        <button class="yt-btn yt-btn-gray" id="groupLeaveBtn" style="flex:1;display:none;color:var(--danger)">
+          🚪 Leave
+        </button>
+      </div>
+
+      <div class="yt-tabs" id="groupTabs" style="margin:0 -16px;padding:0 16px">
+        <div class="yt-tab active" data-gtab="members">Members</div>
+        <div class="yt-tab" data-gtab="requests" id="groupRequestsTab" style="display:none">
+          Requests <span id="groupRequestsCount" style="color:var(--danger);font-size:11px"></span>
+        </div>
+        <div class="yt-tab" data-gtab="info">Info</div>
+      </div>
+
+      <div id="groupMembersTab" style="padding-top:12px;max-height:300px;overflow-y:auto"></div>
+      <div id="groupRequestsTabContent" class="hidden" style="padding-top:12px;max-height:300px;overflow-y:auto"></div>
+      <div id="groupInfoTab" class="hidden" style="padding-top:12px">
+        <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--muted)">Created by</div>
+          <div id="groupInfoCreator" style="font-size:14px;font-weight:600;margin-top:2px">-</div>
+        </div>
+        <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--muted)">Created on</div>
+          <div id="groupInfoDate" style="font-size:14px;margin-top:2px">-</div>
+        </div>
+        <div style="padding:10px 0">
+          <div style="font-size:11px;color:var(--muted)">Group ID</div>
+          <div id="groupInfoId" style="font-size:12px;font-family:monospace;margin-top:2px;word-break:break-all">-</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP CHAT MODAL -->
+<div id="groupChatModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:90vh;height:90vh">
+    
+    <div class="dm-chat-header" style="border-radius:16px 16px 0 0;flex-shrink:0">
+      <button class="icon-btn" data-close="groupChatModal" style="font-size:22px">←</button>
+      <img id="groupChatAvatar" src="" alt="" style="width:36px;height:36px;border-radius:50%">
+      <div class="info" style="flex:1;min-width:0">
+        <strong id="groupChatName">Group Name</strong>
+        <small id="groupChatMeta">0 members</small>
+      </div>
+      <button class="icon-btn" id="groupChatInfoBtn">ℹ️</button>
+    </div>
+
+    <div class="dm-messages" id="groupChatMessages" style="flex:1;overflow-y:auto;padding:14px 12px 20px"></div>
+
+    <div class="dm-input-bar" style="flex-shrink:0;position:relative">
+      <button class="dm-attach-btn" id="groupAttachBtn" type="button">📎</button>
+      <input id="groupChatInput" placeholder="Message group...">
+      <button id="groupChatSendBtn">Send</button>
+    </div>
+
+    <!-- Group Attachment Menu -->
+    <div class="dm-attach-menu" id="groupAttachMenu">
+      <div class="dm-attach-option" id="groupAttachPhotoBtn">
+        <span class="icon">📷</span>
+        <span>Photo</span>
+      </div>
+      <div class="dm-attach-option" id="groupAttachVideoBtn">
+        <span class="icon">🎥</span>
+        <span>Video</span>
+      </div>
+      <div class="dm-attach-option" id="groupAttachPdfBtn">
+        <span class="icon">📄</span>
+        <span>PDF / Document</span>
+      </div>
+    </div>
+
+    <!-- Hidden File Inputs -->
+    <input type="file" id="groupPhotoFile2" accept="image/*" class="hidden">
+    <input type="file" id="groupVideoFile2" accept="video/*" class="hidden">
+    <input type="file" id="groupPdfFile" accept=".pdf,.doc,.docx,.txt,.zip,.ppt,.pptx,.xls,.xlsx" class="hidden">
+  </div>
+</div>
+
+<!-- GROUP MENU MODAL -->
+<div id="groupMenuModal" class="modal">
+  <div class="modal-box" style="max-width:340px">
+    <div class="modal-header">
+      <h2 id="groupMenuTitle">Group Options</h2>
+      <button class="close" data-close="groupMenuModal">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="groupMenuOpenBtn">
+        💬 Open Chat
+      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="groupMenuInfoBtn">
+        ℹ️ View Info
+      </button>
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left" id="groupMenuDeleteBtn">
+        🗑️ Delete Group
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- GROUP PHOTO VIEWER -->
+<div id="groupPhotoViewerModal" class="modal">
+  <div class="modal-box" style="padding:0;background:#000;max-width:100%;text-align:center">
+    <button class="close" data-close="groupPhotoViewerModal"
+            style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);color:white;z-index:10">×</button>
+    <img id="largeGroupPhoto" src="" alt=""
+         style="width:100%;max-height:85vh;object-fit:contain;display:block">
+  </div>
+</div>
 
 <!-- APP SCRIPT -->
 <script type="module" src="app.js"></script>
