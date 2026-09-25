@@ -125,7 +125,6 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* GLOBAL MONETIZATION TOGGLE */
 .global-toggle-card {
   margin: 0 16px 16px;
   background: #1a1a22;
@@ -436,7 +435,6 @@ body {
   margin-bottom: 12px;
 }
 
-/* MODAL */
 .admin-modal {
   position: fixed;
   inset: 0;
@@ -682,7 +680,6 @@ body {
   display: none;
 }
 
-/* MONETIZATION DETAILS */
 .monetization-details {
   background: #0a0a0f;
   border-radius: 10px;
@@ -721,9 +718,7 @@ body {
   font-size: 12px;
 }
 
-/* ============================================================
-   ✅ SONG LIBRARY STYLES (NEW)
-============================================================ */
+/* SONG LIBRARY STYLES */
 .song-library-header {
   display: flex;
   justify-content: space-between;
@@ -966,6 +961,178 @@ body {
 .song-library-empty p {
   font-size: 13px;
 }
+
+/* ============================================================
+   🎛️ AD CONTROL PANEL STYLES (NEW)
+============================================================ */
+.ad-control-wrap {
+  padding: 4px 0 20px;
+}
+
+.ad-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  margin: 20px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ad-section-title:first-child {
+  margin-top: 0;
+}
+
+.ad-card {
+  background: #1a1a22;
+  border: 2px solid #2a2a35;
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.ad-card.active {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.ad-card.inactive {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.ad-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ad-card-info h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.ad-card-info p {
+  font-size: 11.5px;
+  color: #888;
+  line-height: 1.4;
+}
+
+.ad-card-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ad-card-badge.blocked {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid #ef4444;
+}
+
+.ad-card-badge.active {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid #22c55e;
+}
+
+.ad-user-search {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.ad-user-search input {
+  flex: 1;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #2a2a35;
+  background: #0a0a0f;
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.ad-user-search input:focus {
+  border-color: #7c3aed;
+}
+
+.ad-user-search button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #7c3aed, #ec4899);
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  border: 0;
+  cursor: pointer;
+}
+
+.ad-user-status {
+  font-size: 12px;
+  color: #888;
+  padding: 10px 12px;
+  background: #0a0a0f;
+  border-radius: 10px;
+  border: 1px solid #2a2a35;
+  margin-top: 8px;
+  display: none;
+}
+
+.ad-user-status.show {
+  display: block;
+}
+
+.ad-user-status.blocked {
+  color: #ef4444;
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.ad-user-status.active {
+  color: #22c55e;
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.ad-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.ad-stat-mini {
+  background: #0a0a0f;
+  border: 1px solid #2a2a35;
+  border-radius: 10px;
+  padding: 12px;
+  text-align: center;
+}
+
+.ad-stat-mini .n {
+  font-size: 20px;
+  font-weight: 900;
+  color: #a78bfa;
+}
+
+.ad-stat-mini .l {
+  font-size: 10px;
+  color: #888;
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
 </style>
 </head>
 <body>
@@ -1007,7 +1174,6 @@ body {
     </div>
   </div>
 
-  <!-- GLOBAL MONETIZATION TOGGLE -->
   <div class="global-toggle-card" id="globalMonetizationCard">
     <div class="global-toggle-info">
       <h3>💰 Global Monetization</h3>
@@ -1024,6 +1190,7 @@ body {
       <span class="tab-badge hidden" id="monetizationBadge">0</span>
     </div>
     <div class="admin-tab" data-tab="songs">🎵 Songs</div>
+    <div class="admin-tab" data-tab="ads">🎛️ Ads</div>
     <div class="admin-tab" data-tab="reports">⚠️ Reports</div>
     <div class="admin-tab" data-tab="broadcast">📢 Broadcast</div>
   </div>
@@ -1039,7 +1206,6 @@ body {
       <h2>🚫 Suspend User</h2>
       <button class="admin-modal-close" id="suspendModalClose">×</button>
     </div>
-
     <div class="admin-user-preview">
       <img id="suspendUserPhoto" src="" alt="">
       <div>
@@ -1047,7 +1213,6 @@ body {
         <small id="suspendUserUsername">@user</small>
       </div>
     </div>
-
     <label class="admin-form-label">Duration</label>
     <div class="duration-options">
       <div class="duration-option" data-days="7">7 days</div>
@@ -1055,17 +1220,10 @@ body {
       <div class="duration-option" data-days="90">90 days</div>
       <div class="duration-option" data-days="permanent">Permanent</div>
     </div>
-
     <label class="admin-form-label">Reason</label>
-    <textarea class="admin-form-input" id="suspendReason" 
-              placeholder="Reason for suspension..." rows="3" maxlength="200"></textarea>
-
-    <button class="admin-submit-btn" id="confirmSuspendBtn">
-      🚫 Suspend User
-    </button>
-    <button class="admin-cancel-btn" id="cancelSuspendBtn">
-      Cancel
-    </button>
+    <textarea class="admin-form-input" id="suspendReason" placeholder="Reason for suspension..." rows="3" maxlength="200"></textarea>
+    <button class="admin-submit-btn" id="confirmSuspendBtn">🚫 Suspend User</button>
+    <button class="admin-cancel-btn" id="cancelSuspendBtn">Cancel</button>
   </div>
 </div>
 
@@ -1076,7 +1234,6 @@ body {
       <h2>✅ Unsuspend User</h2>
       <button class="admin-modal-close" id="unsuspendModalClose">×</button>
     </div>
-
     <div class="admin-user-preview">
       <img id="unsuspendUserPhoto" src="" alt="">
       <div>
@@ -1084,28 +1241,21 @@ body {
         <small id="unsuspendUserUsername">@user</small>
       </div>
     </div>
-
     <p style="color:#aaa;font-size:14px;line-height:1.6;margin-bottom:16px">
       This user's account will be reactivated.
     </p>
-
-    <button class="admin-submit-btn success" id="confirmUnsuspendBtn">
-      ✅ Unsuspend User
-    </button>
-    <button class="admin-cancel-btn" id="cancelUnsuspendBtn">
-      Cancel
-    </button>
+    <button class="admin-submit-btn success" id="confirmUnsuspendBtn">✅ Unsuspend User</button>
+    <button class="admin-cancel-btn" id="cancelUnsuspendBtn">Cancel</button>
   </div>
 </div>
 
-<!-- MONETIZATION APPROVE MODAL -->
+<!-- MONETIZATION MODAL -->
 <div id="monetizationModal" class="admin-modal">
   <div class="admin-modal-box">
     <div class="admin-modal-header">
       <h2 id="monetizationModalTitle">💰 Monetization Request</h2>
       <button class="admin-modal-close" id="monetizationModalClose">×</button>
     </div>
-
     <div class="admin-user-preview">
       <img id="monetizationUserPhoto" src="" alt="">
       <div>
@@ -1113,7 +1263,6 @@ body {
         <small id="monetizationUserUsername">@user</small>
       </div>
     </div>
-
     <div class="monetization-details">
       <div class="monetization-detail-row">
         <span class="label">👥 Followers</span>
@@ -1136,41 +1285,27 @@ body {
         <span class="value" id="monetizationDate">—</span>
       </div>
     </div>
-
     <p style="color:#f59e0b;font-size:12px;line-height:1.5;margin-bottom:14px;padding:10px;background:rgba(245,158,11,0.1);border-radius:8px">
       ⚠️ <strong>Demo Mode:</strong> Payment is disabled. Approving will only mark the channel as monetized.
     </p>
-
-    <button class="admin-submit-btn success" id="approveMonetizationBtn">
-      ✅ Approve Monetization
-    </button>
-    <button class="admin-submit-btn" id="rejectMonetizationBtn" style="margin-top:8px">
-      ❌ Reject
-    </button>
-    <button class="admin-cancel-btn" id="cancelMonetizationBtn">
-      Cancel
-    </button>
+    <button class="admin-submit-btn success" id="approveMonetizationBtn">✅ Approve Monetization</button>
+    <button class="admin-submit-btn" id="rejectMonetizationBtn" style="margin-top:8px">❌ Reject</button>
+    <button class="admin-cancel-btn" id="cancelMonetizationBtn">Cancel</button>
   </div>
 </div>
 
-<!-- ✅ ADD / EDIT SONG MODAL -->
+<!-- ADD / EDIT SONG MODAL -->
 <div id="addSongModal" class="admin-modal">
   <div class="admin-modal-box">
     <div class="admin-modal-header">
       <h2 id="addSongTitle">➕ Add Song</h2>
       <button class="admin-modal-close" id="addSongModalClose">×</button>
     </div>
-
     <input type="hidden" id="editingSongId">
-
     <label class="admin-form-label">Song Name *</label>
-    <input id="songName" class="admin-form-input" maxlength="100" 
-           placeholder="e.g. Kesariya">
-
+    <input id="songName" class="admin-form-input" maxlength="100" placeholder="e.g. Kesariya">
     <label class="admin-form-label">Artist</label>
-    <input id="songArtist" class="admin-form-input" maxlength="100" 
-           placeholder="e.g. Arijit Singh">
-
+    <input id="songArtist" class="admin-form-input" maxlength="100" placeholder="e.g. Arijit Singh">
     <label class="admin-form-label">Category</label>
     <select id="songCategory" class="admin-form-input">
       <option value="Bollywood">Bollywood</option>
@@ -1180,7 +1315,6 @@ body {
       <option value="Trending">Trending</option>
       <option value="Other">Other</option>
     </select>
-
     <label class="admin-form-label">Song File (MP3, WAV, M4A) *</label>
     <div class="song-upload-zone" id="songUploadZone">
       <span class="icon">🎵</span>
@@ -1188,25 +1322,17 @@ body {
       <div class="sub">Max 100MB · MP3, WAV, M4A, AAC</div>
     </div>
     <input type="file" id="songFile" accept="audio/*" style="display:none">
-
     <div id="songFileSelected" class="song-file-selected" style="display:none">
       <span class="icon">🎵</span>
       <span class="name" id="songFileName"></span>
       <button class="remove-btn" id="songFileRemoveBtn">✕</button>
     </div>
-
     <div class="song-upload-progress" id="songUploadProgress">
       <div class="song-upload-progress-bar" id="songUploadProgressBar"></div>
     </div>
-
     <p id="songUploadStatus" style="text-align:center;font-size:13px;color:#888;min-height:18px;margin:10px 0"></p>
-
-    <button class="admin-submit-btn success" id="saveSongBtn">
-      ✅ Save Song
-    </button>
-    <button class="admin-cancel-btn" id="cancelSongBtn">
-      Cancel
-    </button>
+    <button class="admin-submit-btn success" id="saveSongBtn">✅ Save Song</button>
+    <button class="admin-cancel-btn" id="cancelSongBtn">Cancel</button>
   </div>
 </div>
 
@@ -1257,7 +1383,6 @@ const provider = new GoogleAuthProvider();
 const CLOUDINARY_CLOUD_NAME = "s3eresx6";
 const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
 
-/* ✅ ADMIN EMAILS */
 const ADMIN_EMAILS = [
   "appcreator001.harshitkumar@gmail.com",
   "satender8510815609@gmail.com"
@@ -1282,6 +1407,15 @@ let songLibraryUnsubscribe = null;
 let editingSongId = null;
 let pendingSongFile = null;
 let previewAudio = null;
+
+/* ✅ AD CONTROL STATE (NEW) */
+let adSettings = {
+  masterDisabled: false,
+  typeDisabled: { banner: false, popup: false, video: false }
+};
+let adSettingsUnsubscribe = null;
+let userAdsUnsubscribe = null;
+let adUserSearchStatus = { uid: null, disabled: false, loading: false };
 
 const $ = id => document.getElementById(id);
 
@@ -1376,6 +1510,7 @@ onAuthStateChanged(auth, async (user) => {
     await loadStats();
     startMonetizationListener();
     startSongLibraryListener();
+    startAdSettingsListener();      // ✅ NEW
     await renderTab("users");
 
   } catch(e) {
@@ -1427,7 +1562,6 @@ function updateGlobalToggleUI(){
   }
 }
 
-/* ✅ GLOBAL TOGGLE */
 $("globalMonetizationToggle")?.addEventListener("click", async () => {
   const newValue = !globalMonetizationEnabled;
 
@@ -1454,6 +1588,223 @@ $("globalMonetizationToggle")?.addEventListener("click", async () => {
     showToast("Failed to update: " + e.message, true);
   }
 });
+
+/* ✅ ============================================================
+   AD SETTINGS LISTENERS (NEW)
+   ============================================================ */
+function startAdSettingsListener(){
+  if(adSettingsUnsubscribe){ adSettingsUnsubscribe(); adSettingsUnsubscribe = null; }
+  if(userAdsUnsubscribe){ userAdsUnsubscribe(); userAdsUnsubscribe = null; }
+
+  adSettingsUnsubscribe = onSnapshot(
+    doc(db, "ad_settings", "global"),
+    snap => {
+      if(snap.exists()){
+        const d = snap.data();
+        adSettings.masterDisabled = d.masterDisabled === true;
+        adSettings.typeDisabled = d.typeDisabled || { banner: false, popup: false, video: false };
+      }else{
+        adSettings.masterDisabled = false;
+        adSettings.typeDisabled = { banner: false, popup: false, video: false };
+      }
+      if(currentTab === "ads") renderAds();
+    },
+    error => console.error("Ad settings listener error:", error)
+  );
+
+  userAdsUnsubscribe = onSnapshot(
+    collection(db, "ad_settings", "global", "users"),
+    snap => {
+      if(adUserSearchStatus.uid){
+        const userDoc = snap.docs.find(d => d.id === adUserSearchStatus.uid);
+        adUserSearchStatus.disabled = userDoc ? userDoc.data().disabled === true : false;
+      }
+      if(currentTab === "ads") renderAds();
+    },
+    error => console.error("User ads listener error:", error)
+  );
+}
+
+/* ✅ RENDER ADS TAB (NEW) */
+function renderAds(){
+  const content = $("adminContent");
+
+  const masterBlocked = adSettings.masterDisabled;
+  const bannerBlocked = adSettings.typeDisabled?.banner === true;
+  const popupBlocked = adSettings.typeDisabled?.popup === true;
+  const videoBlocked = adSettings.typeDisabled?.video === true;
+
+  content.innerHTML = `
+    <div class="ad-control-wrap">
+
+      <div class="ad-section-title">🌍 Master Control</div>
+      <div class="ad-card ${masterBlocked ? 'active' : 'inactive'}" data-toggle="master">
+        <div class="ad-card-info">
+          <h4>Master Switch</h4>
+          <p>Sab users ke sab ads band/on karo — sabse upar wala control</p>
+        </div>
+        <div class="ad-card-badge ${masterBlocked ? 'blocked' : 'active'}">
+          ${masterBlocked ? '🚫 BLOCKED' : '✅ ACTIVE'}
+        </div>
+      </div>
+
+      <div class="ad-section-title">📋 Ad Type Control (Sab Users)</div>
+      <div class="ad-card ${bannerBlocked ? 'active' : 'inactive'}" data-toggle="banner">
+        <div class="ad-card-info">
+          <h4>Banner Ads</h4>
+          <p>Sab users ke liye banner ads control</p>
+        </div>
+        <div class="ad-card-badge ${bannerBlocked ? 'blocked' : 'active'}">
+          ${bannerBlocked ? '🚫 BLOCKED' : '✅ ACTIVE'}
+        </div>
+      </div>
+      <div class="ad-card ${popupBlocked ? 'active' : 'inactive'}" data-toggle="popup">
+        <div class="ad-card-info">
+          <h4>Popup Ads</h4>
+          <p>Sab users ke liye popup/popunder ads control</p>
+        </div>
+        <div class="ad-card-badge ${popupBlocked ? 'blocked' : 'active'}">
+          ${popupBlocked ? '🚫 BLOCKED' : '✅ ACTIVE'}
+        </div>
+      </div>
+      <div class="ad-card ${videoBlocked ? 'active' : 'inactive'}" data-toggle="video">
+        <div class="ad-card-info">
+          <h4>Video Ads</h4>
+          <p>Sab users ke liye video ads control</p>
+        </div>
+        <div class="ad-card-badge ${videoBlocked ? 'blocked' : 'active'}">
+          ${videoBlocked ? '🚫 BLOCKED' : '✅ ACTIVE'}
+        </div>
+      </div>
+
+      <div class="ad-section-title">👤 Per User Control</div>
+      <div class="ad-user-search">
+        <input id="adUserIdInput" placeholder="User ka UID daalo..." value="${adUserSearchStatus.uid || ''}">
+        <button id="adUserSearchBtn">Check</button>
+      </div>
+      <div id="adUserStatusBox" class="ad-user-status ${adUserSearchStatus.uid ? 'show' : ''} ${adUserSearchStatus.disabled ? 'blocked' : 'active'}">
+        ${adUserSearchStatus.uid ? `
+          <strong>UID:</strong> ${esc(adUserSearchStatus.uid)}<br>
+          <strong>Status:</strong> ${adUserSearchStatus.disabled ? '🚫 Ads BLOCKED' : '✅ Ads ACTIVE'}<br>
+          <button class="admin-btn ${adUserSearchStatus.disabled ? 'success' : 'danger'}" id="adUserToggleBtn" style="margin-top:8px">
+            ${adUserSearchStatus.disabled ? '✅ Unblock Ads' : '🚫 Block Ads'}
+          </button>
+        ` : 'UID daal ke Check karo'}
+      </div>
+
+      <div class="ad-section-title">📊 Info</div>
+      <div class="ad-stats-grid">
+        <div class="ad-stat-mini">
+          <div class="n">${masterBlocked ? 'ON' : 'OFF'}</div>
+          <div class="l">Master</div>
+        </div>
+        <div class="ad-stat-mini">
+          <div class="n">${[bannerBlocked, popupBlocked, videoBlocked].filter(Boolean).length}/3</div>
+          <div class="l">Types Blocked</div>
+        </div>
+      </div>
+
+      <p style="font-size:11.5px;color:#888;text-align:center;line-height:1.5;margin-top:16px">
+        ℹ️ Ye settings Firebase <code style="color:#a78bfa">ad_settings</code> collection mein save hoti hain.<br>
+        App.js mein <code style="color:#a78bfa">showMyAd()</code> function se ads check hote hain.
+      </p>
+
+    </div>
+  `;
+
+  /* Attach toggle handlers */
+  content.querySelectorAll("[data-toggle]").forEach(card => {
+    card.addEventListener("click", async () => {
+      const type = card.dataset.toggle;
+      await toggleAdSetting(type);
+    });
+  });
+
+  /* Attach user search handler */
+  $("adUserSearchBtn")?.addEventListener("click", searchAdUser);
+  $("adUserIdInput")?.addEventListener("keydown", (e) => {
+    if(e.key === "Enter") searchAdUser();
+  });
+
+  /* Attach user toggle handler */
+  $("adUserToggleBtn")?.addEventListener("click", async () => {
+    if(!adUserSearchStatus.uid) return;
+    await toggleUserAds(adUserSearchStatus.uid);
+  });
+}
+
+/* ✅ TOGGLE AD SETTING */
+async function toggleAdSetting(type){
+  const globalRef = doc(db, "ad_settings", "global");
+  try{
+    const snap = await getDoc(globalRef);
+
+    if(type === "master"){
+      const cur = snap.exists() ? snap.data().masterDisabled : false;
+      await setDoc(globalRef, {
+        masterDisabled: !cur,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      showToast(!cur ? "🚫 Master: ALL ADS BLOCKED" : "✅ Master: Ads ENABLED");
+    }else{
+      const types = snap.exists() ? (snap.data().typeDisabled || {}) : {};
+      types[type] = !types[type];
+      await setDoc(globalRef, {
+        typeDisabled: types,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+      showToast(types[type] ? `🚫 ${type} BLOCKED` : `✅ ${type} ENABLED`);
+    }
+  }catch(e){
+    console.error(e);
+    showToast("Failed: " + e.message, true);
+  }
+}
+
+/* ✅ SEARCH AD USER */
+async function searchAdUser(){
+  const uid = $("adUserIdInput")?.value.trim();
+  if(!uid){
+    showToast("UID daalo", true);
+    return;
+  }
+
+  try{
+    const ref = doc(db, "ad_settings", "global", "users", uid);
+    const snap = await getDoc(ref);
+    adUserSearchStatus.uid = uid;
+    adUserSearchStatus.disabled = snap.exists() ? snap.data().disabled === true : false;
+    adUserSearchStatus.loading = false;
+    renderAds();
+    showToast(`User ${uid}: ${adUserSearchStatus.disabled ? "🚫 BLOCKED" : "✅ ACTIVE"}`);
+  }catch(e){
+    console.error(e);
+    showToast("Failed: " + e.message, true);
+  }
+}
+
+/* ✅ TOGGLE USER ADS */
+async function toggleUserAds(uid){
+  if(!uid) return;
+  try{
+    const ref = doc(db, "ad_settings", "global", "users", uid);
+    const snap = await getDoc(ref);
+    const cur = snap.exists() ? snap.data().disabled === true : false;
+
+    await setDoc(ref, {
+      disabled: !cur,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+
+    adUserSearchStatus.disabled = !cur;
+    renderAds();
+    showToast(!cur ? `🚫 User ${uid} ads BLOCKED` : `✅ User ${uid} ads ACTIVE`);
+  }catch(e){
+    console.error(e);
+    showToast("Failed: " + e.message, true);
+  }
+}
+/* ✅ ============================================================ */
 
 /* ✅ MONETIZATION LISTENER */
 function startMonetizationListener(){
@@ -1526,7 +1877,6 @@ async function loadStats(){
     ]);
 
     let totalLikes = 0;
-
     videosSnap.forEach(d => {
       totalLikes += Number(d.data().likes || 0);
     });
@@ -1560,6 +1910,7 @@ async function renderTab(tab){
   else if(tab === "videos") await renderVideos();
   else if(tab === "monetization") renderMonetization();
   else if(tab === "songs") renderSongs();
+  else if(tab === "ads") renderAds();           /* ✅ NEW */
   else if(tab === "reports") await renderReports();
   else if(tab === "broadcast") await renderBroadcast();
 }
@@ -1645,7 +1996,6 @@ function renderSongs(){
       </div>
       <button class="song-add-btn" id="addSongBtn">➕ Add Song</button>
     </div>
-
     <div id="songLibraryList"></div>
   `;
 
@@ -1692,7 +2042,7 @@ function renderSongs(){
   });
 }
 
-/* ✅ ADD SONG MODAL */
+/* ADD SONG MODAL */
 function openAddSongModal(){
   editingSongId = null;
   pendingSongFile = null;
@@ -1710,7 +2060,7 @@ function openAddSongModal(){
   $("addSongModal").classList.add("show");
 }
 
-/* ✅ EDIT SONG MODAL */
+/* EDIT SONG MODAL */
 function openEditSongModal(songId){
   const song = allSongs.find(s => s.id === songId);
   if(!song) return;
@@ -1804,19 +2154,12 @@ $("saveSongBtn")?.addEventListener("click", async () => {
 
     if(editingSongId){
       await updateDoc(doc(db, "song_library", editingSongId), {
-        name,
-        artist,
-        category,
-        audioURL,
-        updatedAt: serverTimestamp()
+        name, artist, category, audioURL, updatedAt: serverTimestamp()
       });
       showToast("✅ Song updated");
     } else {
       await addDoc(collection(db, "song_library"), {
-        name,
-        artist,
-        category,
-        audioURL,
+        name, artist, category, audioURL,
         createdBy: currentUser.uid,
         createdByName: currentUser.displayName || "Admin",
         createdAt: serverTimestamp(),
@@ -1920,7 +2263,7 @@ async function deleteSong(songId){
   }
 }
 
-/* ✅ MONETIZATION TAB */
+/* MONETIZATION TAB */
 function renderMonetization(){
   const content = $("adminContent");
 
@@ -1980,7 +2323,6 @@ function renderMonetization(){
   });
 }
 
-/* ✅ MONETIZATION MODAL */
 function openMonetizationModal(requestId){
   const req = allMonetizationRequests.find(r => r.id === requestId);
   if(!req) return;
@@ -1991,7 +2333,6 @@ function openMonetizationModal(requestId){
   $("monetizationUserPhoto").src = avatar(req.userPhoto, req.userName);
   $("monetizationUserName").textContent = req.userName || "User";
   $("monetizationUserUsername").textContent = "@" + (req.username || "user");
-
   $("monetizationFollowers").textContent = req.followers || 0;
   $("monetizationWatchTime").textContent = Math.floor((req.totalWatchTime || 0) / 60) + " min";
   $("monetizationViews").textContent = req.totalViews || 0;
@@ -2013,7 +2354,6 @@ $("cancelMonetizationBtn")?.addEventListener("click", () => {
   currentMonetizationUserId = null;
 });
 
-/* ✅ APPROVE MONETIZATION */
 $("approveMonetizationBtn")?.addEventListener("click", async () => {
   if(!currentMonetizationRequestId || !currentMonetizationUserId) return;
 
@@ -2060,7 +2400,6 @@ $("approveMonetizationBtn")?.addEventListener("click", async () => {
   }
 });
 
-/* ✅ REJECT MONETIZATION */
 $("rejectMonetizationBtn")?.addEventListener("click", async () => {
   if(!currentMonetizationRequestId || !currentMonetizationUserId) return;
 
@@ -2508,7 +2847,7 @@ document.querySelectorAll(".admin-modal").forEach(modal => {
   });
 });
 
-console.log("✅ Admin Panel loaded with Song Library!");
+console.log("✅ Admin Panel loaded with Song Library + Ad Control!");
 </script>
 
 </body>
