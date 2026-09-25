@@ -150,7 +150,20 @@
       <button class="chip" data-cat="sports">Sports</button>
       <button class="chip" data-cat="learning">Learning</button>
     </div>
+
+    <!-- 🎯 AD SLOT: Banner (Home Feed top) -->
+    <div id="adSlotHomeBanner" class="ad-slot ad-slot-banner" data-ad-type="banner" style="display:none">
+      <div class="ad-label">Sponsored</div>
+      <div id="adContainerHomeBanner"></div>
+    </div>
+
     <div id="feed" class="video-grid"></div>
+
+    <!-- 🎯 AD SLOT: Banner (Home Feed bottom) -->
+    <div id="adSlotHomeBottom" class="ad-slot ad-slot-banner" data-ad-type="banner" style="display:none">
+      <div class="ad-label">Sponsored</div>
+      <div id="adContainerHomeBottom"></div>
+    </div>
   </section>
 
   <!-- SHORTS -->
@@ -652,6 +665,12 @@
         <span class="icon" style="font-size:22px">⚡</span>
         <small style="font-size:10px;color:var(--muted);font-weight:600">Speed</small>
       </button>
+    </div>
+
+    <!-- 🎯 AD SLOT: Video Player bottom (video type) -->
+    <div id="adSlotVideoPlayer" class="ad-slot ad-slot-banner" data-ad-type="video" style="display:none;margin:10px 16px 14px">
+      <div class="ad-label">Sponsored</div>
+      <div id="adContainerVideoPlayer"></div>
     </div>
   </div>
 </div>
@@ -1310,12 +1329,215 @@
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
 
+<!-- ============================================================
+     AD SLOT STYLES (INLINE — kyunki style.css mein nahi hai)
+============================================================ -->
+<style>
+  .ad-slot {
+    margin: 14px 0;
+    padding: 12px;
+    background: var(--card, #1a1a22);
+    border: 1px solid var(--border, #2a2a35);
+    border-radius: 12px;
+    position: relative;
+    min-height: 60px;
+    text-align: center;
+  }
+  .ad-slot .ad-label {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(0,0,0,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .ad-slot-banner {
+    min-height: 100px;
+  }
+  .ad-slot #adContainerHomeBanner,
+  .ad-slot #adContainerHomeBottom,
+  .ad-slot #adContainerVideoPlayer {
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .ad-slot iframe,
+  .ad-slot img {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+</style>
+
 <!-- APP SCRIPT -->
 <script type="module" src="app.js"></script>
 
+<!-- ============================================================
+     🎛️ AD CONTROL SYSTEM — LOADER
+     app.js ke showMyAd() ke through ads render karta hai
+============================================================ -->
+<script>
+(function(){
+  "use strict";
+
+  // Ads ke sources (aapki di hui scripts)
+  const AD_SOURCES = {
+    banner: {
+      invoke: "https://pl31503866.profitableratecpmnetwork.com/1fe6d8ff04cda98725422466b9ea6b14/invoke.js",
+      containerId: "container-1fe6d8ff04cda98725422466b9ea6b14"
+    },
+    popup: {
+      social: "https://pl31503867.profitableratecpmnetwork.com/d9/9a/d2/d99ad2d380150ac462b91a18530b10d9.js"
+    },
+    video: {
+      pounder: "https://pl31503868.profitableratecpmnetwork.com/cf/d0/ed/cfd0edbe231c0f6240271057001d998c.js"
+    }
+  };
+
+  // Ek baar load hone ke baad dubara na ho
+  const loadedAds = new Set();
+
+  /**
+   * Ek ad script inject karta hai (agar pehle se load na hua ho)
+   */
+  function injectScript(src, attrs){
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    if(attrs){
+      Object.keys(attrs).forEach(k => script.setAttribute(k, attrs[k]));
+    }
+    document.body.appendChild(script);
+  }
+
+  /**
+   * Banner ad render — ad slot ke andar
+   */
+  function renderBannerAd(slotId, containerId){
+    if(loadedAds.has("banner_" + slotId)) return;
+
+    const slot = document.getElementById(slotId);
+    if(!slot) return;
+
+    const container = document.getElementById(containerId);
+    if(!container) return;
+
+    // Container empty karo
+    container.innerHTML = "";
+
+    // Ad container div
+    const adDiv = document.createElement("div");
+    adDiv.id = "container-1fe6d8ff04cda98725422466b9ea6b14";
+    container.appendChild(adDiv);
+
+    // Invoke script
+    injectScript(AD_SOURCES.banner.invoke, { "data-cfasync": "false" });
+
+    // Slot dikhao
+    slot.style.display = "block";
+
+    loadedAds.add("banner_" + slotId);
+    console.log("✅ Banner ad rendered in", slotId);
+  }
+
+  /**
+   * Popup ad render (script body pe load hoga — global)
+   */
+  function renderPopupAd(){
+    if(loadedAds.has("popup")) return;
+    injectScript(AD_SOURCES.popup.social);
+    loadedAds.add("popup");
+    console.log("✅ Popup/Social ad script injected");
+  }
+
+  /**
+   * Video/Pounder ad render
+   */
+  function renderVideoAd(slotId, containerId){
+    if(loadedAds.has("video")) return;
+
+    // Pounder script
+    injectScript(AD_SOURCES.video.pounder);
+
+    // Slot dikhao (agar video player ke andar hai)
+    const slot = document.getElementById(slotId);
+    if(slot) slot.style.display = "block";
+
+    loadedAds.add("video");
+    console.log("✅ Video/Pounder ad script injected");
+  }
+
+  /**
+   * Ad system ready hone ka wait karta hai
+   * (app.js load hone ke baad showMyAd available hoga)
+   */
+  function waitForAdSystem(callback, maxTries){
+    maxTries = maxTries || 50;
+    let tries = 0;
+    const interval = setInterval(function(){
+      tries++;
+      if(typeof window.showMyAd === "function"){
+        clearInterval(interval);
+        callback();
+      } else if(tries >= maxTries){
+        clearInterval(interval);
+        console.warn("⚠️ Ad system not loaded after 5s — ads skipped");
+      }
+    }, 100);
+  }
+
+  /**
+   * Saare ads load karo (showMyAd ke through)
+   */
+  function loadAllAds(){
+    const uid = window.currentUser?.uid || null;
+
+    // 1. Home banner top
+    window.showMyAd("banner", uid, function(){
+      renderBannerAd("adSlotHomeBanner", "adContainerHomeBanner");
+    });
+
+    // 2. Home banner bottom
+    window.showMyAd("banner", uid, function(){
+      renderBannerAd("adSlotHomeBottom", "adContainerHomeBottom");
+    });
+
+    // 3. Popup (global — user ne popup type on rakha ho)
+    window.showMyAd("popup", uid, function(){
+      renderPopupAd();
+    });
+
+    // 4. Video ad (jab video player khule)
+    // Ye event-driven hai — video player open hone pe trigger hoga
+    window.addEventListener("videoPlayerOpened", function(){
+      window.showMyAd("video", uid, function(){
+        renderVideoAd("adSlotVideoPlayer", "adContainerVideoPlayer");
+      });
+    });
+  }
+
+  // App.js load hone ke baad ads load karo
+  window.addEventListener("load", function(){
+    waitForAdSystem(loadAllAds);
+  });
+
+  // Manual trigger ke liye global function
+  window.reloadAds = function(){
+    loadedAds.clear();
+    loadAllAds();
+  };
+
+  console.log("✅ Ad Control Loader initialized");
+})();
+</script>
+
 <!-- 🚨 EMERGENCY SPLASH FIX -->
 <script>
-  // Agar 3 second me app.js kuch na kare, toh splash force hide
   setTimeout(function() {
     var splash = document.getElementById("splashScreen");
     if (splash && splash.style.display !== "none" && !splash.classList.contains("fade-out")) {
@@ -1332,7 +1554,6 @@
     }
   }, 3500);
 
-  // Error catcher
   window.addEventListener("error", function(e) {
     console.error("🚨 ERROR:", e.message, "at", (e.filename || "").split("/").pop(), ":", e.lineno);
   });
