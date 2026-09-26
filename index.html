@@ -144,22 +144,56 @@
   <!-- UPLOAD -->
   <section id="uploadPanel" class="panel hidden">
     <div class="upload-wrap">
-      <div class="upload-header"><h2>Upload Video</h2></div>
+      <div class="upload-header"><h2>Upload</h2></div>
 
+      <!-- 🆕 Content Type Toggle: Video / Photo -->
       <div class="yt-card">
-        <div class="yt-card-title">📹 Select Video</div>
+        <div class="yt-card-title">📤 Content Type</div>
+        <div class="yt-radio-group" id="contentTypeGroup" style="grid-template-columns:1fr 1fr">
+          <div class="yt-radio selected" data-value="video">
+            <span class="r-icon">🎬</span>
+            <div class="r-title">Video</div>
+            <div class="r-sub">MP4, WebM, MOV</div>
+          </div>
+          <div class="yt-radio" data-value="photo">
+            <span class="r-icon">📷</span>
+            <div class="r-title">Photo</div>
+            <div class="r-sub">JPG, PNG</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🆕 Video/Photo Select -->
+      <div class="yt-card">
+        <div class="yt-card-title" id="selectMediaTitle">📹 Select Video</div>
         <div class="yt-dropzone" id="dropzone">
           <span class="icon">⬆️</span>
           <div class="main-text">Click to select video</div>
           <div class="sub-text">MP4, WebM, MOV · Max 100MB</div>
         </div>
         <video id="uploadPreview" class="yt-preview hidden" controls></video>
+        <img id="photoPreview" class="yt-preview hidden" alt="" style="max-width:100%;border-radius:12px">
         <input type="file" id="videoFile" accept="video/*" class="hidden">
+        <input type="file" id="photoFile" accept="image/*" class="hidden">
       </div>
 
+      <!-- 🆕 Custom Thumbnail -->
+      <div class="yt-card" id="thumbnailCard" style="display:none">
+        <div class="yt-card-title">🖼️ Custom Thumbnail (optional)</div>
+        <div class="yt-dropzone" id="thumbnailZone" style="padding:20px">
+          <span class="icon" style="font-size:28px">🖼️</span>
+          <div class="main-text" style="font-size:13px">Tap to select thumbnail</div>
+          <div class="sub-text">JPG, PNG · 1280×720 recommended</div>
+        </div>
+        <img id="thumbnailPreview" class="yt-preview hidden" alt="" style="max-width:100%;border-radius:12px">
+        <input type="file" id="thumbnailFile" accept="image/*" class="hidden">
+        <button class="yt-mini-btn danger" id="removeThumbnailBtn" style="display:none;margin-top:10px;width:100%">❌ Remove Thumbnail</button>
+      </div>
+
+      <!-- 🆕 Video Editor Bar (existing + new) -->
       <div class="yt-card" id="videoEditBar" style="display:none">
         <div class="yt-card-title">🎬 Video Tools</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
           <button class="yt-mini-btn" id="editVideoTrimBtn">✂️ Trim</button>
           <button class="yt-mini-btn" id="editVideoRotateBtn">🔄 Rotate</button>
           <button class="yt-mini-btn" id="editVideoMuteBtn">🔇 Mute</button>
@@ -167,6 +201,41 @@
           <button class="yt-mini-btn" id="editVideoStickerBtn">😀 Sticker</button>
           <button class="yt-mini-btn" id="editVideoPreviewBtn">👁️ Preview</button>
         </div>
+
+        <!-- 🆕 Filters -->
+        <div style="margin-top:12px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">🎨 Filters</div>
+          <div style="display:flex;gap:8px;overflow-x:auto;padding:4px 0;scrollbar-width:none" id="filterBar">
+            <button class="filter-btn active" data-filter="none" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--primary);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">None</button>
+            <button class="filter-btn" data-filter="grayscale(1)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">B&W</button>
+            <button class="filter-btn" data-filter="sepia(0.8)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Sepia</button>
+            <button class="filter-btn" data-filter="contrast(1.3) saturate(1.2)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Vivid</button>
+            <button class="filter-btn" data-filter="brightness(1.2)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Bright</button>
+            <button class="filter-btn" data-filter="brightness(0.8) contrast(1.2)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Dark</button>
+            <button class="filter-btn" data-filter="hue-rotate(180deg)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Cool</button>
+            <button class="filter-btn" data-filter="hue-rotate(-30deg) saturate(1.3)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Warm</button>
+            <button class="filter-btn" data-filter="blur(1px) saturate(1.5)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Dreamy</button>
+            <button class="filter-btn" data-filter="invert(1)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Invert</button>
+          </div>
+        </div>
+
+        <!-- 🆕 Speed Control -->
+        <div style="margin-top:12px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">⚡ Speed: <span id="speedValue">1x</span></div>
+          <input type="range" id="speedSlider" min="0.5" max="2" step="0.5" value="1" style="width:100%">
+        </div>
+
+        <!-- 🆕 Text Overlay -->
+        <div style="margin-top:12px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">✍️ Text on Video</div>
+          <input type="text" id="textOverlayInput" class="yt-input" placeholder="Type text to show on video..." maxlength="50" style="padding:8px 12px;font-size:13px;margin-bottom:8px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+            <button class="text-pos-btn active" data-pos="top" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px">Top</button>
+            <button class="text-pos-btn" data-pos="center" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px">Center</button>
+            <button class="text-pos-btn" data-pos="bottom" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px">Bottom</button>
+          </div>
+        </div>
+
         <div id="videoEditStatus" style="font-size:12px;color:var(--muted);margin-top:10px;text-align:center"></div>
       </div>
 
@@ -216,14 +285,16 @@
 
       <p id="uploadStatus" style="font-size:13px;color:var(--muted);margin-top:10px;text-align:center"></p>
 
-      <button class="yt-publish-btn" id="publishBtn">🚀 Publish</button>
+      <div style="display:flex;gap:8px">
+        <button class="yt-mini-btn" id="saveDraftBtn" style="flex:1;padding:14px;font-size:14px">💾 Save Draft</button>
+        <button class="yt-publish-btn" id="publishBtn" style="flex:2;margin-top:0">🚀 Publish</button>
+      </div>
     </div>
   </section>
 
   <!-- MESSAGES -->
   <section id="messagesPanel" class="panel hidden">
     <div class="dm-container">
-
       <div id="dmInboxView">
         <div class="dm-header">
           <h2>Messages</h2>
@@ -232,16 +303,13 @@
             <button class="icon-btn" id="newMsgBtn">✏️</button>
           </div>
         </div>
-
         <div class="dm-tabs" id="dmTabs">
           <button class="dm-tab active" data-dmtab="chats">💬 Chats</button>
           <button class="dm-tab" data-dmtab="groups">👥 Groups</button>
         </div>
-
         <div class="dm-search">
           <input id="dmSearchInput" placeholder="Search...">
         </div>
-
         <div id="dmInboxList"></div>
         <div id="dmGroupsList" class="hidden"></div>
       </div>
@@ -262,18 +330,15 @@
           <input id="dmInput" placeholder="Message...">
           <button id="dmSendBtn">Send</button>
         </div>
-
         <div class="dm-attach-menu" id="dmAttachMenu">
           <div class="dm-attach-option" id="attachPhotoBtn"><span class="icon">📷</span><span>Photo</span></div>
           <div class="dm-attach-option" id="attachVideoBtn"><span class="icon">🎥</span><span>Video</span></div>
           <div class="dm-attach-option" id="attachPdfBtn"><span class="icon">📄</span><span>PDF / Document</span></div>
         </div>
-
         <input type="file" id="dmPhotoFile" accept="image/*" class="hidden">
         <input type="file" id="dmVideoFile" accept="video/*" class="hidden">
         <input type="file" id="dmPdfFile" accept=".pdf,.doc,.docx,.txt,.zip,.ppt,.pptx,.xls,.xlsx" class="hidden">
       </div>
-
     </div>
   </section>
 
@@ -289,9 +354,7 @@
           <div class="meta" id="profileExtra"></div>
         </div>
       </div>
-
       <div class="yt-profile-bio" id="profileBio"></div>
-
       <div class="yt-profile-stats">
         <div class="yt-stat" id="myFollowersBtn">
           <strong id="followersCount">0</strong>
@@ -306,13 +369,11 @@
           <span>Videos</span>
         </div>
       </div>
-
       <div class="yt-profile-actions">
         <button class="yt-btn yt-btn-primary" id="editProfileBtn">✏️ Edit Profile</button>
         <button class="yt-btn yt-btn-gray" id="shareAppBtn">📤 Share</button>
         <button class="yt-btn yt-btn-gray" id="settingsBtn">⚙️</button>
       </div>
-
       <div class="yt-tabs" id="profileTabs">
         <div class="yt-tab active" data-tab="videos">Videos <span class="tab-count" id="tabVideosCount">0</span></div>
         <div class="yt-tab" data-tab="playlists">Playlists <span class="tab-count" id="tabPlaylistsCount">0</span></div>
@@ -320,7 +381,6 @@
         <div class="yt-tab" data-tab="monetization">💰 Monetization</div>
         <div class="yt-tab" data-tab="about">About</div>
       </div>
-
       <div class="yt-videos-grid" id="myVideos"></div>
       <div class="playlist-tab-content hidden" id="playlistsTab"></div>
       <div class="yt-videos-grid hidden" id="savedVideos"></div>
@@ -617,6 +677,10 @@
         <span class="icon" style="font-size:22px">📤</span>
         <small style="font-size:10px;color:var(--muted);font-weight:600">Share</small>
       </button>
+      <button class="action-btn" id="videoPlayerDownloadBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">📥</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Download</small>
+      </button>
       <button class="action-btn" id="videoPlayerSaveBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
         <span class="icon" style="font-size:22px">📑</span>
         <small style="font-size:10px;color:var(--muted);font-weight:600">Save</small>
@@ -639,14 +703,18 @@
   </div>
 </div>
 
-<!-- SHARE SHEET -->
+<!-- SHARE SHEET (with WhatsApp/Insta/FB) -->
 <div id="shareSheet" class="share-sheet">
   <div class="share-sheet-box">
     <h3>Share with</h3>
     <div class="share-user-list" id="shareUserList"></div>
     <div class="share-actions">
       <div class="share-action-btn" id="shareCopyLink"><span class="icon">🔗</span>Copy Link</div>
-      <div class="share-action-btn" id="shareNative"><span class="icon">📤</span>Share</div>
+      <div class="share-action-btn" id="shareNative"><span class="icon">📤</span>More</div>
+      <div class="share-action-btn" id="shareWhatsApp"><span class="icon">💬</span>WhatsApp</div>
+      <div class="share-action-btn" id="shareInstagram"><span class="icon">📸</span>Instagram</div>
+      <div class="share-action-btn" id="shareFacebook"><span class="icon">📘</span>Facebook</div>
+      <div class="share-action-btn" id="shareTwitter"><span class="icon">🐦</span>Twitter</div>
     </div>
   </div>
 </div>
@@ -1296,57 +1364,34 @@
 
 <!-- ============================================================
    🎛️ AD SYSTEM — SIRF VIDEO PLAYER KE LIYE
-   (Social bar + banner + popup scripts REMOVED)
 ============================================================ -->
 <script>
 (function(){
   "use strict";
 
-  // ✅ Sirf 1 script — video ads ke liye
   const VIDEO_AD_SCRIPT = "https://pl31503868.profitableratecpmnetwork.com/cf/d0/ed/cfd0edbe231c0f6240271057001d998c.js";
-
-  // Track: kaunse video pe ad load hua
   let currentLoadedVideoId = null;
 
-  /**
-   * Video player ad render karo
-   * — Sirf jab video open ho
-   * — Ek video pe ek ad
-   */
   function renderVideoAd(){
     const slot = document.getElementById("adSlotVideoPlayer");
     const container = document.getElementById("adContainerVideoPlayer");
     if(!slot || !container) return;
-
-    // Container saaf karo
     container.innerHTML = "";
-
-    // Naya script inject
     const script = document.createElement("script");
     script.src = VIDEO_AD_SCRIPT;
     script.async = true;
     container.appendChild(script);
-
-    // Slot dikhao
     slot.style.display = "block";
-
     console.log("✅ Video ad rendered in player");
   }
 
-  /**
-   * Video player band hone pe ad hatao
-   */
   function clearVideoAd(){
     const slot = document.getElementById("adSlotVideoPlayer");
     const container = document.getElementById("adContainerVideoPlayer");
     if(slot) slot.style.display = "none";
     if(container) container.innerHTML = "";
-    console.log("🧹 Video ad cleared");
   }
 
-  /**
-   * Ad system ready hone ka wait karo
-   */
   function waitForAdSystem(callback, maxTries){
     maxTries = maxTries || 50;
     let tries = 0;
@@ -1357,71 +1402,38 @@
         callback();
       } else if(tries >= maxTries){
         clearInterval(interval);
-        console.warn("⚠️ Ad system not loaded after 5s");
       }
     }, 100);
   }
 
-  /**
-   * Har video player open hone pe:
-   * 1. Ad system ready hone ka wait
-   * 2. showMyAd check karo (Master/User/Type)
-   * 3. Agar allowed hai toh ad dikhao
-   */
   window.addEventListener("videoPlayerOpened", function(){
-    const uid = window.currentUser?.uid || null;
-
-    // Pehle purana ad hatao
     clearVideoAd();
-
-    // Ad system ready hone ka wait
     waitForAdSystem(function(){
-      // Check karo — ads allowed hain?
-      window.showMyAd("video", uid, function(){
+      window.showMyAd("video", null, function(){
         renderVideoAd();
       });
     });
   });
 
-  /**
-   * Video player modal band hone pe ad hatao
-   */
   document.addEventListener("click", function(e){
     const closeBtn = e.target.closest('[data-close="videoPlayerModal"]');
-    if(closeBtn){
-      setTimeout(clearVideoAd, 300);
-    }
+    if(closeBtn){ setTimeout(clearVideoAd, 300); }
   });
 
-  // Modal backdrop click se bhi hatao
   const playerModal = document.getElementById("videoPlayerModal");
   if(playerModal){
     playerModal.addEventListener("click", function(e){
-      if(e.target === playerModal){
-        setTimeout(clearVideoAd, 300);
-      }
+      if(e.target === playerModal){ setTimeout(clearVideoAd, 300); }
     });
   }
 
-  /**
-   * Pehli baar app load hone pe console message
-   */
   window.addEventListener("load", function(){
     waitForAdSystem(function(){
       console.log("✅ Ad Control Loader initialized (Video-only mode)");
-      console.log("   → Master + Ad Type + Per User control active");
-      console.log("   → Social bar / banner / popup ads REMOVED");
     });
   });
 
-  /**
-   * Manual reload (agar chahiye)
-   */
-  window.reloadAds = function(){
-    clearVideoAd();
-    console.log("🔄 Ads reset — agle video pe naya ad aayega");
-  };
-
+  window.reloadAds = function(){ clearVideoAd(); };
   console.log("✅ Ad System: Video-player only mode");
 })();
 </script>
