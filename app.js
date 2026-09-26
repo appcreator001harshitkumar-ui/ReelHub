@@ -121,6 +121,14 @@ let currentPlaylistView = null;
 let deepLinkChecked = false;
 let viewingProfileUid = null;
 
+/* Upload New Features */
+let uploadContentType = "video";
+let pendingThumbnailFile = null;
+let pendingVideoFilter = "none";
+let pendingVideoSpeed = 1;
+let pendingTextOverlay = "";
+let pendingTextPosition = "top";
+
 let storiesCache = [];
 let groupedStories = [];
 let currentStoryUserIndex = 0;
@@ -191,9 +199,7 @@ const processingSaves = new Set();
 
 let currentWatchSession = { videoId: null, startTime: null };
 
-/* ============================================================
-   ✅ AD CONTROL STATE
-============================================================ */
+/* AD CONTROL STATE */
 let adSettings = {
   masterDisabled: false,
   typeDisabled: { banner: false, popup: false, video: false },
@@ -336,9 +342,7 @@ function isAdminUser(){
   return currentUser && ADMIN_EMAILS.includes(currentUser.email);
 }
 
-/* ============================================================
-   ✅ AD CONTROL — Check + Render + Listener
-============================================================ */
+/* AD CONTROL — Check + Render + Listener */
 function canShowAd(adType, userId){
   if(adSettings.masterDisabled === true) return false;
   if(userId && adSettings.userDisabled[userId] === true) return false;
@@ -365,7 +369,6 @@ function startAdSettingsListener(){
         const d = snap.data();
         adSettings.masterDisabled = d.masterDisabled === true;
         adSettings.typeDisabled = d.typeDisabled || { banner: false, popup: false, video: false };
-        console.log("📢 Ad settings:", adSettings.masterDisabled ? "ALL BLOCKED" : "ACTIVE");
       }
     },
     error => console.error("Ad settings listener error:", error)
@@ -382,9 +385,7 @@ function startAdSettingsListener(){
   );
 }
 
-/* ============================================================
-   MODAL MANAGEMENT
-============================================================ */
+/* MODAL MANAGEMENT */
 function showModal(id){
   const el = $(id);
   if(!el) return;
@@ -419,9 +420,7 @@ function hideModal(id){
   }
 }
 
-/* ============================================================
-   SPLASH
-============================================================ */
+/* SPLASH */
 function hideSplash(){
   if(splashHidden) return;
   splashHidden = true;
@@ -439,9 +438,7 @@ function prepareInitialState(){
   document.body.classList.remove("app-ready");
 }
 
-/* ============================================================
-   SUSPENSION
-============================================================ */
+/* SUSPENSION */
 function showSuspensionScreen(profile){
   const screen = $("suspensionScreen");
   if(!screen) return;
@@ -502,9 +499,7 @@ $("suspensionLogoutBtn")?.addEventListener("click", async ()=>{
   }catch(e){ console.error(e); }
 });
 
-/* ============================================================
-   WATCH TIME
-============================================================ */
+/* WATCH TIME */
 function startWatchTimer(videoId){
   if(!currentUser || !videoId) return;
   if(currentWatchSession.videoId === videoId && currentWatchSession.startTime) return;
@@ -536,9 +531,7 @@ document.addEventListener("visibilitychange", () => {
 
 window.addEventListener("beforeunload", () => { stopWatchTimer(); });
 
-/* ============================================================
-   CLOUDINARY UPLOAD
-============================================================ */
+/* CLOUDINARY UPLOAD */
 function uploadToCloudinary(file, onProgress){
   return new Promise((resolve,reject)=>{
     let resource = "image";
@@ -595,7 +588,7 @@ function uploadAudioToCloudinary(file, onProgress){
 }
 
 /* ============================================================
-   AUTH — Email/Password/Google
+   AUTH
 ============================================================ */
 document.querySelectorAll(".auth-tab").forEach(tab => {
   tab.addEventListener("click", () => {
@@ -619,13 +612,11 @@ $("loginForm")?.addEventListener("submit", async (e) => {
   const email = $("loginEmail").value.trim();
   const password = $("loginPassword").value;
   const status = $("loginStatus");
-
   if(!email || !password){
     if(status){ status.textContent = "Email and password required"; status.style.color = "#ed4956"; }
     return;
   }
   if(status){ status.textContent = "Logging in..."; status.style.color = "#7c3aed"; }
-
   try{
     await signInWithEmailAndPassword(auth, email, password);
     if(status){ status.textContent = ""; status.style.color = "#ed4956"; }
@@ -641,7 +632,6 @@ $("signupForm")?.addEventListener("submit", async (e) => {
   const email = $("signupEmail").value.trim();
   const password = $("signupPassword").value;
   const status = $("loginStatus");
-
   if(!name || !email || !password){
     if(status){ status.textContent = "All fields required"; status.style.color = "#ed4956"; }
     return;
@@ -651,7 +641,6 @@ $("signupForm")?.addEventListener("submit", async (e) => {
     return;
   }
   if(status){ status.textContent = "Creating account..."; status.style.color = "#7c3aed"; }
-
   try{
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCred.user, { displayName: name });
@@ -698,44 +687,31 @@ function getAuthError(code){
   return errors[code] || "Something went wrong. Please try again";
 }
 
-/* ============================================================
-   GOOGLE LOGIN
-============================================================ */
 $("googleLogin")?.addEventListener("click", async ()=>{
   const status = $("loginStatus");
   if(status){ status.textContent = "Opening Google..."; status.style.color = "#7c3aed"; }
-
   try{
     const result = await signInWithPopup(auth, provider);
     console.log("✅ Google login success:", result.user?.email);
     if(status){ status.textContent = "✅ Login successful!"; status.style.color = "#22c55e"; }
   }catch(error){
     console.error("❌ Google login error:", error.code, error.message);
-
     if(status){
       status.textContent = "❌ " + (error.code || "error") + ": " + (error.message || "Login failed");
       status.style.color = "#ed4956";
     }
-
     if(error.code === "auth/popup-blocked" || error.code === "auth/popup-closed-by-user"){
-      try{
-        await signInWithRedirect(auth, provider);
-      }catch(e){
-        if(status){ status.textContent = "Redirect error: " + e.message; status.style.color = "#ed4956"; }
-      }
+      try{ await signInWithRedirect(auth, provider); }
+      catch(e){ if(status){ status.textContent = "Redirect error: " + e.message; status.style.color = "#ed4956"; } }
     }
   }
 });
 
 getRedirectResult(auth).then(result => {
-  if(result && result.user){
-    console.log("✅ Google redirect login:", result.user.email);
-  }
+  if(result && result.user) console.log("✅ Google redirect login:", result.user.email);
 }).catch(err => console.error("Redirect result error:", err));
 
-/* ============================================================
-   PROFILE
-============================================================ */
+/* PROFILE */
 async function createProfile(){
   const ref = doc(db, "profiles", currentUser.uid);
   const snap = await getDoc(ref);
@@ -852,9 +828,7 @@ function stopAllPresenceListeners(){
   presenceListenersMap.clear();
 }
 
-/* ============================================================
-   AUTH STATE
-============================================================ */
+/* AUTH STATE */
 onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
@@ -883,7 +857,6 @@ onAuthStateChanged(auth, async user => {
     if(typeof startMyGroupsListener === "function") startMyGroupsListener();
     if(typeof startSongLibraryListener === "function") startSongLibraryListener();
     if(typeof updateAdminVisibility === "function") updateAdminVisibility();
-
     if(typeof startAdSettingsListener === "function") startAdSettingsListener();
 
     try{ window.history.replaceState({ reelhubHome: true }, "", window.location.href); }catch(e){}
@@ -972,12 +945,17 @@ function createVideoCard(v){
 
   const rotationStyle = v.rotation ? `transform: rotate(${v.rotation}deg);` : "";
   const scaleStyle = (v.rotation === 90 || v.rotation === 270) ? "scale(1.3);" : "";
+  const filterStyle = v.filter && v.filter !== "none" ? `filter: ${v.filter};` : "";
+
+  // 🆕 Thumbnail or video preview
+  const thumbnailHTML = v.thumbnail
+    ? `<img src="${esc(v.thumbnail)}" alt="" style="width:100%;height:100%;object-fit:cover;${filterStyle}">`
+    : `<video src="${esc(v.videoURL)}#t=0.5" preload="metadata" muted playsinline style="${rotationStyle}${scaleStyle}${filterStyle}"></video>`;
 
   return `
   <div class="video-card" data-id="${esc(v.id)}" data-open-video="${esc(v.id)}">
-    <div class="thumbnail">
-      <video src="${esc(v.videoURL)}#t=0.5" preload="metadata" muted playsinline
-             style="${rotationStyle}${scaleStyle}"></video>
+    <div class="thumbnail" style="position:relative">
+      ${thumbnailHTML}
       <span class="duration" data-duration-for="${esc(v.id)}">0:00</span>
       ${v.muted ? `<span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:white;font-size:11px;padding:3px 8px;border-radius:8px;font-weight:600">🔇</span>` : ""}
     </div>
@@ -1146,6 +1124,7 @@ function setupReelsObserver(){
   videos.forEach(v => reelObserver.observe(v));
 }
 
+/* STORIES LISTENER */
 function startStoriesListener(){
   if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
   if(!currentUser) return;
@@ -1360,6 +1339,7 @@ $("storyUploadBtn")?.addEventListener("click", async ()=>{
   }
 });
 
+/* STORY VIEWER */
 function openStoryViewer(userIndex, storyIndex){
   if(!groupedStories.length) return;
   currentStoryUserIndex = userIndex;
@@ -1773,6 +1753,7 @@ $("storyMenuDeleteBtn")?.addEventListener("click", async (e)=>{
   }catch(e){ toast("Failed to delete"); }
 });
 
+/* SONG LIBRARY LISTENER */
 function startSongLibraryListener(){
   if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
   songLibraryUnsubscribe = onSnapshot(
@@ -1791,6 +1772,7 @@ function updateAdminVisibility(){
   adminBtn.style.display = isAdminUser() ? "flex" : "none";
 }
 
+/* SONG PICKER */
 function openSongPicker(context){
   songPickerContext = context || "story";
   selectedSongForApply = null;
@@ -1916,6 +1898,7 @@ function removeSongFromStoryEdit(){
   toast("🔇 Song removed");
 }
 
+/* STICKER PICKER */
 function openStickerPicker(context){
   stickerPickerContext = context || "story";
   selectedStickerEmoji = null;
@@ -2045,6 +2028,7 @@ function removeStickerFromStoryEdit(){
   toast("Sticker removed");
 }
 
+/* BUTTON HANDLERS */
 $("storyAddSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("story"); });
 $("storyAddStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openStickerPicker("story"); });
 $("editVideoSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("video"); });
@@ -2085,6 +2069,7 @@ $("editStoryChangeStickerBtn")?.addEventListener("click", (e)=>{
   }, 300);
 });
 
+/* VIDEO EDITOR */
 $("editVideoRotateBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   const videoEl = $("uploadPreview");
@@ -2131,7 +2116,7 @@ $("editVideoPreviewBtn")?.addEventListener("click", (e)=>{
     playerVideo.style.transform = `rotate(${pendingVideoRotation}deg)`;
 
     ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn",
-     "videoPlayerSaveBtn", "videoPlayerPlaylistBtn"].forEach(id => {
+     "videoPlayerDownloadBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn"].forEach(id => {
       const btn = $(id);
       if(btn) btn.style.display = "none";
     });
@@ -2159,6 +2144,7 @@ $("editVideoPreviewBtn")?.addEventListener("click", (e)=>{
   }
 });
 
+/* VIDEO TRIM */
 function openVideoTrimModal(videoEl){
   if(!videoEl || !videoEl.src){ toast("No video selected"); return; }
   trimVideoElement = videoEl;
@@ -2231,22 +2217,14 @@ $("storyTrimBtn")?.addEventListener("click", (e)=>{
   openVideoTrimModal($("storyVideoPreview"));
 });
 
-$("videoFile")?.addEventListener("change", ()=>{
-  setTimeout(()=>{
-    const editBar = $("videoEditBar");
-    if(editBar && $("videoFile").files[0]) editBar.style.display = "block";
-  }, 200);
-});
-
-console.log("✅ app.js PART B loaded — Videos + Shorts + Stories ready!");
+console.log("✅ app.js PART 1/3 loaded!");
 /* ============================================================
    ReelHub - app.js
-   PART C — Upload + Playlists + Comments + DM + Groups + Vault + Admin + Init
-   ✅ FIXES: Messages badge + Notifications badge
+   PART 2/3 — Video Menu + Player + Playlists + Upload + Follow + DM
 ============================================================ */
 
 /* ============================================================
-   VIDEO MENU (⋮) — Edit + Delete
+   VIDEO MENU (⋮)
 ============================================================ */
 window.openVideoMenu = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
@@ -2359,6 +2337,7 @@ window.openVideoPlayer = function(videoId){
     videoEl.src = v.videoURL;
     videoEl.playbackRate = 1;
     videoEl.muted = v.muted || false;
+    videoEl.style.filter = v.filter && v.filter !== "none" ? v.filter : "";
 
     if(v.rotation){
       videoEl.style.transition = "transform 0.3s ease";
@@ -2410,7 +2389,8 @@ window.openVideoPlayer = function(videoId){
   if($("videoPlayerLikes")) $("videoPlayerLikes").textContent = (v.likes || 0);
 
   ["videoPlayerLikeBtn", "videoPlayerShareBtn", "videoPlayerCommentBtn",
-   "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn"]
+   "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn",
+   "videoPlayerDownloadBtn"]
     .forEach(id => { const btn = $(id); if(btn) btn.style.display = ""; });
 
   updateVideoPlayerLike(videoId);
@@ -2424,6 +2404,9 @@ window.openVideoPlayer = function(videoId){
 
   const shareBtn = $("videoPlayerShareBtn");
   if(shareBtn) shareBtn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); openShareSheet(videoId); };
+
+  const downloadBtn = $("videoPlayerDownloadBtn");
+  if(downloadBtn) downloadBtn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); downloadVideo(videoId); };
 
   const saveBtn = $("videoPlayerSaveBtn");
   if(saveBtn) saveBtn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); toggleSave(videoId, saveBtn); };
@@ -2447,11 +2430,7 @@ window.openVideoPlayer = function(videoId){
   });
 
   showModal("videoPlayerModal");
-
-  // ✅ Trigger ad system for video player
-  try{
-    window.dispatchEvent(new Event("videoPlayerOpened"));
-  }catch(e){}
+  try{ window.dispatchEvent(new Event("videoPlayerOpened")); }catch(e){}
 };
 
 async function updateVideoPlayerSave(videoId){
@@ -2479,11 +2458,49 @@ async function updateVideoPlayerLike(videoId){
 
 function resetVideoPlayer(){
   const videoEl = $("videoPlayerVideo");
-  if(videoEl){ videoEl.pause(); videoEl.playbackRate = 1; videoEl.style.transform = ""; videoEl.muted = false; }
+  if(videoEl){ videoEl.pause(); videoEl.playbackRate = 1; videoEl.style.transform = ""; videoEl.muted = false; videoEl.style.filter = ""; }
   const sc = $("speedControl");
   if(sc) sc.style.display = "none";
   if(window.__videoAudio){ window.__videoAudio.pause(); window.__videoAudio = null; }
   stopWatchTimer();
+}
+
+/* ============================================================
+   🆕 VIDEO DOWNLOAD
+============================================================ */
+async function downloadVideo(videoId){
+  const v = videosCache.find(x => x.id === videoId);
+  if(!v || !v.videoURL){ toast("Video not found"); return; }
+
+  try{
+    toast("📥 Preparing download...");
+
+    let downloadURL = v.videoURL;
+    if(downloadURL.includes("cloudinary.com") && downloadURL.includes("/upload/")){
+      downloadURL = downloadURL.replace("/upload/", "/upload/fl_attachment/");
+    }
+
+    const cleanTitle = (v.title || "ReelHub_Video")
+      .replace(/[^a-zA-Z0-9_\- ]/g, "")
+      .trim()
+      .replace(/\s+/g, "_")
+      .slice(0, 50) || "ReelHub_Video";
+
+    const a = document.createElement("a");
+    a.href = downloadURL;
+    a.download = cleanTitle + ".mp4";
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+
+    setTimeout(() => { if(a.parentNode) document.body.removeChild(a); }, 1000);
+    toast("✅ Download started — Check phone Downloads");
+  }catch(err){
+    console.error("Download error:", err);
+    window.open(v.videoURL, "_blank");
+  }
 }
 
 /* ============================================================
@@ -2864,19 +2881,193 @@ async function syncAllPlaylistCounts(){
 $("newPlaylistFromAddBtn")?.addEventListener("click", ()=>{ hideModal("addToPlaylistModal"); $("playlistName").value = ""; $("playlistDesc").value = ""; showModal("createPlaylistModal"); });
 
 /* ============================================================
-   UPLOAD VIDEO
+   🆕 UPLOAD — WITH ALL NEW FEATURES
 ============================================================ */
-$("dropzone")?.addEventListener("click", ()=> $("videoFile").click());
 
+/* Content Type Toggle (Video/Photo) */
+document.addEventListener("click", (e)=>{
+  const typeRadio = e.target.closest("#contentTypeGroup .yt-radio");
+  if(typeRadio){
+    e.preventDefault(); e.stopPropagation();
+    document.querySelectorAll("#contentTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
+    typeRadio.classList.add("selected");
+    uploadContentType = typeRadio.dataset.value;
+
+    const title = $("selectMediaTitle");
+    const dz = $("dropzone");
+    const thumbCard = $("thumbnailCard");
+    const editBar = $("videoEditBar");
+
+    if(uploadContentType === "photo"){
+      if(title) title.textContent = "📷 Select Photo";
+      if(dz) dz.querySelector(".main-text").textContent = "Click to select photo";
+      if(dz) dz.querySelector(".sub-text").textContent = "JPG, PNG · Max 20MB";
+      if(thumbCard) thumbCard.style.display = "none";
+      if(editBar) editBar.style.display = "none";
+    }else{
+      if(title) title.textContent = "📹 Select Video";
+      if(dz) dz.querySelector(".main-text").textContent = "Click to select video";
+      if(dz) dz.querySelector(".sub-text").textContent = "MP4, WebM, MOV · Max 100MB";
+      if(thumbCard) thumbCard.style.display = "none";
+    }
+  }
+});
+
+/* Dropzone */
+const dropzoneEl = $("dropzone");
+if(dropzoneEl){
+  dropzoneEl.addEventListener("click", ()=>{
+    if(uploadContentType === "photo") $("photoFile")?.click();
+    else $("videoFile")?.click();
+  });
+}
+
+/* Photo File */
+$("photoFile")?.addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 20 * 1024 * 1024){ toast("Photo too large (max 20MB)"); e.target.value = ""; return; }
+
+  const preview = $("photoPreview");
+  if(preview){
+    preview.src = URL.createObjectURL(file);
+    preview.classList.remove("hidden");
+  }
+  $("dropzone")?.classList.add("hidden");
+  $("uploadPreview")?.classList.add("hidden");
+  const thumbCard = $("thumbnailCard");
+  if(thumbCard) thumbCard.style.display = "block";
+});
+
+/* Video File */
 $("videoFile")?.addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
   const preview = $("uploadPreview");
   preview.src = URL.createObjectURL(file);
   preview.classList.remove("hidden");
-  $("dropzone").classList.add("hidden");
+  $("dropzone")?.classList.add("hidden");
+  $("photoPreview")?.classList.add("hidden");
+
+  setTimeout(()=>{
+    const editBar = $("videoEditBar");
+    if(editBar) editBar.style.display = "block";
+    const thumbCard = $("thumbnailCard");
+    if(thumbCard) thumbCard.style.display = "block";
+  }, 200);
 });
 
+/* Custom Thumbnail */
+$("thumbnailZone")?.addEventListener("click", ()=>{ $("thumbnailFile")?.click(); });
+
+$("thumbnailFile")?.addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 5 * 1024 * 1024){ toast("Thumbnail too large (max 5MB)"); e.target.value = ""; return; }
+  pendingThumbnailFile = file;
+  const prev = $("thumbnailPreview");
+  if(prev){ prev.src = URL.createObjectURL(file); prev.classList.remove("hidden"); }
+  $("thumbnailZone")?.classList.add("hidden");
+  $("removeThumbnailBtn").style.display = "block";
+});
+
+$("removeThumbnailBtn")?.addEventListener("click", (e)=>{
+  e.preventDefault(); e.stopPropagation();
+  pendingThumbnailFile = null;
+  $("thumbnailFile").value = "";
+  $("thumbnailPreview")?.classList.add("hidden");
+  $("thumbnailZone")?.classList.remove("hidden");
+  $("removeThumbnailBtn").style.display = "none";
+});
+
+/* Filters */
+document.addEventListener("click", (e)=>{
+  const btn = e.target.closest(".filter-btn");
+  if(!btn) return;
+  e.preventDefault(); e.stopPropagation();
+
+  document.querySelectorAll(".filter-btn").forEach(b => {
+    b.classList.remove("active");
+    b.style.borderColor = "var(--border)";
+  });
+  btn.classList.add("active");
+  btn.style.borderColor = "var(--primary)";
+
+  pendingVideoFilter = btn.dataset.filter || "none";
+  const videoEl = $("uploadPreview");
+  if(videoEl) videoEl.style.filter = pendingVideoFilter === "none" ? "" : pendingVideoFilter;
+  const photoEl = $("photoPreview");
+  if(photoEl) photoEl.style.filter = pendingVideoFilter === "none" ? "" : pendingVideoFilter;
+});
+
+/* Speed Slider */
+$("speedSlider")?.addEventListener("input", (e)=>{
+  const val = parseFloat(e.target.value);
+  pendingVideoSpeed = val;
+  const speedVal = $("speedValue");
+  if(speedVal) speedVal.textContent = val + "x";
+  const videoEl = $("uploadPreview");
+  if(videoEl) videoEl.playbackRate = val;
+});
+
+/* Text Overlay */
+$("textOverlayInput")?.addEventListener("input", (e)=>{
+  pendingTextOverlay = e.target.value;
+});
+
+document.addEventListener("click", (e)=>{
+  const posBtn = e.target.closest(".text-pos-btn");
+  if(!posBtn) return;
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll(".text-pos-btn").forEach(b => {
+    b.classList.remove("active");
+    b.style.background = "var(--card)";
+    b.style.color = "var(--text)";
+  });
+  posBtn.classList.add("active");
+  posBtn.style.background = "var(--primary)";
+  posBtn.style.color = "white";
+  pendingTextPosition = posBtn.dataset.pos;
+});
+
+/* Save Draft */
+$("saveDraftBtn")?.addEventListener("click", ()=>{
+  if(!currentUser){ toast("Login required"); return; }
+  const draft = {
+    title: $("videoTitle")?.value || "",
+    description: $("videoDescription")?.value || "",
+    visibility: uploadVisibility,
+    type: uploadType,
+    contentType: uploadContentType,
+    filter: pendingVideoFilter,
+    speed: pendingVideoSpeed,
+    textOverlay: pendingTextOverlay,
+    textPosition: pendingTextPosition,
+    savedAt: Date.now()
+  };
+  localStorage.setItem("reelhubDraft_" + currentUser.uid, JSON.stringify(draft));
+  toast("💾 Draft saved");
+});
+
+function loadDraftIfExists(){
+  if(!currentUser) return;
+  try{
+    const draft = JSON.parse(localStorage.getItem("reelhubDraft_" + currentUser.uid) || "null");
+    if(!draft) return;
+    setTimeout(()=>{
+      if($("videoTitle") && draft.title) $("videoTitle").value = draft.title;
+      if($("videoDescription") && draft.description) $("videoDescription").value = draft.description;
+      if(draft.filter && $("uploadPreview")) $("uploadPreview").style.filter = draft.filter === "none" ? "" : draft.filter;
+      if(draft.textOverlay && $("textOverlayInput")) $("textOverlayInput").value = draft.textOverlay;
+      pendingVideoFilter = draft.filter || "none";
+      pendingVideoSpeed = draft.speed || 1;
+      pendingTextOverlay = draft.textOverlay || "";
+      pendingTextPosition = draft.textPosition || "top";
+    }, 500);
+  }catch(e){}
+}
+
+/* Visibility / Type Toggle */
 $("visibilityGroup")?.addEventListener("click", e=>{
   const el = e.target.closest(".yt-radio");
   if(!el) return;
@@ -2893,12 +3084,14 @@ $("typeGroup")?.addEventListener("click", e=>{
   uploadType = el.dataset.value;
 });
 
+/* PUBLISH */
 $("publishBtn")?.addEventListener("click", async()=>{
-  const file = $("videoFile").files[0];
+  const isPhoto = uploadContentType === "photo";
+  const file = isPhoto ? $("photoFile").files[0] : $("videoFile").files[0];
   const title = $("videoTitle").value.trim();
   const description = $("videoDescription").value.trim();
 
-  if(!file){ toast("Select video first"); return; }
+  if(!file){ toast(isPhoto ? "Select photo first" : "Select video first"); return; }
   if(!title){ toast("Title डालो"); return; }
   if(!currentUser){ toast("Login required"); return; }
 
@@ -2912,6 +3105,15 @@ $("publishBtn")?.addEventListener("click", async()=>{
       $("uploadStatus").textContent = "Uploading " + pct + "%";
     });
 
+    let thumbnailURL = "";
+    if(pendingThumbnailFile){
+      $("uploadStatus").textContent = "Uploading thumbnail...";
+      thumbnailURL = await uploadToCloudinary(pendingThumbnailFile, (pct)=>{
+        $("uploadProgressBar").style.width = pct + "%";
+        $("uploadStatus").textContent = "Thumbnail " + pct + "%";
+      });
+    }
+
     const videoData = {
       userId: currentUser.uid,
       userName: currentProfile?.name || currentUser.displayName || "User",
@@ -2921,39 +3123,64 @@ $("publishBtn")?.addEventListener("click", async()=>{
       title,
       description,
       visibility: uploadVisibility,
-      type: uploadType,
+      type: isPhoto ? "photo" : uploadType,
       likes: 0,
       views: 0,
       watchTime: 0,
       createdAt: serverTimestamp()
     };
 
+    if(isPhoto) videoData.isPhoto = true;
+    if(thumbnailURL) videoData.thumbnail = thumbnailURL;
+    if(pendingVideoFilter && pendingVideoFilter !== "none") videoData.filter = pendingVideoFilter;
     if(pendingVideoRotation) videoData.rotation = pendingVideoRotation;
     if(pendingVideoMuted) videoData.muted = true;
     if(pendingVideoSong) videoData.song = pendingVideoSong;
     if(pendingVideoSticker) videoData.sticker = pendingVideoSticker;
     if(pendingVideoTrim.applied){ videoData.trimStart = pendingVideoTrim.start; videoData.trimEnd = pendingVideoTrim.end; }
+    if(pendingTextOverlay && pendingTextOverlay.trim()){
+      videoData.textOverlay = pendingTextOverlay.trim();
+      videoData.textPosition = pendingTextPosition;
+    }
+    if(pendingVideoSpeed && pendingVideoSpeed !== 1) videoData.uploadSpeed = pendingVideoSpeed;
 
     await addDoc(collection(db,"videos"), videoData);
     await syncVideoCount(currentUser.uid);
 
+    // Cleanup
     $("videoFile").value = "";
+    if($("photoFile")) $("photoFile").value = "";
+    if($("thumbnailFile")) $("thumbnailFile").value = "";
     $("videoTitle").value = "";
     $("videoDescription").value = "";
     $("uploadPreview").classList.add("hidden");
+    if($("photoPreview")) $("photoPreview").classList.add("hidden");
     $("dropzone").classList.remove("hidden");
     $("uploadProgressBar").style.width = "0%";
     $("uploadProgressWrap").classList.remove("active");
     $("uploadStatus").textContent = "";
     $("videoEditBar").style.display = "none";
+    if($("thumbnailCard")) $("thumbnailCard").style.display = "none";
+    if($("thumbnailPreview")) $("thumbnailPreview").classList.add("hidden");
+    if($("thumbnailZone")) $("thumbnailZone").classList.remove("hidden");
+    if($("removeThumbnailBtn")) $("removeThumbnailBtn").style.display = "none";
 
+    // Reset state
     pendingVideoSong = null;
     pendingVideoSticker = null;
     pendingVideoTrim = { start: 0, end: 0, applied: false };
     pendingVideoRotation = 0;
     pendingVideoMuted = false;
+    pendingThumbnailFile = null;
+    pendingVideoFilter = "none";
+    pendingVideoSpeed = 1;
+    pendingTextOverlay = "";
+    pendingTextPosition = "top";
 
-    toast("✅ Video published!");
+    // Clear draft
+    localStorage.removeItem("reelhubDraft_" + currentUser.uid);
+
+    toast("✅ " + (isPhoto ? "Photo" : "Video") + " published!");
     openPanel("homePanel");
   }catch(error){
     console.error(error);
@@ -3334,10 +3561,11 @@ async function loadPublicVideos(uid){
 
 function createYTVideoItem(v, isMine){
   const views = Number(v.views || 0);
+  const filterStyle = v.filter && v.filter !== "none" ? `filter:${v.filter};` : "";
   return `
   <div class="yt-video-item" data-open-video="${esc(v.id)}">
     <div class="yt-video-thumb">
-      <video src="${esc(v.videoURL)}" preload="metadata" muted></video>
+      ${v.thumbnail ? `<img src="${esc(v.thumbnail)}" style="width:100%;height:100%;object-fit:cover;${filterStyle}">` : `<video src="${esc(v.videoURL)}" preload="metadata" muted style="${filterStyle}"></video>`}
       <div class="view-badge">👁️ ${formatViewsShort(views)}</div>
     </div>
     <div class="yt-video-meta">
@@ -3522,7 +3750,7 @@ $("shareAppBtn")?.addEventListener("click", async()=>{
 });
 
 /* ============================================================
-   ✅ NOTIFICATIONS — FIXED (sirf unread count)
+   NOTIFICATIONS (FIXED BADGE)
 ============================================================ */
 function startNotifications(){
   if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
@@ -3533,7 +3761,6 @@ function startNotifications(){
       const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       list.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
 
-      // ✅ FIX: Sirf UNREAD notifications count karo
       const lastSeen = Number(localStorage.getItem("notifLastSeen_" + currentUser.uid) || 0);
       const unreadCount = list.filter(n => timeValue(n.createdAt) > lastSeen).length;
 
@@ -3562,14 +3789,11 @@ function startNotifications(){
   );
 }
 
-/* ✅ FIX: Bell click pe "sab read" mark karo */
 $("topAlertsBtn")?.addEventListener("click", ()=>{
   showModal("alertsModal");
-  
   if(currentUser){
     localStorage.setItem("notifLastSeen_" + currentUser.uid, Date.now().toString());
   }
-  
   setTimeout(()=>{
     const badge = $("alertsBadge");
     if(badge) badge.classList.add("hidden");
@@ -3655,16 +3879,13 @@ function getOnlineText(uid){
 }
 
 /* ============================================================
-   ✅ CHAT READ STATUS — FIXED
+   CHAT READ STATUS (FIXED)
 ============================================================ */
 async function markChatAsRead(chatId){
   if(!currentUser || !chatId) return;
-  
-  // ✅ IMMEDIATE: cache clear karo (badge turant hat jaye)
   unreadChatsCache[chatId] = 0;
   chatLastReadCache[chatId] = Date.now();
   updateMsgBadge();
-  
   try{
     const userKey = "readBy_" + currentUser.uid;
     await updateDoc(doc(db, "chats", chatId), { [userKey]: serverTimestamp() });
@@ -3703,7 +3924,6 @@ async function calculateAllUnread(){
     return; 
   }
   for(const chat of myChatsCache){
-    // ✅ FIX: Current open chat ko skip karo
     if(chat.id === currentChatId){
       unreadChatsCache[chat.id] = 0;
       continue;
@@ -3718,7 +3938,7 @@ async function calculateAllUnread(){
 }
 
 /* ============================================================
-   ✅ DM CHAT — FIXED (badge turant clear)
+   DM CHAT (FIXED BADGE)
 ============================================================ */
 function startChatsListListener(){
   if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
@@ -3788,7 +4008,6 @@ async function openChat(uid){
   currentChatUser = p;
   currentChatId = [currentUser.uid, uid].sort().join("_");
   
-  // ✅ FIX: Badge turant clear karo (500ms delay hatao)
   unreadChatsCache[currentChatId] = 0;
   updateMsgBadge();
   markChatAsRead(currentChatId);
@@ -3845,7 +4064,6 @@ function startChatListener(){
       const container = $("dmMessages");
       if(!container) return;
       
-      // ✅ Naya message aaya toh bhi read mark karo
       if(currentChatId) markChatAsRead(currentChatId);
       
       if(!list.length){
@@ -3967,6 +4185,13 @@ $("dmSearchInput")?.addEventListener("input", e=>{
     item.style.display = name.includes(val) ? "" : "none";
   });
 });
+
+console.log("✅ app.js PART 2/3 loaded!");
+/* ============================================================
+   ReelHub - app.js
+   PART 3/3 — Groups + Comments + Share + Vault + Admin + Init
+============================================================ */
+
 /* ============================================================
    GROUPS
 ============================================================ */
@@ -4825,7 +5050,7 @@ async function deleteComment(videoId, commentId){
 }
 
 /* ============================================================
-   SHARE
+   SHARE — with WhatsApp/Insta/FB/Twitter
 ============================================================ */
 async function openShareSheet(videoId){
   shareVideoId = videoId;
@@ -4880,6 +5105,38 @@ $("shareNative")?.addEventListener("click", async()=>{
     else { await navigator.clipboard.writeText(url); toast("Link copied"); }
     hideModal("shareSheet");
   }catch(e){}
+});
+
+$("shareWhatsApp")?.addEventListener("click", ()=>{
+  if(!shareVideoId) return;
+  const url = location.origin + location.pathname + "?video=" + shareVideoId;
+  window.open("https://wa.me/?text=" + encodeURIComponent("Watch this on ReelHub 🎬: " + url), "_blank");
+  hideModal("shareSheet");
+});
+
+$("shareInstagram")?.addEventListener("click", async ()=>{
+  if(!shareVideoId) return;
+  const url = location.origin + location.pathname + "?video=" + shareVideoId;
+  try{
+    await navigator.clipboard.writeText(url);
+    toast("Link copied — Instagram pe paste karo");
+    window.open("https://www.instagram.com/", "_blank");
+  }catch(e){ toast("Copy failed"); }
+  hideModal("shareSheet");
+});
+
+$("shareFacebook")?.addEventListener("click", ()=>{
+  if(!shareVideoId) return;
+  const url = location.origin + location.pathname + "?video=" + shareVideoId;
+  window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank");
+  hideModal("shareSheet");
+});
+
+$("shareTwitter")?.addEventListener("click", ()=>{
+  if(!shareVideoId) return;
+  const url = location.origin + location.pathname + "?video=" + shareVideoId;
+  window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent("Watch this 🎬") + "&url=" + encodeURIComponent(url), "_blank");
+  hideModal("shareSheet");
 });
 
 /* ============================================================
@@ -5231,7 +5488,7 @@ function openVaultVideoPlayer(f){
   if(videoEl){ videoEl.src = f.mediaURL; videoEl.play().catch(()=>{}); }
   if($("videoPlayerTitle")) $("videoPlayerTitle").textContent = f.fileName || "Vault Video";
   if($("videoPlayerMeta")) $("videoPlayerMeta").textContent = timeAgo(f.createdAt);
-  ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn"]
+  ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn", "videoPlayerDownloadBtn"]
     .forEach(id => { const btn = $(id); if(btn) btn.style.display = "none"; });
   showModal("videoPlayerModal");
 }
@@ -5655,6 +5912,7 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
     }
 
     if(panelId === "shortsPanel") setTimeout(setupReelsObserver, 100);
+    if(panelId === "uploadPanel") loadDraftIfExists();
   });
 });
 
@@ -5710,9 +5968,7 @@ window.addEventListener("popstate", (e) => {
   }
 }, { passive: true });
 
-/* ============================================================
-   EMERGENCY ERROR CATCHER
-============================================================ */
+/* ERROR CATCHER */
 window.addEventListener("error", (e) => {
   console.error("🚨 RUNTIME ERROR:", e.message, e.filename, e.lineno);
 });
@@ -5721,9 +5977,7 @@ window.addEventListener("unhandledrejection", (e) => {
   console.error("🚨 PROMISE ERROR:", e.reason);
 });
 
-/* ============================================================
-   AD SYSTEM — AUTO INIT
-============================================================ */
+/* AD SYSTEM AUTO INIT */
 window.addEventListener("load", function(){
   setTimeout(function(){
     if(typeof window.showMyAd === "function" && typeof window.reloadAds === "function"){
@@ -5733,12 +5987,15 @@ window.addEventListener("load", function(){
   }, 2000);
 });
 
-/* ============================================================
-   FINAL LOG
-============================================================ */
+/* FINAL LOG */
 console.log("✅ ReelHub app.js FULL loaded!");
 console.log("🎉 All features active:");
 console.log("  ✅ Video Feed + Shorts + Upload");
+console.log("  ✅ Custom Thumbnail + Photo Posts");
+console.log("  ✅ Video Filters (10) + Speed Control");
+console.log("  ✅ Text Overlay + Save Draft");
+console.log("  ✅ Video Download 📥");
+console.log("  ✅ Share to WhatsApp/Insta/FB/Twitter");
 console.log("  ✅ Stories (Edit + Song + Sticker)");
 console.log("  ✅ DM Chat (text + photo + video + PDF)");
 console.log("  ✅ Groups (Public/Private + Edit)");
@@ -5750,4 +6007,3 @@ console.log("  ✅ Ad Control System (Master + Ad Type + Per User)");
 console.log("🔧 BADGE FIXES APPLIED:");
 console.log("  ✅ Messages badge — chat kholne pe turant clear");
 console.log("  ✅ Notifications badge — bell kholne pe turant clear");
-console.log("  ✅ Sirf unread count dikhta hai (read/unread ka fark)");
