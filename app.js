@@ -1,7 +1,9 @@
 /* ============================================================
    ReelHub - app.js PART 1/3
    Config + State + Helpers + Ad + Auth + Profile + Videos + Stories
-   ✅ FIXED: Splash timing, presence listener leak
+   ✅ FIXED: Google Login (robust DOM ready + logs + fallback)
+   ✅ FIXED: Splash timing (no flash on suspension)
+   ✅ FIXED: Presence heartbeat guard
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
@@ -441,7 +443,9 @@ function uploadAudioToCloudinary(file, onProgress){
   });
 }
 
-/* AUTH */
+/* ============================================================
+   AUTH — Email + Signup + Forgot Password
+============================================================ */
 document.querySelectorAll(".auth-tab").forEach(tab => {
   tab.addEventListener("click", () => {
     const tabName = tab.dataset.tab;
@@ -453,6 +457,7 @@ document.querySelectorAll(".auth-tab").forEach(tab => {
     if(status){ status.textContent = ""; status.style.color = "#ed4956"; }
   });
 });
+
 $("loginForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const email = $("loginEmail").value.trim();
@@ -460,9 +465,16 @@ $("loginForm")?.addEventListener("submit", async (e) => {
   const status = $("loginStatus");
   if(!email || !password){ if(status){ status.textContent = "Email and password required"; status.style.color = "#ed4956"; } return; }
   if(status){ status.textContent = "Logging in..."; status.style.color = "#7c3aed"; }
-  try{ await signInWithEmailAndPassword(auth, email, password); if(status){ status.textContent = ""; status.style.color = "#ed4956"; } }
-  catch(err){ if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } }
+  try{ 
+    await signInWithEmailAndPassword(auth, email, password); 
+    if(status){ status.textContent = ""; status.style.color = "#ed4956"; } 
+  }
+  catch(err){ 
+    console.error("Login error:", err);
+    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } 
+  }
 });
+
 $("signupForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
   const name = $("signupName").value.trim();
@@ -477,15 +489,27 @@ $("signupForm")?.addEventListener("submit", async (e) => {
     await updateProfile(userCred.user, { displayName: name });
     try{ await sendEmailVerification(userCred.user); }catch(e){}
     if(status){ status.textContent = "✅ Account created!"; status.style.color = "#22c55e"; }
-  }catch(err){ if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } }
+  }catch(err){ 
+    console.error("Signup error:", err);
+    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } 
+  }
 });
+
 $("forgotPasswordBtn")?.addEventListener("click", async () => {
   const email = $("loginEmail").value.trim();
   const status = $("loginStatus");
   if(!email){ if(status){ status.textContent = "Enter your email first"; status.style.color = "#ed4956"; } return; }
-  try{ await sendPasswordResetEmail(auth, email); if(status){ status.textContent = "✅ Reset email sent!"; status.style.color = "#22c55e"; } setTimeout(() => { if(status) status.style.color = "#ed4956"; }, 4000); }
-  catch(err){ if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } }
+  try{ 
+    await sendPasswordResetEmail(auth, email); 
+    if(status){ status.textContent = "✅ Reset email sent!"; status.style.color = "#22c55e"; } 
+    setTimeout(() => { if(status) status.style.color = "#ed4956"; }, 4000); 
+  }
+  catch(err){ 
+    console.error("Reset error:", err);
+    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } 
+  }
 });
+
 function getAuthError(code){
   const errors = {
     "auth/email-already-in-use": "This email is already registered",
@@ -501,22 +525,99 @@ function getAuthError(code){
   };
   return errors[code] || "Something went wrong. Please try again";
 }
-$("googleLogin")?.addEventListener("click", async ()=>{
-  const status = $("loginStatus");
-  if(status){ status.textContent = "Opening Google..."; status.style.color = "#7c3aed"; }
-  try{
-    const result = await signInWithPopup(auth, provider);
-    if(status){ status.textContent = "✅ Login successful!"; status.style.color = "#22c55e"; }
-  }catch(error){
-    if(status){ status.textContent = "❌ " + (error.code || "error"); status.style.color = "#ed4956"; }
-    if(error.code === "auth/popup-blocked" || error.code === "auth/popup-closed-by-user"){
-      try{ await signInWithRedirect(auth, provider); }catch(e){}
-    }
-  }
-});
-getRedirectResult(auth).then(result => { if(result && result.user) console.log("✅ Redirect login:", result.user.email); }).catch(err => console.error("Redirect error:", err));
 
-/* PROFILE */
+/* ============================================================
+   ✅ GOOGLE LOGIN — ROBUST VERSION (FIXED)
+   - DOM ready ka wait
+   - Duplicate listener check
+   - Console logs
+   - Better errors
+   - Auto fallback to redirect
+============================================================ */
+function attachGoogleLogin(){
+  const btn = document.getElementById("googleLogin");
+  if(!btn){
+    console.warn("⚠️ googleLogin button HTML mein nahi mila! (id='googleLogin' check karo)");
+    return false;
+  }
+  if(btn.dataset.listenerAttached === "1"){
+    console.log("ℹ️ Google listener already attached");
+    return true;
+  }
+  btn.dataset.listenerAttached = "1";
+
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("🔵 Google button clicked");
+
+    const status = $("loginStatus");
+    if(status){ status.textContent = "Opening Google..."; status.style.color = "#7c3aed"; }
+
+    try{
+      const result = await signInWithPopup(auth, provider);
+      console.log("✅ Google success:", result.user?.email);
+      if(status){ status.textContent = "✅ Login successful!"; status.style.color = "#22c55e"; }
+    }catch(error){
+      console.error("❌ Google error:", error.code, error.message);
+      if(status){ status.textContent = "❌ " + (error.code || "error"); status.style.color = "#ed4956"; }
+
+      // Specific helpful messages
+      if(error.code === "auth/operation-not-allowed"){
+        if(status) status.textContent = "❌ Firebase mein Google login enable nahi hai";
+        alert("Admin action: Firebase Console → Authentication → Sign-in method → Google → Enable karo");
+        return;
+      }
+      if(error.code === "auth/unauthorized-domain"){
+        if(status) status.textContent = "❌ Yeh domain authorized nahi hai";
+        alert("Admin action: Firebase Console → Authentication → Settings → Authorized domains → apna domain add karo");
+        return;
+      }
+
+      // Fallback to redirect on popup issues
+      if(error.code === "auth/popup-blocked" || 
+         error.code === "auth/popup-closed-by-user" ||
+         error.code === "auth/cancelled-popup-request"){
+        console.log("🔄 Falling back to redirect...");
+        try{ 
+          await signInWithRedirect(auth, provider); 
+        }catch(e){ 
+          console.error("Redirect error:", e);
+          if(status){ status.textContent = "Redirect failed: " + e.message; status.style.color = "#ed4956"; }
+        }
+      }
+    }
+  });
+  console.log("✅ Google login listener attached");
+  return true;
+}
+
+/* Attach now if DOM ready, else wait */
+if(document.readyState === "loading"){
+  document.addEventListener("DOMContentLoaded", () => {
+    if(!attachGoogleLogin()){
+      // Retry after 500ms (if button renders late)
+      setTimeout(attachGoogleLogin, 500);
+      setTimeout(attachGoogleLogin, 1500);
+    }
+  });
+} else {
+  if(!attachGoogleLogin()){
+    setTimeout(attachGoogleLogin, 500);
+    setTimeout(attachGoogleLogin, 1500);
+  }
+}
+
+/* Handle redirect result (for popup-blocked fallback) */
+getRedirectResult(auth)
+  .then(result => { 
+    if(result && result.user) console.log("✅ Redirect login success:", result.user.email); 
+  })
+  .catch(err => console.error("Redirect result error:", err));
+
+/* ============================================================
+   PROFILE
+============================================================ */
 async function createProfile(){
   const ref = doc(db, "profiles", currentUser.uid);
   const snap = await getDoc(ref);
@@ -631,8 +732,6 @@ function stopAllPresenceListeners(){
   presenceListenersMap.forEach(unsub => { try{ unsub(); }catch(e){} });
   presenceListenersMap.clear();
 }
-
-/* ✅ FIX: presence heartbeat guard — sirf ek baar listeners bind honge */
 function startPresenceHeartbeat(){
   if(!currentUser) return;
   if(heartbeatInterval) clearInterval(heartbeatInterval);
@@ -654,7 +753,7 @@ onAuthStateChanged(auth, async user => {
     currentUser = user;
     $("loginPage")?.classList.add("hidden");
     
-    // ✅ FIX: Suspension check PEHLE, then show app (no flash)
+    // ✅ Suspension check PEHLE
     const isSuspended = await checkSuspension(user.uid);
     if(isSuspended){ hideSplash(); authResolved = true; return; }
     
@@ -740,7 +839,7 @@ onAuthStateChanged(auth, async user => {
     authResolved = true;
   }
 });
-console.log("✅ Part 1/3 loaded — Auth + Profile");
+console.log("✅ Part 1/3 loaded — Auth + Profile (Google login FIXED)");
 
 /* ============================================================
    VIDEO CARD + FEED + SHORTS
@@ -1494,7 +1593,7 @@ $("trimSaveBtn")?.addEventListener("click", ()=>{
 $("editVideoTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); window.__trimContext = "video"; openVideoTrimModal($("uploadPreview")); });
 $("storyTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(storyMediaType !== "video"){ toast("Trim only for videos"); return; } window.__trimContext = "story"; openVideoTrimModal($("storyVideoPreview")); });
 
-console.log("✅ Part 1/3 complete");
+console.log("✅ Part 1/3 complete — Google login ROBUST version loaded");
 /* ============================================================
    ReelHub - app.js PART 2/3
    Video Menu + Player + Upload + DM + Block/Report + Watch History
