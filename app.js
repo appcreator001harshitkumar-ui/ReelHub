@@ -1,41 +1,11 @@
 /* ============================================================
-   ReelHub - app.js (Full Clean Version)
-   PART A — Imports + Config + State + Helpers + Auth + Profile
+   ReelHub - app.js PART 1/3
+   Config + State + Helpers + Ad + Auth + Profile + Videos + Stories
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-
-import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup,
-  signInWithRedirect,
-  getRedirectResult,
-  onAuthStateChanged,
-  signOut,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-  updateProfile,
-  sendEmailVerification
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-
-import {
-  getFirestore,
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  setDoc,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  serverTimestamp,
-  onSnapshot,
-  increment
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, serverTimestamp, onSnapshot, increment, limit, orderBy } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
@@ -54,12 +24,7 @@ const provider = new GoogleAuthProvider();
 
 const CLOUDINARY_CLOUD_NAME = "s3eresx6";
 const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
-
-const ADMIN_EMAILS = [
-  "appcreator001.harshitkumar@gmail.com",
-  "satender8510815609@gmail.com"
-];
-
+const ADMIN_EMAILS = ["appcreator001.harshitkumar@gmail.com", "satender8510815609@gmail.com"];
 const STORY_LIFETIME_MS = 24 * 60 * 60 * 1000;
 const STORY_DURATION_IMAGE = 5000;
 const STORY_DURATION_VIDEO_MAX = 15000;
@@ -67,17 +32,11 @@ const VAULT_AUTO_LOCK_MS = 5 * 60 * 1000;
 const VAULT_MAX_FILE_SIZE = 30 * 1024 * 1024;
 const VAULT_MAX_FILES = 100;
 const MESSAGE_COOLDOWN = 1500;
-
 const GROUP_MAX_MEMBERS = 100;
 const GROUP_MAX_PDF_SIZE = 50 * 1024 * 1024;
 const GROUP_MAX_VIDEO_SIZE = 100 * 1024 * 1024;
 const GROUP_MAX_PHOTO_SIZE = 20 * 1024 * 1024;
-
-const MONETIZATION_REQUIREMENTS = {
-  followers: 10,
-  watchTime: 3600,
-  views: 50
-};
+const MONETIZATION_REQUIREMENTS = { followers: 10, watchTime: 3600, views: 50 };
 
 /* ============================================================
    STATE
@@ -91,6 +50,9 @@ let myChatsCache = [];
 let myPlaylistsCache = [];
 let myFollowRequestsCache = [];
 let mySentRequestsCache = new Set();
+let blockedUsersCache = new Set();  // ✅ NEW
+let watchHistoryCache = [];          // ✅ NEW
+let continueWatchingCache = [];      // ✅ NEW
 
 let videosUnsubscribe = null;
 let notificationsUnsubscribe = null;
@@ -103,6 +65,8 @@ let followRequestsUnsubscribe = null;
 let storiesUnsubscribe = null;
 let vaultUnsubscribe = null;
 let heartbeatInterval = null;
+let blockedUsersUnsubscribe = null;  // ✅ NEW
+let watchHistoryUnsubscribe = null;  // ✅ NEW
 
 let onlineUsersCache = {};
 let unreadChatsCache = {};
@@ -114,6 +78,7 @@ let currentChatUser = null;
 let shareVideoId = null;
 let uploadVisibility = "public";
 let uploadType = "long";
+let uploadCategory = "all";          // ✅ NEW
 let currentProfileTab = "videos";
 let currentPlaylistVideoId = null;
 let selectedPlaylists = new Set();
@@ -129,6 +94,11 @@ let pendingVideoSpeed = 1;
 let pendingTextOverlay = "";
 let pendingTextPosition = "top";
 
+/* Video Menu Modal */
+let videoMenuVideoId = null;         // ✅ NEW
+let reportTargetType = "video";      // ✅ NEW
+let reportTargetId = null;           // ✅ NEW
+
 let storiesCache = [];
 let groupedStories = [];
 let currentStoryUserIndex = 0;
@@ -142,17 +112,14 @@ let storyUploadFile = null;
 let storyMediaType = null;
 let currentStoryId = null;
 let currentStoryData = null;
-
 let pendingStorySong = null;
 let pendingStorySticker = null;
 let pendingStoryTrim = { start: 0, end: 0, applied: false };
-
 let pendingVideoSong = null;
 let pendingVideoSticker = null;
 let pendingVideoTrim = { start: 0, end: 0, applied: false };
 let pendingVideoRotation = 0;
 let pendingVideoMuted = false;
-
 let trimVideoElement = null;
 let trimVideoDuration = 0;
 
@@ -174,10 +141,8 @@ let selectedStickerColor = "#ffffff";
 let selectedStickerEmoji = null;
 let selectedStickerText = null;
 let previewAudio = null;
-
 let editingSongId = null;
 let pendingSongFile = null;
-
 let modalHistoryStack = [];
 
 let vaultPinVerified = false;
@@ -185,26 +150,18 @@ let vaultUnlockTime = 0;
 let vaultAutoLockEnabled = true;
 let vaultFilesCache = [];
 let vaultUploading = false;
-
 let splashHidden = false;
 let authResolved = false;
 
 const presenceListenersMap = new Map();
-
 const processingMessages = new Set();
 let lastSentMessageTime = 0;
 const processingLikes = new Set();
 const processingViews = new Set();
 const processingSaves = new Set();
-
 let currentWatchSession = { videoId: null, startTime: null };
 
-/* AD CONTROL STATE */
-let adSettings = {
-  masterDisabled: false,
-  typeDisabled: { banner: false, popup: false, video: false },
-  userDisabled: {}
-};
+let adSettings = { masterDisabled: false, typeDisabled: { banner: false, popup: false, video: false }, userDisabled: {} };
 let adSettingsUnsubscribe = null;
 let userAdsUnsubscribe = null;
 
@@ -214,12 +171,7 @@ let userAdsUnsubscribe = null;
 const $ = id => document.getElementById(id);
 
 function esc(v){
-  return String(v ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+  return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
 
 function timeValue(v){
@@ -229,9 +181,7 @@ function timeValue(v){
 }
 
 function avatar(url, name){
-  return url || "https://ui-avatars.com/api/?name=" +
-    encodeURIComponent(name || "User") +
-    "&background=7c3aed&color=fff";
+  return url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(name || "User") + "&background=7c3aed&color=fff";
 }
 
 function toast(msg){
@@ -342,7 +292,9 @@ function isAdminUser(){
   return currentUser && ADMIN_EMAILS.includes(currentUser.email);
 }
 
-/* AD CONTROL — Check + Render + Listener */
+function isUserBlocked(uid){ return blockedUsersCache.has(uid); }  // ✅ NEW
+
+/* AD CONTROL */
 function canShowAd(adType, userId){
   if(adSettings.masterDisabled === true) return false;
   if(userId && adSettings.userDisabled[userId] === true) return false;
@@ -352,7 +304,7 @@ function canShowAd(adType, userId){
 
 window.showMyAd = function(adType, targetUserId, adCallback){
   if(!canShowAd(adType, targetUserId || currentUser?.uid)){
-    console.log("🚫 Ad blocked:", adType, "for:", targetUserId || "all");
+    console.log("🚫 Ad blocked:", adType);
     return;
   }
   if(typeof adCallback === "function") adCallback();
@@ -385,7 +337,7 @@ function startAdSettingsListener(){
   );
 }
 
-/* MODAL MANAGEMENT */
+/* MODAL */
 function showModal(id){
   const el = $(id);
   if(!el) return;
@@ -404,19 +356,10 @@ function hideModal(id){
   el.classList.remove("show");
   const idx = modalHistoryStack.indexOf(id);
   if(idx > -1) modalHistoryStack.splice(idx, 1);
-
   if(id === "videoPlayerModal"){
     const videoEl = $("videoPlayerVideo");
-    if(videoEl){
-      videoEl.pause();
-      videoEl.src = "";
-      videoEl.style.transform = "";
-      videoEl.muted = false;
-    }
-    if(window.__videoAudio){
-      window.__videoAudio.pause();
-      window.__videoAudio = null;
-    }
+    if(videoEl){ videoEl.pause(); videoEl.src = ""; videoEl.style.transform = ""; videoEl.muted = false; }
+    if(window.__videoAudio){ window.__videoAudio.pause(); window.__videoAudio = null; }
   }
 }
 
@@ -426,10 +369,7 @@ function hideSplash(){
   splashHidden = true;
   document.body.classList.add("app-ready");
   const splash = $("splashScreen");
-  if(splash){
-    splash.classList.add("fade-out");
-    setTimeout(()=> splash.remove(), 500);
-  }
+  if(splash){ splash.classList.add("fade-out"); setTimeout(()=> splash.remove(), 500); }
 }
 
 function prepareInitialState(){
@@ -444,20 +384,12 @@ function showSuspensionScreen(profile){
   if(!screen) return;
   const reason = profile.suspendReason || "Violation of Terms";
   const duration = profile.suspendDuration || "Temporary";
-  const until = profile.suspendUntil ? 
-    new Date(timeValue(profile.suspendUntil)).toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'short', year: 'numeric'
-    }) : "Permanent";
-  const date = profile.suspendedAt ?
-    new Date(timeValue(profile.suspendedAt)).toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'short', year: 'numeric'
-    }) : "—";
-
+  const until = profile.suspendUntil ? new Date(timeValue(profile.suspendUntil)).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "Permanent";
+  const date = profile.suspendedAt ? new Date(timeValue(profile.suspendedAt)).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "—";
   if($("suspensionReason")) $("suspensionReason").textContent = reason;
   if($("suspensionDuration")) $("suspensionDuration").textContent = duration;
   if($("suspensionUntil")) $("suspensionUntil").textContent = until;
   if($("suspensionDate")) $("suspensionDate").textContent = date;
-
   $("loginPage")?.classList.add("hidden");
   $("app")?.classList.add("hidden");
   hideSplash();
@@ -471,32 +403,22 @@ async function checkSuspension(uid){
     if(snap.empty) return false;
     const profileData = snap.docs[0].data();
     if(!profileData.suspended) return false;
-
     if(profileData.suspendUntil){
       const untilTime = timeValue(profileData.suspendUntil);
       if(Date.now() > untilTime){
-        await updateDoc(doc(db, "profiles", snap.docs[0].id), {
-          suspended: false, suspendReason: "", suspendDuration: "",
-          suspendUntil: null, autoUnsuspendedAt: serverTimestamp()
-        });
+        await updateDoc(doc(db, "profiles", snap.docs[0].id), { suspended: false, suspendReason: "", suspendDuration: "", suspendUntil: null, autoUnsuspendedAt: serverTimestamp() });
         toast("✅ Suspension ended");
         return false;
       }
     }
     showSuspensionScreen(profileData);
     return true;
-  }catch(e){
-    console.error("Suspension check error:", e);
-    return false;
-  }
+  }catch(e){ console.error("Suspension check error:", e); return false; }
 }
 
 $("suspensionLogoutBtn")?.addEventListener("click", async ()=>{
   if(!confirm("Logout?")) return;
-  try{
-    await signOut(auth);
-    window.location.reload();
-  }catch(e){ console.error(e); }
+  try{ await signOut(auth); window.location.reload(); }catch(e){ console.error(e); }
 });
 
 /* WATCH TIME */
@@ -531,28 +453,20 @@ document.addEventListener("visibilitychange", () => {
 
 window.addEventListener("beforeunload", () => { stopWatchTimer(); });
 
-/* CLOUDINARY UPLOAD */
+/* CLOUDINARY */
 function uploadToCloudinary(file, onProgress){
   return new Promise((resolve,reject)=>{
     let resource = "image";
     if(file.type.startsWith("video/")) resource = "video";
     else if(!file.type.startsWith("image/")) resource = "raw";
-
     const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resource}/upload`;
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
     xhr.timeout = 5 * 60 * 1000;
-
-    xhr.onload = ()=>{
-      if(xhr.status >= 200 && xhr.status < 300){
-        try{ resolve(JSON.parse(xhr.responseText).secure_url); }
-        catch(e){ reject(e); }
-      }else reject(new Error("Upload failed: " + xhr.status));
-    };
+    xhr.onload = ()=>{ if(xhr.status >= 200 && xhr.status < 300){ try{ resolve(JSON.parse(xhr.responseText).secure_url); }catch(e){ reject(e); } } else reject(new Error("Upload failed: " + xhr.status)); };
     xhr.onerror = ()=> reject(new Error("Network error"));
     xhr.ontimeout = ()=> reject(new Error("Upload timeout"));
     xhr.upload.onprogress = e=>{ if(e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100)); };
-
     const form = new FormData();
     form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
     form.append("file", file);
@@ -566,19 +480,10 @@ function uploadAudioToCloudinary(file, onProgress){
     const xhr = new XMLHttpRequest();
     xhr.open("POST", url);
     xhr.timeout = 5 * 60 * 1000;
-
-    xhr.onload = ()=>{
-      if(xhr.status >= 200 && xhr.status < 300){
-        try{
-          const data = JSON.parse(xhr.responseText);
-          resolve(data.secure_url);
-        }catch(e){ reject(e); }
-      }else reject(new Error("Upload failed: " + xhr.status));
-    };
+    xhr.onload = ()=>{ if(xhr.status >= 200 && xhr.status < 300){ try{ const data = JSON.parse(xhr.responseText); resolve(data.secure_url); }catch(e){ reject(e); } } else reject(new Error("Upload failed: " + xhr.status)); };
     xhr.onerror = ()=> reject(new Error("Network error"));
     xhr.ontimeout = ()=> reject(new Error("Audio upload timeout"));
     xhr.upload.onprogress = e=>{ if(e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100)); };
-
     const form = new FormData();
     form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
     form.append("resource_type", "video");
@@ -587,21 +492,14 @@ function uploadAudioToCloudinary(file, onProgress){
   });
 }
 
-/* ============================================================
-   AUTH
-============================================================ */
+/* AUTH */
 document.querySelectorAll(".auth-tab").forEach(tab => {
   tab.addEventListener("click", () => {
     const tabName = tab.dataset.tab;
     document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
     tab.classList.add("active");
-    if(tabName === "login"){
-      $("loginForm")?.classList.remove("hidden");
-      $("signupForm")?.classList.add("hidden");
-    }else{
-      $("loginForm")?.classList.add("hidden");
-      $("signupForm")?.classList.remove("hidden");
-    }
+    if(tabName === "login"){ $("loginForm")?.classList.remove("hidden"); $("signupForm")?.classList.add("hidden"); }
+    else { $("loginForm")?.classList.add("hidden"); $("signupForm")?.classList.remove("hidden"); }
     const status = $("loginStatus");
     if(status){ status.textContent = ""; status.style.color = "#ed4956"; }
   });
@@ -612,18 +510,10 @@ $("loginForm")?.addEventListener("submit", async (e) => {
   const email = $("loginEmail").value.trim();
   const password = $("loginPassword").value;
   const status = $("loginStatus");
-  if(!email || !password){
-    if(status){ status.textContent = "Email and password required"; status.style.color = "#ed4956"; }
-    return;
-  }
+  if(!email || !password){ if(status){ status.textContent = "Email and password required"; status.style.color = "#ed4956"; } return; }
   if(status){ status.textContent = "Logging in..."; status.style.color = "#7c3aed"; }
-  try{
-    await signInWithEmailAndPassword(auth, email, password);
-    if(status){ status.textContent = ""; status.style.color = "#ed4956"; }
-  }catch(err){
-    console.error(err);
-    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; }
-  }
+  try{ await signInWithEmailAndPassword(auth, email, password); if(status){ status.textContent = ""; status.style.color = "#ed4956"; } }
+  catch(err){ console.error(err); if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } }
 });
 
 $("signupForm")?.addEventListener("submit", async (e) => {
@@ -632,41 +522,26 @@ $("signupForm")?.addEventListener("submit", async (e) => {
   const email = $("signupEmail").value.trim();
   const password = $("signupPassword").value;
   const status = $("loginStatus");
-  if(!name || !email || !password){
-    if(status){ status.textContent = "All fields required"; status.style.color = "#ed4956"; }
-    return;
-  }
-  if(password.length < 6){
-    if(status){ status.textContent = "Password must be 6+ chars"; status.style.color = "#ed4956"; }
-    return;
-  }
+  if(!name || !email || !password){ if(status){ status.textContent = "All fields required"; status.style.color = "#ed4956"; } return; }
+  if(password.length < 6){ if(status){ status.textContent = "Password must be 6+ chars"; status.style.color = "#ed4956"; } return; }
   if(status){ status.textContent = "Creating account..."; status.style.color = "#7c3aed"; }
   try{
     const userCred = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCred.user, { displayName: name });
     try{ await sendEmailVerification(userCred.user); }catch(e){}
     if(status){ status.textContent = "✅ Account created!"; status.style.color = "#22c55e"; }
-  }catch(err){
-    console.error(err);
-    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; }
-  }
+  }catch(err){ console.error(err); if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } }
 });
 
 $("forgotPasswordBtn")?.addEventListener("click", async () => {
   const email = $("loginEmail").value.trim();
   const status = $("loginStatus");
-  if(!email){
-    if(status){ status.textContent = "Enter your email first"; status.style.color = "#ed4956"; }
-    return;
-  }
+  if(!email){ if(status){ status.textContent = "Enter your email first"; status.style.color = "#ed4956"; } return; }
   try{
     await sendPasswordResetEmail(auth, email);
     if(status){ status.textContent = "✅ Reset email sent!"; status.style.color = "#22c55e"; }
     setTimeout(() => { if(status) status.style.color = "#ed4956"; }, 4000);
-  }catch(err){
-    console.error(err);
-    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; }
-  }
+  }catch(err){ console.error(err); if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } }
 });
 
 function getAuthError(code){
@@ -696,13 +571,9 @@ $("googleLogin")?.addEventListener("click", async ()=>{
     if(status){ status.textContent = "✅ Login successful!"; status.style.color = "#22c55e"; }
   }catch(error){
     console.error("❌ Google login error:", error.code, error.message);
-    if(status){
-      status.textContent = "❌ " + (error.code || "error") + ": " + (error.message || "Login failed");
-      status.style.color = "#ed4956";
-    }
+    if(status){ status.textContent = "❌ " + (error.code || "error") + ": " + (error.message || "Login failed"); status.style.color = "#ed4956"; }
     if(error.code === "auth/popup-blocked" || error.code === "auth/popup-closed-by-user"){
-      try{ await signInWithRedirect(auth, provider); }
-      catch(e){ if(status){ status.textContent = "Redirect error: " + e.message; status.style.color = "#ed4956"; } }
+      try{ await signInWithRedirect(auth, provider); }catch(e){ if(status){ status.textContent = "Redirect error: " + e.message; status.style.color = "#ed4956"; } }
     }
   }
 });
@@ -716,19 +587,17 @@ async function createProfile(){
   const ref = doc(db, "profiles", currentUser.uid);
   const snap = await getDoc(ref);
   if(!snap.exists()){
-    const displayName = currentUser.displayName || 
-      (currentUser.email ? currentUser.email.split("@")[0] : "User");
+    const displayName = currentUser.displayName || (currentUser.email ? currentUser.email.split("@")[0] : "User");
     await setDoc(ref, {
       uid: currentUser.uid,
       name: displayName,
-      username: displayName.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,20) ||
-        "user" + Date.now().toString().slice(-5),
+      username: displayName.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,20) || "user" + Date.now().toString().slice(-5),
       age: "", gender: "", bio: "", photo: currentUser.photoURL || "",
       followers: 0, following: 0, videos: 0, private: false, suspended: false,
       suspendReason: "", suspendDuration: "", suspendUntil: null, suspendedAt: null,
       bannerType: "gradient", bannerGradient: "linear-gradient(135deg, #7c3aed, #ec4899)", bannerURL: "",
       vaultPin: "", vaultEnabled: false, totalWatchTime: 0, totalViews: 0,
-      monetizationStatus: "none", upiId: "", createdAt: serverTimestamp()
+      monetizationStatus: "none", upiId: "", pinnedVideos: [], createdAt: serverTimestamp()
     });
   }
 }
@@ -736,12 +605,7 @@ async function createProfile(){
 async function getProfile(uid){
   const snap = await getDoc(doc(db, "profiles", uid));
   if(!snap.exists()){
-    return { uid, name:"User", username:"user", age:"", gender:"", bio:"",
-             photo:"", followers:0, following:0, videos:0, private:false,
-             suspended:false, bannerType:"gradient",
-             bannerGradient:"linear-gradient(135deg, #7c3aed, #ec4899)",
-             bannerURL:"", vaultPin: "", vaultEnabled: false,
-             totalWatchTime: 0, totalViews: 0, monetizationStatus: "none", upiId: "" };
+    return { uid, name:"User", username:"user", age:"", gender:"", bio:"", photo:"", followers:0, following:0, videos:0, private:false, suspended:false, bannerType:"gradient", bannerGradient:"linear-gradient(135deg, #7c3aed, #ec4899)", bannerURL:"", vaultPin: "", vaultEnabled: false, totalWatchTime: 0, totalViews: 0, monetizationStatus: "none", upiId: "", pinnedVideos: [] };
   }
   const d = snap.data();
   return {
@@ -759,7 +623,8 @@ async function getProfile(uid){
     totalWatchTime: Number(d.totalWatchTime || 0),
     totalViews: Number(d.totalViews || 0),
     monetizationStatus: d.monetizationStatus || "none",
-    upiId: d.upiId || ""
+    upiId: d.upiId || "",
+    pinnedVideos: Array.isArray(d.pinnedVideos) ? d.pinnedVideos : []
   };
 }
 
@@ -773,13 +638,11 @@ async function loadProfile(){
   $("followersCount").textContent = currentProfile.followers || 0;
   $("followingCount").textContent = currentProfile.following || 0;
   $("videosCount").textContent = currentProfile.videos || 0;
-
   let extra = [];
   if(currentProfile.age) extra.push("Age: " + currentProfile.age);
   if(currentProfile.gender) extra.push(currentProfile.gender);
   $("profileExtra").textContent = extra.join(" · ");
   $("profileBio").textContent = currentProfile.bio || "";
-
   updateProfileTabCounts();
   updatePrivateToggleUI();
   applyBanner(currentProfile);
@@ -823,6 +686,66 @@ async function loadMySentRequests(){
   }catch(e){ console.error(e); }
 }
 
+/* ✅ NEW: Load blocked users */
+async function loadBlockedUsers(){
+  if(!currentUser) return;
+  blockedUsersCache = new Set();
+  try{
+    const q = query(collection(db, "blocked_users"), where("blockerId", "==", currentUser.uid));
+    const snap = await getDocs(q);
+    snap.forEach(d => blockedUsersCache.add(d.data().blockedId));
+  }catch(e){ console.error("loadBlockedUsers:", e); }
+}
+
+function startBlockedUsersListener(){
+  if(blockedUsersUnsubscribe){ blockedUsersUnsubscribe(); blockedUsersUnsubscribe = null; }
+  if(!currentUser) return;
+  blockedUsersUnsubscribe = onSnapshot(
+    query(collection(db, "blocked_users"), where("blockerId", "==", currentUser.uid)),
+    snapshot=>{
+      blockedUsersCache = new Set();
+      snapshot.forEach(d => blockedUsersCache.add(d.data().blockedId));
+      renderFeed();
+      renderShorts();
+    },
+    error=>console.error("Blocked users listener error:", error)
+  );
+}
+
+/* ✅ NEW: Load watch history */
+async function loadWatchHistory(){
+  if(!currentUser) return;
+  watchHistoryCache = [];
+  continueWatchingCache = [];
+  try{
+    const q = query(collection(db, "watch_history"), where("userId", "==", currentUser.uid));
+    const snap = await getDocs(q);
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    items.sort((a,b)=> timeValue(b.watchedAt) - timeValue(a.watchedAt));
+    watchHistoryCache = items;
+    continueWatchingCache = items.filter(i => i.progress > 3 && i.progress < (i.duration - 5)).slice(0, 10);
+    renderWatchHistory();
+    renderContinueWatching();
+  }catch(e){ console.error("loadWatchHistory:", e); }
+}
+
+function startWatchHistoryListener(){
+  if(watchHistoryUnsubscribe){ watchHistoryUnsubscribe(); watchHistoryUnsubscribe = null; }
+  if(!currentUser) return;
+  watchHistoryUnsubscribe = onSnapshot(
+    query(collection(db, "watch_history"), where("userId", "==", currentUser.uid)),
+    snapshot=>{
+      const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      items.sort((a,b)=> timeValue(b.watchedAt) - timeValue(a.watchedAt));
+      watchHistoryCache = items;
+      continueWatchingCache = items.filter(i => i.progress > 3 && i.duration > 0 && i.progress < (i.duration - 5)).slice(0, 10);
+      renderWatchHistory();
+      renderContinueWatching();
+    },
+    error=>console.error("Watch history listener error:", error)
+  );
+}
+
 function stopAllPresenceListeners(){
   presenceListenersMap.forEach(unsub => { try{ unsub(); }catch(e){} });
   presenceListenersMap.clear();
@@ -845,6 +768,8 @@ onAuthStateChanged(auth, async user => {
     await loadMyFollows();
     await loadMySaves();
     await loadMySentRequests();
+    await loadBlockedUsers();      // ✅ NEW
+    await loadWatchHistory();      // ✅ NEW
 
     if(typeof startRealtimeVideos === "function") startRealtimeVideos();
     if(typeof startNotifications === "function") startNotifications();
@@ -858,6 +783,8 @@ onAuthStateChanged(auth, async user => {
     if(typeof startSongLibraryListener === "function") startSongLibraryListener();
     if(typeof updateAdminVisibility === "function") updateAdminVisibility();
     if(typeof startAdSettingsListener === "function") startAdSettingsListener();
+    if(typeof startBlockedUsersListener === "function") startBlockedUsersListener();  // ✅ NEW
+    if(typeof startWatchHistoryListener === "function") startWatchHistoryListener();  // ✅ NEW
 
     try{ window.history.replaceState({ reelhubHome: true }, "", window.location.href); }catch(e){}
     try{ window.history.pushState({ reelhubApp: true }, "", window.location.href); }catch(e){}
@@ -874,9 +801,12 @@ onAuthStateChanged(auth, async user => {
     vaultFilesCache = [];
     myGroupsCache = [];
     songLibraryCache = [];
+    watchHistoryCache = [];        // ✅ NEW
+    continueWatchingCache = [];    // ✅ NEW
     myFollowsCache.clear();
     mySavesCache.clear();
     mySentRequestsCache.clear();
+    blockedUsersCache.clear();     // ✅ NEW
     onlineUsersCache = {};
     unreadChatsCache = {};
     chatLastReadCache = {};
@@ -896,17 +826,13 @@ onAuthStateChanged(auth, async user => {
     if(groupChatUnsubscribe){ groupChatUnsubscribe(); groupChatUnsubscribe = null; }
     if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
     if(heartbeatInterval){ clearInterval(heartbeatInterval); heartbeatInterval = null; }
-
     if(adSettingsUnsubscribe){ adSettingsUnsubscribe(); adSettingsUnsubscribe = null; }
     if(userAdsUnsubscribe){ userAdsUnsubscribe(); userAdsUnsubscribe = null; }
-    adSettings = {
-      masterDisabled: false,
-      typeDisabled: { banner: false, popup: false, video: false },
-      userDisabled: {}
-    };
+    if(blockedUsersUnsubscribe){ blockedUsersUnsubscribe(); blockedUsersUnsubscribe = null; }  // ✅ NEW
+    if(watchHistoryUnsubscribe){ watchHistoryUnsubscribe(); watchHistoryUnsubscribe = null; }  // ✅ NEW
 
+    adSettings = { masterDisabled: false, typeDisabled: { banner: false, popup: false, video: false }, userDisabled: {} };
     stopAllPresenceListeners();
-
     processingLikes.clear();
     processingSaves.clear();
     processingViews.clear();
@@ -920,16 +846,18 @@ onAuthStateChanged(auth, async user => {
   }
 });
 
-console.log("✅ app.js PART A loaded — Auth + Profile + Ad System ready!");
+console.log("✅ Part 1/3 loaded — Auth + Profile ready!");
 
 /* ============================================================
-   PART B — Videos + Shorts + Stories + Editors
+   VIDEOS + SHORTS
 ============================================================ */
+let currentCategory = "all";         // ✅ NEW
 
 function createVideoCard(v){
   const views = Number(v.views || 0);
   const mine = currentUser && v.userId === currentUser.uid;
   const isAdmin = isAdminUser();
+  const isPinned = currentProfile?.pinnedVideos?.includes(v.id);
 
   let songBadge = "";
   if(v.song && v.song.name){
@@ -947,7 +875,6 @@ function createVideoCard(v){
   const scaleStyle = (v.rotation === 90 || v.rotation === 270) ? "scale(1.3);" : "";
   const filterStyle = v.filter && v.filter !== "none" ? `filter: ${v.filter};` : "";
 
-  // 🆕 Thumbnail or video preview
   const thumbnailHTML = v.thumbnail
     ? `<img src="${esc(v.thumbnail)}" alt="" style="width:100%;height:100%;object-fit:cover;${filterStyle}">`
     : `<video src="${esc(v.videoURL)}#t=0.5" preload="metadata" muted playsinline style="${rotationStyle}${scaleStyle}${filterStyle}"></video>`;
@@ -958,17 +885,17 @@ function createVideoCard(v){
       ${thumbnailHTML}
       <span class="duration" data-duration-for="${esc(v.id)}">0:00</span>
       ${v.muted ? `<span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:white;font-size:11px;padding:3px 8px;border-radius:8px;font-weight:600">🔇</span>` : ""}
+      ${isPinned ? `<span style="position:absolute;top:8px;left:8px;background:rgba(124,58,237,0.9);color:white;font-size:10px;padding:3px 8px;border-radius:8px;font-weight:700">📌 PINNED</span>` : ""}
     </div>
     <div class="video-info">
-      <img class="channel-avatar post-open-user" data-uid="${esc(v.userId)}"
-           src="${avatar(v.userPhoto, v.userName)}" alt="${esc(v.userName)}">
+      <img class="channel-avatar post-open-user" data-uid="${esc(v.userId)}" src="${avatar(v.userPhoto, v.userName)}" alt="${esc(v.userName)}">
       <div class="video-details">
         <h3 class="video-title">${esc(v.title || "Untitled")}</h3>
         <p class="channel-name">${esc(v.username || v.userName || "User")} <span class="verified">✓</span></p>
         <p class="video-meta">${formatViewsShort(views)} views <span class="dot">•</span> ${timeAgoYouTube(v.createdAt)}</p>
         ${songBadge || stickerBadge ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${songBadge}${stickerBadge}</div>` : ""}
       </div>
-      ${mine || isAdmin ? `<button class="video-more" onclick="event.stopPropagation();event.preventDefault();openVideoMenu('${esc(v.id)}')">⋮</button>` : ""}
+      ${mine || isAdmin ? `<button class="video-more" onclick="event.stopPropagation();event.preventDefault();openVideoMenuModal('${esc(v.id)}')">⋮</button>` : ""}
     </div>
   </div>
   `;
@@ -978,10 +905,32 @@ function renderFeed(){
   const feed = $("feed");
   if(!feed) return;
 
-  const list = videosCache.filter(v =>
+  let list = videosCache.filter(v =>
     v.type !== "short" &&
-    (v.visibility !== "private" || v.userId === currentUser?.uid)
+    (v.visibility !== "private" || v.userId === currentUser?.uid) &&
+    !isUserBlocked(v.userId)   // ✅ Block filter
   );
+
+  // ✅ Category filter
+  if(currentCategory === "trending"){
+    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    list = list.filter(v => timeValue(v.createdAt) > sevenDaysAgo);
+    list.sort((a,b)=> (b.views || 0) - (a.views || 0));
+    list = list.slice(0, 50);
+  } else if(currentCategory !== "all"){
+    list = list.filter(v => v.category === currentCategory);
+  }
+
+  // ✅ Pinned videos first (only on "all" tab)
+  if(currentCategory === "all" && currentProfile?.pinnedVideos?.length){
+    const pinned = [];
+    const rest = [];
+    list.forEach(v => {
+      if(currentProfile.pinnedVideos.includes(v.id) && v.userId === currentUser?.uid) pinned.push(v);
+      else rest.push(v);
+    });
+    list = [...pinned, ...rest];
+  }
 
   if(!list.length){
     feed.innerHTML = `
@@ -998,19 +947,27 @@ function renderFeed(){
   list.forEach(v => loadVideoDuration(v.id, v.videoURL));
 }
 
+// ✅ Category chips click handler
+document.querySelectorAll("#categoryChips .chip").forEach(chip => {
+  chip.addEventListener("click", ()=>{
+    document.querySelectorAll("#categoryChips .chip").forEach(c => c.classList.remove("active"));
+    chip.classList.add("active");
+    currentCategory = chip.dataset.cat || "all";
+    renderFeed();
+  });
+});
+
 function loadVideoDuration(videoId, videoURL){
   if(!videoURL) return;
   const tempVideo = document.createElement("video");
   tempVideo.preload = "metadata";
   tempVideo.src = videoURL;
-
   tempVideo.addEventListener("loadedmetadata", () => {
     const duration = formatDuration(tempVideo.duration);
     const badge = document.querySelector(`[data-duration-for="${videoId}"]`);
     if(badge) badge.textContent = duration;
     tempVideo.src = "";
   });
-
   tempVideo.addEventListener("error", () => {
     const badge = document.querySelector(`[data-duration-for="${videoId}"]`);
     if(badge) badge.textContent = "0:00";
@@ -1019,22 +976,15 @@ function loadVideoDuration(videoId, videoURL){
 
 function startRealtimeVideos(){
   if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
-
   videosUnsubscribe = onSnapshot(
     collection(db,"videos"),
     snapshot=>{
       videosCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       videosCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
-
       renderFeed();
       renderShorts();
       loadMyVideos();
-
-      if(mySavesCache.size > 0){
-        renderSavedVideos();
-        updateProfileTabCounts();
-      }
-
+      if(mySavesCache.size > 0){ renderSavedVideos(); updateProfileTabCounts(); }
       if($("publicProfileModal")?.classList.contains("show")){
         const uid = $("publicProfileModal").dataset.uid;
         if(uid) loadPublicVideos(uid);
@@ -1047,12 +997,11 @@ function startRealtimeVideos(){
 function renderShorts(){
   const container = $("reelsContainer");
   if(!container) return;
-
   const list = videosCache.filter(v =>
     v.type === "short" &&
-    (v.visibility !== "private" || v.userId === currentUser?.uid)
+    (v.visibility !== "private" || v.userId === currentUser?.uid) &&
+    !isUserBlocked(v.userId)
   );
-
   if(!list.length){
     container.innerHTML = `<div class="reel-empty">
       <div style="font-size:56px;margin-bottom:14px">🎞️</div>
@@ -1061,7 +1010,6 @@ function renderShorts(){
     </div>`;
     return;
   }
-
   container.innerHTML = list.map(v => createReel(v)).join("");
   setTimeout(setupReelsObserver, 100);
 }
@@ -1071,16 +1019,13 @@ function createReel(v){
   const mine = currentUser && v.userId === currentUser.uid;
   const isSaved = mySavesCache.has(v.id);
   const views = Number(v.views || 0);
-
   return `
   <div class="reel-item" data-id="${esc(v.id)}">
-    <video src="${esc(v.videoURL)}" loop playsinline webkit-playsinline
-           preload="metadata" muted data-video-id="${esc(v.id)}"></video>
+    <video src="${esc(v.videoURL)}" loop playsinline webkit-playsinline preload="metadata" muted data-video-id="${esc(v.id)}"></video>
     <div class="reel-overlay">
       <div class="reel-info">
         <div class="reel-user">
-          <img class="post-open-user" data-uid="${esc(v.userId)}"
-               src="${avatar(v.userPhoto, v.userName)}">
+          <img class="post-open-user" data-uid="${esc(v.userId)}" src="${avatar(v.userPhoto, v.userName)}">
           <strong>@${esc(v.username || v.userName)}</strong>
           ${!mine ? `<button class="follow-btn-sm" data-follow-uid="${esc(v.userId)}" data-action="follow">${isFollowing ? "Following" : "Follow"}</button>` : ""}
         </div>
@@ -1091,15 +1036,10 @@ function createReel(v){
     <div class="reel-views">👁️ ${formatViewsShort(views)}</div>
     <div class="reel-actions">
       <div class="reel-action like-btn" id="reel-like-${esc(v.id)}" data-like-video="${esc(v.id)}" data-reel="true">
-        <span class="icon">🤍</span>
-        <small class="like-count">${v.likes || 0}</small>
+        <span class="icon">🤍</span><small class="like-count">${v.likes || 0}</small>
       </div>
-      <div class="reel-action" data-comment-video="${esc(v.id)}">
-        <span class="icon">💬</span><small>Comment</small>
-      </div>
-      <div class="reel-action" data-share-video="${esc(v.id)}">
-        <span class="icon">📤</span><small>Share</small>
-      </div>
+      <div class="reel-action" data-comment-video="${esc(v.id)}"><span class="icon">💬</span><small>Comment</small></div>
+      <div class="reel-action" data-share-video="${esc(v.id)}"><span class="icon">📤</span><small>Share</small></div>
       <div class="reel-action save-btn ${isSaved?"saved":""}" data-save-video="${esc(v.id)}">
         <span class="icon">${isSaved ? "🔖" : "📑"}</span><small>Save</small>
       </div>
@@ -1124,7 +1064,9 @@ function setupReelsObserver(){
   videos.forEach(v => reelObserver.observe(v));
 }
 
-/* STORIES LISTENER */
+/* ============================================================
+   STORIES
+============================================================ */
 function startStoriesListener(){
   if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
   if(!currentUser) return;
@@ -1133,7 +1075,7 @@ function startStoriesListener(){
     snapshot=>{
       const now = Date.now();
       storiesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
-        .filter(s => (now - timeValue(s.createdAt)) < STORY_LIFETIME_MS);
+        .filter(s => (now - timeValue(s.createdAt)) < STORY_LIFETIME_MS && !isUserBlocked(s.userId));
       storiesCache.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
       groupStories();
       renderStoriesBar();
@@ -1145,9 +1087,7 @@ function startStoriesListener(){
 function groupStories(){
   const map = {};
   storiesCache.forEach(s=>{
-    if(!map[s.userId]){
-      map[s.userId] = { userId: s.userId, userName: s.userName || "User", userPhoto: s.userPhoto || "", stories: [], latestAt: 0 };
-    }
+    if(!map[s.userId]){ map[s.userId] = { userId: s.userId, userName: s.userName || "User", userPhoto: s.userPhoto || "", stories: [], latestAt: 0 }; }
     map[s.userId].stories.push(s);
     const t = timeValue(s.createdAt);
     if(t > map[s.userId].latestAt) map[s.userId].latestAt = t;
@@ -1165,15 +1105,12 @@ function renderStoriesBar(){
   const bar = $("storiesBar");
   if(!bar) return;
   if(!currentUser){ bar.innerHTML = ""; return; }
-
   const myGroup = groupedStories.find(g => g.userId === currentUser.uid);
   const otherGroups = groupedStories.filter(g => g.userId !== currentUser.uid);
-
   let html = "";
   const myPhoto = currentProfile?.photo || "";
   const myName = currentProfile?.name || "You";
   const myHasStory = myGroup && myGroup.stories.length > 0;
-
   html += `
     <div class="story-item" data-my-story="true">
       <div class="story-ring ${myHasStory ? 'active' : 'yours'}">
@@ -1183,7 +1120,6 @@ function renderStoriesBar(){
       <div class="story-name">Your Story</div>
     </div>
   `;
-
   otherGroups.forEach((g)=>{
     html += `
       <div class="story-item" data-story-user="${esc(g.userId)}">
@@ -1194,7 +1130,6 @@ function renderStoriesBar(){
       </div>
     `;
   });
-
   bar.innerHTML = html;
 }
 
@@ -1206,7 +1141,7 @@ document.addEventListener("click", (e)=>{
     if(myGroup && myGroup.stories.length > 0){
       const idx = groupedStories.findIndex(g => g.userId === currentUser.uid);
       openStoryViewer(idx, 0);
-    }else openCreateStoryModal();
+    } else openCreateStoryModal();
     return;
   }
   const storyUser = e.target.closest("[data-story-user]");
@@ -1225,7 +1160,6 @@ function openCreateStoryModal(){
   pendingStorySong = null;
   pendingStorySticker = null;
   pendingStoryTrim = { start: 0, end: 0, applied: false };
-
   const imgPrev = $("storyImagePreview");
   const vidPrev = $("storyVideoPreview");
   const zone = $("storyUploadZone");
@@ -1233,7 +1167,6 @@ function openCreateStoryModal(){
   const prog = $("storyUploadProgress");
   const status = $("storyUploadStatus");
   const tools = $("storyEditorTools");
-
   if(imgPrev){ imgPrev.src = ""; imgPrev.classList.add("hidden"); }
   if(vidPrev){ vidPrev.src = ""; vidPrev.classList.add("hidden"); }
   if(zone) zone.classList.remove("hidden");
@@ -1241,15 +1174,12 @@ function openCreateStoryModal(){
   if(prog) prog.classList.remove("active");
   if(status) status.textContent = "";
   if(tools) tools.classList.add("hidden");
-
   const songBtn = $("storyAddSongBtn");
   if(songBtn){ songBtn.innerHTML = "🎵 Song"; songBtn.style.borderColor = ""; songBtn.style.color = ""; }
   const stickerBtn = $("storyAddStickerBtn");
   if(stickerBtn){ stickerBtn.innerHTML = "😀 Sticker"; stickerBtn.style.borderColor = ""; stickerBtn.style.color = ""; }
-
   const progressBar = $("storyUploadProgressBar");
   if(progressBar) progressBar.style.width = "0%";
-
   showModal("createStoryModal");
 }
 
@@ -1259,52 +1189,41 @@ $("storyFile")?.addEventListener("change", (e)=>{
   const file = e.target.files[0];
   if(!file) return;
   if(file.size > 30 * 1024 * 1024){ toast("File too large (max 30MB)"); e.target.value = ""; return; }
-
   storyUploadFile = file;
   storyMediaType = file.type.startsWith("video/") ? "video" : "image";
-
   const imgPrev = $("storyImagePreview");
   const vidPrev = $("storyVideoPreview");
   const zone = $("storyUploadZone");
   const btn = $("storyUploadBtn");
   const tools = $("storyEditorTools");
-
   if(zone) zone.classList.add("hidden");
   if(tools) tools.classList.remove("hidden");
-
   const url = URL.createObjectURL(file);
-
   if(storyMediaType === "image"){
     if(imgPrev){ imgPrev.src = url; imgPrev.classList.remove("hidden"); }
     if(vidPrev){ vidPrev.src = ""; vidPrev.classList.add("hidden"); }
-  }else{
+  } else {
     if(vidPrev){ vidPrev.src = url; vidPrev.classList.remove("hidden"); }
     if(imgPrev){ imgPrev.src = ""; imgPrev.classList.add("hidden"); }
   }
-
   if(btn) btn.disabled = false;
 });
 
 $("storyUploadBtn")?.addEventListener("click", async ()=>{
   if(!storyUploadFile || !currentUser){ toast("Select a file first"); return; }
-
   const btn = $("storyUploadBtn");
   const prog = $("storyUploadProgress");
   const progBar = $("storyUploadProgressBar");
   const status = $("storyUploadStatus");
-
   if(btn) btn.disabled = true;
   if(prog) prog.classList.add("active");
   if(status) status.textContent = "Uploading...";
-
   try{
     const url = await uploadToCloudinary(storyUploadFile, (pct)=>{
       if(progBar) progBar.style.width = pct + "%";
       if(status) status.textContent = "Uploading " + pct + "%";
     });
-
     const expiresAt = new Date(Date.now() + STORY_LIFETIME_MS);
-
     const storyData = {
       userId: currentUser.uid,
       userName: currentProfile?.name || currentUser.displayName || "User",
@@ -1315,40 +1234,26 @@ $("storyUploadBtn")?.addEventListener("click", async ()=>{
       createdAt: serverTimestamp(),
       expiresAt: expiresAt
     };
-
     if(pendingStorySong) storyData.song = pendingStorySong;
     if(pendingStorySticker) storyData.sticker = pendingStorySticker;
-    if(pendingStoryTrim.applied){
-      storyData.trimStart = pendingStoryTrim.start;
-      storyData.trimEnd = pendingStoryTrim.end;
-    }
-
+    if(pendingStoryTrim.applied){ storyData.trimStart = pendingStoryTrim.start; storyData.trimEnd = pendingStoryTrim.end; }
     await addDoc(collection(db, "stories"), storyData);
-
     if(status) status.textContent = "✅ Story shared!";
     toast("✅ Story added");
-
     setTimeout(()=>{ hideModal("createStoryModal"); }, 500);
-
   }catch(err){
     console.error("Story upload error:", err);
     if(status) status.textContent = "Error: " + err.message;
     toast("Story upload failed");
-  }finally{
-    if(btn) btn.disabled = false;
-  }
+  }finally{ if(btn) btn.disabled = false; }
 });
 
-/* STORY VIEWER */
 function openStoryViewer(userIndex, storyIndex){
   if(!groupedStories.length) return;
   currentStoryUserIndex = userIndex;
   currentStoryIndex = storyIndex || 0;
   const viewer = $("storyViewer");
-  if(viewer){
-    viewer.classList.add("show");
-    try{ window.history.pushState({ storyViewer: true }, "", window.location.href); }catch(e){}
-  }
+  if(viewer){ viewer.classList.add("show"); try{ window.history.pushState({ storyViewer: true }, "", window.location.href); }catch(e){} }
   loadCurrentStory();
 }
 
@@ -1356,18 +1261,11 @@ function closeStoryViewer(){
   const viewer = $("storyViewer");
   if(viewer) viewer.classList.remove("show");
   stopStoryTimer();
-
-  if(window.__storyAudio){
-    window.__storyAudio.pause();
-    window.__storyAudio = null;
-  }
-
+  if(window.__storyAudio){ window.__storyAudio.pause(); window.__storyAudio = null; }
   const media = $("storyMedia");
   if(media) media.innerHTML = "";
-
   const songOverlay = $("storySongOverlay");
   if(songOverlay) songOverlay.classList.add("hidden");
-
   const stickerOverlay = $("storyStickerOverlay");
   if(stickerOverlay){ stickerOverlay.style.display = "none"; stickerOverlay.textContent = ""; }
 }
@@ -1375,27 +1273,21 @@ function closeStoryViewer(){
 function loadCurrentStory(){
   stopStoryTimer();
   if(window.__storyAudio){ window.__storyAudio.pause(); window.__storyAudio = null; }
-
   const group = groupedStories[currentStoryUserIndex];
   if(!group || !group.stories.length){ closeStoryViewer(); return; }
-
   const story = group.stories[currentStoryIndex];
   if(!story){
-    if(currentStoryUserIndex < groupedStories.length - 1){
-      currentStoryUserIndex++; currentStoryIndex = 0; loadCurrentStory();
-    }else closeStoryViewer();
+    if(currentStoryUserIndex < groupedStories.length - 1){ currentStoryUserIndex++; currentStoryIndex = 0; loadCurrentStory(); }
+    else closeStoryViewer();
     return;
   }
-
   const avatarEl = $("storyViewerAvatar");
   const nameEl = $("storyViewerName");
   const timeEl = $("storyViewerTime");
   if(avatarEl) avatarEl.src = avatar(group.userPhoto, group.userName);
   if(nameEl) nameEl.textContent = group.userName;
   if(timeEl) timeEl.textContent = timeAgoShort(story.createdAt) + " ago";
-
   renderStoryProgress(group.stories.length, currentStoryIndex);
-
   const mediaContainer = $("storyMedia");
   if(mediaContainer){
     mediaContainer.innerHTML = "";
@@ -1403,24 +1295,19 @@ function loadCurrentStory(){
       const vid = document.createElement("video");
       vid.src = story.mediaURL;
       vid.autoplay = true; vid.playsInline = true; vid.muted = false; vid.preload = "auto";
-
       vid.addEventListener("loadedmetadata", ()=>{
         const dur = Math.min((vid.duration || 5) * 1000, STORY_DURATION_VIDEO_MAX);
         startStoryTimer(dur);
-
         if(story.trimStart && story.trimEnd){
           vid.currentTime = story.trimStart;
-          vid.addEventListener("timeupdate", ()=>{
-            if(vid.currentTime >= story.trimEnd){ vid.currentTime = story.trimStart; }
-          });
+          vid.addEventListener("timeupdate", ()=>{ if(vid.currentTime >= story.trimEnd){ vid.currentTime = story.trimStart; } });
         }
       });
-
       vid.addEventListener("ended", ()=>{ nextStory(); });
       vid.addEventListener("error", ()=>{ nextStory(); });
       mediaContainer.appendChild(vid);
       vid.play().catch(()=>{});
-    }else{
+    } else {
       const img = document.createElement("img");
       img.src = story.mediaURL;
       img.alt = "";
@@ -1429,57 +1316,42 @@ function loadCurrentStory(){
       mediaContainer.appendChild(img);
     }
   }
-
   const songOverlay = $("storySongOverlay");
   if(songOverlay){
     if(story.song && story.song.audioURL){
       songOverlay.classList.remove("hidden");
       $("storySongTitle").textContent = story.song.name || "Song";
       $("storySongArtist").textContent = story.song.artist || "Unknown";
-
       window.__storyAudio = new Audio(story.song.audioURL);
       window.__storyAudio.loop = true;
       window.__storyAudio.volume = 0.5;
       window.__storyAudio.play().catch(()=>{});
-    }else songOverlay.classList.add("hidden");
+    } else songOverlay.classList.add("hidden");
   }
-
   const stickerOverlay = $("storyStickerOverlay");
   if(stickerOverlay){
     if(story.sticker){
       stickerOverlay.style.display = "block";
       if(story.sticker.type === "emoji"){
         stickerOverlay.textContent = story.sticker.icon || "😀";
-        stickerOverlay.style.color = "";
         stickerOverlay.style.fontSize = "80px";
-        stickerOverlay.style.fontWeight = "";
         stickerOverlay.style.textShadow = "0 2px 8px rgba(0,0,0,0.4)";
-      }else if(story.sticker.type === "text"){
+      } else if(story.sticker.type === "text"){
         stickerOverlay.textContent = story.sticker.text || "";
         stickerOverlay.style.color = story.sticker.color || "#ffffff";
         stickerOverlay.style.fontSize = "40px";
         stickerOverlay.style.fontWeight = "900";
         stickerOverlay.style.textShadow = "2px 2px 8px rgba(0,0,0,0.6)";
       }
-    }else{
-      stickerOverlay.style.display = "none";
-      stickerOverlay.textContent = "";
-    }
+    } else { stickerOverlay.style.display = "none"; stickerOverlay.textContent = ""; }
   }
-
   const viewsCounter = $("storyViewsCounter");
   if(viewsCounter) viewsCounter.classList.add("hidden");
-
   if(story.userId !== currentUser?.uid) markStoryViewed(story.id);
-
   const footer = $("storyFooter");
   if(footer){
     if(story.userId === currentUser?.uid) footer.style.display = "none";
-    else {
-      footer.style.display = "flex";
-      const input = $("storyReplyInput");
-      if(input) input.value = "";
-    }
+    else { footer.style.display = "flex"; const input = $("storyReplyInput"); if(input) input.value = ""; }
   }
 }
 
@@ -1514,44 +1386,25 @@ function updateStoryProgressLoop(){
   storyProgressRAF = requestAnimationFrame(updateStoryProgressLoop);
 }
 
-function stopStoryTimer(){
-  if(storyProgressRAF){ cancelAnimationFrame(storyProgressRAF); storyProgressRAF = null; }
-}
-
-function pauseStoryTimer(){
-  if(storyPaused) return;
-  storyPaused = true;
-  storyElapsed = Date.now() - storyStartTime;
-  if(window.__storyAudio) window.__storyAudio.pause();
-  if(storyProgressRAF){ cancelAnimationFrame(storyProgressRAF); storyProgressRAF = null; }
-}
-
-function resumeStoryTimer(){
-  if(!storyPaused) return;
-  storyPaused = false;
-  storyStartTime = Date.now() - storyElapsed;
-  if(window.__storyAudio) window.__storyAudio.play().catch(()=>{});
-  updateStoryProgressLoop();
-}
+function stopStoryTimer(){ if(storyProgressRAF){ cancelAnimationFrame(storyProgressRAF); storyProgressRAF = null; } }
+function pauseStoryTimer(){ if(storyPaused) return; storyPaused = true; storyElapsed = Date.now() - storyStartTime; if(window.__storyAudio) window.__storyAudio.pause(); if(storyProgressRAF){ cancelAnimationFrame(storyProgressRAF); storyProgressRAF = null; } }
+function resumeStoryTimer(){ if(!storyPaused) return; storyPaused = false; storyStartTime = Date.now() - storyElapsed; if(window.__storyAudio) window.__storyAudio.play().catch(()=>{}); updateStoryProgressLoop(); }
 
 function nextStory(){
   stopStoryTimer();
   const group = groupedStories[currentStoryUserIndex];
-  if(!group) { closeStoryViewer(); return; }
-  if(currentStoryIndex < group.stories.length - 1){
-    currentStoryIndex++; loadCurrentStory();
-  }else{
-    if(currentStoryUserIndex < groupedStories.length - 1){
-      currentStoryUserIndex++; currentStoryIndex = 0; loadCurrentStory();
-    }else closeStoryViewer();
+  if(!group){ closeStoryViewer(); return; }
+  if(currentStoryIndex < group.stories.length - 1){ currentStoryIndex++; loadCurrentStory(); }
+  else {
+    if(currentStoryUserIndex < groupedStories.length - 1){ currentStoryUserIndex++; currentStoryIndex = 0; loadCurrentStory(); }
+    else closeStoryViewer();
   }
 }
 
 function prevStory(){
   stopStoryTimer();
-  if(currentStoryIndex > 0){
-    currentStoryIndex--; loadCurrentStory();
-  }else{
+  if(currentStoryIndex > 0){ currentStoryIndex--; loadCurrentStory(); }
+  else {
     if(currentStoryUserIndex > 0){
       currentStoryUserIndex--;
       const group = groupedStories[currentStoryUserIndex];
@@ -1566,9 +1419,7 @@ async function markStoryViewed(storyId){
   try{
     const viewRef = doc(db, "stories", storyId, "views", currentUser.uid);
     const snap = await getDoc(viewRef);
-    if(!snap.exists()){
-      await setDoc(viewRef, { userId: currentUser.uid, viewedAt: serverTimestamp() });
-    }
+    if(!snap.exists()) await setDoc(viewRef, { userId: currentUser.uid, viewedAt: serverTimestamp() });
   }catch(e){ console.error("markStoryViewed:", e); }
 }
 
@@ -1603,18 +1454,13 @@ async function sendStoryReply(){
   if(!text) return;
   const group = groupedStories[currentStoryUserIndex];
   if(!group || group.userId === currentUser?.uid) return;
-
   const targetUid = group.userId;
   const chatId = [currentUser.uid, targetUid].sort().join("_");
-
   try{
     await setDoc(doc(db, "chats", chatId), { members: [currentUser.uid, targetUid], updatedAt: serverTimestamp() }, { merge: true });
     await addDoc(collection(db, "chats", chatId, "messages"), {
-      userId: currentUser.uid,
-      userName: currentProfile?.name || "User",
-      text: "📸 Replied to story: " + text,
-      type: "text",
-      createdAt: serverTimestamp()
+      userId: currentUser.uid, userName: currentProfile?.name || "User",
+      text: "📸 Replied to story: " + text, type: "text", createdAt: serverTimestamp()
     });
     await updateDoc(doc(db, "chats", chatId), { lastMessage: "📸 Replied to story", updatedAt: serverTimestamp() });
     input.value = "";
@@ -1636,10 +1482,7 @@ $("storyMoreBtn")?.addEventListener("click", (e)=>{
   if(!group) return;
   const story = group.stories[currentStoryIndex];
   if(!story) return;
-  if(story.userId !== currentUser?.uid && !isAdminUser()){
-    toast("You can only manage your own story");
-    return;
-  }
+  if(story.userId !== currentUser?.uid && !isAdminUser()){ toast("You can only manage your own story"); return; }
   currentStoryId = story.id;
   currentStoryData = story;
   pauseStoryTimer();
@@ -1659,17 +1502,15 @@ async function openEditStoryModal(storyId){
     if(!storySnap.exists()){ toast("Story not found"); return; }
     const story = { id: storyId, ...storySnap.data() };
     if(story.userId !== currentUser.uid && !isAdminUser()){ toast("Not your story"); return; }
-
     if(story.mediaType === "video"){
       $("editStoryPreview").classList.add("hidden");
       $("editStoryVideoPreview").classList.remove("hidden");
       $("editStoryVideoPreview").src = story.mediaURL;
-    }else{
+    } else {
       $("editStoryVideoPreview").classList.add("hidden");
       $("editStoryPreview").classList.remove("hidden");
       $("editStoryPreview").src = story.mediaURL;
     }
-
     $("editStoryCaption").value = story.caption || "";
     window.__editingStorySong = story.song || null;
     window.__editingStorySticker = story.sticker || null;
@@ -1682,27 +1523,13 @@ async function openEditStoryModal(storyId){
 function updateEditStoryButtons(){
   const songBtn = $("editStoryChangeSongBtn");
   if(songBtn){
-    if(window.__editingStorySong){
-      songBtn.innerHTML = `🎵 ${esc(window.__editingStorySong.name || "Song")} ✓`;
-      songBtn.style.borderColor = "var(--primary)";
-      songBtn.style.color = "var(--primary)";
-    }else{
-      songBtn.innerHTML = "🎵 Add Song";
-      songBtn.style.borderColor = "";
-      songBtn.style.color = "";
-    }
+    if(window.__editingStorySong){ songBtn.innerHTML = `🎵 ${esc(window.__editingStorySong.name || "Song")} ✓`; songBtn.style.borderColor = "var(--primary)"; songBtn.style.color = "var(--primary)"; }
+    else { songBtn.innerHTML = "🎵 Add Song"; songBtn.style.borderColor = ""; songBtn.style.color = ""; }
   }
   const stickerBtn = $("editStoryChangeStickerBtn");
   if(stickerBtn){
-    if(window.__editingStorySticker){
-      stickerBtn.innerHTML = `${window.__editingStorySticker.icon || "😀"} Sticker ✓`;
-      stickerBtn.style.borderColor = "var(--primary)";
-      stickerBtn.style.color = "var(--primary)";
-    }else{
-      stickerBtn.innerHTML = "😀 Add Sticker";
-      stickerBtn.style.borderColor = "";
-      stickerBtn.style.color = "";
-    }
+    if(window.__editingStorySticker){ stickerBtn.innerHTML = `${window.__editingStorySticker.icon || "😀"} Sticker ✓`; stickerBtn.style.borderColor = "var(--primary)"; stickerBtn.style.color = "var(--primary)"; }
+    else { stickerBtn.innerHTML = "😀 Add Sticker"; stickerBtn.style.borderColor = ""; stickerBtn.style.color = ""; }
   }
 }
 
@@ -1711,11 +1538,9 @@ $("saveStoryEditBtn")?.addEventListener("click", async ()=>{
   const caption = $("editStoryCaption").value.trim();
   const status = $("editStoryStatus");
   const btn = $("saveStoryEditBtn");
-
   if(btn){ btn.disabled = true; btn.textContent = "Saving..."; }
   status.textContent = "Saving...";
   status.style.color = "#7c3aed";
-
   try{
     await updateDoc(doc(db, "stories", currentStoryId), {
       caption,
@@ -1726,7 +1551,6 @@ $("saveStoryEditBtn")?.addEventListener("click", async ()=>{
     status.textContent = "✅ Saved!";
     status.style.color = "#22c55e";
     toast("✅ Story updated");
-
     setTimeout(async ()=>{
       hideModal("editStoryModal");
       closeStoryViewer();
@@ -1736,9 +1560,7 @@ $("saveStoryEditBtn")?.addEventListener("click", async ()=>{
   }catch(err){
     status.textContent = "Error: " + err.message;
     status.style.color = "#ed4956";
-  }finally{
-    if(btn){ btn.disabled = false; btn.textContent = "✅ Save Changes"; }
-  }
+  }finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Save Changes"; } }
 });
 
 $("storyMenuDeleteBtn")?.addEventListener("click", async (e)=>{
@@ -1753,7 +1575,7 @@ $("storyMenuDeleteBtn")?.addEventListener("click", async (e)=>{
   }catch(e){ toast("Failed to delete"); }
 });
 
-/* SONG LIBRARY LISTENER */
+/* SONG LIBRARY */
 function startSongLibraryListener(){
   if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
   songLibraryUnsubscribe = onSnapshot(
@@ -1772,7 +1594,6 @@ function updateAdminVisibility(){
   adminBtn.style.display = isAdminUser() ? "flex" : "none";
 }
 
-/* SONG PICKER */
 function openSongPicker(context){
   songPickerContext = context || "story";
   selectedSongForApply = null;
@@ -1783,23 +1604,15 @@ function openSongPicker(context){
 function renderSongPickerList(searchText){
   const container = $("songPickerList");
   if(!container) return;
-
   const q = (searchText || "").toLowerCase().trim();
   let list = songLibraryCache;
-
   if(q){
-    list = list.filter(s => 
-      (s.name || "").toLowerCase().includes(q) ||
-      (s.artist || "").toLowerCase().includes(q) ||
-      (s.category || "").toLowerCase().includes(q)
-    );
+    list = list.filter(s => (s.name || "").toLowerCase().includes(q) || (s.artist || "").toLowerCase().includes(q) || (s.category || "").toLowerCase().includes(q));
   }
-
   if(!list.length){
     container.innerHTML = `<div class="song-library-empty"><span class="icon">🎵</span><h3>No songs ${q ? "found" : "yet"}</h3><p>${q ? "Try another search" : "Admin will add songs soon"}</p></div>`;
     return;
   }
-
   container.innerHTML = list.map(s => `
     <div class="song-picker-item" data-pick-song="${esc(s.id)}">
       <div class="song-thumb">🎵</div>
@@ -1812,9 +1625,7 @@ function renderSongPickerList(searchText){
   `).join("");
 }
 
-$("songSearchInput")?.addEventListener("input", (e)=>{
-  renderSongPickerList(e.target.value);
-});
+$("songSearchInput")?.addEventListener("input", (e)=>{ renderSongPickerList(e.target.value); });
 
 document.addEventListener("click", (e)=>{
   const pickerItem = e.target.closest("[data-pick-song]");
@@ -1836,11 +1647,9 @@ document.addEventListener("click", (e)=>{
 $("confirmSongBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   if(!selectedSongForApply){ toast("Select a song first"); return; }
-
   if(songPickerContext === "story") applySongToStory(selectedSongForApply);
   else if(songPickerContext === "video") applySongToVideo(selectedSongForApply);
   else if(songPickerContext === "story_edit") applySongToStoryEdit(selectedSongForApply);
-
   hideModal("songPickerModal");
 });
 
@@ -1852,51 +1661,12 @@ $("removeSongBtn")?.addEventListener("click", (e)=>{
   hideModal("songPickerModal");
 });
 
-function applySongToStory(song){
-  pendingStorySong = song;
-  const btn = $("storyAddSongBtn");
-  if(btn){ btn.innerHTML = `🎵 ${esc(song.name).slice(0, 12)} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; }
-  toast("🎵 Song added");
-}
-
-function removeSongFromStory(){
-  pendingStorySong = null;
-  const btn = $("storyAddSongBtn");
-  if(btn){ btn.innerHTML = "🎵 Song"; btn.style.borderColor = ""; btn.style.color = ""; }
-  toast("🔇 Song removed");
-}
-
-function applySongToVideo(song){
-  pendingVideoSong = song;
-  const status = $("videoEditStatus");
-  if(status) status.textContent = "🎵 " + song.name + " selected";
-  const btn = $("editVideoSongBtn");
-  if(btn){ btn.innerHTML = `🎵 ${esc(song.name).slice(0, 10)} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; }
-  toast("🎵 Song selected");
-}
-
-function removeSongFromVideo(){
-  pendingVideoSong = null;
-  const btn = $("editVideoSongBtn");
-  if(btn){ btn.innerHTML = "🎵 Song"; btn.style.borderColor = ""; btn.style.color = ""; }
-  toast("🔇 Song removed");
-}
-
-function applySongToStoryEdit(song){
-  window.__editingStorySong = song;
-  updateEditStoryButtons();
-  hideModal("songPickerModal");
-  showModal("editStoryModal");
-  toast("🎵 " + song.name + " selected");
-}
-
-function removeSongFromStoryEdit(){
-  window.__editingStorySong = null;
-  updateEditStoryButtons();
-  hideModal("songPickerModal");
-  showModal("editStoryModal");
-  toast("🔇 Song removed");
-}
+function applySongToStory(song){ pendingStorySong = song; const btn = $("storyAddSongBtn"); if(btn){ btn.innerHTML = `🎵 ${esc(song.name).slice(0, 12)} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("🎵 Song added"); }
+function removeSongFromStory(){ pendingStorySong = null; const btn = $("storyAddSongBtn"); if(btn){ btn.innerHTML = "🎵 Song"; btn.style.borderColor = ""; btn.style.color = ""; } toast("🔇 Song removed"); }
+function applySongToVideo(song){ pendingVideoSong = song; const status = $("videoEditStatus"); if(status) status.textContent = "🎵 " + song.name + " selected"; const btn = $("editVideoSongBtn"); if(btn){ btn.innerHTML = `🎵 ${esc(song.name).slice(0, 10)} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("🎵 Song selected"); }
+function removeSongFromVideo(){ pendingVideoSong = null; const btn = $("editVideoSongBtn"); if(btn){ btn.innerHTML = "🎵 Song"; btn.style.borderColor = ""; btn.style.color = ""; } toast("🔇 Song removed"); }
+function applySongToStoryEdit(song){ window.__editingStorySong = song; updateEditStoryButtons(); hideModal("songPickerModal"); showModal("editStoryModal"); toast("🎵 " + song.name + " selected"); }
+function removeSongFromStoryEdit(){ window.__editingStorySong = null; updateEditStoryButtons(); hideModal("songPickerModal"); showModal("editStoryModal"); toast("🔇 Song removed"); }
 
 /* STICKER PICKER */
 function openStickerPicker(context){
@@ -1904,15 +1674,12 @@ function openStickerPicker(context){
   selectedStickerEmoji = null;
   selectedStickerText = null;
   selectedStickerColor = "#ffffff";
-
   document.querySelectorAll("#stickerTabs .yt-tab").forEach(t => t.classList.remove("active"));
   document.querySelector('#stickerTabs .yt-tab[data-stab="emoji"]')?.classList.add("active");
   $("stickerEmojiTab")?.classList.remove("hidden");
   $("stickerTextTab")?.classList.add("hidden");
-
   document.querySelectorAll(".sticker-item").forEach(el=>{ el.style.background = ""; el.style.color = ""; });
   if($("textStickerInput")) $("textStickerInput").value = "";
-
   showModal("stickerPickerModal");
 }
 
@@ -1923,13 +1690,8 @@ document.addEventListener("click", (e)=>{
   const stab = tab.dataset.stab;
   document.querySelectorAll("#stickerTabs .yt-tab").forEach(t => t.classList.remove("active"));
   tab.classList.add("active");
-  if(stab === "emoji"){
-    $("stickerEmojiTab")?.classList.remove("hidden");
-    $("stickerTextTab")?.classList.add("hidden");
-  }else{
-    $("stickerEmojiTab")?.classList.add("hidden");
-    $("stickerTextTab")?.classList.remove("hidden");
-  }
+  if(stab === "emoji"){ $("stickerEmojiTab")?.classList.remove("hidden"); $("stickerTextTab")?.classList.add("hidden"); }
+  else { $("stickerEmojiTab")?.classList.add("hidden"); $("stickerTextTab")?.classList.remove("hidden"); }
 });
 
 document.addEventListener("click", (e)=>{
@@ -1955,22 +1717,15 @@ document.addEventListener("click", (e)=>{
 $("confirmStickerBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   let sticker = null;
-
-  if(selectedStickerEmoji){
-    sticker = { type: "emoji", icon: selectedStickerEmoji };
-  }else{
+  if(selectedStickerEmoji){ sticker = { type: "emoji", icon: selectedStickerEmoji }; }
+  else {
     const text = $("textStickerInput")?.value.trim();
-    if(text){
-      sticker = { type: "text", text: text, icon: text.slice(0, 3) || "✏️", color: selectedStickerColor };
-    }
+    if(text){ sticker = { type: "text", text: text, icon: text.slice(0, 3) || "✏️", color: selectedStickerColor }; }
   }
-
   if(!sticker){ toast("Select emoji or enter text"); return; }
-
   if(stickerPickerContext === "story") applyStickerToStory(sticker);
   else if(stickerPickerContext === "video") applyStickerToVideo(sticker);
   else if(stickerPickerContext === "story_edit") applyStickerToStoryEdit(sticker);
-
   hideModal("stickerPickerModal");
 });
 
@@ -1982,53 +1737,13 @@ $("removeStickerBtn")?.addEventListener("click", (e)=>{
   hideModal("stickerPickerModal");
 });
 
-function applyStickerToStory(sticker){
-  pendingStorySticker = sticker;
-  const btn = $("storyAddStickerBtn");
-  if(btn){ btn.innerHTML = `${sticker.icon || "😀"} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; }
-  toast("😀 Sticker added");
-}
+function applyStickerToStory(sticker){ pendingStorySticker = sticker; const btn = $("storyAddStickerBtn"); if(btn){ btn.innerHTML = `${sticker.icon || "😀"} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("😀 Sticker added"); }
+function removeStickerFromStory(){ pendingStorySticker = null; const btn = $("storyAddStickerBtn"); if(btn){ btn.innerHTML = "😀 Sticker"; btn.style.borderColor = ""; btn.style.color = ""; } toast("Sticker removed"); }
+function applyStickerToVideo(sticker){ pendingVideoSticker = sticker; const status = $("videoEditStatus"); if(status) status.textContent = `${sticker.icon || "😀"} Sticker selected`; const btn = $("editVideoStickerBtn"); if(btn){ btn.innerHTML = `${sticker.icon || "😀"} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("😀 Sticker selected"); }
+function removeStickerFromVideo(){ pendingVideoSticker = null; const btn = $("editVideoStickerBtn"); if(btn){ btn.innerHTML = "😀 Sticker"; btn.style.borderColor = ""; btn.style.color = ""; } toast("Sticker removed"); }
+function applyStickerToStoryEdit(sticker){ window.__editingStorySticker = sticker; updateEditStoryButtons(); hideModal("stickerPickerModal"); showModal("editStoryModal"); toast("😀 Sticker added"); }
+function removeStickerFromStoryEdit(){ window.__editingStorySticker = null; updateEditStoryButtons(); hideModal("stickerPickerModal"); showModal("editStoryModal"); toast("Sticker removed"); }
 
-function removeStickerFromStory(){
-  pendingStorySticker = null;
-  const btn = $("storyAddStickerBtn");
-  if(btn){ btn.innerHTML = "😀 Sticker"; btn.style.borderColor = ""; btn.style.color = ""; }
-  toast("Sticker removed");
-}
-
-function applyStickerToVideo(sticker){
-  pendingVideoSticker = sticker;
-  const status = $("videoEditStatus");
-  if(status) status.textContent = `${sticker.icon || "😀"} Sticker selected`;
-  const btn = $("editVideoStickerBtn");
-  if(btn){ btn.innerHTML = `${sticker.icon || "😀"} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; }
-  toast("😀 Sticker selected");
-}
-
-function removeStickerFromVideo(){
-  pendingVideoSticker = null;
-  const btn = $("editVideoStickerBtn");
-  if(btn){ btn.innerHTML = "😀 Sticker"; btn.style.borderColor = ""; btn.style.color = ""; }
-  toast("Sticker removed");
-}
-
-function applyStickerToStoryEdit(sticker){
-  window.__editingStorySticker = sticker;
-  updateEditStoryButtons();
-  hideModal("stickerPickerModal");
-  showModal("editStoryModal");
-  toast("😀 Sticker added");
-}
-
-function removeStickerFromStoryEdit(){
-  window.__editingStorySticker = null;
-  updateEditStoryButtons();
-  hideModal("stickerPickerModal");
-  showModal("editStoryModal");
-  toast("Sticker removed");
-}
-
-/* BUTTON HANDLERS */
 $("storyAddSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("story"); });
 $("storyAddStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openStickerPicker("story"); });
 $("editVideoSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("video"); });
@@ -2055,10 +1770,7 @@ $("editStoryChangeStickerBtn")?.addEventListener("click", (e)=>{
     if(window.__editingStorySticker){
       if(window.__editingStorySticker.type === "emoji"){
         document.querySelectorAll(".sticker-item").forEach(el=>{
-          if(el.dataset.sticker === window.__editingStorySticker.icon){
-            el.style.background = "var(--primary)";
-            el.style.color = "white";
-          }
+          if(el.dataset.sticker === window.__editingStorySticker.icon){ el.style.background = "var(--primary)"; el.style.color = "white"; }
         });
       }
       if(window.__editingStorySticker.type === "text"){
@@ -2078,11 +1790,7 @@ $("editVideoRotateBtn")?.addEventListener("click", (e)=>{
   videoEl.style.transform = `rotate(${pendingVideoRotation}deg)`;
   videoEl.style.transition = "transform 0.3s ease";
   const btn = $("editVideoRotateBtn");
-  if(btn){
-    btn.innerHTML = `🔄 ${pendingVideoRotation}°`;
-    if(pendingVideoRotation !== 0){ btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; }
-    else { btn.style.borderColor = ""; btn.style.color = ""; }
-  }
+  if(btn){ btn.innerHTML = `🔄 ${pendingVideoRotation}°`; if(pendingVideoRotation !== 0){ btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } else { btn.style.borderColor = ""; btn.style.color = ""; } }
   const status = $("videoEditStatus");
   if(status) status.textContent = `🔄 Rotated ${pendingVideoRotation}°`;
   toast(`🔄 Rotated ${pendingVideoRotation}°`);
@@ -2095,10 +1803,7 @@ $("editVideoMuteBtn")?.addEventListener("click", (e)=>{
   pendingVideoMuted = !pendingVideoMuted;
   videoEl.muted = pendingVideoMuted;
   const btn = $("editVideoMuteBtn");
-  if(btn){
-    if(pendingVideoMuted){ btn.innerHTML = "🔇 Muted"; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; }
-    else { btn.innerHTML = "🔊 Sound"; btn.style.borderColor = ""; btn.style.color = ""; }
-  }
+  if(btn){ if(pendingVideoMuted){ btn.innerHTML = "🔇 Muted"; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } else { btn.innerHTML = "🔊 Sound"; btn.style.borderColor = ""; btn.style.color = ""; } }
   const status = $("videoEditStatus");
   if(status) status.textContent = pendingVideoMuted ? "🔇 Video muted" : "🔊 Sound on";
   toast(pendingVideoMuted ? "🔇 Muted" : "🔊 Sound on");
@@ -2108,21 +1813,13 @@ $("editVideoPreviewBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   const videoEl = $("uploadPreview");
   if(!videoEl || !videoEl.src){ toast("Select a video first"); return; }
-
   const playerVideo = $("videoPlayerVideo");
   if(playerVideo){
     playerVideo.src = videoEl.src;
     playerVideo.muted = pendingVideoMuted;
     playerVideo.style.transform = `rotate(${pendingVideoRotation}deg)`;
-
-    ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn",
-     "videoPlayerDownloadBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn"].forEach(id => {
-      const btn = $(id);
-      if(btn) btn.style.display = "none";
-    });
-
+    ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn", "videoPlayerDownloadBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn"].forEach(id => { const btn = $(id); if(btn) btn.style.display = "none"; });
     if($("videoPlayerTitle")) $("videoPlayerTitle").textContent = "🎬 Preview";
-
     const metaEl = $("videoPlayerMeta");
     if(metaEl){
       let info = [];
@@ -2133,18 +1830,15 @@ $("editVideoPreviewBtn")?.addEventListener("click", (e)=>{
       if(pendingVideoSticker) info.push(`😀 ${pendingVideoSticker.icon}`);
       metaEl.textContent = info.join(" · ") || "Original video";
     }
-
     if($("videoPlayerDesc")){
       $("videoPlayerDesc").textContent = $("videoTitle")?.value || "";
       $("videoPlayerDesc").style.display = $("videoPlayerDesc").textContent ? "block" : "none";
     }
-
     setTimeout(()=>{ playerVideo.play().catch(()=>{}); }, 300);
     showModal("videoPlayerModal");
   }
 });
 
-/* VIDEO TRIM */
 function openVideoTrimModal(videoEl){
   if(!videoEl || !videoEl.src){ toast("No video selected"); return; }
   trimVideoElement = videoEl;
@@ -2190,136 +1884,370 @@ $("trimSaveBtn")?.addEventListener("click", ()=>{
   const start = Number($("trimStartRange").value) || 0;
   const end = Number($("trimEndRange").value) || 0;
   if(end - start < 1){ toast("Minimum 1 second required"); return; }
-
   const trimData = { start, end, applied: true, duration: end - start };
-
   if(window.__trimContext === "story"){
     pendingStoryTrim = trimData;
     const status = $("storySelectedMedia");
     if(status) status.textContent = `✂️ Trimmed: ${formatDuration(start)} - ${formatDuration(end)}`;
     toast("✂️ Trim applied to story");
-  }else if(window.__trimContext === "video"){
+  } else if(window.__trimContext === "video"){
     pendingVideoTrim = trimData;
     const status = $("videoEditStatus");
     if(status) status.textContent = `✂️ Trimmed: ${formatDuration(start)} - ${formatDuration(end)}`;
     toast("✂️ Trim applied to video");
   }
-
   hideModal("videoTrimModal");
   trimVideoElement = null;
 });
 
 $("editVideoTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); window.__trimContext = "video"; openVideoTrimModal($("uploadPreview")); });
-$("storyTrimBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  if(storyMediaType !== "video"){ toast("Trim only for videos"); return; }
-  window.__trimContext = "story";
-  openVideoTrimModal($("storyVideoPreview"));
-});
+$("storyTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(storyMediaType !== "video"){ toast("Trim only for videos"); return; } window.__trimContext = "story"; openVideoTrimModal($("storyVideoPreview")); });
 
-console.log("✅ app.js PART 1/3 loaded!");
+console.log("✅ Part 1/3 loaded");
 /* ============================================================
-   ReelHub - app.js
-   PART 2/3 — Video Menu + Player + Playlists + Upload + Follow + DM
+   ReelHub - app.js PART 2/3
+   Video Menu + Player + Upload + Search + Follow + DM + Block/Report
 ============================================================ */
 
 /* ============================================================
-   VIDEO MENU (⋮)
+   ✅ VIDEO MENU MODAL (⋮) — Pin/Block/Report/Edit/Delete
 ============================================================ */
-window.openVideoMenu = function(videoId){
+window.openVideoMenuModal = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
   if(!v){ toast("Not found"); return; }
+  videoMenuVideoId = videoId;
 
   const mine = currentUser && v.userId === currentUser.uid;
   const isAdmin = isAdminUser();
-  const canDelete = mine || isAdmin;
-  const canEdit = mine;
+  const isPinned = currentProfile?.pinnedVideos?.includes(videoId);
 
-  if(!canDelete && !canEdit){ toast("You can't manage this video"); return; }
+  const editBtn = $("videoMenuEditBtn");
+  const pinBtn = $("videoMenuPinBtn");
+  const downloadBtn = $("videoMenuDownloadBtn");
+  const deleteBtn = $("videoMenuDeleteBtn");
+  const blockBtn = $("videoMenuBlockBtn");
+  const reportBtn = $("videoMenuReportBtn");
 
-  let options = [];
-  if(canEdit) options.push("1 = ✏️ Edit");
-  if(canDelete) options.push("2 = 🗑️ Delete" + (isAdmin && !mine ? " (ADMIN)" : ""));
-  options.push("3 = ❌ Cancel");
+  if(editBtn) editBtn.style.display = mine ? "block" : "none";
+  if(deleteBtn) deleteBtn.style.display = (mine || isAdmin) ? "block" : "none";
+  if(downloadBtn) downloadBtn.style.display = "block";
+  if(pinBtn){
+    if(mine){
+      pinBtn.style.display = "block";
+      pinBtn.innerHTML = isPinned ? "📌 Unpin Video" : "📌 Pin to Profile";
+      pinBtn.dataset.pinned = isPinned ? "true" : "false";
+    } else {
+      pinBtn.style.display = "none";
+    }
+  }
+  if(blockBtn) blockBtn.style.display = (!mine && currentUser) ? "block" : "none";
+  if(reportBtn) reportBtn.style.display = (!mine && currentUser) ? "block" : "none";
 
-  const action = prompt("Choose action:\n\n" + options.join("\n") + "\n\nEnter number:");
-
-  if(action === "1" && canEdit) openEditVideo(videoId);
-  else if(action === "2" && canDelete) window.deleteVideo(videoId);
+  showModal("videoMenuModal");
 };
 
-/* ============================================================
-   DELETE VIDEO
-============================================================ */
-window.deleteVideo = async function(videoId){
-  if(!currentUser) return;
+$("videoMenuEditBtn")?.addEventListener("click", ()=>{
+  if(!videoMenuVideoId) return;
+  hideModal("videoMenuModal");
+  openEditVideo(videoMenuVideoId);
+});
 
-  const ref = doc(db, "videos", videoId);
-  const snap = await getDoc(ref);
-  if(!snap.exists()){ toast("Video not found"); return; }
+$("videoMenuPinBtn")?.addEventListener("click", async ()=>{
+  if(!videoMenuVideoId || !currentUser) return;
+  const v = videosCache.find(x => x.id === videoMenuVideoId);
+  if(!v || v.userId !== currentUser.uid){ toast("Not your video"); return; }
 
-  const videoData = snap.data();
-  const ownerId = videoData.userId;
-  const isOwnerUser = ownerId === currentUser.uid;
-  const isAdmin = isAdminUser();
+  const currentPinned = Array.isArray(currentProfile?.pinnedVideos) ? [...currentProfile.pinnedVideos] : [];
+  const isPinned = currentPinned.includes(videoMenuVideoId);
 
-  if(!isOwnerUser && !isAdmin){ toast("You can't delete this video"); return; }
-  if(!confirm(isAdmin && !isOwnerUser ? "ADMIN: Delete this video?" : "Delete this video?")) return;
+  let newPinned;
+  if(isPinned){
+    newPinned = currentPinned.filter(id => id !== videoMenuVideoId);
+  } else {
+    if(currentPinned.length >= 3){ toast("Max 3 videos can be pinned"); return; }
+    newPinned = [...currentPinned, videoMenuVideoId];
+  }
 
   try{
-    const comments = await getDocs(collection(db, "videos", videoId, "comments"));
-    for(const c of comments.docs) await deleteDoc(c.ref);
-    const likes = await getDocs(collection(db, "videos", videoId, "likes"));
-    for(const l of likes.docs) await deleteDoc(l.ref);
-    const views = await getDocs(collection(db, "videos", videoId, "views"));
-    for(const v of views.docs) await deleteDoc(v.ref);
+    await updateDoc(doc(db, "profiles", currentUser.uid), { pinnedVideos: newPinned });
+    currentProfile.pinnedVideos = newPinned;
+    toast(isPinned ? "📌 Unpinned" : "📌 Pinned to profile");
+    hideModal("videoMenuModal");
+    renderFeed();
+    loadMyVideos();
+  }catch(e){ console.error(e); toast("Failed"); }
+});
 
-    await deleteDoc(ref);
+$("videoMenuDownloadBtn")?.addEventListener("click", ()=>{
+  if(!videoMenuVideoId) return;
+  hideModal("videoMenuModal");
+  downloadVideo(videoMenuVideoId);
+});
 
-    const q = query(collection(db, "videos"), where("userId", "==", ownerId));
-    const ownerVideos = await getDocs(q);
-    await updateDoc(doc(db, "profiles", ownerId), { videos: ownerVideos.size });
+$("videoMenuDeleteBtn")?.addEventListener("click", ()=>{
+  if(!videoMenuVideoId) return;
+  hideModal("videoMenuModal");
+  window.deleteVideo(videoMenuVideoId);
+});
 
-    toast(isAdmin && !isOwnerUser ? "🗑️ Video deleted (admin)" : "🗑️ Video deleted");
-  }catch(e){ console.error("deleteVideo error:", e); toast("Failed: " + e.message); }
-};
+$("videoMenuBlockBtn")?.addEventListener("click", async ()=>{
+  if(!videoMenuVideoId || !currentUser) return;
+  const v = videosCache.find(x => x.id === videoMenuVideoId);
+  if(!v) return;
+  const targetUid = v.userId;
+  if(targetUid === currentUser.uid){ toast("Can't block yourself"); return; }
+  hideModal("videoMenuModal");
+  if(!confirm(`Block ${v.userName || "this user"}? You won't see their videos, stories, or messages.`)) return;
+  await blockUser(targetUid);
+});
+
+$("videoMenuReportBtn")?.addEventListener("click", ()=>{
+  if(!videoMenuVideoId) return;
+  const v = videosCache.find(x => x.id === videoMenuVideoId);
+  if(!v) return;
+  hideModal("videoMenuModal");
+  openReportModal("video", videoMenuVideoId, `Report "${v.title || "video"}"`);
+});
 
 /* ============================================================
-   EDIT VIDEO
+   ✅ REPORT SYSTEM
 ============================================================ */
-async function openEditVideo(videoId){
-  const snap = await getDoc(doc(db,"videos",videoId));
-  if(!snap.exists()) return;
-  const v = snap.data();
-  if(v.userId !== currentUser.uid && !isAdminUser()){ toast("Not yours"); return; }
-
-  $("editVideoId").value = videoId;
-  $("editVideoTitle").value = v.title || "";
-  $("editVideoDescription").value = v.description || "";
-  $("editVideoVisibility").value = v.visibility || "public";
-  $("editVideoType").value = v.type || "long";
-  showModal("editVideoModal");
+function openReportModal(type, id, label){
+  reportTargetType = type;
+  reportTargetId = id;
+  const labelEl = $("reportTargetLabel");
+  if(labelEl) labelEl.textContent = label || "What's the issue?";
+  const statusEl = $("reportStatus");
+  if(statusEl) statusEl.textContent = "";
+  const detailsEl = $("reportDetails");
+  if(detailsEl) detailsEl.value = "";
+  const reasonEl = $("reportReason");
+  if(reasonEl) reasonEl.value = "spam";
+  showModal("reportModal");
 }
 
-$("saveVideoEditBtn")?.addEventListener("click", async ()=>{
-  const id = $("editVideoId").value;
-  if(!id) return;
-  try{
-    const ref = doc(db,"videos",id);
-    const snap = await getDoc(ref);
-    if(!snap.exists()) return;
-    if(snap.data().userId !== currentUser.uid && !isAdminUser()) return;
+$("submitReportBtn")?.addEventListener("click", async ()=>{
+  if(!currentUser){ toast("Login required"); return; }
+  if(!reportTargetId){ toast("Invalid target"); return; }
 
-    await updateDoc(ref, {
-      title: $("editVideoTitle").value.trim(),
-      description: $("editVideoDescription").value.trim(),
-      visibility: $("editVideoVisibility").value,
-      type: $("editVideoType").value,
-      updatedAt: serverTimestamp()
+  const reason = $("reportReason")?.value || "other";
+  const details = $("reportDetails")?.value.trim() || "";
+  const status = $("reportStatus");
+  const btn = $("submitReportBtn");
+
+  if(btn){ btn.disabled = true; btn.textContent = "Submitting..."; }
+  if(status){ status.textContent = "Submitting..."; status.style.color = "#7c3aed"; }
+
+  try{
+    await addDoc(collection(db, "reports"), {
+      type: reportTargetType,
+      targetId: reportTargetId,
+      reporterId: currentUser.uid,
+      reporterName: currentProfile?.name || "User",
+      reason,
+      details,
+      status: "pending",
+      createdAt: serverTimestamp()
     });
-    hideModal("editVideoModal");
-    toast("✅ Updated");
-  }catch(e){ toast("Update failed"); }
+
+    if(status){ status.textContent = "✅ Report submitted. Thank you!"; status.style.color = "#22c55e"; }
+    toast("✅ Report submitted");
+    setTimeout(()=>{ hideModal("reportModal"); }, 1200);
+  }catch(e){
+    console.error("Report submit error:", e);
+    if(status){ status.textContent = "Failed: " + e.message; status.style.color = "#ef4444"; }
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = "Submit Report"; }
+  }
+});
+
+/* ============================================================
+   ✅ BLOCK USER
+============================================================ */
+async function blockUser(targetUid){
+  if(!currentUser || !targetUid) return;
+  if(targetUid === currentUser.uid){ toast("Can't block yourself"); return; }
+
+  const blockId = currentUser.uid + "_" + targetUid;
+  try{
+    await setDoc(doc(db, "blocked_users", blockId), {
+      blockerId: currentUser.uid,
+      blockedId: targetUid,
+      createdAt: serverTimestamp()
+    });
+    blockedUsersCache.add(targetUid);
+    toast("🚫 User blocked");
+    renderFeed();
+    renderShorts();
+    renderStoriesBar();
+    if(typeof renderDMInbox === "function") renderDMInbox();
+    if($("publicProfileModal")?.classList.contains("show")){
+      hideModal("publicProfileModal");
+    }
+  }catch(e){ console.error("blockUser error:", e); toast("Failed to block"); }
+}
+
+async function unblockUser(targetUid){
+  if(!currentUser || !targetUid) return;
+  const blockId = currentUser.uid + "_" + targetUid;
+  try{
+    await deleteDoc(doc(db, "blocked_users", blockId));
+    blockedUsersCache.delete(targetUid);
+    toast("✅ User unblocked");
+    renderBlockedUsers();
+    renderFeed();
+    renderShorts();
+    renderStoriesBar();
+  }catch(e){ console.error("unblockUser error:", e); toast("Failed to unblock"); }
+}
+
+async function renderBlockedUsers(){
+  const container = $("blockedUsersList");
+  if(!container) return;
+  if(!blockedUsersCache.size){
+    container.innerHTML = `<div class="yt-empty" style="padding:30px"><div style="font-size:42px;margin-bottom:10px">🚫</div><p>No blocked users</p></div>`;
+    return;
+  }
+  container.innerHTML = `<div class="yt-empty" style="padding:20px">Loading...</div>`;
+  const users = [];
+  for(const uid of blockedUsersCache){
+    try{ const p = await getProfile(uid); users.push(p); }catch(e){}
+  }
+  container.innerHTML = users.map(p => `
+    <div class="person-item">
+      <img src="${avatar(p.photo, p.name)}" class="people-open-btn" data-uid="${esc(p.uid)}">
+      <div class="info people-open-btn" data-uid="${esc(p.uid)}">
+        <strong>${esc(p.name || "User")}</strong>
+        <small>@${esc(p.username || "user")}</small>
+      </div>
+      <button class="follow-btn following" data-unblock-user="${esc(p.uid)}">Unblock</button>
+    </div>
+  `).join("");
+}
+
+$("blockedUsersBtn")?.addEventListener("click", ()=>{
+  hideModal("settingsModal");
+  showModal("blockedUsersModal");
+  renderBlockedUsers();
+});
+
+document.addEventListener("click", async (e)=>{
+  const unblockBtn = e.target.closest("[data-unblock-user]");
+  if(unblockBtn){
+    e.preventDefault(); e.stopPropagation();
+    const uid = unblockBtn.dataset.unblockUser;
+    if(uid && confirm("Unblock this user?")) await unblockUser(uid);
+    return;
+  }
+});
+
+/* ============================================================
+   ✅ WATCH HISTORY + CONTINUE WATCHING
+============================================================ */
+async function saveWatchProgress(videoId, progress, duration){
+  if(!currentUser || !videoId) return;
+  try{
+    const historyId = currentUser.uid + "_" + videoId;
+    await setDoc(doc(db, "watch_history", historyId), {
+      userId: currentUser.uid,
+      videoId,
+      progress: Math.floor(progress || 0),
+      duration: Math.floor(duration || 0),
+      watchedAt: serverTimestamp()
+    }, { merge: true });
+  }catch(e){ console.warn("saveWatchProgress:", e.message); }
+}
+
+async function removeFromHistory(videoId){
+  if(!currentUser || !videoId) return;
+  try{
+    await deleteDoc(doc(db, "watch_history", currentUser.uid + "_" + videoId));
+    toast("Removed from history");
+    renderWatchHistory();
+  }catch(e){ console.error(e); }
+}
+
+function renderWatchHistory(){
+  const container = $("watchHistoryList");
+  if(!container) return;
+  if(!watchHistoryCache.length){
+    container.innerHTML = `<div class="yt-empty" style="padding:30px"><div style="font-size:42px;margin-bottom:10px">📺</div><p>No watch history</p></div>`;
+    return;
+  }
+  const videos = watchHistoryCache.map(h => {
+    const v = videosCache.find(x => x.id === h.videoId);
+    return v ? { ...v, _history: h } : null;
+  }).filter(Boolean);
+
+  if(!videos.length){
+    container.innerHTML = `<div class="yt-empty" style="padding:30px"><p>No videos available</p></div>`;
+    return;
+  }
+
+  container.innerHTML = videos.map(v => {
+    const progressPct = v._history.duration > 0 ? Math.min(100, (v._history.progress / v._history.duration) * 100) : 0;
+    return `
+      <div class="yt-video-item" data-open-video="${esc(v.id)}" style="position:relative">
+        <div class="yt-video-thumb">
+          ${v.thumbnail ? `<img src="${esc(v.thumbnail)}" style="width:100%;height:100%;object-fit:cover">` : `<video src="${esc(v.videoURL)}" preload="metadata" muted></video>`}
+          <div class="view-badge">${timeAgo(v._history.watchedAt)}</div>
+          ${progressPct > 0 ? `<div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(0,0,0,0.5)"><div style="height:100%;width:${progressPct}%;background:#7c3aed"></div></div>` : ""}
+        </div>
+        <div class="yt-video-meta">
+          <h4>${esc(v.title || "Untitled")}</h4>
+          <div class="views">${formatViews(v.views)} · ${timeAgo(v.createdAt)}</div>
+          <div class="btns" data-stop-propagation style="margin-top:6px">
+            <button class="yt-mini-btn danger" data-remove-history="${esc(v.id)}">Remove</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+document.addEventListener("click", async (e)=>{
+  const rmHist = e.target.closest("[data-remove-history]");
+  if(rmHist){
+    e.preventDefault(); e.stopPropagation();
+    await removeFromHistory(rmHist.dataset.removeHistory);
+    return;
+  }
+});
+
+function renderContinueWatching(){
+  const section = $("continueWatchingSection");
+  const container = $("continueWatchingList");
+  if(!section || !container) return;
+
+  if(!continueWatchingCache.length){ section.style.display = "none"; return; }
+
+  const videos = continueWatchingCache.map(h => {
+    const v = videosCache.find(x => x.id === h.videoId);
+    return v ? { ...v, _history: h } : null;
+  }).filter(Boolean);
+
+  if(!videos.length){ section.style.display = "none"; return; }
+
+  section.style.display = "block";
+  container.innerHTML = videos.map(v => {
+    const progressPct = v._history.duration > 0 ? Math.min(100, (v._history.progress / v._history.duration) * 100) : 0;
+    return `
+      <div class="cw-card" data-open-video="${esc(v.id)}" style="min-width:180px;max-width:180px;cursor:pointer">
+        <div style="position:relative;width:100%;height:100px;border-radius:10px;overflow:hidden;background:#000">
+          ${v.thumbnail ? `<img src="${esc(v.thumbnail)}" style="width:100%;height:100%;object-fit:cover">` : `<video src="${esc(v.videoURL)}#t=1" preload="metadata" muted style="width:100%;height:100%;object-fit:cover"></video>`}
+          <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(0,0,0,0.6)"><div style="height:100%;width:${progressPct}%;background:#7c3aed"></div></div>
+        </div>
+        <div style="font-size:12px;font-weight:600;margin-top:6px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(v.title || "Untitled")}</div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:2px">${formatDuration(v._history.progress)} / ${formatDuration(v._history.duration)}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+$("watchHistoryBtn")?.addEventListener("click", ()=>{
+  hideModal("settingsModal");
+  showModal("watchHistoryModal");
+  renderWatchHistory();
 });
 
 /* ============================================================
@@ -2343,13 +2271,34 @@ window.openVideoPlayer = function(videoId){
       videoEl.style.transition = "transform 0.3s ease";
       if(v.rotation === 90 || v.rotation === 270){
         videoEl.style.transform = `rotate(${v.rotation}deg) scale(1.3)`;
-      }else{
+      } else {
         videoEl.style.transform = `rotate(${v.rotation}deg)`;
       }
-    }else{
+    } else {
       videoEl.style.transform = "";
     }
+
+    // Resume from history
+    const hist = watchHistoryCache.find(h => h.videoId === videoId);
+    if(hist && hist.progress > 3 && hist.duration > 0 && hist.progress < (hist.duration - 5)){
+      videoEl.addEventListener("loadedmetadata", ()=>{
+        try{ videoEl.currentTime = hist.progress; }catch(e){}
+      }, { once: true });
+    }
+
     videoEl.play().catch(()=>{});
+
+    // Save progress
+    let saveTimer = null;
+    const onTimeUpdate = () => {
+      if(saveTimer) return;
+      saveTimer = setTimeout(()=>{
+        saveWatchProgress(videoId, videoEl.currentTime, videoEl.duration);
+        saveTimer = null;
+      }, 5000);
+    };
+    videoEl.addEventListener("timeupdate", onTimeUpdate);
+    videoEl.addEventListener("ended", ()=>{ saveWatchProgress(videoId, 0, videoEl.duration); });
   }
 
   if(v.song && v.song.audioURL){
@@ -2377,7 +2326,7 @@ window.openVideoPlayer = function(videoId){
     const baseMeta = formatViews(v.views) + " · " + timeAgo(v.createdAt);
     if(extraInfo.length){
       metaEl.innerHTML = `${baseMeta}<br><span style="font-size:11px;color:var(--primary)">${extraInfo.join(" · ")}</span>`;
-    }else{
+    } else {
       metaEl.textContent = baseMeta;
     }
   }
@@ -2388,10 +2337,7 @@ window.openVideoPlayer = function(videoId){
   }
   if($("videoPlayerLikes")) $("videoPlayerLikes").textContent = (v.likes || 0);
 
-  ["videoPlayerLikeBtn", "videoPlayerShareBtn", "videoPlayerCommentBtn",
-   "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn",
-   "videoPlayerDownloadBtn"]
-    .forEach(id => { const btn = $(id); if(btn) btn.style.display = ""; });
+  ["videoPlayerLikeBtn", "videoPlayerShareBtn", "videoPlayerCommentBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn", "videoPlayerDownloadBtn"].forEach(id => { const btn = $(id); if(btn) btn.style.display = ""; });
 
   updateVideoPlayerLike(videoId);
   updateVideoPlayerSave(videoId);
@@ -2465,27 +2411,17 @@ function resetVideoPlayer(){
   stopWatchTimer();
 }
 
-/* ============================================================
-   🆕 VIDEO DOWNLOAD
-============================================================ */
+/* DOWNLOAD */
 async function downloadVideo(videoId){
   const v = videosCache.find(x => x.id === videoId);
   if(!v || !v.videoURL){ toast("Video not found"); return; }
-
   try{
     toast("📥 Preparing download...");
-
     let downloadURL = v.videoURL;
     if(downloadURL.includes("cloudinary.com") && downloadURL.includes("/upload/")){
       downloadURL = downloadURL.replace("/upload/", "/upload/fl_attachment/");
     }
-
-    const cleanTitle = (v.title || "ReelHub_Video")
-      .replace(/[^a-zA-Z0-9_\- ]/g, "")
-      .trim()
-      .replace(/\s+/g, "_")
-      .slice(0, 50) || "ReelHub_Video";
-
+    const cleanTitle = (v.title || "ReelHub_Video").replace(/[^a-zA-Z0-9_\- ]/g, "").trim().replace(/\s+/g, "_").slice(0, 50) || "ReelHub_Video";
     const a = document.createElement("a");
     a.href = downloadURL;
     a.download = cleanTitle + ".mp4";
@@ -2494,7 +2430,6 @@ async function downloadVideo(videoId){
     a.style.display = "none";
     document.body.appendChild(a);
     a.click();
-
     setTimeout(() => { if(a.parentNode) document.body.removeChild(a); }, 1000);
     toast("✅ Download started — Check phone Downloads");
   }catch(err){
@@ -2503,9 +2438,69 @@ async function downloadVideo(videoId){
   }
 }
 
-/* ============================================================
-   TRACK VIEW / LIKE / SAVE
-============================================================ */
+/* DELETE VIDEO */
+window.deleteVideo = async function(videoId){
+  if(!currentUser) return;
+  const ref = doc(db, "videos", videoId);
+  const snap = await getDoc(ref);
+  if(!snap.exists()){ toast("Video not found"); return; }
+  const videoData = snap.data();
+  const ownerId = videoData.userId;
+  const isOwnerUser = ownerId === currentUser.uid;
+  const isAdmin = isAdminUser();
+  if(!isOwnerUser && !isAdmin){ toast("You can't delete this video"); return; }
+  if(!confirm(isAdmin && !isOwnerUser ? "ADMIN: Delete this video?" : "Delete this video?")) return;
+
+  try{
+    const comments = await getDocs(collection(db, "videos", videoId, "comments"));
+    for(const c of comments.docs) await deleteDoc(c.ref);
+    const likes = await getDocs(collection(db, "videos", videoId, "likes"));
+    for(const l of likes.docs) await deleteDoc(l.ref);
+    const views = await getDocs(collection(db, "videos", videoId, "views"));
+    for(const v of views.docs) await deleteDoc(v.ref);
+    await deleteDoc(ref);
+    const q = query(collection(db, "videos"), where("userId", "==", ownerId));
+    const ownerVideos = await getDocs(q);
+    await updateDoc(doc(db, "profiles", ownerId), { videos: ownerVideos.size });
+    toast(isAdmin && !isOwnerUser ? "🗑️ Video deleted (admin)" : "🗑️ Video deleted");
+  }catch(e){ console.error("deleteVideo error:", e); toast("Failed: " + e.message); }
+};
+
+/* EDIT VIDEO */
+async function openEditVideo(videoId){
+  const snap = await getDoc(doc(db,"videos",videoId));
+  if(!snap.exists()) return;
+  const v = snap.data();
+  if(v.userId !== currentUser.uid && !isAdminUser()){ toast("Not yours"); return; }
+  $("editVideoId").value = videoId;
+  $("editVideoTitle").value = v.title || "";
+  $("editVideoDescription").value = v.description || "";
+  $("editVideoVisibility").value = v.visibility || "public";
+  $("editVideoType").value = v.type || "long";
+  showModal("editVideoModal");
+}
+
+$("saveVideoEditBtn")?.addEventListener("click", async ()=>{
+  const id = $("editVideoId").value;
+  if(!id) return;
+  try{
+    const ref = doc(db,"videos",id);
+    const snap = await getDoc(ref);
+    if(!snap.exists()) return;
+    if(snap.data().userId !== currentUser.uid && !isAdminUser()) return;
+    await updateDoc(ref, {
+      title: $("editVideoTitle").value.trim(),
+      description: $("editVideoDescription").value.trim(),
+      visibility: $("editVideoVisibility").value,
+      type: $("editVideoType").value,
+      updatedAt: serverTimestamp()
+    });
+    hideModal("editVideoModal");
+    toast("✅ Updated");
+  }catch(e){ toast("Update failed"); }
+});
+
+/* TRACK VIEW / LIKE / SAVE */
 async function trackView(videoId){
   if(!currentUser || !videoId) return;
   if(processingViews.has(videoId)) return;
@@ -2545,19 +2540,11 @@ document.addEventListener("pause", (e)=>{
   }
 }, true);
 
-document.addEventListener("ended", (e)=>{
-  if(e.target.tagName === "VIDEO"){
-    const vid = e.target.dataset.videoId;
-    if(vid) stopWatchTimer();
-  }
-}, true);
-
 async function toggleLike(videoId, btnEl, isReel=false){
   if(!currentUser){ toast("Login required"); return; }
   if(!videoId) return;
   if(processingLikes.has(videoId)) return;
   processingLikes.add(videoId);
-
   try{
     const likeRef = doc(db,"videos",videoId,"likes",currentUser.uid);
     const videoRef = doc(db,"videos",videoId);
@@ -2565,30 +2552,25 @@ async function toggleLike(videoId, btnEl, isReel=false){
     if(!videoSnap.exists()) return;
     const ownerId = videoSnap.data().userId;
     const wasLiked = likeSnap.exists();
-
     if(wasLiked){
       await deleteDoc(likeRef);
       await updateDoc(videoRef, { likes: increment(-1) });
       if(btnEl){ btnEl.classList.remove("liked"); const icon = btnEl.querySelector(".icon"); if(icon) icon.textContent = "🤍"; }
-    }else{
+    } else {
       await setDoc(likeRef, { userId: currentUser.uid, createdAt: serverTimestamp() });
       await updateDoc(videoRef, { likes: increment(1) });
       if(btnEl){ btnEl.classList.add("liked"); const icon = btnEl.querySelector(".icon"); if(icon) icon.textContent = "❤️"; }
       if(ownerId !== currentUser.uid){
         await addDoc(collection(db,"notifications"), {
-          to: ownerId, from: currentUser.uid,
-          title: "❤️ New Like",
+          to: ownerId, from: currentUser.uid, title: "❤️ New Like",
           message: (currentProfile?.name || "Someone") + " liked your video",
           createdAt: serverTimestamp()
         });
       }
     }
-
     const freshSnap = await getDoc(videoRef);
     if(freshSnap.exists()){
       const newCount = Math.max(0, Number(freshSnap.data().likes || 0));
-      const likesEl = $("likes-" + videoId);
-      if(likesEl) likesEl.textContent = newCount + " likes";
       if(btnEl){ const count = btnEl.querySelector(".like-count"); if(count) count.textContent = newCount; }
     }
   }catch(e){ console.error("toggleLike error:", e); }
@@ -2600,10 +2582,8 @@ async function toggleSave(videoId, btnEl){
   if(!videoId) return;
   if(processingSaves.has(videoId)) return;
   processingSaves.add(videoId);
-
   const saveId = currentUser.uid + "_" + videoId;
   const saveRef = doc(db, "saves", saveId);
-
   try{
     const snap = await getDoc(saveRef);
     if(snap.exists()){
@@ -2614,7 +2594,7 @@ async function toggleSave(videoId, btnEl){
       renderSavedVideos();
       updateVideoPlayerSave(videoId);
       toast("Removed from saved");
-    }else{
+    } else {
       await setDoc(saveRef, { userId: currentUser.uid, videoId: videoId, savedAt: serverTimestamp() });
       mySavesCache.add(videoId);
       updateAllSaveButtons(videoId, true);
@@ -2659,7 +2639,6 @@ document.querySelectorAll("#profileTabs .yt-tab").forEach(tab=>{
     $("savedVideos")?.classList.add("hidden");
     $("monetizationTab")?.classList.add("hidden");
     $("aboutTab")?.classList.add("hidden");
-
     if(tabName === "videos") $("myVideos")?.classList.remove("hidden");
     else if(tabName === "saved"){ $("savedVideos")?.classList.remove("hidden"); renderSavedVideos(); }
     else if(tabName === "playlists"){ $("playlistsTab")?.classList.remove("hidden"); renderPlaylistsTab(); }
@@ -2695,9 +2674,7 @@ function renderSavedVideos(){
   container.innerHTML = savedList.map(v => createYTVideoItem(v, v.userId === currentUser?.uid)).join("");
 }
 
-/* ============================================================
-   PLAYLISTS
-============================================================ */
+/* PLAYLISTS */
 async function loadMyPlaylists(){
   if(!currentUser) return;
   try{
@@ -2776,9 +2753,7 @@ async function renderPlaylistDetail(playlistId){
         <div class="playlist-detail-cover">${firstVideo ? `<video src="${esc(firstVideo.videoURL)}" preload="metadata" muted></video>` : `🎵`}</div>
         <div class="playlist-detail-info"><h3>${esc(playlist.name)}</h3><div class="meta">${videos.length} ${videos.length === 1 ? "video" : "videos"}</div></div>
       </div>
-      ${videos.length === 0 
-        ? `<div class="playlist-empty" style="padding:30px"><span class="icon">📭</span><p>No videos</p></div>`
-        : videos.map(v => `
+      ${videos.length === 0 ? `<div class="playlist-empty" style="padding:30px"><span class="icon">📭</span><p>No videos</p></div>` : videos.map(v => `
             <div class="playlist-video-item" data-playlist-video="${esc(v.id)}">
               <div class="thumb"><video src="${esc(v.videoURL)}" preload="metadata" muted></video></div>
               <div class="info"><h4>${esc(v.title || "Untitled")}</h4><div class="stats">${formatViews(v.views)} · ${timeAgo(v.createdAt)}</div></div>
@@ -2840,7 +2815,7 @@ $("saveToPlaylistBtn")?.addEventListener("click", async()=>{
       const snap = await getDoc(itemRef);
       if(selectedPlaylists.has(p.id)){
         if(!snap.exists()){ await setDoc(itemRef, { videoId: currentPlaylistVideoId, addedAt: serverTimestamp() }); savedCount++; }
-      }else{
+      } else {
         if(snap.exists()){ await deleteDoc(itemRef); removedCount++; }
       }
     }
@@ -2881,10 +2856,8 @@ async function syncAllPlaylistCounts(){
 $("newPlaylistFromAddBtn")?.addEventListener("click", ()=>{ hideModal("addToPlaylistModal"); $("playlistName").value = ""; $("playlistDesc").value = ""; showModal("createPlaylistModal"); });
 
 /* ============================================================
-   🆕 UPLOAD — WITH ALL NEW FEATURES
+   UPLOAD
 ============================================================ */
-
-/* Content Type Toggle (Video/Photo) */
 document.addEventListener("click", (e)=>{
   const typeRadio = e.target.closest("#contentTypeGroup .yt-radio");
   if(typeRadio){
@@ -2892,19 +2865,17 @@ document.addEventListener("click", (e)=>{
     document.querySelectorAll("#contentTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
     typeRadio.classList.add("selected");
     uploadContentType = typeRadio.dataset.value;
-
     const title = $("selectMediaTitle");
     const dz = $("dropzone");
     const thumbCard = $("thumbnailCard");
     const editBar = $("videoEditBar");
-
     if(uploadContentType === "photo"){
       if(title) title.textContent = "📷 Select Photo";
       if(dz) dz.querySelector(".main-text").textContent = "Click to select photo";
       if(dz) dz.querySelector(".sub-text").textContent = "JPG, PNG · Max 20MB";
       if(thumbCard) thumbCard.style.display = "none";
       if(editBar) editBar.style.display = "none";
-    }else{
+    } else {
       if(title) title.textContent = "📹 Select Video";
       if(dz) dz.querySelector(".main-text").textContent = "Click to select video";
       if(dz) dz.querySelector(".sub-text").textContent = "MP4, WebM, MOV · Max 100MB";
@@ -2913,7 +2884,6 @@ document.addEventListener("click", (e)=>{
   }
 });
 
-/* Dropzone */
 const dropzoneEl = $("dropzone");
 if(dropzoneEl){
   dropzoneEl.addEventListener("click", ()=>{
@@ -2922,24 +2892,18 @@ if(dropzoneEl){
   });
 }
 
-/* Photo File */
 $("photoFile")?.addEventListener("change", (e)=>{
   const file = e.target.files[0];
   if(!file) return;
   if(file.size > 20 * 1024 * 1024){ toast("Photo too large (max 20MB)"); e.target.value = ""; return; }
-
   const preview = $("photoPreview");
-  if(preview){
-    preview.src = URL.createObjectURL(file);
-    preview.classList.remove("hidden");
-  }
+  if(preview){ preview.src = URL.createObjectURL(file); preview.classList.remove("hidden"); }
   $("dropzone")?.classList.add("hidden");
   $("uploadPreview")?.classList.add("hidden");
   const thumbCard = $("thumbnailCard");
   if(thumbCard) thumbCard.style.display = "block";
 });
 
-/* Video File */
 $("videoFile")?.addEventListener("change", e=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -2948,7 +2912,6 @@ $("videoFile")?.addEventListener("change", e=>{
   preview.classList.remove("hidden");
   $("dropzone")?.classList.add("hidden");
   $("photoPreview")?.classList.add("hidden");
-
   setTimeout(()=>{
     const editBar = $("videoEditBar");
     if(editBar) editBar.style.display = "block";
@@ -2957,7 +2920,6 @@ $("videoFile")?.addEventListener("change", e=>{
   }, 200);
 });
 
-/* Custom Thumbnail */
 $("thumbnailZone")?.addEventListener("click", ()=>{ $("thumbnailFile")?.click(); });
 
 $("thumbnailFile")?.addEventListener("change", (e)=>{
@@ -2980,19 +2942,13 @@ $("removeThumbnailBtn")?.addEventListener("click", (e)=>{
   $("removeThumbnailBtn").style.display = "none";
 });
 
-/* Filters */
 document.addEventListener("click", (e)=>{
   const btn = e.target.closest(".filter-btn");
   if(!btn) return;
   e.preventDefault(); e.stopPropagation();
-
-  document.querySelectorAll(".filter-btn").forEach(b => {
-    b.classList.remove("active");
-    b.style.borderColor = "var(--border)";
-  });
+  document.querySelectorAll(".filter-btn").forEach(b => { b.classList.remove("active"); b.style.borderColor = "var(--border)"; });
   btn.classList.add("active");
   btn.style.borderColor = "var(--primary)";
-
   pendingVideoFilter = btn.dataset.filter || "none";
   const videoEl = $("uploadPreview");
   if(videoEl) videoEl.style.filter = pendingVideoFilter === "none" ? "" : pendingVideoFilter;
@@ -3000,7 +2956,6 @@ document.addEventListener("click", (e)=>{
   if(photoEl) photoEl.style.filter = pendingVideoFilter === "none" ? "" : pendingVideoFilter;
 });
 
-/* Speed Slider */
 $("speedSlider")?.addEventListener("input", (e)=>{
   const val = parseFloat(e.target.value);
   pendingVideoSpeed = val;
@@ -3010,7 +2965,6 @@ $("speedSlider")?.addEventListener("input", (e)=>{
   if(videoEl) videoEl.playbackRate = val;
 });
 
-/* Text Overlay */
 $("textOverlayInput")?.addEventListener("input", (e)=>{
   pendingTextOverlay = e.target.value;
 });
@@ -3019,18 +2973,13 @@ document.addEventListener("click", (e)=>{
   const posBtn = e.target.closest(".text-pos-btn");
   if(!posBtn) return;
   e.preventDefault(); e.stopPropagation();
-  document.querySelectorAll(".text-pos-btn").forEach(b => {
-    b.classList.remove("active");
-    b.style.background = "var(--card)";
-    b.style.color = "var(--text)";
-  });
+  document.querySelectorAll(".text-pos-btn").forEach(b => { b.classList.remove("active"); b.style.background = "var(--card)"; b.style.color = "var(--text)"; });
   posBtn.classList.add("active");
   posBtn.style.background = "var(--primary)";
   posBtn.style.color = "white";
   pendingTextPosition = posBtn.dataset.pos;
 });
 
-/* Save Draft */
 $("saveDraftBtn")?.addEventListener("click", ()=>{
   if(!currentUser){ toast("Login required"); return; }
   const draft = {
@@ -3038,6 +2987,7 @@ $("saveDraftBtn")?.addEventListener("click", ()=>{
     description: $("videoDescription")?.value || "",
     visibility: uploadVisibility,
     type: uploadType,
+    category: uploadCategory,
     contentType: uploadContentType,
     filter: pendingVideoFilter,
     speed: pendingVideoSpeed,
@@ -3059,15 +3009,16 @@ function loadDraftIfExists(){
       if($("videoDescription") && draft.description) $("videoDescription").value = draft.description;
       if(draft.filter && $("uploadPreview")) $("uploadPreview").style.filter = draft.filter === "none" ? "" : draft.filter;
       if(draft.textOverlay && $("textOverlayInput")) $("textOverlayInput").value = draft.textOverlay;
+      if(draft.category && $("videoCategory")) $("videoCategory").value = draft.category;
       pendingVideoFilter = draft.filter || "none";
       pendingVideoSpeed = draft.speed || 1;
       pendingTextOverlay = draft.textOverlay || "";
       pendingTextPosition = draft.textPosition || "top";
+      uploadCategory = draft.category || "all";
     }, 500);
   }catch(e){}
 }
 
-/* Visibility / Type Toggle */
 $("visibilityGroup")?.addEventListener("click", e=>{
   const el = e.target.closest(".yt-radio");
   if(!el) return;
@@ -3084,12 +3035,16 @@ $("typeGroup")?.addEventListener("click", e=>{
   uploadType = el.dataset.value;
 });
 
-/* PUBLISH */
+$("videoCategory")?.addEventListener("change", e=>{
+  uploadCategory = e.target.value || "all";
+});
+
 $("publishBtn")?.addEventListener("click", async()=>{
   const isPhoto = uploadContentType === "photo";
   const file = isPhoto ? $("photoFile").files[0] : $("videoFile").files[0];
   const title = $("videoTitle").value.trim();
   const description = $("videoDescription").value.trim();
+  const category = $("videoCategory")?.value || "all";
 
   if(!file){ toast(isPhoto ? "Select photo first" : "Select video first"); return; }
   if(!title){ toast("Title डालो"); return; }
@@ -3122,6 +3077,7 @@ $("publishBtn")?.addEventListener("click", async()=>{
       videoURL: url,
       title,
       description,
+      category,
       visibility: uploadVisibility,
       type: isPhoto ? "photo" : uploadType,
       likes: 0,
@@ -3165,7 +3121,6 @@ $("publishBtn")?.addEventListener("click", async()=>{
     if($("thumbnailZone")) $("thumbnailZone").classList.remove("hidden");
     if($("removeThumbnailBtn")) $("removeThumbnailBtn").style.display = "none";
 
-    // Reset state
     pendingVideoSong = null;
     pendingVideoSticker = null;
     pendingVideoTrim = { start: 0, end: 0, applied: false };
@@ -3177,9 +3132,7 @@ $("publishBtn")?.addEventListener("click", async()=>{
     pendingTextOverlay = "";
     pendingTextPosition = "top";
 
-    // Clear draft
     localStorage.removeItem("reelhubDraft_" + currentUser.uid);
-
     toast("✅ " + (isPhoto ? "Photo" : "Video") + " published!");
     openPanel("homePanel");
   }catch(error){
@@ -3196,23 +3149,18 @@ async function syncVideoCount(uid){
     const q = query(collection(db,"videos"), where("userId","==",uid));
     const snap = await getDocs(q);
     await updateDoc(doc(db,"profiles",uid), { videos: snap.size });
-    if(currentProfile && currentProfile.uid === uid){
-      currentProfile.videos = snap.size;
-      $("videosCount").textContent = snap.size;
-    }
+    if(currentProfile && currentProfile.uid === uid){ currentProfile.videos = snap.size; $("videosCount").textContent = snap.size; }
   }catch(e){}
 }
 
-/* ============================================================
-   BANNER
-============================================================ */
+/* BANNER */
 function applyBanner(profile){
   const bannerEl = document.querySelector("#profilePanel .yt-banner");
   if(!bannerEl || !profile) return;
   if(profile.bannerType === "image" && profile.bannerURL){
     bannerEl.style.background = `url(${profile.bannerURL}) center/cover no-repeat`;
     bannerEl.classList.add("banner-image");
-  }else if(profile.bannerGradient){
+  } else if(profile.bannerGradient){
     bannerEl.style.background = profile.bannerGradient;
     bannerEl.classList.remove("banner-image");
   }
@@ -3268,9 +3216,7 @@ $("bannerFile")?.addEventListener("change", async (e)=>{
   finally { e.target.value = ""; }
 });
 
-/* ============================================================
-   FOLLOW SYSTEM
-============================================================ */
+/* FOLLOW */
 async function canViewUser(uid){
   if(!uid) return false;
   if(uid === currentUser?.uid) return true;
@@ -3313,22 +3259,14 @@ async function cancelFollowRequest(targetUid){
 async function acceptFollowRequest(fromUid){
   if(!currentUser) return;
   try{
-    await setDoc(doc(db, "follows", fromUid + "_" + currentUser.uid), {
-      follower: fromUid, following: currentUser.uid, createdAt: serverTimestamp()
-    });
+    await setDoc(doc(db, "follows", fromUid + "_" + currentUser.uid), { follower: fromUid, following: currentUser.uid, createdAt: serverTimestamp() });
     await deleteDoc(doc(db, "follow_requests", fromUid + "_" + currentUser.uid));
     await syncFollowCounts(fromUid);
     await syncFollowCounts(currentUser.uid);
-
     myFollowsCache.add(fromUid);
     mySentRequestsCache.delete(fromUid);
     updateAllFollowButtons(fromUid, true);
-
-    await addDoc(collection(db, "notifications"), {
-      to: fromUid, from: currentUser.uid, title: "✅ Request Accepted",
-      message: (currentProfile?.name || "User") + " accepted your follow request",
-      createdAt: serverTimestamp()
-    });
+    await addDoc(collection(db, "notifications"), { to: fromUid, from: currentUser.uid, title: "✅ Request Accepted", message: (currentProfile?.name || "User") + " accepted your follow request", createdAt: serverTimestamp() });
     toast("✅ Request accepted");
     renderFollowRequests();
   }catch(e){ toast("Failed"); }
@@ -3400,38 +3338,30 @@ $("followRequestsBtn")?.addEventListener("click", ()=>{ hideModal("settingsModal
 async function toggleFollow(targetUid, btnEl){
   if(!currentUser || targetUid === currentUser.uid) return;
   if(btnEl){ btnEl.disabled = true; btnEl.style.opacity = "0.6"; }
-
   const id = currentUser.uid + "_" + targetUid;
   const ref = doc(db,"follows",id);
-
   try{
     const snap = await getDoc(ref);
     const targetProfile = await getProfile(targetUid);
-
     if(snap.exists()){
       await deleteDoc(ref);
       myFollowsCache.delete(targetUid);
       updateAllFollowButtons(targetUid, false);
       await syncFollowCounts(currentUser.uid);
       await syncFollowCounts(targetUid);
-    }else{
+    } else {
       if(targetProfile.private){
         if(mySentRequestsCache.has(targetUid)){ await cancelFollowRequest(targetUid); updateAllFollowButtons(targetUid, "cancelled"); }
         else { await sendFollowRequest(targetUid); updateAllFollowButtons(targetUid, "requested"); }
-      }else{
+      } else {
         await setDoc(ref, { follower: currentUser.uid, following: targetUid, createdAt: serverTimestamp() });
         myFollowsCache.add(targetUid);
         updateAllFollowButtons(targetUid, true);
-        await addDoc(collection(db,"notifications"), {
-          to: targetUid, from: currentUser.uid, title: "👤 New Follower",
-          message: (currentProfile?.name || "Someone") + " started following you",
-          createdAt: serverTimestamp()
-        });
+        await addDoc(collection(db,"notifications"), { to: targetUid, from: currentUser.uid, title: "👤 New Follower", message: (currentProfile?.name || "Someone") + " started following you", createdAt: serverTimestamp() });
         await syncFollowCounts(currentUser.uid);
         await syncFollowCounts(targetUid);
       }
     }
-
     if($("publicProfileModal")?.classList.contains("show")){
       const uid = $("publicProfileModal").dataset.uid;
       if(uid === targetUid){ await updateFollowButtonState(targetUid); await loadPublicVideos(targetUid); }
@@ -3475,11 +3405,10 @@ async function syncFollowCounts(uid){
   }catch(e){}
 }
 
-/* ============================================================
-   PUBLIC PROFILE
-============================================================ */
+/* PUBLIC PROFILE */
 async function openPublicProfile(uid){
   if(!uid){ toast("Invalid user"); return; }
+  if(isUserBlocked(uid)){ toast("User is blocked"); return; }
   try{
     viewingProfileUid = uid;
     const p = await getProfile(uid);
@@ -3487,7 +3416,6 @@ async function openPublicProfile(uid){
     $("publicPhoto").src = avatar(p.photo, p.name);
     $("publicName").textContent = p.name || "User";
     $("publicUsername").textContent = "@" + (p.username || "user");
-
     let extra = [];
     if(p.age) extra.push("Age: " + p.age);
     if(p.gender) extra.push(p.gender);
@@ -3495,32 +3423,26 @@ async function openPublicProfile(uid){
     if(p.suspended) extra.push("🚫 Suspended");
     if(p.monetizationStatus === "approved") extra.push("💰 Monetized");
     $("publicExtra").textContent = extra.join(" · ");
-
     $("publicFollowers").textContent = p.followers || 0;
     $("publicFollowing").textContent = p.following || 0;
     $("publicVideos").textContent = p.videos || 0;
-
     const publicBanner = document.querySelector("#publicProfileModal .yt-banner");
     if(publicBanner){
       if(p.bannerType === "image" && p.bannerURL) publicBanner.style.background = `url(${p.bannerURL}) center/cover no-repeat`;
       else if(p.bannerGradient) publicBanner.style.background = p.bannerGradient;
     }
-
     const followBtn = $("publicFollowBtn");
     const newFollowBtn = followBtn.cloneNode(true);
     followBtn.parentNode.replaceChild(newFollowBtn, followBtn);
-
     const msgBtn = $("publicMessageBtn");
     const newMsgBtn = msgBtn.cloneNode(true);
     msgBtn.parentNode.replaceChild(newMsgBtn, msgBtn);
-
     const canView = await canViewUser(uid);
-
     if(currentUser && uid === currentUser.uid){
       newFollowBtn.style.display = "none";
       newMsgBtn.style.display = "none";
       $("privateAccountNotice").classList.add("hidden");
-    }else{
+    } else {
       newFollowBtn.style.display = "";
       newMsgBtn.style.display = "";
       await updateFollowButtonState(uid);
@@ -3529,19 +3451,15 @@ async function openPublicProfile(uid){
       if(!canView && p.private) $("privateAccountNotice").classList.remove("hidden");
       else $("privateAccountNotice").classList.add("hidden");
     }
-
     await loadPublicVideos(uid);
-
     const fBtn = $("publicFollowersBtn");
     const newFBtn = fBtn.cloneNode(true);
     fBtn.parentNode.replaceChild(newFBtn, fBtn);
     newFBtn.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openPeople(uid, "followers"); });
-
     const fwBtn = $("publicFollowingBtn");
     const newFwBtn = fwBtn.cloneNode(true);
     fwBtn.parentNode.replaceChild(newFwBtn, fwBtn);
     newFwBtn.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openPeople(uid, "following"); });
-
     startPresenceListener([uid]);
     showModal("publicProfileModal");
   }catch(e){ console.error("openPublicProfile:", e); toast("Error"); }
@@ -3552,10 +3470,7 @@ async function loadPublicVideos(uid){
   const container = $("publicVideosList");
   if(!canView){ container.innerHTML = ""; return; }
   const list = videosCache.filter(v => v.userId === uid && (v.visibility !== "private" || uid === currentUser?.uid));
-  if(!list.length){
-    container.innerHTML = `<div class="yt-empty" style="padding:30px 0;font-size:13px">No videos yet</div>`;
-    return;
-  }
+  if(!list.length){ container.innerHTML = `<div class="yt-empty" style="padding:30px 0;font-size:13px">No videos yet</div>`; return; }
   container.innerHTML = list.map(v => createYTVideoItem(v, uid === currentUser?.uid)).join("");
 }
 
@@ -3582,12 +3497,22 @@ function createYTVideoItem(v, isMine){
 
 async function loadMyVideos(){
   if(!currentUser) return;
-  const list = videosCache.filter(v => v.userId === currentUser.uid);
+  let list = videosCache.filter(v => v.userId === currentUser.uid);
   const container = $("myVideos");
   if(!container) return;
   if(!list.length){
     container.innerHTML = `<div class="yt-empty" style="padding:40px 20px"><div style="font-size:48px;margin-bottom:12px">📹</div><h3 style="font-size:16px;margin-bottom:6px">No videos yet</h3><p style="font-size:13px">Upload your first video</p></div>`;
     return;
+  }
+  // Pinned first
+  if(currentProfile?.pinnedVideos?.length){
+    const pinned = [];
+    const rest = [];
+    list.forEach(v => {
+      if(currentProfile.pinnedVideos.includes(v.id)) pinned.push(v);
+      else rest.push(v);
+    });
+    list = [...pinned, ...rest];
   }
   container.innerHTML = list.map(v => createYTVideoItem(v, true)).join("");
   updateProfileTabCounts();
@@ -3599,19 +3524,15 @@ async function openPeople(uid, type){
   $("peopleList").innerHTML = `<div class="yt-empty" style="padding:30px">Loading...</div>`;
   showModal("peopleModal");
   try{
-    const q = type === "followers"
-      ? query(collection(db,"follows"), where("following","==",uid))
-      : query(collection(db,"follows"), where("follower","==",uid));
+    const q = type === "followers" ? query(collection(db,"follows"), where("following","==",uid)) : query(collection(db,"follows"), where("follower","==",uid));
     const snap = await getDocs(q);
     if(!snap.size){ $("peopleList").innerHTML = `<div class="yt-empty" style="padding:30px">No users yet</div>`; return; }
-
     const people = [];
     for(const d of snap.docs){
       const data = d.data();
       const personUid = type === "followers" ? data.follower : data.following;
       try{ people.push(await getProfile(personUid)); }catch(e){}
     }
-
     $("peopleList").innerHTML = people.map(p=>{
       const followed = myFollowsCache.has(p.uid);
       const requested = mySentRequestsCache.has(p.uid);
@@ -3632,9 +3553,21 @@ $("myFollowersBtn")?.addEventListener("click", ()=>{ if(currentUser) openPeople(
 $("myFollowingBtn")?.addEventListener("click", ()=>{ if(currentUser) openPeople(currentUser.uid, "following"); });
 
 /* ============================================================
-   SEARCH
+   SEARCH (Users + Videos)
 ============================================================ */
+let searchTab = "users";
+
 $("topSearchBtn")?.addEventListener("click", ()=>{ showModal("searchModal"); setTimeout(()=> $("searchInput").focus(), 100); });
+
+document.querySelectorAll("#searchTabs .yt-tab").forEach(tab => {
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll("#searchTabs .yt-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    searchTab = tab.dataset.stab || "users";
+    const q = $("searchInput")?.value.trim() || "";
+    if(q) doSearch(q);
+  });
+});
 
 let searchTimeout = null;
 $("searchInput")?.addEventListener("input", e=>{
@@ -3647,13 +3580,40 @@ async function doSearch(value){
   const container = $("searchResults");
   if(!value){ container.innerHTML = ""; return; }
   container.innerHTML = `<div class="yt-empty" style="padding:20px">Searching...</div>`;
+
+  if(searchTab === "videos"){
+    const results = videosCache.filter(v => {
+      if(isUserBlocked(v.userId)) return false;
+      if(v.visibility === "private" && v.userId !== currentUser?.uid) return false;
+      return (v.title || "").toLowerCase().includes(value) || (v.description || "").toLowerCase().includes(value);
+    }).slice(0, 30);
+
+    if(!results.length){ container.innerHTML = `<div class="yt-empty" style="padding:20px">No videos found</div>`; return; }
+    container.innerHTML = results.map(v => {
+      const filterStyle = v.filter && v.filter !== "none" ? `filter:${v.filter};` : "";
+      return `
+        <div class="yt-video-item" data-open-video="${esc(v.id)}" style="cursor:pointer;margin-bottom:12px">
+          <div class="yt-video-thumb" style="width:120px;height:70px">
+            ${v.thumbnail ? `<img src="${esc(v.thumbnail)}" style="width:100%;height:100%;object-fit:cover;${filterStyle}">` : `<video src="${esc(v.videoURL)}" preload="metadata" muted style="${filterStyle}"></video>`}
+          </div>
+          <div class="yt-video-meta">
+            <h4>${esc(v.title || "Untitled")}</h4>
+            <div class="stats">${formatViewsShort(v.views)} views · ${timeAgo(v.createdAt)}</div>
+            <div class="views" style="font-size:11px">@${esc(v.username || v.userName || "user")}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+    return;
+  }
+
+  // Users search
   try{
     const snap = await getDocs(collection(db,"profiles"));
     const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }))
-      .filter(p => String(p.name||"").toLowerCase().includes(value) || String(p.username||"").toLowerCase().includes(value.replace("@","")))
+      .filter(p => !isUserBlocked(p.uid) && (String(p.name||"").toLowerCase().includes(value) || String(p.username||"").toLowerCase().includes(value.replace("@",""))))
       .slice(0,30);
     if(!users.length){ container.innerHTML = `<div class="yt-empty" style="padding:20px">No user found</div>`; return; }
-
     container.innerHTML = users.map(p=>{
       const followed = myFollowsCache.has(p.uid);
       const requested = mySentRequestsCache.has(p.uid);
@@ -3670,9 +3630,7 @@ async function doSearch(value){
   }catch(e){ container.innerHTML = `<div class="yt-empty" style="padding:20px">Error</div>`; }
 }
 
-/* ============================================================
-   EDIT PROFILE / SETTINGS
-============================================================ */
+/* EDIT PROFILE / SETTINGS */
 $("editProfileBtn")?.addEventListener("click", async()=>{
   const p = await getProfile(currentUser.uid);
   $("editName").value = p.name || "";
@@ -3699,19 +3657,15 @@ $("saveProfileBtn")?.addEventListener("click", async()=>{
   const bio = $("editBio").value.trim();
   if(!name){ toast("Name डालो"); return; }
   if(!username){ toast("Username डालो"); return; }
-
   try{
     $("profileSaveStatus").textContent = "Saving...";
     $("saveProfileBtn").disabled = true;
-
     const q = query(collection(db,"profiles"), where("username","==",username));
     const snap = await getDocs(q);
     if(snap.docs.some(d => d.id !== currentUser.uid)){ $("profileSaveStatus").textContent = "Username taken"; $("saveProfileBtn").disabled = false; return; }
-
     let photo = currentProfile?.photo || "";
     const file = $("profilePhotoFile").files[0];
     if(file){ $("profileSaveStatus").textContent = "Uploading photo..."; photo = await uploadToCloudinary(file); }
-
     await updateDoc(doc(db,"profiles",currentUser.uid), { name, username, age, gender, bio, photo, updatedAt: serverTimestamp() });
     await loadProfile();
     hideModal("editProfileModal");
@@ -3743,15 +3697,10 @@ $("logoutBtn")?.addEventListener("click", async()=>{
 
 $("shareAppBtn")?.addEventListener("click", async()=>{
   const data = { title: "ReelHub", text: "Join me on ReelHub 🎬", url: location.href };
-  try{
-    if(navigator.share) await navigator.share(data);
-    else { await navigator.clipboard.writeText(location.href); toast("Link copied"); }
-  }catch(e){}
+  try{ if(navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(location.href); toast("Link copied"); } }catch(e){}
 });
 
-/* ============================================================
-   NOTIFICATIONS (FIXED BADGE)
-============================================================ */
+/* NOTIFICATIONS */
 function startNotifications(){
   if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
   if(!currentUser) return;
@@ -3760,20 +3709,13 @@ function startNotifications(){
     snapshot=>{
       const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       list.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
-
       const lastSeen = Number(localStorage.getItem("notifLastSeen_" + currentUser.uid) || 0);
       const unreadCount = list.filter(n => timeValue(n.createdAt) > lastSeen).length;
-
       const badge = $("alertsBadge");
       if(badge){
-        if(unreadCount > 0){ 
-          badge.textContent = Math.min(unreadCount, 99); 
-          badge.classList.remove("hidden"); 
-        } else { 
-          badge.classList.add("hidden"); 
-        }
+        if(unreadCount > 0){ badge.textContent = Math.min(unreadCount, 99); badge.classList.remove("hidden"); }
+        else badge.classList.add("hidden");
       }
-
       if(!list.length){
         $("notificationsList").innerHTML = `<div class="yt-empty" style="padding:30px"><div style="font-size:42px;margin-bottom:10px">🔔</div><p>No notifications</p></div>`;
         return;
@@ -3791,27 +3733,17 @@ function startNotifications(){
 
 $("topAlertsBtn")?.addEventListener("click", ()=>{
   showModal("alertsModal");
-  if(currentUser){
-    localStorage.setItem("notifLastSeen_" + currentUser.uid, Date.now().toString());
-  }
-  setTimeout(()=>{
-    const badge = $("alertsBadge");
-    if(badge) badge.classList.add("hidden");
-  }, 100);
+  if(currentUser){ localStorage.setItem("notifLastSeen_" + currentUser.uid, Date.now().toString()); }
+  setTimeout(()=>{ const badge = $("alertsBadge"); if(badge) badge.classList.add("hidden"); }, 100);
 });
 
-/* ============================================================
-   PRESENCE
-============================================================ */
+/* PRESENCE */
 async function updatePresence(){
   if(!currentUser) return;
   try{
     await setDoc(doc(db, "presence", currentUser.uid), {
-      userId: currentUser.uid,
-      userName: currentProfile?.name || "User",
-      userPhoto: currentProfile?.photo || "",
-      lastSeen: serverTimestamp(),
-      online: true
+      userId: currentUser.uid, userName: currentProfile?.name || "User", userPhoto: currentProfile?.photo || "",
+      lastSeen: serverTimestamp(), online: true
     }, { merge: true });
   }catch(e){}
 }
@@ -3837,10 +3769,8 @@ function startPresenceListener(uids){
   if(!uids || !uids.length) return;
   const uniqueUids = [...new Set(uids)].filter(u => u && u !== currentUser?.uid);
   if(!uniqueUids.length) return;
-
   uniqueUids.forEach(uid => {
     if(presenceListenersMap.has(uid)) return;
-
     const unsub = onSnapshot(
       doc(db, "presence", uid),
       snap=>{
@@ -3878,9 +3808,7 @@ function getOnlineText(uid){
   return "";
 }
 
-/* ============================================================
-   CHAT READ STATUS (FIXED)
-============================================================ */
+/* CHAT READ STATUS */
 async function markChatAsRead(chatId){
   if(!currentUser || !chatId) return;
   unreadChatsCache[chatId] = 0;
@@ -3889,9 +3817,7 @@ async function markChatAsRead(chatId){
   try{
     const userKey = "readBy_" + currentUser.uid;
     await updateDoc(doc(db, "chats", chatId), { [userKey]: serverTimestamp() });
-  }catch(e){
-    console.warn("markChatAsRead failed:", e.message);
-  }
+  }catch(e){ console.warn("markChatAsRead failed:", e.message); }
 }
 
 async function countUnreadMessages(chatId, lastReadTimestamp){
@@ -3918,16 +3844,9 @@ function updateMsgBadge(){
 }
 
 async function calculateAllUnread(){
-  if(!currentUser || !myChatsCache.length){ 
-    unreadChatsCache = {};
-    updateMsgBadge(); 
-    return; 
-  }
+  if(!currentUser || !myChatsCache.length){ unreadChatsCache = {}; updateMsgBadge(); return; }
   for(const chat of myChatsCache){
-    if(chat.id === currentChatId){
-      unreadChatsCache[chat.id] = 0;
-      continue;
-    }
+    if(chat.id === currentChatId){ unreadChatsCache[chat.id] = 0; continue; }
     try{
       const userKey = "readBy_" + currentUser.uid;
       const lastRead = timeValue(chat[userKey]);
@@ -3937,9 +3856,7 @@ async function calculateAllUnread(){
   updateMsgBadge();
 }
 
-/* ============================================================
-   DM CHAT (FIXED BADGE)
-============================================================ */
+/* DM CHAT */
 function startChatsListListener(){
   if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
   if(!currentUser) return;
@@ -3971,11 +3888,15 @@ function showDMInbox(){
 function renderDMInbox(){
   const container = $("dmInboxList");
   if(!container) return;
-  if(!myChatsCache.length){
+  const visibleChats = myChatsCache.filter(c => {
+    const otherUid = c.members.find(uid => uid !== currentUser.uid);
+    return otherUid && !isUserBlocked(otherUid);
+  });
+  if(!visibleChats.length){
     container.innerHTML = `<div class="dm-empty"><span class="icon">💬</span><h3>No messages yet</h3><p>Start a conversation</p></div>`;
     return;
   }
-  container.innerHTML = myChatsCache.map(c=>{
+  container.innerHTML = visibleChats.map(c=>{
     const otherUid = c.members.find(uid => uid !== currentUser.uid);
     const unreadCount = unreadChatsCache[c.id] || 0;
     const unreadDot = unreadCount > 0 ? `<span class="dm-unread-dot"></span>` : "";
@@ -3991,7 +3912,7 @@ function renderDMInbox(){
       <div class="dm-inbox-time">${timeAgo(c.updatedAt)}</div>
     </div>`;
   }).join("");
-  myChatsCache.forEach(async c=>{
+  visibleChats.forEach(async c=>{
     const otherUid = c.members.find(uid => uid !== currentUser.uid);
     try{
       const p = await getProfile(otherUid);
@@ -4004,10 +3925,10 @@ function renderDMInbox(){
 
 async function openChat(uid){
   if(!currentUser || uid === currentUser.uid) return;
+  if(isUserBlocked(uid)){ toast("User is blocked"); return; }
   const p = await getProfile(uid);
   currentChatUser = p;
   currentChatId = [currentUser.uid, uid].sort().join("_");
-  
   unreadChatsCache[currentChatId] = 0;
   updateMsgBadge();
   markChatAsRead(currentChatId);
@@ -4036,7 +3957,6 @@ async function openChat(uid){
   hideModal("publicProfileModal");
   hideModal("searchModal");
   startPresenceListener([uid]);
-
   try{ await setDoc(doc(db,"chats",currentChatId), { members: [currentUser.uid, uid], updatedAt: serverTimestamp() }, { merge: true }); }catch(e){}
   startChatListener();
 }
@@ -4063,9 +3983,7 @@ function startChatListener(){
       list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
       const container = $("dmMessages");
       if(!container) return;
-      
       if(currentChatId) markChatAsRead(currentChatId);
-      
       if(!list.length){
         container.innerHTML = `<div class="yt-empty" style="padding:40px 20px;color:var(--muted)"><p style="font-size:13px">No messages yet. Say hi! 👋</p></div>`;
         return;
@@ -4106,11 +4024,9 @@ async function sendDM(){
   if(now - lastSentMessageTime < MESSAGE_COOLDOWN) return;
   processingMessages.add(text); lastSentMessageTime = now;
   input.value = "";
-
   try{
     await addDoc(collection(db,"chats",currentChatId,"messages"), {
-      userId: currentUser.uid, userName: currentProfile?.name || "User",
-      text, type: "text", createdAt: serverTimestamp()
+      userId: currentUser.uid, userName: currentProfile?.name || "User", text, type: "text", createdAt: serverTimestamp()
     });
     await updateDoc(doc(db,"chats",currentChatId), { lastMessage: text, updatedAt: serverTimestamp() });
   }catch(e){ toast("Send failed"); input.value = text; }
@@ -4141,10 +4057,7 @@ async function sendPhotoInChat(file){
   try{
     toast("Uploading photo...");
     const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("Photo " + pct + "%"); });
-    await addDoc(collection(db,"chats",currentChatId,"messages"), {
-      userId: currentUser.uid, userName: currentProfile?.name || "User",
-      text: "", type: "image", imageURL: url, createdAt: serverTimestamp()
-    });
+    await addDoc(collection(db,"chats",currentChatId,"messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", text: "", type: "image", imageURL: url, createdAt: serverTimestamp() });
     await updateDoc(doc(db,"chats",currentChatId), { lastMessage: "📷 Photo", updatedAt: serverTimestamp() });
     toast("✅ Photo sent");
   }catch(e){ toast("Photo failed"); }
@@ -4154,10 +4067,7 @@ async function sendChatVideo(file){
   try{
     toast("Uploading video...");
     const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("Video " + pct + "%"); });
-    await addDoc(collection(db,"chats",currentChatId,"messages"), {
-      userId: currentUser.uid, userName: currentProfile?.name || "User",
-      text: "", type: "chat_video", videoURL: url, createdAt: serverTimestamp()
-    });
+    await addDoc(collection(db,"chats",currentChatId,"messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", text: "", type: "chat_video", videoURL: url, createdAt: serverTimestamp() });
     await updateDoc(doc(db,"chats",currentChatId), { lastMessage: "🎥 Video", updatedAt: serverTimestamp() });
     toast("✅ Video sent");
   }catch(e){ toast("Video failed"); }
@@ -4168,11 +4078,7 @@ async function sendPdfInChat(file){
     if(file.size > GROUP_MAX_PDF_SIZE){ toast("File too large (max 50MB)"); return; }
     toast("Uploading file...");
     const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("File " + pct + "%"); });
-    await addDoc(collection(db,"chats",currentChatId,"messages"), {
-      userId: currentUser.uid, userName: currentProfile?.name || "User",
-      text: "", type: "file", fileURL: url, fileName: file.name, fileSize: file.size, fileType: file.type,
-      createdAt: serverTimestamp()
-    });
+    await addDoc(collection(db,"chats",currentChatId,"messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", text: "", type: "file", fileURL: url, fileName: file.name, fileSize: file.size, fileType: file.type, createdAt: serverTimestamp() });
     await updateDoc(doc(db,"chats",currentChatId), { lastMessage: "📄 File", updatedAt: serverTimestamp() });
     toast("✅ File sent");
   }catch(e){ toast("File failed"); }
@@ -4186,10 +4092,10 @@ $("dmSearchInput")?.addEventListener("input", e=>{
   });
 });
 
-console.log("✅ app.js PART 2/3 loaded!");
+console.log("✅ Part 2/3 loaded");
 /* ============================================================
-   ReelHub - app.js
-   PART 3/3 — Groups + Comments + Share + Vault + Admin + Init
+   ReelHub - app.js PART 3/3
+   Groups + Comments + Share + Vault + Admin + Init
 ============================================================ */
 
 /* ============================================================
@@ -4200,13 +4106,10 @@ function openCreateGroupModal(){
   $("groupDescription").value = "";
   $("createGroupStatus").textContent = "";
   $("groupPhotoPreview").src = "https://ui-avatars.com/api/?name=G&size=200&background=7c3aed&color=fff";
-
   document.querySelectorAll("#groupTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
   document.querySelector('#groupTypeGroup .yt-radio[data-value="public"]')?.classList.add("selected");
-
   window.__selectedGroupType = "public";
   window.__groupPhotoFile = null;
-
   hideModal("advancedSettingsModal");
   showModal("createGroupModal");
 }
@@ -4237,7 +4140,6 @@ $("createGroupBtn")?.addEventListener("click", async ()=>{
   const description = $("groupDescription").value.trim();
   const type = window.__selectedGroupType || "public";
   const status = $("createGroupStatus");
-
   if(!name){ status.style.color = "#ed4956"; status.textContent = "Group name required"; return; }
 
   const btn = $("createGroupBtn");
@@ -4277,7 +4179,6 @@ $("createGroupBtn")?.addEventListener("click", async ()=>{
     status.style.color = "#22c55e"; status.textContent = "✅ Created!";
     window.__groupPhotoFile = null;
     toast("✅ Group created");
-
     setTimeout(() => { hideModal("createGroupModal"); openGroupView(docRef.id); }, 600);
   }catch(err){
     console.error("Create group error:", err);
@@ -4347,7 +4248,7 @@ async function openGroupView(groupId){
       if(chatBtn) chatBtn.style.display = "block";
       if(leaveBtn) leaveBtn.style.display = "block";
       if(requestsTab && isAdmin) requestsTab.style.display = "block";
-    }else{
+    } else {
       if(joinBtn){
         joinBtn.style.display = "block";
         joinBtn.textContent = currentGroupData.type === "public" ? "Join Group" : "Request to Join";
@@ -4503,7 +4404,6 @@ async function acceptGroupJoinRequest(reqId){
     const groupSnap = await getDoc(doc(db, "groups", groupId));
     if(!groupSnap.exists()) return;
     const group = groupSnap.data();
-
     if((group.memberCount || 0) >= GROUP_MAX_MEMBERS){ toast("Group full"); return; }
 
     await updateDoc(doc(db, "groups", groupId), {
@@ -4656,7 +4556,6 @@ $("saveGroupEditBtn")?.addEventListener("click", async ()=>{
   const description = $("editGroupDescription").value.trim();
   const type = window.__editGroupType || "public";
   const status = $("editGroupStatus");
-
   if(!name){ status.style.color = "#ed4956"; status.textContent = "Name required"; return; }
 
   const btn = $("saveGroupEditBtn");
@@ -4683,7 +4582,6 @@ $("saveGroupEditBtn")?.addEventListener("click", async ()=>{
     status.style.color = "#22c55e"; status.textContent = "✅ Saved!";
     window.__editGroupPhotoFile = null;
     toast("✅ Group updated");
-
     setTimeout(() => { hideModal("editGroupModal"); openGroupView(currentGroupId); }, 700);
   }catch(err){
     status.style.color = "#ed4956"; status.textContent = "Error: " + err.message;
@@ -4793,21 +4691,16 @@ function startGroupChatListener(groupId){
 function renderGroupMessages(list){
   const container = $("groupChatMessages");
   if(!container) return;
-
   if(!list.length){
     container.innerHTML = `<div class="group-chat-empty"><span class="icon">💬</span><p>No messages yet</p></div>`;
     return;
   }
-
   container.innerHTML = list.map(m => {
     const mine = m.userId === currentUser.uid;
-
     if(m.type === "system"){
       return `<div style="text-align:center;padding:10px 20px;font-size:11.5px;color:var(--muted);font-style:italic">${esc(m.text)}</div>`;
     }
-
     const senderName = mine ? "" : `<span class="sender-name">${esc(m.userName || "User")}</span>`;
-
     if(m.type === "text" || !m.type){
       return `<div class="dm-msg ${mine?"me":"them"}">${senderName}${esc(m.text)}<small>${timeAgo(m.createdAt)}</small></div>`;
     }
@@ -4823,7 +4716,6 @@ function renderGroupMessages(list){
     }
     return "";
   }).join("");
-
   container.scrollTop = container.scrollHeight;
 }
 
@@ -4835,12 +4727,10 @@ async function sendGroupMessage(){
   if(!input || !currentGroupId) return;
   const text = input.value.trim();
   if(!text) return;
-
   const now = Date.now();
   if(now - lastSentMessageTime < MESSAGE_COOLDOWN) return;
   lastSentMessageTime = now;
   input.value = "";
-
   try{
     await addDoc(collection(db, "groups", currentGroupId, "messages"), {
       userId: currentUser.uid, userName: currentProfile?.name || "User",
@@ -5043,14 +4933,11 @@ async function deleteComment(videoId, commentId){
     if(!confirm("Delete comment?")) return;
     await deleteDoc(ref);
     toast("🗑️ Comment deleted");
-  }catch(e){
-    console.error("deleteComment error:", e);
-    toast("Delete failed");
-  }
+  }catch(e){ console.error("deleteComment error:", e); toast("Delete failed"); }
 }
 
 /* ============================================================
-   SHARE — with WhatsApp/Insta/FB/Twitter
+   SHARE
 ============================================================ */
 async function openShareSheet(videoId){
   shareVideoId = videoId;
@@ -5059,10 +4946,10 @@ async function openShareSheet(videoId){
   list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">Loading...</div>`;
   try{
     const chatUids = new Set();
-    myChatsCache.forEach(c=>{ const other = c.members.find(uid => uid !== currentUser.uid); if(other) chatUids.add(other); });
-    const allUids = new Set([...myFollowsCache, ...chatUids]);
+    myChatsCache.forEach(c=>{ const other = c.members.find(uid => uid !== currentUser.uid); if(other && !isUserBlocked(other)) chatUids.add(other); });
+    const followUids = [...myFollowsCache].filter(uid => !isUserBlocked(uid));
+    const allUids = new Set([...followUids, ...chatUids]);
     if(!allUids.size){ list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">Follow users to share</div>`; return; }
-
     const chips = [];
     for(const uid of Array.from(allUids).slice(0, 20)){
       const p = await getProfile(uid);
@@ -5074,6 +4961,7 @@ async function openShareSheet(videoId){
 
 async function shareToUser(uid){
   if(!shareVideoId || !uid) return;
+  if(isUserBlocked(uid)){ toast("User is blocked"); return; }
   const v = videosCache.find(x => x.id === shareVideoId);
   if(!v) return;
   const chatId = [currentUser.uid, uid].sort().join("_");
@@ -5117,11 +5005,8 @@ $("shareWhatsApp")?.addEventListener("click", ()=>{
 $("shareInstagram")?.addEventListener("click", async ()=>{
   if(!shareVideoId) return;
   const url = location.origin + location.pathname + "?video=" + shareVideoId;
-  try{
-    await navigator.clipboard.writeText(url);
-    toast("Link copied — Instagram pe paste karo");
-    window.open("https://www.instagram.com/", "_blank");
-  }catch(e){ toast("Copy failed"); }
+  try{ await navigator.clipboard.writeText(url); toast("Link copied — Instagram pe paste karo"); window.open("https://www.instagram.com/", "_blank"); }
+  catch(e){ toast("Copy failed"); }
   hideModal("shareSheet");
 });
 
@@ -5154,6 +5039,7 @@ async function openVideoByDeepLink(videoId){
   const v = videosCache.find(x => x.id === videoId);
   if(!v){ toast("Video not found"); return; }
   if(v.visibility === "private" && v.userId !== currentUser?.uid){ toast("Private video"); return; }
+  if(isUserBlocked(v.userId)){ toast("Video unavailable"); return; }
   const canView = await canViewUserVideos(v.userId);
   if(!canView){ toast("Private account"); return; }
   await trackView(videoId);
@@ -5182,27 +5068,18 @@ async function renderMonetizationTab(){
     const watchTime = Number(profile.totalWatchTime || 0);
     const views = Number(profile.totalViews || 0);
     const status = profile.monetizationStatus || "none";
-
     const followersComplete = followers >= MONETIZATION_REQUIREMENTS.followers;
     const watchTimeComplete = watchTime >= MONETIZATION_REQUIREMENTS.watchTime;
     const viewsComplete = views >= MONETIZATION_REQUIREMENTS.views;
     const allComplete = followersComplete && watchTimeComplete && viewsComplete;
 
     let statusBadge = "", actionButton = "";
-    if(status === "approved"){
-      statusBadge = `<div class="monetization-status-badge approved">✅ Active</div>`;
-      actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">🎉 Monetized!</p>`;
-    }else if(status === "pending"){
-      statusBadge = `<div class="monetization-status-badge pending">⏳ Pending</div>`;
-      actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Under review.</p>`;
-    }else if(status === "rejected"){
-      statusBadge = `<div class="monetization-status-badge rejected">❌ Rejected</div>`;
-      actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Try again.</p>`;
-    }else{
+    if(status === "approved"){ statusBadge = `<div class="monetization-status-badge approved">✅ Active</div>`; actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">🎉 Monetized!</p>`; }
+    else if(status === "pending"){ statusBadge = `<div class="monetization-status-badge pending">⏳ Pending</div>`; actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Under review.</p>`; }
+    else if(status === "rejected"){ statusBadge = `<div class="monetization-status-badge rejected">❌ Rejected</div>`; actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Try again.</p>`; }
+    else {
       statusBadge = `<div class="monetization-status-badge none">💰 Not Applied</div>`;
-      actionButton = allComplete 
-        ? `<button class="monetization-apply-btn" id="openMonetizationModalBtn">💰 Apply</button>`
-        : `<button class="monetization-apply-btn" disabled>🔒 Complete requirements</button>`;
+      actionButton = allComplete ? `<button class="monetization-apply-btn" id="openMonetizationModalBtn">💰 Apply</button>` : `<button class="monetization-apply-btn" disabled>🔒 Complete requirements</button>`;
     }
 
     container.innerHTML = `
@@ -5221,7 +5098,6 @@ async function renderMonetizationTab(){
           <div class="req-row ${viewsComplete ? 'completed' : ''}"><span class="req-icon">👁️</span><span class="req-text">Total Views</span><span class="req-count">${views} / ${MONETIZATION_REQUIREMENTS.views}</span><span class="req-status">${viewsComplete ? '✅' : '⏳'}</span></div>
         </div>
       </div>`;
-
     $("openMonetizationModalBtn")?.addEventListener("click", () => openMonetizationModal(followers, watchTime, views));
   }catch(e){ container.innerHTML = `<div class="yt-empty" style="padding:30px">Error</div>`; }
 }
@@ -5230,27 +5106,21 @@ function openMonetizationModal(followers, watchTime, views){
   const followersComplete = followers >= MONETIZATION_REQUIREMENTS.followers;
   const watchTimeComplete = watchTime >= MONETIZATION_REQUIREMENTS.watchTime;
   const viewsComplete = views >= MONETIZATION_REQUIREMENTS.views;
-
   $("reqFollowersCount").textContent = followers;
   $("reqWatchTimeCount").textContent = watchTime;
   $("reqViewsCount").textContent = views;
   $("reqFollowersStatus").textContent = followersComplete ? "✅" : "⏳";
   $("reqWatchTimeStatus").textContent = watchTimeComplete ? "✅" : "⏳";
   $("reqViewsStatus").textContent = viewsComplete ? "✅" : "⏳";
-
   const p1 = Math.min(100, (followers / MONETIZATION_REQUIREMENTS.followers) * 100);
   const p2 = Math.min(100, (watchTime / MONETIZATION_REQUIREMENTS.watchTime) * 100);
   const p3 = Math.min(100, (views / MONETIZATION_REQUIREMENTS.views) * 100);
   const overallProgress = Math.round((p1 + p2 + p3) / 3);
-
   $("reqProgressBar").style.width = overallProgress + "%";
   $("reqProgressPercent").textContent = overallProgress + "%";
-
   if(currentProfile?.upiId) $("monetizationUpiId").value = currentProfile.upiId;
-
   const allComplete = followersComplete && watchTimeComplete && viewsComplete;
   if($("submitMonetizationBtn")) $("submitMonetizationBtn").disabled = !allComplete;
-
   showModal("monetizationModal");
 }
 
@@ -5260,15 +5130,11 @@ $("submitMonetizationBtn")?.addEventListener("click", async () => {
   const statusEl = $("monetizationStatus");
   if(!upiId){ statusEl.textContent = "Enter UPI ID"; statusEl.style.color = "#ef4444"; return; }
   if(!upiId.includes("@") || upiId.length < 5){ statusEl.textContent = "Invalid UPI"; statusEl.style.color = "#ef4444"; return; }
-
   const btn = $("submitMonetizationBtn");
   btn.disabled = true; btn.textContent = "Submitting...";
-
   try{
     const profile = await getProfile(currentUser.uid);
-    await updateDoc(doc(db, "profiles", currentUser.uid), {
-      upiId, monetizationStatus: "pending", monetizationRequestedAt: serverTimestamp(), updatedAt: serverTimestamp()
-    });
+    await updateDoc(doc(db, "profiles", currentUser.uid), { upiId, monetizationStatus: "pending", monetizationRequestedAt: serverTimestamp(), updatedAt: serverTimestamp() });
     await addDoc(collection(db, "monetization_requests"), {
       userId: currentUser.uid, userName: profile.name || "User", username: profile.username || "",
       userPhoto: profile.photo || "", followers: profile.followers || 0,
@@ -5322,7 +5188,6 @@ async function openVaultFlow(){
   if(!currentUser) return;
   currentProfile = await getProfile(currentUser.uid);
   const hasPin = await hasVaultPin();
-
   if(!hasPin){
     $("newPinInput").value = "";
     $("confirmPinInput").value = "";
@@ -5331,13 +5196,11 @@ async function openVaultFlow(){
     showModal("pinSetupModal");
     return;
   }
-
   if(vaultPinVerified && (Date.now() - vaultUnlockTime) < VAULT_AUTO_LOCK_MS){
     hideModal("settingsModal"); hideModal("advancedSettingsModal");
     openVaultViewer();
     return;
   }
-
   vaultPinVerified = false;
   $("vaultPinInput").value = "";
   $("pinEntryStatus").textContent = "";
@@ -5350,10 +5213,8 @@ $("savePinBtn")?.addEventListener("click", async () => {
   const pin = $("newPinInput").value.trim();
   const confirm = $("confirmPinInput").value.trim();
   const status = $("pinSetupStatus");
-
   if(!/^\d{4}$/.test(pin)){ status.style.color = "#ed4956"; status.textContent = "PIN must be 4 digits"; return; }
   if(pin !== confirm){ status.style.color = "#ed4956"; status.textContent = "PINs don't match"; return; }
-
   status.style.color = "#7c3aed"; status.textContent = "Saving...";
   const ok = await saveVaultPin(pin);
   if(ok){
@@ -5361,7 +5222,7 @@ $("savePinBtn")?.addEventListener("click", async () => {
     vaultPinVerified = true;
     vaultUnlockTime = Date.now();
     setTimeout(() => { hideModal("pinSetupModal"); openVaultViewer(); }, 600);
-  }else{
+  } else {
     status.style.color = "#ed4956"; status.textContent = "Failed";
   }
 });
@@ -5370,21 +5231,19 @@ $("unlockVaultBtn")?.addEventListener("click", async () => {
   const pin = $("vaultPinInput").value.trim();
   const status = $("pinEntryStatus");
   const input = $("vaultPinInput");
-
   if(!/^\d{4}$/.test(pin)){
     status.textContent = "Enter 4-digit PIN";
     input.classList.add("pin-error");
     setTimeout(() => input.classList.remove("pin-error"), 400);
     return;
   }
-
   const valid = await verifyVaultPin(pin);
   if(valid){
     status.style.color = "#22c55e"; status.textContent = "✅ Unlocked!";
     vaultPinVerified = true;
     vaultUnlockTime = Date.now();
     setTimeout(() => { hideModal("pinEntryModal"); openVaultViewer(); }, 400);
-  }else{
+  } else {
     status.style.color = "#ed4956"; status.textContent = "❌ Wrong PIN";
     input.value = "";
     input.classList.add("pin-error");
@@ -5418,7 +5277,7 @@ function renderVaultContent(){
   vaultFilesCache.forEach(f => {
     if(f.mediaType === "video"){
       html += `<div class="vault-item" data-vault-file="${esc(f.id)}"><video src="${esc(f.mediaURL)}" preload="metadata" muted></video><span class="vault-item-type">🎬</span></div>`;
-    }else{
+    } else {
       html += `<div class="vault-item" data-vault-file="${esc(f.id)}"><img src="${esc(f.mediaURL)}" alt=""><span class="vault-item-type">📷</span></div>`;
     }
   });
@@ -5447,7 +5306,6 @@ $("vaultFileInput")?.addEventListener("change", async (e) => {
   const progressBar = $("vaultUploadBar");
   const progressLabel = $("vaultUploadLabel");
   if(progressWrap) progressWrap.style.display = "block";
-
   let completed = 0, failed = 0;
   for(let i = 0; i < files.length; i++){
     const file = files[i];
@@ -5455,10 +5313,7 @@ $("vaultFileInput")?.addEventListener("change", async (e) => {
     if(progressLabel) progressLabel.textContent = `Uploading ${i + 1}/${files.length}: ${file.name}`;
     try{
       const url = await uploadToCloudinary(file, (pct)=>{ if(progressBar) progressBar.style.width = pct + "%"; });
-      await addDoc(collection(db, "vault_files"), {
-        userId: currentUser.uid, mediaURL: url, mediaType: mediaType,
-        fileName: file.name, fileSize: file.size, createdAt: serverTimestamp()
-      });
+      await addDoc(collection(db, "vault_files"), { userId: currentUser.uid, mediaURL: url, mediaType: mediaType, fileName: file.name, fileSize: file.size, createdAt: serverTimestamp() });
       completed++;
     }catch(err){ failed++; }
   }
@@ -5488,8 +5343,7 @@ function openVaultVideoPlayer(f){
   if(videoEl){ videoEl.src = f.mediaURL; videoEl.play().catch(()=>{}); }
   if($("videoPlayerTitle")) $("videoPlayerTitle").textContent = f.fileName || "Vault Video";
   if($("videoPlayerMeta")) $("videoPlayerMeta").textContent = timeAgo(f.createdAt);
-  ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn", "videoPlayerDownloadBtn"]
-    .forEach(id => { const btn = $(id); if(btn) btn.style.display = "none"; });
+  ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn", "videoPlayerDownloadBtn"].forEach(id => { const btn = $(id); if(btn) btn.style.display = "none"; });
   showModal("videoPlayerModal");
 }
 
@@ -5555,12 +5409,10 @@ function renderAdminSongLibrary(){
   if(!container) return;
   const countEl = $("songCount");
   if(countEl) countEl.textContent = songLibraryCache.length + " songs";
-
   if(!songLibraryCache.length){
     container.innerHTML = `<div class="song-library-empty"><span class="icon">🎵</span><h3>No songs yet</h3><p>Tap "Add New Song" to add</p></div>`;
     return;
   }
-
   container.innerHTML = songLibraryCache.map(s => `
     <div class="song-library-item">
       <div class="song-thumb">🎵</div>
@@ -5633,16 +5485,13 @@ $("saveSongBtn")?.addEventListener("click", async () => {
   const artist = $("songArtist").value.trim();
   const category = $("songCategory").value;
   const status = $("songUploadStatus");
-
   if(!name){ status.style.color = "#ef4444"; status.textContent = "Name required"; return; }
   if(!editingSongId && !pendingSongFile){ status.style.color = "#ef4444"; status.textContent = "Select file"; return; }
-
   const btn = $("saveSongBtn");
   btn.disabled = true;
   btn.textContent = "Saving...";
   status.style.color = "#a78bfa";
   status.textContent = "Saving...";
-
   try{
     let audioURL = "";
     if(pendingSongFile){
@@ -5656,7 +5505,6 @@ $("saveSongBtn")?.addEventListener("click", async () => {
       const existing = songLibraryCache.find(s => s.id === editingSongId);
       audioURL = existing?.audioURL || "";
     }
-
     if(editingSongId){
       await updateDoc(doc(db, "song_library", editingSongId), { name, artist, category, audioURL, updatedAt: serverTimestamp() });
       toast("✅ Updated");
@@ -5669,10 +5517,8 @@ $("saveSongBtn")?.addEventListener("click", async () => {
       });
       toast("✅ Song added");
     }
-
     status.style.color = "#22c55e";
     status.textContent = "✅ Saved!";
-
     setTimeout(() => { hideModal("addSongModal"); showModal("adminSongLibraryModal"); }, 700);
   } catch(err) {
     console.error(err);
@@ -5709,16 +5555,12 @@ document.addEventListener("click", (e)=>{
   const t = e.target;
   const adminBtn = t.closest("#adminSongLibraryBtn");
   if(adminBtn){ e.preventDefault(); e.stopPropagation(); openAdminSongLibrary(); return; }
-
   const addBtn = t.closest("#addSongBtn");
   if(addBtn){ e.preventDefault(); e.stopPropagation(); openAddSongModal(); return; }
-
   const playBtn = t.closest("[data-play-song]");
   if(playBtn){ e.preventDefault(); e.stopPropagation(); playSongPreview(playBtn.dataset.playSong); return; }
-
   const editBtn = t.closest("[data-edit-song]");
   if(editBtn){ e.preventDefault(); e.stopPropagation(); openEditSongModal(editBtn.dataset.editSong); return; }
-
   const delBtn = t.closest("[data-delete-song]");
   if(delBtn){ e.preventDefault(); e.stopPropagation(); deleteSong(delBtn.dataset.deleteSong); return; }
 });
@@ -5765,7 +5607,7 @@ document.addEventListener("click", async (e)=>{
     if(!insideStop){
       e.preventDefault(); e.stopPropagation();
       const vid = openVideoBtn.dataset.openVideo;
-      if(vid){ hideModal("playlistDetailModal"); hideModal("publicProfileModal"); setTimeout(()=> window.openVideoPlayer(vid), 100); }
+      if(vid){ hideModal("playlistDetailModal"); hideModal("publicProfileModal"); hideModal("watchHistoryModal"); setTimeout(()=> window.openVideoPlayer(vid), 100); }
     }
     return;
   }
@@ -5774,7 +5616,7 @@ document.addEventListener("click", async (e)=>{
   if(searchOpen){ e.preventDefault(); e.stopPropagation(); const uid = searchOpen.dataset.uid; if(uid){ hideModal("searchModal"); setTimeout(()=> openPublicProfile(uid), 150); } return; }
 
   const peopleOpen = t.closest(".people-open-btn");
-  if(peopleOpen){ e.preventDefault(); e.stopPropagation(); const uid = peopleOpen.dataset.uid; if(uid){ hideModal("peopleModal"); hideModal("followRequestsModal"); setTimeout(()=> openPublicProfile(uid), 150); } return; }
+  if(peopleOpen){ e.preventDefault(); e.stopPropagation(); const uid = peopleOpen.dataset.uid; if(uid){ hideModal("peopleModal"); hideModal("followRequestsModal"); hideModal("blockedUsersModal"); setTimeout(()=> openPublicProfile(uid), 150); } return; }
 
   const delC = t.closest("[data-delete-comment]");
   if(delC){ e.preventDefault(); e.stopPropagation(); const [vid, cid] = delC.dataset.deleteComment.split("|"); if(vid && cid) await deleteComment(vid, cid); return; }
@@ -5820,13 +5662,8 @@ document.addEventListener("click", async (e)=>{
   if(toggleP){
     e.preventDefault(); e.stopPropagation();
     const pid = toggleP.dataset.togglePlaylist;
-    if(selectedPlaylists.has(pid)){
-      selectedPlaylists.delete(pid); toggleP.classList.remove("checked");
-      const check = toggleP.querySelector(".playlist-select-check"); if(check) check.textContent = "";
-    }else{
-      selectedPlaylists.add(pid); toggleP.classList.add("checked");
-      const check = toggleP.querySelector(".playlist-select-check"); if(check) check.textContent = "✓";
-    }
+    if(selectedPlaylists.has(pid)){ selectedPlaylists.delete(pid); toggleP.classList.remove("checked"); const check = toggleP.querySelector(".playlist-select-check"); if(check) check.textContent = ""; }
+    else { selectedPlaylists.add(pid); toggleP.classList.add("checked"); const check = toggleP.querySelector(".playlist-select-check"); if(check) check.textContent = "✓"; }
     return;
   }
 
@@ -5860,7 +5697,6 @@ document.querySelectorAll("[data-close]").forEach(btn=>{
     e.stopPropagation();
     const id = btn.dataset.close;
     hideModal(id);
-
     if(id === "commentsModal"){ currentCommentVideoId = null; if(commentsUnsubscribe){ commentsUnsubscribe(); commentsUnsubscribe = null; } }
     if(id === "publicProfileModal"){ delete $("publicProfileModal").dataset.uid; $("privateAccountNotice")?.classList.add("hidden"); viewingProfileUid = null; }
     if(id === "playlistDetailModal") currentPlaylistView = null;
@@ -5895,12 +5731,9 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
     $(panelId)?.classList.remove("hidden");
     document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
     btn.classList.add("active");
-
     if(panelId === "shortsPanel") $("mainTopbar")?.classList.add("hidden");
     else $("mainTopbar")?.classList.remove("hidden");
-
     if(panelId === "profilePanel"){ loadProfile(); loadMyVideos(); loadMyPlaylists(); }
-
     if(panelId === "messagesPanel"){
       const inbox = $("dmInboxView");
       const chat = $("dmChatView");
@@ -5910,7 +5743,6 @@ document.querySelectorAll(".nav-btn").forEach(btn => {
       currentChatId = null; currentChatUser = null;
       showDMInbox();
     }
-
     if(panelId === "shortsPanel") setTimeout(setupReelsObserver, 100);
     if(panelId === "uploadPanel") loadDraftIfExists();
   });
@@ -5954,7 +5786,6 @@ window.addEventListener("popstate", (e) => {
     try{ window.history.pushState({ reelhubModal: true }, "", window.location.href); }catch(err){}
     return;
   }
-
   const openModals = document.querySelectorAll(".modal.show");
   if(openModals.length > 0){
     const topModal = openModals[openModals.length - 1];
@@ -5969,13 +5800,8 @@ window.addEventListener("popstate", (e) => {
 }, { passive: true });
 
 /* ERROR CATCHER */
-window.addEventListener("error", (e) => {
-  console.error("🚨 RUNTIME ERROR:", e.message, e.filename, e.lineno);
-});
-
-window.addEventListener("unhandledrejection", (e) => {
-  console.error("🚨 PROMISE ERROR:", e.reason);
-});
+window.addEventListener("error", (e) => { console.error("🚨 RUNTIME ERROR:", e.message, e.filename, e.lineno); });
+window.addEventListener("unhandledrejection", (e) => { console.error("🚨 PROMISE ERROR:", e.reason); });
 
 /* AD SYSTEM AUTO INIT */
 window.addEventListener("load", function(){
@@ -6004,6 +5830,15 @@ console.log("  ✅ Song Library (Admin)");
 console.log("  ✅ Video Editor (Trim/Rotate/Mute)");
 console.log("  ✅ Vault + Monetization + Notifications");
 console.log("  ✅ Ad Control System (Master + Ad Type + Per User)");
-console.log("🔧 BADGE FIXES APPLIED:");
-console.log("  ✅ Messages badge — chat kholne pe turant clear");
-console.log("  ✅ Notifications badge — bell kholne pe turant clear");
+console.log("🆕 NEW FEATURES:");
+console.log("  ✅ 📌 Pin top 3 videos on profile");
+console.log("  ✅ 🎬 Video title search");
+console.log("  ✅ 📂 Category filter (Trending, Music, Gaming...)");
+console.log("  ✅ 🔥 Trending (last 7 days, top viewed)");
+console.log("  ✅ 📺 Watch History");
+console.log("  ✅ ▶️ Continue Watching");
+console.log("  ✅ 🚫 Block User");
+console.log("  ✅ ⚠️ Report System");
+console.log("🔧 BADGE FIXES:");
+console.log("  ✅ Messages badge — turant clear");
+console.log("  ✅ Notifications badge — sirf unread");
