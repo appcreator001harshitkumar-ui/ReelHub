@@ -133,8 +133,6 @@
       <button class="chip" data-cat="sports">Sports</button>
       <button class="chip" data-cat="learning">Learning</button>
     </div>
-
-    <!-- 🎯 HOME FEED -->
     <div id="feed" class="video-grid"></div>
   </section>
 
@@ -633,10 +631,10 @@
       </button>
     </div>
 
-    <!-- 🎯 AD SLOT: Video Player bottom (ek ad per video) -->
-    <div id="adSlotVideoPlayer" class="ad-slot ad-slot-video" data-ad-type="video" style="display:none;margin:10px 16px 14px">
-      <div class="ad-label">Sponsored</div>
-      <div id="adContainerVideoPlayer"></div>
+    <!-- 🎯 AD SLOT: Video Player (1 ad per video) -->
+    <div id="adSlotVideoPlayer" class="ad-slot-video" style="display:none;margin:10px 16px 14px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;position:relative;min-height:60px;text-align:center">
+      <div style="position:absolute;top:6px;right:10px;font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px">Sponsored</div>
+      <div id="adContainerVideoPlayer" style="min-height:50px;display:flex;align-items:center;justify-content:center"></div>
     </div>
   </div>
 </div>
@@ -919,6 +917,18 @@
       <div class="sticker-item" data-sticker="💪" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💪</div>
       <div class="sticker-item" data-sticker="🙏" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🙏</div>
       <div class="sticker-item" data-sticker="✨" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">✨</div>
+      <div class="sticker-item" data-sticker="💕" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💕</div>
+      <div class="sticker-item" data-sticker="😢" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😢</div>
+      <div class="sticker-item" data-sticker="😡" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😡</div>
+      <div class="sticker-item" data-sticker="🤔" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🤔</div>
+      <div class="sticker-item" data-sticker="👏" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">👏</div>
+      <div class="sticker-item" data-sticker="🎵" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🎵</div>
+      <div class="sticker-item" data-sticker="⭐" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">⭐</div>
+      <div class="sticker-item" data-sticker="💫" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💫</div>
+      <div class="sticker-item" data-sticker="🌈" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🌈</div>
+      <div class="sticker-item" data-sticker="☀️" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">☀️</div>
+      <div class="sticker-item" data-sticker="🍕" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🍕</div>
+      <div class="sticker-item" data-sticker="🎂" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🎂</div>
     </div>
     <div id="stickerTextTab" class="hidden">
       <label class="yt-label">Enter text (max 20 chars)</label>
@@ -1281,67 +1291,29 @@
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
 
-<!-- AD SLOT STYLES -->
-<style>
-  .ad-slot {
-    margin: 14px 16px;
-    padding: 12px;
-    background: var(--card, #1a1a22);
-    border: 1px solid var(--border, #2a2a35);
-    border-radius: 12px;
-    position: relative;
-    min-height: 60px;
-    text-align: center;
-  }
-  .ad-slot .ad-label {
-    position: absolute;
-    top: 6px;
-    right: 10px;
-    font-size: 9px;
-    font-weight: 700;
-    color: #888;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    background: rgba(0,0,0,0.3);
-    padding: 2px 6px;
-    border-radius: 4px;
-  }
-  .ad-slot #adContainerVideoPlayer {
-    min-height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .ad-slot iframe,
-  .ad-slot img {
-    max-width: 100%;
-    border-radius: 8px;
-  }
-</style>
-
 <!-- APP SCRIPT -->
 <script type="module" src="app.js"></script>
 
 <!-- ============================================================
-   🎛️ AD SYSTEM — SIRF VIDEO PLAYER KE LIYE (ek ad per video)
+   🎛️ AD SYSTEM — SIRF VIDEO PLAYER KE LIYE
+   (Social bar + banner + popup scripts REMOVED)
 ============================================================ -->
 <script>
 (function(){
   "use strict";
 
-  // ✅ Sirf yahi 1 script chahiye (video ads ke liye)
+  // ✅ Sirf 1 script — video ads ke liye
   const VIDEO_AD_SCRIPT = "https://pl31503868.profitableratecpmnetwork.com/cf/d0/ed/cfd0edbe231c0f6240271057001d998c.js";
 
-  let videoAdLoaded = false;
+  // Track: kaunse video pe ad load hua
+  let currentLoadedVideoId = null;
 
   /**
-   * Video player ad render
+   * Video player ad render karo
    * — Sirf jab video open ho
-   * — Har video pe ek baar
+   * — Ek video pe ek ad
    */
   function renderVideoAd(){
-    if(videoAdLoaded) return;  // ek baar hi load
-
     const slot = document.getElementById("adSlotVideoPlayer");
     const container = document.getElementById("adContainerVideoPlayer");
     if(!slot || !container) return;
@@ -1349,7 +1321,7 @@
     // Container saaf karo
     container.innerHTML = "";
 
-    // Video ad script inject
+    // Naya script inject
     const script = document.createElement("script");
     script.src = VIDEO_AD_SCRIPT;
     script.async = true;
@@ -1357,13 +1329,23 @@
 
     // Slot dikhao
     slot.style.display = "block";
-    videoAdLoaded = true;
 
-    console.log("✅ Video ad rendered in video player");
+    console.log("✅ Video ad rendered in player");
   }
 
   /**
-   * Ad system ready hone ka wait
+   * Video player band hone pe ad hatao
+   */
+  function clearVideoAd(){
+    const slot = document.getElementById("adSlotVideoPlayer");
+    const container = document.getElementById("adContainerVideoPlayer");
+    if(slot) slot.style.display = "none";
+    if(container) container.innerHTML = "";
+    console.log("🧹 Video ad cleared");
+  }
+
+  /**
+   * Ad system ready hone ka wait karo
    */
   function waitForAdSystem(callback, maxTries){
     maxTries = maxTries || 50;
@@ -1381,37 +1363,66 @@
   }
 
   /**
-   * Har video ke open hone pe ad dikhao
+   * Har video player open hone pe:
+   * 1. Ad system ready hone ka wait
+   * 2. showMyAd check karo (Master/User/Type)
+   * 3. Agar allowed hai toh ad dikhao
    */
   window.addEventListener("videoPlayerOpened", function(){
     const uid = window.currentUser?.uid || null;
 
-    // Reset flag (naya video = naya ad)
-    // Note: Agar aap chahte ho ki ek session mein sirf ek ad dikhe,
-    // toh ye line hatao
-    // videoAdLoaded = false;
+    // Pehle purana ad hatao
+    clearVideoAd();
 
-    window.showMyAd("video", uid, function(){
-      renderVideoAd();
+    // Ad system ready hone ka wait
+    waitForAdSystem(function(){
+      // Check karo — ads allowed hain?
+      window.showMyAd("video", uid, function(){
+        renderVideoAd();
+      });
     });
   });
 
-  // Pehli baar jab app load ho — turant ad system ready hone ka wait
+  /**
+   * Video player modal band hone pe ad hatao
+   */
+  document.addEventListener("click", function(e){
+    const closeBtn = e.target.closest('[data-close="videoPlayerModal"]');
+    if(closeBtn){
+      setTimeout(clearVideoAd, 300);
+    }
+  });
+
+  // Modal backdrop click se bhi hatao
+  const playerModal = document.getElementById("videoPlayerModal");
+  if(playerModal){
+    playerModal.addEventListener("click", function(e){
+      if(e.target === playerModal){
+        setTimeout(clearVideoAd, 300);
+      }
+    });
+  }
+
+  /**
+   * Pehli baar app load hone pe console message
+   */
   window.addEventListener("load", function(){
     waitForAdSystem(function(){
-      console.log("✅ Ad Control Loader initialized (video-only mode)");
+      console.log("✅ Ad Control Loader initialized (Video-only mode)");
+      console.log("   → Master + Ad Type + Per User control active");
+      console.log("   → Social bar / banner / popup ads REMOVED");
     });
   });
 
-  // Manual reload (agar chahiye)
+  /**
+   * Manual reload (agar chahiye)
+   */
   window.reloadAds = function(){
-    videoAdLoaded = false;
-    const slot = document.getElementById("adSlotVideoPlayer");
-    if(slot) slot.style.display = "none";
+    clearVideoAd();
     console.log("🔄 Ads reset — agle video pe naya ad aayega");
   };
 
-  console.log("✅ Ad System: Video-player only mode (Social bar REMOVED)");
+  console.log("✅ Ad System: Video-player only mode");
 })();
 </script>
 
