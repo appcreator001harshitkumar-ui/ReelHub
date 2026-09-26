@@ -1,4 +1,4 @@
-/* ============================================================
+ /* ============================================================
    ReelHub - app.js PART 1/3
    Config + State + Helpers + Ad + Auth + Profile + Videos + Stories
    ✅ FIXED: Google Login (robust DOM ready + logs + fallback)
