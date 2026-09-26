@@ -146,7 +146,6 @@
     <div class="upload-wrap">
       <div class="upload-header"><h2>Upload</h2></div>
 
-      <!-- 🆕 Content Type Toggle: Video / Photo -->
       <div class="yt-card">
         <div class="yt-card-title">📤 Content Type</div>
         <div class="yt-radio-group" id="contentTypeGroup" style="grid-template-columns:1fr 1fr">
@@ -163,7 +162,6 @@
         </div>
       </div>
 
-      <!-- 🆕 Video/Photo Select -->
       <div class="yt-card">
         <div class="yt-card-title" id="selectMediaTitle">📹 Select Video</div>
         <div class="yt-dropzone" id="dropzone">
@@ -177,7 +175,6 @@
         <input type="file" id="photoFile" accept="image/*" class="hidden">
       </div>
 
-      <!-- 🆕 Custom Thumbnail -->
       <div class="yt-card" id="thumbnailCard" style="display:none">
         <div class="yt-card-title">🖼️ Custom Thumbnail (optional)</div>
         <div class="yt-dropzone" id="thumbnailZone" style="padding:20px">
@@ -190,7 +187,6 @@
         <button class="yt-mini-btn danger" id="removeThumbnailBtn" style="display:none;margin-top:10px;width:100%">❌ Remove Thumbnail</button>
       </div>
 
-      <!-- 🆕 Video Editor Bar (existing + new) -->
       <div class="yt-card" id="videoEditBar" style="display:none">
         <div class="yt-card-title">🎬 Video Tools</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
@@ -202,7 +198,6 @@
           <button class="yt-mini-btn" id="editVideoPreviewBtn">👁️ Preview</button>
         </div>
 
-        <!-- 🆕 Filters -->
         <div style="margin-top:12px">
           <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">🎨 Filters</div>
           <div style="display:flex;gap:8px;overflow-x:auto;padding:4px 0;scrollbar-width:none" id="filterBar">
@@ -219,13 +214,11 @@
           </div>
         </div>
 
-        <!-- 🆕 Speed Control -->
         <div style="margin-top:12px">
           <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">⚡ Speed: <span id="speedValue">1x</span></div>
           <input type="range" id="speedSlider" min="0.5" max="2" step="0.5" value="1" style="width:100%">
         </div>
 
-        <!-- 🆕 Text Overlay -->
         <div style="margin-top:12px">
           <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">✍️ Text on Video</div>
           <input type="text" id="textOverlayInput" class="yt-input" placeholder="Type text to show on video..." maxlength="50" style="padding:8px 12px;font-size:13px;margin-bottom:8px">
@@ -420,7 +413,6 @@
 
 <!-- ============ MODALS ============ -->
 
-<!-- SEARCH -->
 <div id="searchModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -432,7 +424,6 @@
   </div>
 </div>
 
-<!-- ALERTS -->
 <div id="alertsModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -443,7 +434,6 @@
   </div>
 </div>
 
-<!-- EDIT PROFILE -->
 <div id="editProfileModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -476,7 +466,6 @@
   </div>
 </div>
 
-<!-- SETTINGS -->
 <div id="settingsModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -508,7 +497,6 @@
   </div>
 </div>
 
-<!-- PUBLIC PROFILE -->
 <div id="publicProfileModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden">
     <div style="position:relative">
@@ -546,7 +534,6 @@
   </div>
 </div>
 
-<!-- PEOPLE -->
 <div id="peopleModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -557,7 +544,6 @@
   </div>
 </div>
 
-<!-- COMMENTS -->
 <div id="commentsModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -572,7 +558,6 @@
   </div>
 </div>
 
-<!-- EDIT VIDEO -->
 <div id="editVideoModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -598,7 +583,6 @@
   </div>
 </div>
 
-<!-- CREATE PLAYLIST -->
 <div id="createPlaylistModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -613,7 +597,6 @@
   </div>
 </div>
 
-<!-- ADD TO PLAYLIST -->
 <div id="addToPlaylistModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -628,7 +611,6 @@
   </div>
 </div>
 
-<!-- PLAYLIST DETAIL -->
 <div id="playlistDetailModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -695,15 +677,15 @@
       </button>
     </div>
 
-    <!-- 🎯 AD SLOT: Video Player (1 ad per video) -->
-    <div id="adSlotVideoPlayer" class="ad-slot-video" style="display:none;margin:10px 16px 14px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;position:relative;min-height:60px;text-align:center">
-      <div style="position:absolute;top:6px;right:10px;font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px">Sponsored</div>
-      <div id="adContainerVideoPlayer" style="min-height:50px;display:flex;align-items:center;justify-content:center"></div>
+    <!-- 🎯 AD SLOT: Video Player -->
+    <div id="adSlotVideoPlayer" class="ad-slot-video" style="display:none;margin:10px 16px 14px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;position:relative;min-height:270px;text-align:center;overflow:hidden">
+      <div style="position:absolute;top:6px;right:10px;font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;z-index:2">Sponsored</div>
+      <div id="adContainerVideoPlayer" style="min-height:250px;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden"></div>
     </div>
   </div>
 </div>
 
-<!-- SHARE SHEET (with WhatsApp/Insta/FB) -->
+<!-- SHARE SHEET -->
 <div id="shareSheet" class="share-sheet">
   <div class="share-sheet-box">
     <h3>Share with</h3>
@@ -719,7 +701,6 @@
   </div>
 </div>
 
-<!-- FOLLOW REQUESTS MODAL -->
 <div id="followRequestsModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -730,7 +711,6 @@
   </div>
 </div>
 
-<!-- IMAGE VIEWER MODAL -->
 <div id="imageViewerModal" class="modal">
   <div class="modal-box" style="padding:0;background:#000;max-width:100%;text-align:center">
     <button class="close" data-close="imageViewerModal" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);color:white;z-index:10">×</button>
@@ -738,7 +718,6 @@
   </div>
 </div>
 
-<!-- BANNER OPTIONS MODAL -->
 <div id="bannerOptionsModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -758,7 +737,6 @@
   </div>
 </div>
 
-<!-- BANNER GRADIENT MODAL -->
 <div id="bannerGradientModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -781,7 +759,6 @@
 
 <input type="file" id="bannerFile" accept="image/*" class="hidden">
 
-<!-- CREATE STORY MODAL -->
 <div id="createStoryModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -817,7 +794,6 @@
 
 <input type="file" id="storyFile" accept="image/*,video/*" class="hidden">
 
-<!-- STORY VIEWER -->
 <div id="storyViewer">
   <div class="story-progress-bar" id="storyProgressBar"></div>
   <div class="story-header">
@@ -854,7 +830,6 @@
   </div>
 </div>
 
-<!-- ADVANCED SETTINGS MODAL -->
 <div id="advancedSettingsModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -887,7 +862,6 @@
   </div>
 </div>
 
-<!-- ADMIN SONG LIBRARY MODAL -->
 <div id="adminSongLibraryModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden">
     <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
@@ -902,7 +876,6 @@
   </div>
 </div>
 
-<!-- ADD/EDIT SONG MODAL -->
 <div id="addSongModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -943,7 +916,6 @@
   </div>
 </div>
 
-<!-- SONG PICKER MODAL -->
 <div id="songPickerModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden">
     <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
@@ -961,7 +933,6 @@
   </div>
 </div>
 
-<!-- STICKER PICKER MODAL -->
 <div id="stickerPickerModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -985,22 +956,10 @@
       <div class="sticker-item" data-sticker="💪" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💪</div>
       <div class="sticker-item" data-sticker="🙏" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🙏</div>
       <div class="sticker-item" data-sticker="✨" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">✨</div>
-      <div class="sticker-item" data-sticker="💕" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💕</div>
-      <div class="sticker-item" data-sticker="😢" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😢</div>
-      <div class="sticker-item" data-sticker="😡" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😡</div>
-      <div class="sticker-item" data-sticker="🤔" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🤔</div>
-      <div class="sticker-item" data-sticker="👏" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">👏</div>
-      <div class="sticker-item" data-sticker="🎵" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🎵</div>
-      <div class="sticker-item" data-sticker="⭐" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">⭐</div>
-      <div class="sticker-item" data-sticker="💫" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💫</div>
-      <div class="sticker-item" data-sticker="🌈" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🌈</div>
-      <div class="sticker-item" data-sticker="☀️" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">☀️</div>
-      <div class="sticker-item" data-sticker="🍕" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🍕</div>
-      <div class="sticker-item" data-sticker="🎂" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🎂</div>
     </div>
     <div id="stickerTextTab" class="hidden">
       <label class="yt-label">Enter text (max 20 chars)</label>
-      <input id="textStickerInput" class="yt-input" maxlength="20" placeholder="e.g. WOW, Best Friend..." style="margin-bottom:14px">
+      <input id="textStickerInput" class="yt-input" maxlength="20" placeholder="e.g. WOW..." style="margin-bottom:14px">
       <label class="yt-label">Text Color</label>
       <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
         <div class="text-sticker-color selected" data-color="#ffffff" style="width:36px;height:36px;border-radius:50%;background:#ffffff;border:2px solid #ccc;cursor:pointer"></div>
@@ -1008,9 +967,6 @@
         <div class="text-sticker-color" data-color="#ed4956" style="width:36px;height:36px;border-radius:50%;background:#ed4956;cursor:pointer"></div>
         <div class="text-sticker-color" data-color="#7c3aed" style="width:36px;height:36px;border-radius:50%;background:#7c3aed;cursor:pointer"></div>
         <div class="text-sticker-color" data-color="#0095f6" style="width:36px;height:36px;border-radius:50%;background:#0095f6;cursor:pointer"></div>
-        <div class="text-sticker-color" data-color="#22c55e" style="width:36px;height:36px;border-radius:50%;background:#22c55e;cursor:pointer"></div>
-        <div class="text-sticker-color" data-color="#f59e0b" style="width:36px;height:36px;border-radius:50%;background:#f59e0b;cursor:pointer"></div>
-        <div class="text-sticker-color" data-color="#ec4899" style="width:36px;height:36px;border-radius:50%;background:#ec4899;cursor:pointer"></div>
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:14px">
@@ -1020,7 +976,6 @@
   </div>
 </div>
 
-<!-- VIDEO TRIM MODAL -->
 <div id="videoTrimModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1046,7 +1001,6 @@
   </div>
 </div>
 
-<!-- STORY MENU MODAL -->
 <div id="storyMenuModal" class="modal">
   <div class="modal-box" style="max-width:340px">
     <div class="modal-header">
@@ -1060,7 +1014,6 @@
   </div>
 </div>
 
-<!-- EDIT STORY MODAL -->
 <div id="editStoryModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1080,7 +1033,6 @@
   </div>
 </div>
 
-<!-- PIN SETUP MODAL -->
 <div id="pinSetupModal" class="modal">
   <div class="modal-box" style="max-width:400px">
     <div class="modal-header">
@@ -1099,7 +1051,6 @@
   </div>
 </div>
 
-<!-- PIN ENTRY MODAL -->
 <div id="pinEntryModal" class="modal">
   <div class="modal-box" style="max-width:400px">
     <div class="modal-header">
@@ -1115,7 +1066,6 @@
   </div>
 </div>
 
-<!-- VAULT VIEWER MODAL -->
 <div id="vaultViewerModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden">
     <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
@@ -1137,7 +1087,6 @@
   </div>
 </div>
 
-<!-- VAULT SETTINGS MODAL -->
 <div id="vaultSettingsModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1155,7 +1104,6 @@
   </div>
 </div>
 
-<!-- MONETIZATION MODAL -->
 <div id="monetizationModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1197,7 +1145,6 @@
   </div>
 </div>
 
-<!-- GROUP MODALS -->
 <div id="createGroupModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -1350,48 +1297,245 @@
   </div>
 </div>
 
-<!-- DEEP LINK BANNER -->
 <div class="deep-link-banner" id="deepLinkBanner">
   <span>📹</span>
   <span>Opening shared video...</span>
 </div>
 
-<!-- TOAST -->
 <div id="toast" class="toast"></div>
+
+<!-- ============================================================
+     🛡️ POPUP BLOCKER — Video click se ad site na khule
+============================================================ -->
+<script>
+(function(){
+  "use strict";
+
+  console.log("🛡️ Popup Blocker: Active");
+
+  // ✅ Whitelist — sirf ye sites allowed hain
+  const ALLOWED_HOSTS = [
+    "firebaseapp.com",
+    "googleapis.com",
+    "gstatic.com",
+    "cloudinary.com",
+    "wa.me",
+    "whatsapp.com",
+    "facebook.com",
+    "twitter.com",
+    "instagram.com",
+    "google.com",
+    "youtube.com",
+    "youtu.be",
+    "github.io",
+    "reelhub"
+  ];
+
+  // ✅ Original window.open save karo
+  const originalWindowOpen = window.open;
+
+  // ✅ window.open override karo
+  window.open = function(url, name, features){
+    if(!url){
+      return originalWindowOpen.apply(this, arguments);
+    }
+
+    try{
+      const urlObj = new URL(url, location.href);
+      const hostname = urlObj.hostname.toLowerCase();
+
+      // Check karo ki allowed hai ya nahi
+      const isAllowed = ALLOWED_HOSTS.some(h => hostname.includes(h));
+
+      // Ad network domains block karo
+      const isAdNetwork = 
+        hostname.includes("profitableratecpm") ||
+        hostname.includes("popunder") ||
+        hostname.includes("popads") ||
+        hostname.includes("clickadu") ||
+        hostname.includes("adsterra") ||
+        hostname.includes("propellerads") ||
+        hostname.includes("onclickads") ||
+        hostname.includes("adcash") ||
+        hostname.includes("hilltopads");
+
+      if(isAdNetwork || !isAllowed){
+        console.log("🚫 Blocked popup:", url);
+        return null;
+      }
+    }catch(e){
+      // Invalid URL — block karo
+      console.log("🚫 Blocked invalid popup:", url);
+      return null;
+    }
+
+    return originalWindowOpen.apply(this, arguments);
+  };
+
+  // ✅ document.createElement override — naye iframe/script detect karo
+  const originalCreateElement = document.createElement.bind(document);
+  document.createElement = function(tagName, options){
+    const el = originalCreateElement(tagName, options);
+    
+    if(tagName.toLowerCase() === "a"){
+      // Anchor elements ke liye click handler
+      el.addEventListener("click", function(e){
+        const href = el.href || "";
+        if(href.includes("profitableratecpm") || href.includes("popunder") || href.includes("pl31")){
+          e.preventDefault();
+          e.stopPropagation();
+          console.log("🚫 Blocked ad link:", href);
+          return false;
+        }
+      }, true);
+    }
+    
+    return el;
+  };
+
+  // ✅ Anchor click intercept — ad network links block
+  document.addEventListener("click", function(e){
+    const link = e.target.closest("a");
+    if(!link) return;
+    
+    const href = link.href || "";
+    if(href.includes("profitableratecpm") || 
+       href.includes("popunder") || 
+       href.includes("popads") ||
+       href.includes("clickadu") ||
+       href.includes("adsterra") ||
+       href.includes("propellerads") ||
+       href.includes("pl31")){
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("🚫 Blocked ad link click:", href);
+      return false;
+    }
+  }, true);
+
+  // ✅ Target=_blank intercept
+  document.addEventListener("click", function(e){
+    const link = e.target.closest("a[target='_blank']");
+    if(!link) return;
+    
+    const href = link.href || "";
+    // Ad network links block
+    if(href.includes("profitableratecpm") || href.includes("pl31")){
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("🚫 Blocked target=_blank ad:", href);
+      return false;
+    }
+  }, true);
+
+})();
+</script>
 
 <!-- APP SCRIPT -->
 <script type="module" src="app.js"></script>
 
 <!-- ============================================================
-   🎛️ AD SYSTEM — SIRF VIDEO PLAYER KE LIYE
+   🎛️ AD SYSTEM — SANDBOX IFRAME (popup blocked)
 ============================================================ -->
 <script>
 (function(){
   "use strict";
 
   const VIDEO_AD_SCRIPT = "https://pl31503868.profitableratecpmnetwork.com/cf/d0/ed/cfd0edbe231c0f6240271057001d998c.js";
+  const AD_CONTAINER_ID = "container-1fe6d8ff04cda98725422466b9ea6b14";
+
   let currentLoadedVideoId = null;
 
+  /* ✅ Ad render in SANDBOX IFRAME
+     — Ad script iframe ke andar chalti hai
+     — Popup/popunder bahar nahi khul sakta
+     — Sirf iframe ke andar ad dikhta hai
+  */
   function renderVideoAd(){
     const slot = document.getElementById("adSlotVideoPlayer");
     const container = document.getElementById("adContainerVideoPlayer");
     if(!slot || !container) return;
+
+    // Container clear karo
     container.innerHTML = "";
-    const script = document.createElement("script");
-    script.src = VIDEO_AD_SCRIPT;
-    script.async = true;
-    container.appendChild(script);
+    container.style.minHeight = "250px";
+    container.style.width = "100%";
+
+    // ✅ Sandbox iframe banao
+    const iframe = document.createElement("iframe");
+    iframe.style.width = "100%";
+    iframe.style.height = "250px";
+    iframe.style.border = "0";
+    iframe.style.borderRadius = "8px";
+    iframe.style.background = "#ffffff";
+    iframe.style.display = "block";
+    iframe.setAttribute("scrolling", "no");
+    iframe.setAttribute("frameborder", "0");
+    iframe.setAttribute("allowtransparency", "true");
+    iframe.setAttribute("referrerpolicy", "no-referrer");
+    // ⚠️ IMPORTANT: allow-popups NAHI diya → popup block
+    // ⚠️ allow-top-navigation NAHI diya → top navigation block
+    iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
+
+    container.appendChild(iframe);
+
+    // ✅ Iframe ke andar ad script inject karo
+    try {
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            html, body {
+              margin: 0;
+              padding: 0;
+              overflow: hidden;
+              background: #ffffff;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              width: 100%;
+              height: 100%;
+            }
+            * { max-width: 100%; }
+            iframe { border: 0 !important; }
+            img, video { max-width: 100%; height: auto; }
+            #${AD_CONTAINER_ID} {
+              width: 100%;
+              min-height: 250px;
+            }
+          </style>
+        </head>
+        <body>
+          <div id="${AD_CONTAINER_ID}"></div>
+          <script type="text/javascript" async data-cfasync="false" src="${VIDEO_AD_SCRIPT}"><\/script>
+        </body>
+        </html>
+      `);
+      doc.close();
+    } catch(e){
+      console.error("Ad iframe inject error:", e);
+    }
+
+    // Slot dikhao
     slot.style.display = "block";
-    console.log("✅ Video ad rendered in player");
+    slot.style.minHeight = "270px";
+
+    console.log("✅ Video ad rendered in SANDBOX IFRAME (popup blocked)");
   }
 
+  /* ✅ Ad clear karo */
   function clearVideoAd(){
     const slot = document.getElementById("adSlotVideoPlayer");
     const container = document.getElementById("adContainerVideoPlayer");
     if(slot) slot.style.display = "none";
     if(container) container.innerHTML = "";
+    console.log("🧹 Video ad cleared");
   }
 
+  /* ✅ Ad system ready hone ka wait */
   function waitForAdSystem(callback, maxTries){
     maxTries = maxTries || 50;
     let tries = 0;
@@ -1402,10 +1546,12 @@
         callback();
       } else if(tries >= maxTries){
         clearInterval(interval);
+        console.warn("⚠️ Ad system not loaded after 5s");
       }
     }, 100);
   }
 
+  /* ✅ Video player open hone pe ad dikhao */
   window.addEventListener("videoPlayerOpened", function(){
     clearVideoAd();
     waitForAdSystem(function(){
@@ -1415,11 +1561,13 @@
     });
   });
 
+  /* ✅ Video close hone pe ad hatao */
   document.addEventListener("click", function(e){
     const closeBtn = e.target.closest('[data-close="videoPlayerModal"]');
     if(closeBtn){ setTimeout(clearVideoAd, 300); }
   });
 
+  /* ✅ Backdrop click se bhi clear */
   const playerModal = document.getElementById("videoPlayerModal");
   if(playerModal){
     playerModal.addEventListener("click", function(e){
@@ -1427,14 +1575,20 @@
     });
   }
 
+  /* ✅ App load pe log */
   window.addEventListener("load", function(){
     waitForAdSystem(function(){
-      console.log("✅ Ad Control Loader initialized (Video-only mode)");
+      console.log("✅ Ad Control Loader initialized (Video-only + Sandbox mode)");
     });
   });
 
-  window.reloadAds = function(){ clearVideoAd(); };
-  console.log("✅ Ad System: Video-player only mode");
+  /* ✅ Manual reload */
+  window.reloadAds = function(){
+    clearVideoAd();
+    console.log("🔄 Ads reset");
+  };
+
+  console.log("✅ Ad System: Video-player only mode with SANDBOX IFRAME");
 })();
 </script>
 
@@ -1462,7 +1616,7 @@
     console.error("🚨 PROMISE ERROR:", e.reason);
   });
 
-  console.log("✅ index.html loaded");
+  console.log("✅ index.html loaded with popup blocker");
 </script>
 
 </body>
