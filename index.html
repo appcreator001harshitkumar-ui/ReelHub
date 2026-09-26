@@ -135,7 +135,6 @@
       <button class="chip" data-cat="learning">Learning</button>
     </div>
 
-    <!-- ✅ Continue Watching Section -->
     <div id="continueWatchingSection" style="display:none;margin-bottom:16px">
       <div style="padding:10px 16px;font-size:14px;font-weight:700;color:var(--text)">▶️ Continue Watching</div>
       <div id="continueWatchingList" style="display:flex;gap:10px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none"></div>
@@ -436,7 +435,7 @@
 
 <!-- ============ MODALS ============ -->
 
-<!-- ✅ VIDEO OPTIONS MENU MODAL -->
+<!-- VIDEO OPTIONS MENU MODAL -->
 <div id="videoMenuModal" class="modal">
   <div class="modal-box" style="max-width:340px">
     <div class="modal-header">
@@ -454,7 +453,7 @@
   </div>
 </div>
 
-<!-- ✅ REPORT MODAL -->
+<!-- REPORT MODAL -->
 <div id="reportModal" class="modal">
   <div class="modal-box" style="max-width:400px">
     <div class="modal-header">
@@ -479,7 +478,7 @@
   </div>
 </div>
 
-<!-- ✅ BLOCKED USERS MODAL -->
+<!-- BLOCKED USERS MODAL -->
 <div id="blockedUsersModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -490,7 +489,7 @@
   </div>
 </div>
 
-<!-- ✅ WATCH HISTORY MODAL -->
+<!-- WATCH HISTORY MODAL -->
 <div id="watchHistoryModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -501,7 +500,7 @@
   </div>
 </div>
 
-<!-- SEARCH (with Users/Videos tabs) -->
+<!-- SEARCH -->
 <div id="searchModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -774,7 +773,6 @@
       </button>
     </div>
 
-    <!-- 🎯 AD SLOT: Video Player -->
     <div id="adSlotVideoPlayer" class="ad-slot-video" style="display:none;margin:10px 16px 14px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;position:relative;min-height:270px;text-align:center;overflow:hidden">
       <div style="position:absolute;top:6px;right:10px;font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;z-index:2">Sponsored</div>
       <div id="adContainerVideoPlayer" style="min-height:250px;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden"></div>
@@ -1402,13 +1400,13 @@
 <div id="toast" class="toast"></div>
 
 <!-- ============================================================
-     🛡️ POPUP BLOCKER
+     🛡️ POPUP BLOCKER — ✅ FIXED for Google Login
 ============================================================ -->
 <script>
 (function(){
   "use strict";
 
-  console.log("🛡️ Popup Blocker: Active");
+  console.log("🛡️ Popup Blocker: Active (Google Login FIXED)");
 
   const ALLOWED_HOSTS = [
     "firebaseapp.com",
@@ -1424,16 +1422,34 @@
     "youtube.com",
     "youtu.be",
     "github.io",
-    "reelhub"
+    "reelhub",
+    "reelhu"
   ];
 
   const originalWindowOpen = window.open;
 
   window.open = function(url, name, features){
-    if(!url) return originalWindowOpen.apply(this, arguments);
+    // ✅ FIX 1: Allow empty or about:blank popups (Firebase Google login ke liye zaroori)
+    if(!url || url === "" || url === "about:blank" || url.startsWith("about:")){
+      console.log("✅ Allowed blank popup (Firebase auth):", url);
+      return originalWindowOpen.apply(this, arguments);
+    }
+    
     try{
       const urlObj = new URL(url, location.href);
       const hostname = urlObj.hostname.toLowerCase();
+      
+      // ✅ FIX 2: Always allow Firebase + Google auth domains (pehle check karo)
+      if(hostname.includes("firebaseapp.com") ||
+         hostname.includes("google.com") ||
+         hostname.includes("googleapis.com") ||
+         hostname.includes("gstatic.com") ||
+         hostname.includes("reelhu") ||
+         hostname.includes("reelhub")){
+        console.log("✅ Allowed auth popup:", hostname);
+        return originalWindowOpen.apply(this, arguments);
+      }
+      
       const isAllowed = ALLOWED_HOSTS.some(h => hostname.includes(h));
       const isAdNetwork = 
         hostname.includes("profitableratecpm") ||
@@ -1451,7 +1467,9 @@
         return null;
       }
     }catch(e){
-      return null;
+      // ✅ FIX 3: Parse error pe bhi allow karo (Google login ke liye zaroori)
+      console.log("✅ Allowed popup (parse error, assuming auth):", url);
+      return originalWindowOpen.apply(this, arguments);
     }
     return originalWindowOpen.apply(this, arguments);
   };
