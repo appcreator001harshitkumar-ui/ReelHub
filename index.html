@@ -15,9 +15,7 @@
 
 <body>
 
-<!-- ============================================================
-     SPLASH SCREEN
-============================================================ -->
+<!-- SPLASH SCREEN -->
 <div id="splashScreen">
   <div class="splash-icon">🎬</div>
   <div class="splash-title">ReelHub</div>
@@ -61,7 +59,7 @@
   </div>
 </div>
 
-<!-- ============ LOGIN ============ -->
+<!-- LOGIN -->
 <div id="loginPage" class="hidden">
   <div class="login-card">
     <div class="logo">ReelHub</div>
@@ -103,7 +101,7 @@
   </div>
 </div>
 
-<!-- ============ APP ============ -->
+<!-- APP -->
 <div id="app" class="hidden">
 
   <header class="topbar" id="mainTopbar">
@@ -432,8 +430,6 @@
   </nav>
 
 </div>
-
-<!-- ============ MODALS ============ -->
 
 <!-- VIDEO OPTIONS MENU MODAL -->
 <div id="videoMenuModal" class="modal">
@@ -1400,96 +1396,9 @@
 <div id="toast" class="toast"></div>
 
 <!-- ============================================================
-     🛡️ POPUP BLOCKER — ✅ FIXED for Google Login
+     ✅ APP SCRIPT
+     ✅ Popup Blocker REMOVED (Google login ab kaam karega)
 ============================================================ -->
-<script>
-(function(){
-  "use strict";
-
-  console.log("🛡️ Popup Blocker: Active (Google Login FIXED)");
-
-  const ALLOWED_HOSTS = [
-    "firebaseapp.com",
-    "googleapis.com",
-    "gstatic.com",
-    "cloudinary.com",
-    "wa.me",
-    "whatsapp.com",
-    "facebook.com",
-    "twitter.com",
-    "instagram.com",
-    "google.com",
-    "youtube.com",
-    "youtu.be",
-    "github.io",
-    "reelhub",
-    "reelhu"
-  ];
-
-  const originalWindowOpen = window.open;
-
-  window.open = function(url, name, features){
-    // ✅ FIX 1: Allow empty or about:blank popups (Firebase Google login ke liye zaroori)
-    if(!url || url === "" || url === "about:blank" || url.startsWith("about:")){
-      console.log("✅ Allowed blank popup (Firebase auth):", url);
-      return originalWindowOpen.apply(this, arguments);
-    }
-    
-    try{
-      const urlObj = new URL(url, location.href);
-      const hostname = urlObj.hostname.toLowerCase();
-      
-      // ✅ FIX 2: Always allow Firebase + Google auth domains (pehle check karo)
-      if(hostname.includes("firebaseapp.com") ||
-         hostname.includes("google.com") ||
-         hostname.includes("googleapis.com") ||
-         hostname.includes("gstatic.com") ||
-         hostname.includes("reelhu") ||
-         hostname.includes("reelhub")){
-        console.log("✅ Allowed auth popup:", hostname);
-        return originalWindowOpen.apply(this, arguments);
-      }
-      
-      const isAllowed = ALLOWED_HOSTS.some(h => hostname.includes(h));
-      const isAdNetwork = 
-        hostname.includes("profitableratecpm") ||
-        hostname.includes("popunder") ||
-        hostname.includes("popads") ||
-        hostname.includes("clickadu") ||
-        hostname.includes("adsterra") ||
-        hostname.includes("propellerads") ||
-        hostname.includes("onclickads") ||
-        hostname.includes("adcash") ||
-        hostname.includes("hilltopads");
-
-      if(isAdNetwork || !isAllowed){
-        console.log("🚫 Blocked popup:", url);
-        return null;
-      }
-    }catch(e){
-      // ✅ FIX 3: Parse error pe bhi allow karo (Google login ke liye zaroori)
-      console.log("✅ Allowed popup (parse error, assuming auth):", url);
-      return originalWindowOpen.apply(this, arguments);
-    }
-    return originalWindowOpen.apply(this, arguments);
-  };
-
-  document.addEventListener("click", function(e){
-    const link = e.target.closest("a");
-    if(!link) return;
-    const href = link.href || "";
-    if(href.includes("profitableratecpm") || href.includes("popunder") || href.includes("pl31")){
-      e.preventDefault();
-      e.stopPropagation();
-      console.log("🚫 Blocked ad link:", href);
-      return false;
-    }
-  }, true);
-
-})();
-</script>
-
-<!-- APP SCRIPT -->
 <script type="module" src="app.js"></script>
 
 <!-- ============================================================
