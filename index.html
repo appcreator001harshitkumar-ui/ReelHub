@@ -425,8 +425,7 @@
 
 </div>
 
-<!-- MODALS (all modals from before, unchanged) -->
-
+<!-- VIDEO OPTIONS MENU MODAL -->
 <div id="videoMenuModal" class="modal">
   <div class="modal-box" style="max-width:340px">
     <div class="modal-header">
@@ -444,6 +443,7 @@
   </div>
 </div>
 
+<!-- REPORT MODAL -->
 <div id="reportModal" class="modal">
   <div class="modal-box" style="max-width:400px">
     <div class="modal-header">
@@ -468,6 +468,7 @@
   </div>
 </div>
 
+<!-- BLOCKED USERS MODAL -->
 <div id="blockedUsersModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -478,6 +479,7 @@
   </div>
 </div>
 
+<!-- WATCH HISTORY MODAL -->
 <div id="watchHistoryModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -488,6 +490,7 @@
   </div>
 </div>
 
+<!-- SEARCH -->
 <div id="searchModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
@@ -704,6 +707,7 @@
   </div>
 </div>
 
+<!-- VIDEO PLAYER MODAL -->
 <div id="videoPlayerModal" class="modal">
   <div class="modal-box" style="padding:0;overflow:hidden;max-width:560px">
     <button class="close" data-close="videoPlayerModal" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:white;z-index:10">×</button>
@@ -766,6 +770,7 @@
   </div>
 </div>
 
+<!-- SHARE SHEET -->
 <div id="shareSheet" class="share-sheet">
   <div class="share-sheet-box">
     <h3>Share with</h3>
@@ -1383,50 +1388,6 @@
 </div>
 
 <div id="toast" class="toast"></div>
-
-<!-- ============================================================
-     🔬 DIAGNOSTIC TEST SCRIPT — Yeh problem pakdega
-     ⚠️ Deploy karne se pehle ise delete karna
-============================================================ -->
-<script>
-window.addEventListener("load", function(){
-  setTimeout(function(){
-    console.log("═══════════════════════════════════════");
-    console.log("🔬 REELHUB DIAGNOSTIC TEST");
-    console.log("═══════════════════════════════════════");
-
-    var btn = document.getElementById("googleLogin");
-    console.log("1️⃣ Button exists:", !!btn);
-    
-    if(!btn){
-      console.error("❌ GOOGLE BUTTON HTML MEIN NAHI HAI!");
-      console.error("   Check: <button id=\"googleLogin\"> present?");
-      return;
-    }
-
-    console.log("2️⃣ Button HTML:", btn.outerHTML);
-    console.log("3️⃣ Button visible:", btn.offsetParent !== null);
-    console.log("4️⃣ Button disabled:", btn.disabled);
-
-    // Test click detect
-    btn.addEventListener("click", function(){
-      console.log("🟢🟢🟢 GOOGLE BUTTON CLICK DETECTED! 🟢🟢🟢");
-      alert("✅ Google button KAAM kar raha hai!\n\nAgar popup nahi khulta toh Firebase problem hai.");
-    });
-
-    console.log("5️⃣ Diagnostic listener attached ✅");
-
-    // Firebase status check
-    console.log("6️⃣ Firebase SDK check:");
-    console.log("   - window.openVideoPlayer:", typeof window.openVideoPlayer);
-    console.log("   - window.showMyAd:", typeof window.showMyAd);
-    
-    console.log("═══════════════════════════════════════");
-    console.log("✅ Ab Google button dabao — agar alert aaya toh button theek hai");
-    console.log("═══════════════════════════════════════");
-  }, 2000);
-});
-</script>
 
 <!-- ============================================================
      ✅ APP SCRIPT — Firebase + App Logic
