@@ -1,10 +1,11 @@
 /* ============================================================
    ReelHub - app.js PART 1/3
+   Config + State + Helpers + Ad + Auth + Profile + Videos + Stories
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, serverTimestamp, onSnapshot, increment, limit } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, serverTimestamp, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
@@ -50,7 +51,6 @@ let mySentRequestsCache = new Set();
 let blockedUsersCache = new Set();
 let watchHistoryCache = [];
 let continueWatchingCache = [];
-
 let videosUnsubscribe = null;
 let notificationsUnsubscribe = null;
 let commentsUnsubscribe = null;
@@ -64,7 +64,6 @@ let vaultUnsubscribe = null;
 let heartbeatInterval = null;
 let blockedUsersUnsubscribe = null;
 let watchHistoryUnsubscribe = null;
-
 let onlineUsersCache = {};
 let unreadChatsCache = {};
 let chatLastReadCache = {};
@@ -81,7 +80,6 @@ let selectedPlaylists = new Set();
 let currentPlaylistView = null;
 let deepLinkChecked = false;
 let viewingProfileUid = null;
-
 let uploadContentType = "video";
 let pendingThumbnailFile = null;
 let pendingVideoFilter = "none";
@@ -92,7 +90,6 @@ let videoMenuVideoId = null;
 let reportTargetType = "video";
 let reportTargetId = null;
 let currentCategory = "all";
-
 let storiesCache = [];
 let groupedStories = [];
 let currentStoryUserIndex = 0;
@@ -116,7 +113,6 @@ let pendingVideoRotation = 0;
 let pendingVideoMuted = false;
 let trimVideoElement = null;
 let trimVideoDuration = 0;
-
 let myGroupsCache = [];
 let currentGroupId = null;
 let currentGroupData = null;
@@ -124,7 +120,6 @@ let groupJoinRequestsCache = [];
 let myGroupsUnsubscribe = null;
 let groupRequestsUnsubscribe = null;
 let groupChatUnsubscribe = null;
-
 let songLibraryCache = [];
 let songLibraryUnsubscribe = null;
 let selectedSongForApply = null;
@@ -136,7 +131,6 @@ let previewAudio = null;
 let editingSongId = null;
 let pendingSongFile = null;
 let modalHistoryStack = [];
-
 let vaultPinVerified = false;
 let vaultUnlockTime = 0;
 let vaultAutoLockEnabled = true;
@@ -144,7 +138,6 @@ let vaultFilesCache = [];
 let vaultUploading = false;
 let splashHidden = false;
 let authResolved = false;
-
 const presenceListenersMap = new Map();
 const processingMessages = new Set();
 let lastSentMessageTime = 0;
@@ -409,7 +402,7 @@ async function stopWatchTimer(){
 document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") stopWatchTimer(); });
 window.addEventListener("beforeunload", () => { stopWatchTimer(); });
 
-/* CLOUDINARY */
+/* CLOUDINARY — default functions (Part 3 mein override honge) */
 function uploadToCloudinary(file, onProgress){
   return new Promise((resolve,reject)=>{
     let resource = "image";
@@ -602,7 +595,8 @@ function startBlockedUsersListener(){
     snapshot=>{
       blockedUsersCache = new Set();
       snapshot.forEach(d => blockedUsersCache.add(d.data().blockedId));
-      renderFeed(); renderShorts();
+      renderFeed();
+      renderShorts();
     }, error=>console.error("Blocked listener error:", error));
 }
 async function loadWatchHistory(){
@@ -677,9 +671,22 @@ onAuthStateChanged(auth, async user => {
     if(currentUser && typeof markOffline === "function") await markOffline();
     currentUser = null;
     currentProfile = null;
-    videosCache = []; storiesCache = []; groupedStories = []; vaultFilesCache = []; myGroupsCache = []; songLibraryCache = []; watchHistoryCache = []; continueWatchingCache = [];
-    myFollowsCache.clear(); mySavesCache.clear(); mySentRequestsCache.clear(); blockedUsersCache.clear();
-    onlineUsersCache = {}; unreadChatsCache = {}; chatLastReadCache = {}; modalHistoryStack = [];
+    videosCache = [];
+    storiesCache = [];
+    groupedStories = [];
+    vaultFilesCache = [];
+    myGroupsCache = [];
+    songLibraryCache = [];
+    watchHistoryCache = [];
+    continueWatchingCache = [];
+    myFollowsCache.clear();
+    mySavesCache.clear();
+    mySentRequestsCache.clear();
+    blockedUsersCache.clear();
+    onlineUsersCache = {};
+    unreadChatsCache = {};
+    chatLastReadCache = {};
+    modalHistoryStack = [];
     vaultPinVerified = false;
     if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
     if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
@@ -700,7 +707,10 @@ onAuthStateChanged(auth, async user => {
     if(watchHistoryUnsubscribe){ watchHistoryUnsubscribe(); watchHistoryUnsubscribe = null; }
     adSettings = { masterDisabled: false, typeDisabled: { banner: false, popup: false, video: false }, userDisabled: {} };
     stopAllPresenceListeners();
-    processingLikes.clear(); processingSaves.clear(); processingViews.clear(); processingMessages.clear();
+    processingLikes.clear();
+    processingSaves.clear();
+    processingViews.clear();
+    processingMessages.clear();
     $("app")?.classList.add("hidden");
     $("loginPage")?.classList.remove("hidden");
     $("suspensionScreen")?.classList.add("hidden");
@@ -708,10 +718,10 @@ onAuthStateChanged(auth, async user => {
     authResolved = true;
   }
 });
-console.log("✅ Part 1/3 loaded");
+console.log("✅ Part 1/3 loaded — Auth + Profile");
 
 /* ============================================================
-   VIDEO CARD + FEED
+   VIDEO CARD + FEED + SHORTS
 ============================================================ */
 function createVideoCard(v){
   const views = Number(v.views || 0);
@@ -719,29 +729,17 @@ function createVideoCard(v){
   const isAdmin = isAdminUser();
   const isPinned = currentProfile?.pinnedVideos?.includes(v.id);
   const isPhoto = v.isPhoto === true;
-
   let songBadge = "";
-  if(v.song && v.song.name){
-    songBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(124,58,237,0.15);color:var(--primary);font-size:10px;font-weight:600;border-radius:8px;margin-top:4px">🎵 ${esc(v.song.name)}</span>`;
-  }
+  if(v.song && v.song.name){ songBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(124,58,237,0.15);color:var(--primary);font-size:10px;font-weight:600;border-radius:8px;margin-top:4px">🎵 ${esc(v.song.name)}</span>`; }
   let stickerBadge = "";
-  if(v.sticker){
-    const icon = v.sticker.type === "emoji" ? v.sticker.icon : v.sticker.text;
-    if(icon){ stickerBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(236,72,153,0.15);color:#ec4899;font-size:10px;font-weight:600;border-radius:8px;margin-top:4px;margin-left:4px">${esc(icon)}</span>`; }
-  }
+  if(v.sticker){ const icon = v.sticker.type === "emoji" ? v.sticker.icon : v.sticker.text; if(icon){ stickerBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(236,72,153,0.15);color:#ec4899;font-size:10px;font-weight:600;border-radius:8px;margin-top:4px;margin-left:4px">${esc(icon)}</span>`; } }
   const rotationStyle = v.rotation ? `transform: rotate(${v.rotation}deg);` : "";
   const scaleStyle = (v.rotation === 90 || v.rotation === 270) ? "scale(1.3);" : "";
   const filterStyle = v.filter && v.filter !== "none" ? `filter: ${v.filter};` : "";
-
   let thumbnailHTML;
-  if(isPhoto){
-    thumbnailHTML = `<img src="${esc(v.videoURL)}" alt="" style="width:100%;height:100%;object-fit:cover;${filterStyle}" loading="lazy">`;
-  } else if(v.thumbnail){
-    thumbnailHTML = `<img src="${esc(v.thumbnail)}" alt="" style="width:100%;height:100%;object-fit:cover;${filterStyle}">`;
-  } else {
-    thumbnailHTML = `<video src="${esc(v.videoURL)}#t=0.5" preload="metadata" muted playsinline style="${rotationStyle}${scaleStyle}${filterStyle}"></video>`;
-  }
-
+  if(isPhoto){ thumbnailHTML = `<img src="${esc(v.videoURL)}" alt="" style="width:100%;height:100%;object-fit:cover;${filterStyle}" loading="lazy">`; }
+  else if(v.thumbnail){ thumbnailHTML = `<img src="${esc(v.thumbnail)}" alt="" style="width:100%;height:100%;object-fit:cover;${filterStyle}">`; }
+  else { thumbnailHTML = `<video src="${esc(v.videoURL)}#t=0.5" preload="metadata" muted playsinline style="${rotationStyle}${scaleStyle}${filterStyle}"></video>`; }
   return `
   <div class="video-card" data-id="${esc(v.id)}" data-open-video="${esc(v.id)}">
     <div class="thumbnail" style="position:relative">
@@ -760,38 +758,25 @@ function createVideoCard(v){
       </div>
       ${mine || isAdmin ? `<button class="video-more" onclick="event.stopPropagation();event.preventDefault();openVideoMenuModal('${esc(v.id)}')">⋮</button>` : ""}
     </div>
-  </div>
-  `;
+  </div>`;
 }
 
 function renderFeed(){
   const feed = $("feed");
   if(!feed) return;
-  let list = videosCache.filter(v =>
-    v.type !== "short" &&
-    (v.visibility !== "private" || v.userId === currentUser?.uid) &&
-    !isUserBlocked(v.userId)
-  );
-
+  let list = videosCache.filter(v => v.type !== "short" && (v.visibility !== "private" || v.userId === currentUser?.uid) && !isUserBlocked(v.userId));
   if(currentCategory === "trending"){
     const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
     list = list.filter(v => timeValue(v.createdAt) > sevenDaysAgo);
     list.sort((a,b)=> (b.views || 0) - (a.views || 0));
     list = list.slice(0, 50);
-  } else if(currentCategory !== "all"){
-    list = list.filter(v => v.category === currentCategory);
-  }
-
+  } else if(currentCategory !== "all"){ list = list.filter(v => v.category === currentCategory); }
   if(currentCategory === "all" && currentProfile?.pinnedVideos?.length){
     const pinned = [];
     const rest = [];
-    list.forEach(v => {
-      if(currentProfile.pinnedVideos.includes(v.id) && v.userId === currentUser?.uid) pinned.push(v);
-      else rest.push(v);
-    });
+    list.forEach(v => { if(currentProfile.pinnedVideos.includes(v.id) && v.userId === currentUser?.uid) pinned.push(v); else rest.push(v); });
     list = [...pinned, ...rest];
   }
-
   if(!list.length){
     feed.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><span class="icon">📹</span><h3>No videos yet</h3><p>Upload your first video or follow creators</p></div>`;
     return;
@@ -846,11 +831,7 @@ function startRealtimeVideos(){
 function renderShorts(){
   const container = $("reelsContainer");
   if(!container) return;
-  const list = videosCache.filter(v =>
-    v.type === "short" &&
-    (v.visibility !== "private" || v.userId === currentUser?.uid) &&
-    !isUserBlocked(v.userId)
-  );
+  const list = videosCache.filter(v => v.type === "short" && (v.visibility !== "private" || v.userId === currentUser?.uid) && !isUserBlocked(v.userId));
   if(!list.length){
     container.innerHTML = `<div class="reel-empty"><div style="font-size:56px;margin-bottom:14px">🎞️</div><h3 style="font-size:17px;margin-bottom:6px">No Shorts yet</h3><p>Upload your first Short to see it here</p></div>`;
     return;
@@ -865,7 +846,6 @@ function createReel(v){
   const isSaved = mySavesCache.has(v.id);
   const views = Number(v.views || 0);
   const isPhoto = v.isPhoto === true;
-
   if(isPhoto){
     return `
     <div class="reel-item" data-id="${esc(v.id)}">
@@ -888,10 +868,8 @@ function createReel(v){
         <div class="reel-action" data-share-video="${esc(v.id)}"><span class="icon">📤</span><small>Share</small></div>
         <div class="reel-action save-btn ${isSaved?"saved":""}" data-save-video="${esc(v.id)}"><span class="icon">${isSaved ? "🔖" : "📑"}</span><small>Save</small></div>
       </div>
-    </div>
-    `;
+    </div>`;
   }
-
   return `
   <div class="reel-item" data-id="${esc(v.id)}">
     <video src="${esc(v.videoURL)}" loop playsinline webkit-playsinline preload="metadata" muted data-video-id="${esc(v.id)}"></video>
@@ -913,8 +891,7 @@ function createReel(v){
       <div class="reel-action" data-share-video="${esc(v.id)}"><span class="icon">📤</span><small>Share</small></div>
       <div class="reel-action save-btn ${isSaved?"saved":""}" data-save-video="${esc(v.id)}"><span class="icon">${isSaved ? "🔖" : "📑"}</span><small>Save</small></div>
     </div>
-  </div>
-  `;
+  </div>`;
 }
 
 let reelObserver = null;
@@ -933,23 +910,19 @@ function setupReelsObserver(){
   videos.forEach(v => reelObserver.observe(v));
 }
 
-/* ============================================================
-   STORIES
-============================================================ */
+/* STORIES */
 function startStoriesListener(){
   if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
   if(!currentUser) return;
   storiesUnsubscribe = onSnapshot(collection(db, "stories"),
     snapshot=>{
       const now = Date.now();
-      storiesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
-        .filter(s => (now - timeValue(s.createdAt)) < STORY_LIFETIME_MS && !isUserBlocked(s.userId));
+      storiesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => (now - timeValue(s.createdAt)) < STORY_LIFETIME_MS && !isUserBlocked(s.userId));
       storiesCache.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
       groupStories();
       renderStoriesBar();
     }, error=>console.error("Stories listener error:", error));
 }
-
 function groupStories(){
   const map = {};
   storiesCache.forEach(s=>{
@@ -966,7 +939,6 @@ function groupStories(){
     return b.latestAt - a.latestAt;
   });
 }
-
 function renderStoriesBar(){
   const bar = $("storiesBar");
   if(!bar) return;
@@ -983,7 +955,6 @@ function renderStoriesBar(){
   });
   bar.innerHTML = html;
 }
-
 document.addEventListener("click", (e)=>{
   const myStory = e.target.closest("[data-my-story]");
   if(myStory){
@@ -1023,9 +994,7 @@ function openCreateStoryModal(){
   if(progressBar) progressBar.style.width = "0%";
   showModal("createStoryModal");
 }
-
 $("storyUploadZone")?.addEventListener("click", ()=>{ $("storyFile")?.click(); });
-
 $("storyFile")?.addEventListener("change", (e)=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -1040,11 +1009,12 @@ $("storyFile")?.addEventListener("change", (e)=>{
   else { if(vidPrev){ vidPrev.src = url; vidPrev.classList.remove("hidden"); } if(imgPrev){ imgPrev.src = ""; imgPrev.classList.add("hidden"); } }
   if(btn) btn.disabled = false;
 });
-
 $("storyUploadBtn")?.addEventListener("click", async ()=>{
   if(!storyUploadFile || !currentUser){ toast("Select a file first"); return; }
   const btn = $("storyUploadBtn"); const prog = $("storyUploadProgress"); const progBar = $("storyUploadProgressBar"); const status = $("storyUploadStatus");
-  if(btn) btn.disabled = true; if(prog) prog.classList.add("active"); if(status) status.textContent = "Uploading...";
+  if(btn) btn.disabled = true;
+  if(prog) prog.classList.add("active");
+  if(status) status.textContent = "Uploading...";
   try{
     const url = await uploadToCloudinary(storyUploadFile, (pct)=>{
       if(progBar) progBar.style.width = pct + "%";
@@ -1071,7 +1041,6 @@ function openStoryViewer(userIndex, storyIndex){
   if(viewer){ viewer.classList.add("show"); try{ window.history.pushState({ storyViewer: true }, "", window.location.href); }catch(e){} }
   loadCurrentStory();
 }
-
 function closeStoryViewer(){
   const viewer = $("storyViewer");
   if(viewer) viewer.classList.remove("show");
@@ -1084,7 +1053,6 @@ function closeStoryViewer(){
   const stickerOverlay = $("storyStickerOverlay");
   if(stickerOverlay){ stickerOverlay.style.display = "none"; stickerOverlay.textContent = ""; }
 }
-
 function loadCurrentStory(){
   stopStoryTimer();
   if(window.__storyAudio){ window.__storyAudio.pause(); window.__storyAudio = null; }
@@ -1154,7 +1122,6 @@ function loadCurrentStory(){
     else { footer.style.display = "flex"; const input = $("storyReplyInput"); if(input) input.value = ""; }
   }
 }
-
 function renderStoryProgress(total, current){
   const bar = $("storyProgressBar");
   if(!bar) return;
@@ -1168,7 +1135,8 @@ function renderStoryProgress(total, current){
 function startStoryTimer(duration){ stopStoryTimer(); storyDuration = duration; storyStartTime = Date.now(); storyElapsed = 0; storyPaused = false; updateStoryProgressLoop(); }
 function updateStoryProgressLoop(){
   if(storyPaused) return;
-  const elapsed = Date.now() - storyStartTime; storyElapsed = elapsed;
+  const elapsed = Date.now() - storyStartTime;
+  storyElapsed = elapsed;
   const pct = Math.min((elapsed / storyDuration) * 100, 100);
   const fill = document.querySelector(`[data-seg="${currentStoryIndex}"]`);
   if(fill) fill.style.width = pct + "%";
@@ -1178,14 +1146,22 @@ function updateStoryProgressLoop(){
 function stopStoryTimer(){ if(storyProgressRAF){ cancelAnimationFrame(storyProgressRAF); storyProgressRAF = null; } }
 function pauseStoryTimer(){ if(storyPaused) return; storyPaused = true; storyElapsed = Date.now() - storyStartTime; if(window.__storyAudio) window.__storyAudio.pause(); if(storyProgressRAF){ cancelAnimationFrame(storyProgressRAF); storyProgressRAF = null; } }
 function resumeStoryTimer(){ if(!storyPaused) return; storyPaused = false; storyStartTime = Date.now() - storyElapsed; if(window.__storyAudio) window.__storyAudio.play().catch(()=>{}); updateStoryProgressLoop(); }
-function nextStory(){ stopStoryTimer(); const group = groupedStories[currentStoryUserIndex]; if(!group){ closeStoryViewer(); return; } if(currentStoryIndex < group.stories.length - 1){ currentStoryIndex++; loadCurrentStory(); } else { if(currentStoryUserIndex < groupedStories.length - 1){ currentStoryUserIndex++; currentStoryIndex = 0; loadCurrentStory(); } else closeStoryViewer(); } }
-function prevStory(){ stopStoryTimer(); if(currentStoryIndex > 0){ currentStoryIndex--; loadCurrentStory(); } else { if(currentStoryUserIndex > 0){ currentStoryUserIndex--; const group = groupedStories[currentStoryUserIndex]; currentStoryIndex = group ? group.stories.length - 1 : 0; loadCurrentStory(); } } }
-
+function nextStory(){
+  stopStoryTimer();
+  const group = groupedStories[currentStoryUserIndex];
+  if(!group){ closeStoryViewer(); return; }
+  if(currentStoryIndex < group.stories.length - 1){ currentStoryIndex++; loadCurrentStory(); }
+  else { if(currentStoryUserIndex < groupedStories.length - 1){ currentStoryUserIndex++; currentStoryIndex = 0; loadCurrentStory(); } else closeStoryViewer(); }
+}
+function prevStory(){
+  stopStoryTimer();
+  if(currentStoryIndex > 0){ currentStoryIndex--; loadCurrentStory(); }
+  else { if(currentStoryUserIndex > 0){ currentStoryUserIndex--; const group = groupedStories[currentStoryUserIndex]; currentStoryIndex = group ? group.stories.length - 1 : 0; loadCurrentStory(); } }
+}
 async function markStoryViewed(storyId){
   if(!currentUser || !storyId) return;
   try{ const viewRef = doc(db, "stories", storyId, "views", currentUser.uid); const snap = await getDoc(viewRef); if(!snap.exists()) await setDoc(viewRef, { userId: currentUser.uid, viewedAt: serverTimestamp() }); }catch(e){}
 }
-
 $("storyProgressBar")?.addEventListener("click", (e)=>{ const seg = e.target.closest("[data-seg]"); if(!seg) return; const idx = Number(seg.dataset.seg); if(!Number.isNaN(idx)){ currentStoryIndex = idx; loadCurrentStory(); } });
 $("storyNextZone")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); nextStory(); });
 $("storyPrevZone")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); prevStory(); });
@@ -1200,10 +1176,8 @@ if(storyMediaEl){
   storyMediaEl.addEventListener("mouseup", ()=>{ if(storyHoldTimer){ clearTimeout(storyHoldTimer); storyHoldTimer = null; } resumeStoryTimer(); });
   storyMediaEl.addEventListener("mouseleave", ()=>{ if(storyHoldTimer){ clearTimeout(storyHoldTimer); storyHoldTimer = null; } resumeStoryTimer(); });
 }
-
 $("storySendBtn")?.addEventListener("click", async (e)=>{ e.preventDefault(); e.stopPropagation(); await sendStoryReply(); });
 $("storyReplyInput")?.addEventListener("keydown", (e)=>{ if(e.key === "Enter"){ e.preventDefault(); sendStoryReply(); } });
-
 async function sendStoryReply(){
   const input = $("storyReplyInput");
   if(!input) return;
@@ -1221,7 +1195,6 @@ async function sendStoryReply(){
     toast("✅ Reply sent");
   }catch(err){ toast("Reply failed"); }
 }
-
 document.addEventListener("keydown", (e)=>{
   const viewer = $("storyViewer");
   if(!viewer || !viewer.classList.contains("show")) return;
@@ -1229,7 +1202,6 @@ document.addEventListener("keydown", (e)=>{
   else if(e.key === "ArrowLeft") prevStory();
   else if(e.key === "Escape") closeStoryViewer();
 });
-
 $("storyMoreBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   const group = groupedStories[currentStoryUserIndex];
@@ -1242,9 +1214,7 @@ $("storyMoreBtn")?.addEventListener("click", (e)=>{
   pauseStoryTimer();
   showModal("storyMenuModal");
 });
-
 $("storyMenuEditBtn")?.addEventListener("click", async (e)=>{ e.preventDefault(); e.stopPropagation(); if(!currentStoryId) return; hideModal("storyMenuModal"); await openEditStoryModal(currentStoryId); });
-
 async function openEditStoryModal(storyId){
   try{
     const storySnap = await getDoc(doc(db, "stories", storyId));
@@ -1261,7 +1231,6 @@ async function openEditStoryModal(storyId){
     showModal("editStoryModal");
   }catch(e){ toast("Failed to open"); }
 }
-
 function updateEditStoryButtons(){
   const songBtn = $("editStoryChangeSongBtn");
   if(songBtn){
@@ -1274,23 +1243,23 @@ function updateEditStoryButtons(){
     else { stickerBtn.innerHTML = "😀 Add Sticker"; stickerBtn.style.borderColor = ""; stickerBtn.style.color = ""; }
   }
 }
-
 $("saveStoryEditBtn")?.addEventListener("click", async ()=>{
   if(!currentStoryId) return;
   const caption = $("editStoryCaption").value.trim();
   const status = $("editStoryStatus");
   const btn = $("saveStoryEditBtn");
   if(btn){ btn.disabled = true; btn.textContent = "Saving..."; }
-  status.textContent = "Saving..."; status.style.color = "#7c3aed";
+  status.textContent = "Saving...";
+  status.style.color = "#7c3aed";
   try{
     await updateDoc(doc(db, "stories", currentStoryId), { caption, song: window.__editingStorySong || null, sticker: window.__editingStorySticker || null, updatedAt: serverTimestamp() });
-    status.textContent = "✅ Saved!"; status.style.color = "#22c55e";
+    status.textContent = "✅ Saved!";
+    status.style.color = "#22c55e";
     toast("✅ Story updated");
     setTimeout(async ()=>{ hideModal("editStoryModal"); closeStoryViewer(); await new Promise(r => setTimeout(r, 300)); startStoriesListener(); }, 700);
   }catch(err){ status.textContent = "Error: " + err.message; status.style.color = "#ed4956"; }
   finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Save Changes"; } }
 });
-
 $("storyMenuDeleteBtn")?.addEventListener("click", async (e)=>{
   e.preventDefault(); e.stopPropagation();
   if(!currentStoryId) return;
@@ -1328,7 +1297,6 @@ function renderSongPickerList(searchText){
   container.innerHTML = list.map(s => `<div class="song-picker-item" data-pick-song="${esc(s.id)}"><div class="song-thumb">🎵</div><div class="song-info"><strong>${esc(s.name || "Untitled")}</strong><small>${esc(s.artist || "Unknown")} · ${esc(s.category || "")}</small></div><div class="check-icon"></div></div>`).join("");
 }
 $("songSearchInput")?.addEventListener("input", (e)=>{ renderSongPickerList(e.target.value); });
-
 document.addEventListener("click", (e)=>{
   const pickerItem = e.target.closest("[data-pick-song]");
   if(pickerItem){
@@ -1340,7 +1308,6 @@ document.addEventListener("click", (e)=>{
     selectedSongForApply = songLibraryCache.find(s => s.id === songId) || null;
   }
 });
-
 $("confirmSongBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   if(!selectedSongForApply){ toast("Select a song first"); return; }
@@ -1390,7 +1357,8 @@ document.addEventListener("click", (e)=>{
   if(!item) return;
   e.preventDefault(); e.stopPropagation();
   document.querySelectorAll(".sticker-item").forEach(el=>{ el.style.background = ""; el.style.color = ""; });
-  item.style.background = "var(--primary)"; item.style.color = "white";
+  item.style.background = "var(--primary)";
+  item.style.color = "white";
   selectedStickerEmoji = item.dataset.sticker;
 });
 document.addEventListener("click", (e)=>{
@@ -1493,7 +1461,6 @@ $("editVideoPreviewBtn")?.addEventListener("click", (e)=>{
     showModal("videoPlayerModal");
   }
 });
-
 function openVideoTrimModal(videoEl){
   if(!videoEl || !videoEl.src){ toast("No video selected"); return; }
   trimVideoElement = videoEl;
@@ -1533,10 +1500,11 @@ $("storyTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPr
 console.log("✅ Part 1/3 complete");
 /* ============================================================
    ReelHub - app.js PART 2/3
+   Video Menu + Player + Upload + DM + Block/Report + Watch History
 ============================================================ */
 
 /* ============================================================
-   VIDEO MENU MODAL
+   VIDEO MENU MODAL (⋮)
 ============================================================ */
 window.openVideoMenuModal = function(videoId){
   const v = videosCache.find(x => x.id === videoId);
@@ -1838,7 +1806,7 @@ window.openVideoPlayer = function(videoId){
 
   trackView(videoId);
 
-  // ✅ PHOTO POST — image viewer mein kholo
+  // PHOTO POST — image viewer mein kholo
   if(v.isPhoto){
     const imgEl = $("largeChatImage");
     if(imgEl){
@@ -2066,7 +2034,7 @@ $("saveVideoEditBtn")?.addEventListener("click", async ()=>{
   }catch(e){ toast("Update failed"); }
 });
 
-/* TRACK / LIKE / SAVE */
+/* TRACK VIEW / LIKE / SAVE */
 async function trackView(videoId){
   if(!currentUser || !videoId) return;
   if(processingViews.has(videoId)) return;
@@ -2415,7 +2383,7 @@ if(dropzoneEl){
 
 $("photoFile")?.addEventListener("change", (e)=>{
   const file = e.target.files[0];
-  if(!file){ return; }
+  if(!file) return;
   if(!file.type.startsWith("image/")){ toast("❌ Please select an image file"); e.target.value = ""; return; }
   if(file.size > 20 * 1024 * 1024){ toast("Photo too large (max 20MB)"); e.target.value = ""; return; }
   const preview = $("photoPreview");
@@ -2722,7 +2690,7 @@ $("bannerFile")?.addEventListener("change", async (e)=>{
   finally { e.target.value = ""; }
 });
 
-/* FOLLOW */
+/* FOLLOW SYSTEM */
 async function canViewUser(uid){
   if(!uid) return false;
   if(uid === currentUser?.uid) return true;
@@ -3551,7 +3519,95 @@ $("dmSearchInput")?.addEventListener("input", e=>{
 console.log("✅ Part 2/3 loaded");
 /* ============================================================
    ReelHub - app.js PART 3/3
+   ✅ FIXED Upload Functions + Groups + Comments + Share + Vault + Admin + Init
 ============================================================ */
+
+/* ============================================================
+   ✅ FIXED UPLOAD FUNCTIONS — Part 1 wale ko override karenge
+   (upload_preset hardcoded + console logs)
+============================================================ */
+function uploadToCloudinary(file, onProgress){
+  return new Promise((resolve, reject) => {
+    let resource = "image";
+    if(file.type.startsWith("video/")) resource = "video";
+    else if(!file.type.startsWith("image/")) resource = "raw";
+
+    const url = `https://api.cloudinary.com/v1_1/s3eresx6/${resource}/upload`;
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.timeout = 5 * 60 * 1000;
+
+    xhr.onload = () => {
+      if(xhr.status >= 200 && xhr.status < 300){
+        try{
+          const data = JSON.parse(xhr.responseText);
+          console.log("✅ Upload success:", data.secure_url);
+          resolve(data.secure_url);
+        }catch(e){
+          console.error("❌ Parse error:", e, xhr.responseText);
+          reject(e);
+        }
+      } else {
+        console.error("❌ Upload failed status:", xhr.status, xhr.responseText);
+        reject(new Error("Upload failed: " + xhr.status));
+      }
+    };
+    xhr.onerror = () => {
+      console.error("❌ Network error");
+      reject(new Error("Network error"));
+    };
+    xhr.ontimeout = () => {
+      console.error("❌ Upload timeout");
+      reject(new Error("Upload timeout"));
+    };
+    xhr.upload.onprogress = e => {
+      if(e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100));
+    };
+
+    const form = new FormData();
+    form.append("upload_preset", "reelhub_upload");
+    form.append("file", file);
+
+    console.log("📤 Uploading:", file.name, "| preset: reelhub_upload | cloud: s3eresx6");
+    xhr.send(form);
+  });
+}
+
+function uploadAudioToCloudinary(file, onProgress){
+  return new Promise((resolve, reject) => {
+    const url = `https://api.cloudinary.com/v1_1/s3eresx6/video/upload`;
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.timeout = 5 * 60 * 1000;
+
+    xhr.onload = () => {
+      if(xhr.status >= 200 && xhr.status < 300){
+        try{
+          const data = JSON.parse(xhr.responseText);
+          console.log("✅ Audio success:", data.secure_url);
+          resolve(data.secure_url);
+        }catch(e){
+          console.error("❌ Parse error:", e, xhr.responseText);
+          reject(e);
+        }
+      } else {
+        console.error("❌ Audio failed status:", xhr.status, xhr.responseText);
+        reject(new Error("Upload failed: " + xhr.status));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Network error"));
+    xhr.ontimeout = () => reject(new Error("Audio upload timeout"));
+    xhr.upload.onprogress = e => {
+      if(e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100));
+    };
+
+    const form = new FormData();
+    form.append("upload_preset", "reelhub_upload");
+    form.append("resource_type", "video");
+    form.append("file", file);
+    xhr.send(form);
+  });
+}
 
 /* ============================================================
    GROUPS
@@ -5214,12 +5270,14 @@ window.addEventListener("load", function(){
   setTimeout(function(){
     if(typeof window.showMyAd === "function" && typeof window.reloadAds === "function"){
       window.reloadAds();
+      console.log("✅ Ads reloaded after page load");
     }
   }, 2000);
 });
 
 /* FINAL LOG */
 console.log("✅ ReelHub app.js FULL loaded!");
+console.log("✅ FIXED UPLOAD FUNCTIONS (preset hardcoded: reelhub_upload)");
 console.log("🎉 All features active:");
 console.log("  ✅ Video Feed + Shorts + Upload");
 console.log("  ✅ Custom Thumbnail + Photo Posts");
@@ -5234,15 +5292,11 @@ console.log("  ✅ Song Library (Admin)");
 console.log("  ✅ Video Editor (Trim/Rotate/Mute)");
 console.log("  ✅ Vault + Monetization + Notifications");
 console.log("  ✅ Ad Control System");
-console.log("🆕 NEW FEATURES:");
 console.log("  ✅ 📌 Pin top 3 videos");
 console.log("  ✅ 🎬 Video title search");
 console.log("  ✅ 📂 Category filter + 🔥 Trending");
-console.log("  ✅ 📺 Watch History");
-console.log("  ✅ ▶️ Continue Watching");
-console.log("  ✅ 🚫 Block User");
-console.log("  ✅ ⚠️ Report System");
+console.log("  ✅ 📺 Watch History + ▶️ Continue Watching");
+console.log("  ✅ 🚫 Block User + ⚠️ Report System");
 console.log("📷 PHOTO FIX:");
 console.log("  ✅ Photo feed mein image ki tarah dikhta hai");
 console.log("  ✅ Video player ki jagah image viewer");
-console.log("  ✅ Duration badge ki jagah 📷 icon");
