@@ -3599,3 +3599,1767 @@ $("dmSearchInput")?.addEventListener("input", e=>{
 });
 
 console.log("✅ Part 2/3 loaded");
+/* ============================================================
+   ReelHub - app.js PART 3/3
+   Groups + Comments + Share + Vault + Admin + Init
+============================================================ */
+
+/* ============================================================
+   UPLOAD FUNCTIONS — overrides Part 1 definitions
+============================================================ */
+function uploadToCloudinary(file, onProgress){
+  return new Promise((resolve, reject) => {
+    let resource = "image";
+    if(file.type.startsWith("video/")) resource = "video";
+    else if(!file.type.startsWith("image/")) resource = "raw";
+
+    const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resource}/upload`;
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.timeout = 5 * 60 * 1000;
+
+    xhr.onload = () => {
+      if(xhr.status >= 200 && xhr.status < 300){
+        try{
+          const data = JSON.parse(xhr.responseText);
+          console.log("✅ Upload success:", data.secure_url);
+          resolve(data.secure_url);
+        }catch(e){
+          console.error("❌ Parse error:", e, xhr.responseText);
+          reject(e);
+        }
+      } else {
+        console.error("❌ Upload failed status:", xhr.status, xhr.responseText);
+        reject(new Error("Upload failed: " + xhr.status));
+      }
+    };
+    xhr.onerror = () => {
+      console.error("❌ Network error");
+      reject(new Error("Network error"));
+    };
+    xhr.ontimeout = () => {
+      console.error("❌ Upload timeout");
+      reject(new Error("Upload timeout"));
+    };
+    xhr.upload.onprogress = e => {
+      if(e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100));
+    };
+
+    const form = new FormData();
+    form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    form.append("file", file);
+
+    console.log("📤 Uploading:", file.name, "| resource:", resource, "| preset:", CLOUDINARY_UPLOAD_PRESET);
+    xhr.send(form);
+  });
+}
+
+function uploadAudioToCloudinary(file, onProgress){
+  return new Promise((resolve, reject) => {
+    const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/video/upload`;
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    xhr.timeout = 5 * 60 * 1000;
+
+    xhr.onload = () => {
+      if(xhr.status >= 200 && xhr.status < 300){
+        try{
+          const data = JSON.parse(xhr.responseText);
+          console.log("✅ Audio success:", data.secure_url);
+          resolve(data.secure_url);
+        }catch(e){
+          console.error("❌ Parse error:", e, xhr.responseText);
+          reject(e);
+        }
+      } else {
+        console.error("❌ Audio failed status:", xhr.status, xhr.responseText);
+        reject(new Error("Upload failed: " + xhr.status));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Network error"));
+    xhr.ontimeout = () => reject(new Error("Audio upload timeout"));
+    xhr.upload.onprogress = e => {
+      if(e.lengthComputable) onProgress?.(Math.round(e.loaded / e.total * 100));
+    };
+
+    const form = new FormData();
+    form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+    form.append("resource_type", "video");
+    form.append("file", file);
+    xhr.send(form);
+  });
+}
+
+/* ============================================================
+   GROUPS
+============================================================ */
+function openCreateGroupModal(){
+  $("groupName").value = "";
+  $("groupDescription").value = "";
+  $("createGroupStatus").textContent = "";
+  $("groupPhotoPreview").src = "https://ui-avatars.com/api/?name=G&size=200&background=7c3aed&color=fff";
+  document.querySelectorAll("#groupTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
+  document.querySelector('#groupTypeGroup .yt-radio[data-value="public"]')?.classList.add("selected");
+  window.__selectedGroupType = "public";
+  window.__groupPhotoFile = null;
+  hideModal("advancedSettingsModal");
+  showModal("createGroupModal");
+}
+
+document.addEventListener("click", (e)=>{
+  const typeRadio = e.target.closest("#groupTypeGroup .yt-radio");
+  if(typeRadio){
+    e.preventDefault(); e.stopPropagation();
+    document.querySelectorAll("#groupTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
+    typeRadio.classList.add("selected");
+    window.__selectedGroupType = typeRadio.dataset.value;
+  }
+});
+
+$("groupPhotoPick")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("groupPhotoFile")?.click(); });
+
+$("groupPhotoFile")?.addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > GROUP_MAX_PHOTO_SIZE){ toast("Photo too large"); e.target.value = ""; return; }
+  window.__groupPhotoFile = file;
+  $("groupPhotoPreview").src = URL.createObjectURL(file);
+});
+
+$("createGroupBtn")?.addEventListener("click", async ()=>{
+  if(!currentUser){ toast("Login required"); return; }
+  const name = $("groupName").value.trim();
+  const description = $("groupDescription").value.trim();
+  const type = window.__selectedGroupType || "public";
+  const status = $("createGroupStatus");
+  if(!name){ status.style.color = "#ed4956"; status.textContent = "Group name required"; return; }
+  const btn = $("createGroupBtn");
+  if(btn){ btn.disabled = true; btn.textContent = "Creating..."; }
+  status.style.color = "#7c3aed"; status.textContent = "Creating...";
+  try{
+    let photoURL = "";
+    if(window.__groupPhotoFile){
+      status.textContent = "Uploading photo...";
+      photoURL = await uploadToCloudinary(window.__groupPhotoFile, (pct)=>{ status.textContent = "Photo " + pct + "%"; });
+    }
+    const groupData = {
+      name, description, photo: photoURL, type,
+      createdBy: currentUser.uid,
+      createdByName: currentProfile?.name || "User",
+      createdByPhoto: currentProfile?.photo || "",
+      members: [currentUser.uid], admins: [currentUser.uid], memberCount: 1,
+      createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+      lastMessage: "Group created", lastMessageAt: serverTimestamp()
+    };
+    const docRef = await addDoc(collection(db, "groups"), groupData);
+    await setDoc(doc(db, "groups", docRef.id, "members", currentUser.uid), {
+      userId: currentUser.uid, name: currentProfile?.name || "User",
+      username: currentProfile?.username || "", photo: currentProfile?.photo || "",
+      role: "admin", joinedAt: serverTimestamp()
+    });
+    await addDoc(collection(db, "groups", docRef.id, "messages"), {
+      userId: "system", userName: "System", text: `Group "${name}" was created`,
+      type: "system", createdAt: serverTimestamp()
+    });
+    status.style.color = "#22c55e"; status.textContent = "✅ Created!";
+    window.__groupPhotoFile = null;
+    toast("✅ Group created");
+    setTimeout(() => { hideModal("createGroupModal"); openGroupView(docRef.id); }, 600);
+  }catch(err){
+    console.error("Create group error:", err);
+    status.style.color = "#ed4956"; status.textContent = "Error: " + err.message;
+  }finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Create Group"; } }
+});
+
+function startMyGroupsListener(){
+  if(myGroupsUnsubscribe){ myGroupsUnsubscribe(); myGroupsUnsubscribe = null; }
+  if(!currentUser) return;
+  myGroupsUnsubscribe = onSnapshot(
+    query(collection(db, "groups"), where("members", "array-contains", currentUser.uid)),
+    snapshot=>{
+      myGroupsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      myGroupsCache.sort((a,b)=> timeValue(b.lastMessageAt || b.createdAt) - timeValue(a.lastMessageAt || a.createdAt));
+      renderGroupsList();
+    },
+    error=>console.error("My groups listener error:", error)
+  );
+}
+
+function renderGroupsList(){
+  const container = $("dmGroupsList");
+  if(!container) return;
+  if(!currentUser){ container.innerHTML = ""; return; }
+  if(!myGroupsCache.length){
+    container.innerHTML = `<div class="group-empty"><span class="icon">👥</span><h3>No groups yet</h3><p>Create your first group</p><button class="create-btn" id="createFirstGroupBtn">➕ Create Group</button></div>`;
+    $("createFirstGroupBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openCreateGroupModal(); });
+    return;
+  }
+  container.innerHTML = myGroupsCache.map(g => {
+    const badge = g.type === "public" ? `<span class="group-type-badge public">🌍 Public</span>` : `<span class="group-type-badge private">🔒 Private</span>`;
+    return `<div class="group-inbox-item" data-open-group="${esc(g.id)}">
+      <img src="${avatar(g.photo, g.name)}" alt="">
+      <div class="group-inbox-info"><strong>${esc(g.name)} ${badge}</strong><small>${esc(g.lastMessage || "No messages")}</small></div>
+      <div class="group-inbox-time">${timeAgo(g.lastMessageAt || g.createdAt)}</div>
+    </div>`;
+  }).join("");
+}
+
+async function openGroupView(groupId){
+  if(!groupId){ toast("Invalid group"); return; }
+  try{
+    const groupSnap = await getDoc(doc(db, "groups", groupId));
+    if(!groupSnap.exists()){ toast("Group not found"); return; }
+    currentGroupId = groupId;
+    currentGroupData = { id: groupId, ...groupSnap.data() };
+
+    $("groupViewModal").dataset.groupId = groupId;
+    $("groupViewTitle").textContent = currentGroupData.name || "Group";
+    $("groupViewPhoto").src = avatar(currentGroupData.photo, currentGroupData.name);
+    $("groupViewName").textContent = currentGroupData.name || "Group";
+    $("groupViewMeta").textContent = `${currentGroupData.memberCount || currentGroupData.members?.length || 0} members`;
+    $("groupViewType").innerHTML = currentGroupData.type === "public" ? "🌍 Public Group" : "🔒 Private Group";
+    $("groupViewDesc").textContent = currentGroupData.description || "No description";
+
+    const isMember = currentGroupData.members?.includes(currentUser.uid);
+    const isAdmin = currentGroupData.admins?.includes(currentUser.uid);
+
+    const joinBtn = $("groupJoinBtn");
+    const chatBtn = $("groupOpenChatBtn");
+    const leaveBtn = $("groupLeaveBtn");
+    const requestsTab = $("groupRequestsTab");
+
+    if(isMember){
+      if(joinBtn) joinBtn.style.display = "none";
+      if(chatBtn) chatBtn.style.display = "block";
+      if(leaveBtn) leaveBtn.style.display = "block";
+      if(requestsTab && isAdmin) requestsTab.style.display = "block";
+    } else {
+      if(joinBtn){
+        joinBtn.style.display = "block";
+        joinBtn.textContent = currentGroupData.type === "public" ? "Join Group" : "Request to Join";
+        joinBtn.onclick = async ()=>{
+          if(currentGroupData.type === "public") await joinPublicGroup(groupId);
+          else await sendGroupJoinRequest(groupId);
+        };
+      }
+      if(chatBtn) chatBtn.style.display = "none";
+      if(leaveBtn) leaveBtn.style.display = "none";
+      if(requestsTab) requestsTab.style.display = "none";
+    }
+
+    $("groupInfoCreator").textContent = currentGroupData.createdByName || "Unknown";
+    $("groupInfoDate").textContent = new Date(timeValue(currentGroupData.createdAt)).toLocaleDateString();
+    $("groupInfoId").textContent = groupId;
+
+    const editBtn = $("editGroupBtn");
+    if(editBtn) editBtn.style.display = (isAdmin || currentGroupData.createdBy === currentUser.uid) ? "flex" : "none";
+
+    await loadGroupMembers(groupId);
+    if(isAdmin) startGroupRequestsListener(groupId);
+
+    document.querySelectorAll("#groupTabs .yt-tab").forEach(t => t.classList.remove("active"));
+    document.querySelector("#groupTabs .yt-tab[data-gtab='members']")?.classList.add("active");
+    $("groupMembersTab")?.classList.remove("hidden");
+    $("groupRequestsTabContent")?.classList.add("hidden");
+    $("groupInfoTab")?.classList.add("hidden");
+
+    showModal("groupViewModal");
+  }catch(e){ console.error("openGroupView:", e); toast("Error"); }
+}
+
+async function loadGroupMembers(groupId){
+  const container = $("groupMembersTab");
+  if(!container) return;
+  try{
+    const snap = await getDocs(collection(db, "groups", groupId, "members"));
+    const members = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if(!members.length){ container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No members</div>`; return; }
+    const isAdmin = currentGroupData?.admins?.includes(currentUser.uid);
+    container.innerHTML = members.map(m => {
+      const isMemAdmin = currentGroupData?.admins?.includes(m.userId);
+      return `<div class="group-member-item">
+        <img src="${avatar(m.photo, m.name)}" class="group-member-open" data-uid="${esc(m.userId)}">
+        <div class="info group-member-open" data-uid="${esc(m.userId)}"><strong>${esc(m.name || "User")}</strong><small>@${esc(m.username || "user")}</small></div>
+        ${isMemAdmin ? `<span class="admin-badge">👑 Admin</span>` : ""}
+        ${isAdmin && m.userId !== currentUser.uid ? `<button class="remove-btn" data-remove-member="${esc(m.userId)}">Remove</button>` : ""}
+      </div>`;
+    }).join("");
+  }catch(e){ container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted)">Error</div>`; }
+}
+
+async function joinPublicGroup(groupId){
+  if(!currentUser){ toast("Login required"); return; }
+  try{
+    const groupSnap = await getDoc(doc(db, "groups", groupId));
+    if(!groupSnap.exists()) return;
+    const group = groupSnap.data();
+    if(group.members?.includes(currentUser.uid)){ toast("Already member"); return; }
+    if((group.memberCount || 0) >= GROUP_MAX_MEMBERS){ toast(`Group full`); return; }
+
+    await updateDoc(doc(db, "groups", groupId), {
+      members: [...(group.members || []), currentUser.uid],
+      memberCount: increment(1), updatedAt: serverTimestamp()
+    });
+    await setDoc(doc(db, "groups", groupId, "members", currentUser.uid), {
+      userId: currentUser.uid, name: currentProfile?.name || "User",
+      username: currentProfile?.username || "", photo: currentProfile?.photo || "",
+      role: "member", joinedAt: serverTimestamp()
+    });
+    await addDoc(collection(db, "groups", groupId, "messages"), {
+      userId: "system", userName: "System",
+      text: `${currentProfile?.name || "Someone"} joined the group`,
+      type: "system", createdAt: serverTimestamp()
+    });
+    toast("✅ Joined");
+    await openGroupView(groupId);
+  }catch(e){ toast("Failed"); }
+}
+
+async function sendGroupJoinRequest(groupId){
+  if(!currentUser) return;
+  try{
+    const reqId = currentUser.uid + "_" + groupId;
+    const reqSnap = await getDoc(doc(db, "group_join_requests", reqId));
+    if(reqSnap.exists()){ toast("Request already sent"); return; }
+
+    await setDoc(doc(db, "group_join_requests", reqId), {
+      groupId, userId: currentUser.uid,
+      userName: currentProfile?.name || "User",
+      userPhoto: currentProfile?.photo || "",
+      username: currentProfile?.username || "",
+      status: "pending", createdAt: serverTimestamp()
+    });
+
+    const groupSnap = await getDoc(doc(db, "groups", groupId));
+    if(groupSnap.exists()){
+      const admins = groupSnap.data().admins || [];
+      for(const adminUid of admins){
+        await addDoc(collection(db, "notifications"), {
+          to: adminUid, from: currentUser.uid, title: "👥 Join Request",
+          message: `${currentProfile?.name || "Someone"} wants to join "${groupSnap.data().name}"`,
+          createdAt: serverTimestamp()
+        });
+      }
+    }
+    toast("✅ Request sent");
+  }catch(e){ toast("Failed"); }
+}
+
+function startGroupRequestsListener(groupId){
+  if(groupRequestsUnsubscribe){ groupRequestsUnsubscribe(); groupRequestsUnsubscribe = null; }
+  if(!groupId) return;
+  groupRequestsUnsubscribe = onSnapshot(
+    query(collection(db, "group_join_requests"), where("groupId", "==", groupId)),
+    snapshot=>{
+      groupJoinRequestsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      groupJoinRequestsCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
+      const badge = $("groupRequestsCount");
+      if(badge) badge.textContent = groupJoinRequestsCache.length ? `(${groupJoinRequestsCache.length})` : "";
+      renderGroupRequests();
+    },
+    error=>console.error("Group requests listener error:", error)
+  );
+}
+
+function renderGroupRequests(){
+  const container = $("groupRequestsTabContent");
+  if(!container) return;
+  if(!groupJoinRequestsCache.length){
+    container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No pending requests</div>`;
+    return;
+  }
+  container.innerHTML = groupJoinRequestsCache.map(r => `
+    <div class="group-request-item">
+      <img src="${avatar(r.userPhoto, r.userName)}" class="group-request-open" data-uid="${esc(r.userId)}">
+      <div class="info group-request-open" data-uid="${esc(r.userId)}"><strong>${esc(r.userName)}</strong><small>@${esc(r.username || "user")}</small></div>
+      <div class="group-request-actions">
+        <button class="accept-btn" data-accept-group-request="${esc(r.id)}">Accept</button>
+        <button class="reject-btn" data-reject-group-request="${esc(r.id)}">Reject</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+async function acceptGroupJoinRequest(reqId){
+  try{
+    const reqSnap = await getDoc(doc(db, "group_join_requests", reqId));
+    if(!reqSnap.exists()) return;
+    const req = reqSnap.data();
+    const groupId = req.groupId;
+    const groupSnap = await getDoc(doc(db, "groups", groupId));
+    if(!groupSnap.exists()) return;
+    const group = groupSnap.data();
+    if((group.memberCount || 0) >= GROUP_MAX_MEMBERS){ toast("Group full"); return; }
+
+    await updateDoc(doc(db, "groups", groupId), {
+      members: [...(group.members || []), req.userId],
+      memberCount: increment(1), updatedAt: serverTimestamp()
+    });
+    await setDoc(doc(db, "groups", groupId, "members", req.userId), {
+      userId: req.userId, name: req.userName || "User",
+      username: req.username || "", photo: req.userPhoto || "",
+      role: "member", joinedAt: serverTimestamp()
+    });
+    await addDoc(collection(db, "groups", groupId, "messages"), {
+      userId: "system", userName: "System",
+      text: `${req.userName || "Someone"} joined the group`,
+      type: "system", createdAt: serverTimestamp()
+    });
+    await addDoc(collection(db, "notifications"), {
+      to: req.userId, from: currentUser.uid, title: "✅ Request Accepted",
+      message: `Your request to join "${group.name}" was accepted`,
+      createdAt: serverTimestamp()
+    });
+    await deleteDoc(doc(db, "group_join_requests", reqId));
+    toast("✅ Accepted");
+  }catch(e){ toast("Failed"); }
+}
+
+async function rejectGroupJoinRequest(reqId){
+  try{
+    const reqSnap = await getDoc(doc(db, "group_join_requests", reqId));
+    if(!reqSnap.exists()) return;
+    const req = reqSnap.data();
+    await addDoc(collection(db, "notifications"), {
+      to: req.userId, from: currentUser.uid, title: "❌ Request Rejected",
+      message: "Your request was rejected", createdAt: serverTimestamp()
+    });
+    await deleteDoc(doc(db, "group_join_requests", reqId));
+    toast("Rejected");
+  }catch(e){ toast("Failed"); }
+}
+
+async function leaveGroup(groupId){
+  if(!currentUser) return;
+  try{
+    const groupSnap = await getDoc(doc(db, "groups", groupId));
+    if(!groupSnap.exists()) return;
+    const group = groupSnap.data();
+    if(group.createdBy === currentUser.uid){ toast("You are creator. Delete instead."); return; }
+
+    await updateDoc(doc(db, "groups", groupId), {
+      members: (group.members || []).filter(uid => uid !== currentUser.uid),
+      memberCount: increment(-1), updatedAt: serverTimestamp()
+    });
+    await deleteDoc(doc(db, "groups", groupId, "members", currentUser.uid));
+    await addDoc(collection(db, "groups", groupId, "messages"), {
+      userId: "system", userName: "System",
+      text: `${currentProfile?.name || "Someone"} left the group`,
+      type: "system", createdAt: serverTimestamp()
+    });
+    hideModal("groupViewModal");
+    toast("✅ Left group");
+  }catch(e){ toast("Failed"); }
+}
+
+async function deleteGroup(groupId){
+  if(!currentUser) return;
+  try{
+    const groupSnap = await getDoc(doc(db, "groups", groupId));
+    if(!groupSnap.exists()) return;
+    const group = groupSnap.data();
+    if(group.createdBy !== currentUser.uid && !isAdminUser()){ toast("Only creator can delete"); return; }
+    if(!confirm(`Delete "${group.name}"?`)) return;
+
+    const messages = await getDocs(collection(db, "groups", groupId, "messages"));
+    for(const m of messages.docs) await deleteDoc(m.ref);
+    const members = await getDocs(collection(db, "groups", groupId, "members"));
+    for(const m of members.docs) await deleteDoc(m.ref);
+    const reqs = await getDocs(query(collection(db, "group_join_requests"), where("groupId", "==", groupId)));
+    for(const r of reqs.docs) await deleteDoc(r.ref);
+
+    await deleteDoc(doc(db, "groups", groupId));
+    hideModal("groupViewModal"); hideModal("groupMenuModal");
+    toast("🗑️ Group deleted");
+  }catch(e){ toast("Failed"); }
+}
+
+async function removeGroupMember(groupId, memberUid){
+  if(!currentUser) return;
+  try{
+    const groupSnap = await getDoc(doc(db, "groups", groupId));
+    if(!groupSnap.exists()) return;
+    const group = groupSnap.data();
+    if(!group.admins?.includes(currentUser.uid)){ toast("Only admins"); return; }
+    if(memberUid === currentUser.uid){ toast("Can't remove self"); return; }
+
+    await updateDoc(doc(db, "groups", groupId), {
+      members: (group.members || []).filter(uid => uid !== memberUid),
+      memberCount: increment(-1), updatedAt: serverTimestamp()
+    });
+    await deleteDoc(doc(db, "groups", groupId, "members", memberUid));
+    toast("✅ Removed");
+    await loadGroupMembers(groupId);
+  }catch(e){ toast("Failed"); }
+}
+
+async function openEditGroupModal(){
+  if(!currentGroupId || !currentGroupData){ toast("Group not loaded"); return; }
+  const isAdmin = currentGroupData.admins?.includes(currentUser.uid);
+  const isCreator = currentGroupData.createdBy === currentUser.uid;
+  if(!isAdmin && !isCreator){ toast("Only admins can edit"); return; }
+
+  $("editGroupName").value = currentGroupData.name || "";
+  $("editGroupDescription").value = currentGroupData.description || "";
+  $("editGroupPhotoPreview").src = avatar(currentGroupData.photo, currentGroupData.name);
+  $("editGroupPhotoFile").value = "";
+  $("editGroupStatus").textContent = "";
+
+  document.querySelectorAll("#editGroupTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
+  document.querySelector(`#editGroupTypeGroup .yt-radio[data-value="${currentGroupData.type}"]`)?.classList.add("selected");
+
+  window.__editGroupType = currentGroupData.type;
+  window.__editGroupPhotoFile = null;
+
+  hideModal("groupViewModal");
+  showModal("editGroupModal");
+}
+
+document.addEventListener("click", (e)=>{
+  const typeRadio = e.target.closest("#editGroupTypeGroup .yt-radio");
+  if(typeRadio){
+    e.preventDefault(); e.stopPropagation();
+    document.querySelectorAll("#editGroupTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
+    typeRadio.classList.add("selected");
+    window.__editGroupType = typeRadio.dataset.value;
+  }
+});
+
+$("editGroupPhotoPick")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("editGroupPhotoFile")?.click(); });
+
+$("editGroupPhotoFile")?.addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > GROUP_MAX_PHOTO_SIZE){ toast("Too large"); e.target.value = ""; return; }
+  window.__editGroupPhotoFile = file;
+  $("editGroupPhotoPreview").src = URL.createObjectURL(file);
+});
+
+$("saveGroupEditBtn")?.addEventListener("click", async ()=>{
+  if(!currentGroupId) return;
+  const name = $("editGroupName").value.trim();
+  const description = $("editGroupDescription").value.trim();
+  const type = window.__editGroupType || "public";
+  const status = $("editGroupStatus");
+  if(!name){ status.style.color = "#ed4956"; status.textContent = "Name required"; return; }
+
+  const btn = $("saveGroupEditBtn");
+  if(btn){ btn.disabled = true; btn.textContent = "Saving..."; }
+  status.style.color = "#7c3aed"; status.textContent = "Saving...";
+
+  try{
+    let photoURL = currentGroupData.photo || "";
+    if(window.__editGroupPhotoFile){
+      status.textContent = "Uploading photo...";
+      photoURL = await uploadToCloudinary(window.__editGroupPhotoFile, (pct)=>{ status.textContent = "Photo " + pct + "%"; });
+    }
+
+    await updateDoc(doc(db, "groups", currentGroupId), {
+      name, description, photo: photoURL, type, updatedAt: serverTimestamp()
+    });
+
+    await addDoc(collection(db, "groups", currentGroupId, "messages"), {
+      userId: "system", userName: "System",
+      text: `Group info was updated by ${currentProfile?.name || "admin"}`,
+      type: "system", createdAt: serverTimestamp()
+    });
+
+    status.style.color = "#22c55e"; status.textContent = "✅ Saved!";
+    window.__editGroupPhotoFile = null;
+    toast("✅ Group updated");
+    setTimeout(() => { hideModal("editGroupModal"); openGroupView(currentGroupId); }, 700);
+  }catch(err){
+    status.style.color = "#ed4956"; status.textContent = "Error: " + err.message;
+  }finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Save Changes"; } }
+});
+
+document.addEventListener("click", async (e)=>{
+  const t = e.target;
+
+  const openGroup = t.closest("[data-open-group]");
+  if(openGroup){ e.preventDefault(); e.stopPropagation(); const gid = openGroup.dataset.openGroup; if(gid) await openGroupView(gid); return; }
+
+  const memberOpen = t.closest(".group-member-open");
+  if(memberOpen){ e.preventDefault(); e.stopPropagation(); const uid = memberOpen.dataset.uid; if(uid) openPublicProfile(uid); return; }
+
+  const reqOpen = t.closest(".group-request-open");
+  if(reqOpen){ e.preventDefault(); e.stopPropagation(); const uid = reqOpen.dataset.uid; if(uid) openPublicProfile(uid); return; }
+
+  const acceptReq = t.closest("[data-accept-group-request]");
+  if(acceptReq){ e.preventDefault(); e.stopPropagation(); const reqId = acceptReq.dataset.acceptGroupRequest; if(reqId) await acceptGroupJoinRequest(reqId); return; }
+
+  const rejectReq = t.closest("[data-reject-group-request]");
+  if(rejectReq){ e.preventDefault(); e.stopPropagation(); const reqId = rejectReq.dataset.rejectGroupRequest; if(reqId) await rejectGroupJoinRequest(reqId); return; }
+
+  const removeMember = t.closest("[data-remove-member]");
+  if(removeMember){
+    e.preventDefault(); e.stopPropagation();
+    const memberUid = removeMember.dataset.removeMember;
+    if(memberUid && currentGroupId && confirm("Remove this member?")) await removeGroupMember(currentGroupId, memberUid);
+    return;
+  }
+
+  const editGroupBtn = t.closest("#editGroupBtn");
+  if(editGroupBtn){ e.preventDefault(); e.stopPropagation(); await openEditGroupModal(); return; }
+});
+
+$("createGroupFromSettingsBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openCreateGroupModal(); });
+$("myGroupsBtn")?.addEventListener("click", (e)=>{
+  e.preventDefault(); e.stopPropagation();
+  hideModal("advancedSettingsModal");
+  document.querySelectorAll(".panel").forEach(p => p.classList.add("hidden"));
+  $("messagesPanel")?.classList.remove("hidden");
+  document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
+  document.querySelector('[data-panel="messagesPanel"]')?.classList.add("active");
+  switchToGroupsTab();
+});
+$("newGroupBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openCreateGroupModal(); });
+
+function switchToChatsTab(){
+  document.querySelectorAll("#dmTabs .dm-tab").forEach(t => { t.classList.remove("active"); t.style.borderBottomColor = "transparent"; t.style.color = "var(--muted)"; });
+  const tab = document.querySelector('#dmTabs .dm-tab[data-dmtab="chats"]');
+  if(tab){ tab.classList.add("active"); tab.style.borderBottomColor = "var(--primary)"; tab.style.color = "var(--primary)"; }
+  $("dmInboxList")?.classList.remove("hidden");
+  $("dmGroupsList")?.classList.add("hidden");
+}
+
+function switchToGroupsTab(){
+  document.querySelectorAll("#dmTabs .dm-tab").forEach(t => { t.classList.remove("active"); t.style.borderBottomColor = "transparent"; t.style.color = "var(--muted)"; });
+  const tab = document.querySelector('#dmTabs .dm-tab[data-dmtab="groups"]');
+  if(tab){ tab.classList.add("active"); tab.style.borderBottomColor = "var(--primary)"; tab.style.color = "var(--primary)"; }
+  $("dmInboxList")?.classList.add("hidden");
+  $("dmGroupsList")?.classList.remove("hidden");
+  renderGroupsList();
+}
+
+document.addEventListener("click", (e)=>{
+  const tab = e.target.closest("#dmTabs .dm-tab");
+  if(!tab) return;
+  e.preventDefault(); e.stopPropagation();
+  if(tab.dataset.dmtab === "groups") switchToGroupsTab();
+  else switchToChatsTab();
+});
+
+async function openGroupChat(groupId){
+  if(!groupId) return;
+  try{
+    const groupSnap = await getDoc(doc(db, "groups", groupId));
+    if(!groupSnap.exists()) return;
+    currentGroupId = groupId;
+    currentGroupData = { id: groupId, ...groupSnap.data() };
+
+    $("groupChatAvatar").src = avatar(currentGroupData.photo, currentGroupData.name);
+    $("groupChatName").textContent = currentGroupData.name || "Group";
+    $("groupChatMeta").textContent = `${currentGroupData.memberCount || 0} members`;
+
+    hideModal("groupViewModal");
+    showModal("groupChatModal");
+    startGroupChatListener(groupId);
+    setTimeout(()=> $("groupChatInput")?.focus(), 300);
+  }catch(e){ toast("Error"); }
+}
+
+function startGroupChatListener(groupId){
+  if(groupChatUnsubscribe){ groupChatUnsubscribe(); groupChatUnsubscribe = null; }
+  if(!groupId) return;
+  groupChatUnsubscribe = onSnapshot(
+    query(collection(db, "groups", groupId, "messages")),
+    snapshot=>{
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
+      renderGroupMessages(list);
+    },
+    error=>console.error("Group chat listener error:", error)
+  );
+}
+
+function renderGroupMessages(list){
+  const container = $("groupChatMessages");
+  if(!container) return;
+  if(!list.length){
+    container.innerHTML = `<div class="group-chat-empty"><span class="icon">💬</span><p>No messages yet</p></div>`;
+    return;
+  }
+  container.innerHTML = list.map(m => {
+    const mine = m.userId === currentUser.uid;
+    if(m.type === "system"){
+      return `<div style="text-align:center;padding:10px 20px;font-size:11.5px;color:var(--muted);font-style:italic">${esc(m.text)}</div>`;
+    }
+    const senderName = mine ? "" : `<span class="sender-name">${esc(m.userName || "User")}</span>`;
+    if(m.type === "text" || !m.type){
+      return `<div class="dm-msg ${mine?"me":"them"}">${senderName}${esc(m.text)}<small>${timeAgo(m.createdAt)}</small></div>`;
+    }
+    if(m.type === "image" && m.imageURL){
+      return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">${senderName}<div class="group-msg-image" data-open-group-image="${esc(m.imageURL)}"><img src="${esc(m.imageURL)}" alt="Photo"></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
+    }
+    if(m.type === "video" && m.videoURL){
+      return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">${senderName}<div class="group-msg-video"><video src="${esc(m.videoURL)}" controls playsinline preload="metadata"></video></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
+    }
+    if(m.type === "file" && m.fileURL){
+      const fInfo = getFileIcon(m.fileName, m.fileType);
+      return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">${senderName}<div class="group-msg-file" data-open-group-file="${esc(m.fileURL)}" data-file-name="${esc(m.fileName)}"><div class="file-icon ${fInfo.cls}">${fInfo.icon}</div><div class="file-info"><strong>${esc(m.fileName || "File")}</strong><small>${formatFileSize(m.fileSize || 0)}</small></div><div class="file-download">⬇️</div></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
+    }
+    return "";
+  }).join("");
+  container.scrollTop = container.scrollHeight;
+}
+
+$("groupChatSendBtn")?.addEventListener("click", sendGroupMessage);
+$("groupChatInput")?.addEventListener("keydown", (e)=>{ if(e.key === "Enter"){ e.preventDefault(); sendGroupMessage(); } });
+
+async function sendGroupMessage(){
+  const input = $("groupChatInput");
+  if(!input || !currentGroupId) return;
+  const text = input.value.trim();
+  if(!text) return;
+  const now = Date.now();
+  if(now - lastSentMessageTime < MESSAGE_COOLDOWN) return;
+  lastSentMessageTime = now;
+  input.value = "";
+  try{
+    await addDoc(collection(db, "groups", currentGroupId, "messages"), {
+      userId: currentUser.uid, userName: currentProfile?.name || "User",
+      userPhoto: currentProfile?.photo || "", text, type: "text",
+      createdAt: serverTimestamp()
+    });
+    await updateDoc(doc(db, "groups", currentGroupId), {
+      lastMessage: text, lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp()
+    });
+  }catch(e){ toast("Send failed"); input.value = text; }
+}
+
+$("groupAttachBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("groupAttachMenu")?.classList.toggle("show"); });
+
+document.addEventListener("click", (e)=>{
+  const menu = $("groupAttachMenu");
+  const btn = $("groupAttachBtn");
+  if(!menu || !btn) return;
+  if(!menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove("show");
+});
+
+$("groupAttachPhotoBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("groupAttachMenu")?.classList.remove("show"); $("groupPhotoFile2")?.click(); });
+$("groupAttachVideoBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("groupAttachMenu")?.classList.remove("show"); $("groupVideoFile2")?.click(); });
+$("groupAttachPdfBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("groupAttachMenu")?.classList.remove("show"); $("groupPdfFile")?.click(); });
+
+$("groupPhotoFile2")?.addEventListener("change", async (e)=>{ const f = e.target.files[0]; if(!f || !currentGroupId) return; await sendGroupPhoto(f); e.target.value = ""; });
+$("groupVideoFile2")?.addEventListener("change", async (e)=>{ const f = e.target.files[0]; if(!f || !currentGroupId) return; await sendGroupVideo(f); e.target.value = ""; });
+$("groupPdfFile")?.addEventListener("change", async (e)=>{ const f = e.target.files[0]; if(!f || !currentGroupId) return; await sendGroupPdf(f); e.target.value = ""; });
+
+async function sendGroupPhoto(file){
+  if(file.size > GROUP_MAX_PHOTO_SIZE){ toast("Photo too large"); return; }
+  try{
+    toast("Uploading photo...");
+    const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("Photo " + pct + "%"); });
+    await addDoc(collection(db, "groups", currentGroupId, "messages"), {
+      userId: currentUser.uid, userName: currentProfile?.name || "User",
+      userPhoto: currentProfile?.photo || "", text: "", type: "image", imageURL: url,
+      createdAt: serverTimestamp()
+    });
+    await updateDoc(doc(db, "groups", currentGroupId), { lastMessage: "📷 Photo", lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    toast("✅ Photo sent");
+  }catch(e){ toast("Photo failed"); }
+}
+
+async function sendGroupVideo(file){
+  if(file.size > GROUP_MAX_VIDEO_SIZE){ toast("Video too large"); return; }
+  try{
+    toast("Uploading video...");
+    const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("Video " + pct + "%"); });
+    await addDoc(collection(db, "groups", currentGroupId, "messages"), {
+      userId: currentUser.uid, userName: currentProfile?.name || "User",
+      userPhoto: currentProfile?.photo || "", text: "", type: "video", videoURL: url,
+      createdAt: serverTimestamp()
+    });
+    await updateDoc(doc(db, "groups", currentGroupId), { lastMessage: "🎥 Video", lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    toast("✅ Video sent");
+  }catch(e){ toast("Video failed"); }
+}
+
+async function sendGroupPdf(file){
+  if(file.size > GROUP_MAX_PDF_SIZE){ toast("File too large"); return; }
+  try{
+    toast("Uploading file...");
+    const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("File " + pct + "%"); });
+    await addDoc(collection(db, "groups", currentGroupId, "messages"), {
+      userId: currentUser.uid, userName: currentProfile?.name || "User",
+      userPhoto: currentProfile?.photo || "", text: "", type: "file",
+      fileURL: url, fileName: file.name, fileSize: file.size, fileType: file.type,
+      createdAt: serverTimestamp()
+    });
+    await updateDoc(doc(db, "groups", currentGroupId), { lastMessage: "📄 " + file.name, lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    toast("✅ File sent");
+  }catch(e){ toast("File failed"); }
+}
+
+document.addEventListener("click", (e)=>{
+  const img = e.target.closest("[data-open-group-image]");
+  if(img){
+    e.preventDefault(); e.stopPropagation();
+    const url = img.dataset.openGroupImage;
+    if(url){ if($("largeChatImage")) $("largeChatImage").src = url; showModal("imageViewerModal"); }
+    return;
+  }
+  const file = e.target.closest("[data-open-group-file]");
+  if(file){
+    e.preventDefault(); e.stopPropagation();
+    const url = file.dataset.openGroupFile;
+    const name = file.dataset.fileName || "file";
+    if(url){
+      const a = document.createElement("a");
+      a.href = url; a.download = name; a.target = "_blank";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      toast("Opening...");
+    }
+    return;
+  }
+});
+
+$("groupChatInfoBtn")?.addEventListener("click", (e)=>{
+  e.preventDefault(); e.stopPropagation();
+  hideModal("groupChatModal");
+  if(currentGroupId) openGroupView(currentGroupId);
+});
+
+$("groupOpenChatBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(currentGroupId) openGroupChat(currentGroupId); });
+
+$("groupLeaveBtn")?.addEventListener("click", async (e)=>{
+  e.preventDefault(); e.stopPropagation();
+  if(!currentGroupId) return;
+  if(confirm("Leave this group?")) await leaveGroup(currentGroupId);
+});
+
+document.addEventListener("click", (e)=>{
+  const tab = e.target.closest("#groupTabs .yt-tab");
+  if(!tab) return;
+  e.preventDefault(); e.stopPropagation();
+  const gtab = tab.dataset.gtab;
+  if(!gtab) return;
+  document.querySelectorAll("#groupTabs .yt-tab").forEach(t => t.classList.remove("active"));
+  tab.classList.add("active");
+  $("groupMembersTab")?.classList.add("hidden");
+  $("groupRequestsTabContent")?.classList.add("hidden");
+  $("groupInfoTab")?.classList.add("hidden");
+  if(gtab === "members") $("groupMembersTab")?.classList.remove("hidden");
+  else if(gtab === "requests") $("groupRequestsTabContent")?.classList.remove("hidden");
+  else if(gtab === "info") $("groupInfoTab")?.classList.remove("hidden");
+});
+
+/* ============================================================
+   COMMENTS
+============================================================ */
+function openComments(videoId){
+  currentCommentVideoId = videoId;
+  showModal("commentsModal");
+  loadComments(videoId);
+}
+
+function loadComments(videoId){
+  if(commentsUnsubscribe){ commentsUnsubscribe(); commentsUnsubscribe = null; }
+  commentsUnsubscribe = onSnapshot(
+    collection(db,"videos",videoId,"comments"),
+    snapshot=>{
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
+      if(!list.length){
+        $("commentsList").innerHTML = `<div class="yt-empty"><div style="font-size:42px;margin-bottom:10px">💬</div><p>No comments yet</p></div>`;
+        return;
+      }
+      $("commentsList").innerHTML = list.map(c=>{
+        const mine = currentUser && c.userId === currentUser.uid;
+        return `<div class="comment-item">
+          <img src="${avatar(c.userPhoto, c.userName)}">
+          <div class="comment-content">
+            <div class="name">${esc(c.userName || "User")}</div>
+            <div class="text">${esc(c.text)}</div>
+            <div class="actions">
+              <span style="font-size:11px;color:var(--muted)">${timeAgo(c.createdAt)}</span>
+              ${mine || isAdminUser() ? `<button data-delete-comment="${esc(videoId)}|${esc(c.id)}">Delete</button>` : ""}
+            </div>
+          </div>
+        </div>`;
+      }).join("");
+    },
+    error=>console.error("Comments listener error:", error)
+  );
+}
+
+$("sendCommentBtn")?.addEventListener("click", sendComment);
+$("commentInput")?.addEventListener("keydown", e=>{ if(e.key === "Enter") sendComment(); });
+
+async function sendComment(){
+  const text = $("commentInput").value.trim();
+  if(!text || !currentCommentVideoId) return;
+  try{
+    await addDoc(collection(db,"videos",currentCommentVideoId,"comments"), {
+      userId: currentUser.uid, userName: currentProfile?.name || "User",
+      userPhoto: currentProfile?.photo || "", text, createdAt: serverTimestamp()
+    });
+    const videoSnap = await getDoc(doc(db,"videos",currentCommentVideoId));
+    if(videoSnap.exists()){
+      const ownerId = videoSnap.data().userId;
+      if(ownerId !== currentUser.uid){
+        await addDoc(collection(db,"notifications"), {
+          to: ownerId, from: currentUser.uid, title: "💬 New Comment",
+          message: (currentProfile?.name || "Someone") + ": " + text.slice(0,50),
+          createdAt: serverTimestamp()
+        });
+      }
+    }
+    $("commentInput").value = "";
+  }catch(e){ toast("Comment failed"); }
+}
+
+async function deleteComment(videoId, commentId){
+  try{
+    const ref = doc(db,"videos",videoId,"comments",commentId);
+    const snap = await getDoc(ref);
+    if(!snap.exists()) return;
+    if(snap.data().userId !== currentUser.uid && !isAdminUser()) return;
+    if(!confirm("Delete comment?")) return;
+    await deleteDoc(ref);
+    toast("🗑️ Comment deleted");
+  }catch(e){ toast("Delete failed"); }
+}
+
+/* ============================================================
+   SHARE
+============================================================ */
+async function openShareSheet(videoId){
+  shareVideoId = videoId;
+  showModal("shareSheet");
+  const list = $("shareUserList");
+  list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">Loading...</div>`;
+  try{
+    const chatUids = new Set();
+    myChatsCache.forEach(c=>{ const other = c.members.find(uid => uid !== currentUser.uid); if(other && !isUserBlocked(other)) chatUids.add(other); });
+    const followUids = [...myFollowsCache].filter(uid => !isUserBlocked(uid));
+    const allUids = new Set([...followUids, ...chatUids]);
+    if(!allUids.size){ list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">Follow users to share</div>`; return; }
+    const chips = [];
+    for(const uid of Array.from(allUids).slice(0, 20)){
+      const p = await getProfile(uid);
+      chips.push(`<div class="share-user-chip" data-share-user="${esc(uid)}"><img src="${avatar(p.photo, p.name)}"><span>${esc(p.name.split(" ")[0])}</span></div>`);
+    }
+    list.innerHTML = chips.join("");
+  }catch(e){ list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">Error</div>`; }
+}
+
+async function shareToUser(uid){
+  if(!shareVideoId || !uid) return;
+  if(isUserBlocked(uid)){ toast("User is blocked"); return; }
+  const v = videosCache.find(x => x.id === shareVideoId);
+  if(!v) return;
+  const chatId = [currentUser.uid, uid].sort().join("_");
+  try{
+    await setDoc(doc(db,"chats",chatId), { members: [currentUser.uid, uid], updatedAt: serverTimestamp() }, { merge: true });
+    await addDoc(collection(db,"chats",chatId,"messages"), {
+      userId: currentUser.uid, userName: currentProfile?.name || "User",
+      text: "", type: "shared_video", videoId: shareVideoId, videoURL: v.videoURL, videoTitle: v.title || "Video",
+      createdAt: serverTimestamp()
+    });
+    await updateDoc(doc(db,"chats",chatId), { lastMessage: "📹 Shared a video", updatedAt: serverTimestamp() });
+    hideModal("shareSheet");
+    toast("✅ Video shared");
+  }catch(e){ toast("Share failed"); }
+}
+
+$("shareCopyLink")?.addEventListener("click", async()=>{
+  if(!shareVideoId) return;
+  const url = location.origin + location.pathname + "?video=" + shareVideoId;
+  try{ await navigator.clipboard.writeText(url); toast("Link copied"); hideModal("shareSheet"); }
+  catch(e){ toast("Copy failed"); }
+});
+
+$("shareNative")?.addEventListener("click", async()=>{
+  if(!shareVideoId) return;
+  const url = location.origin + location.pathname + "?video=" + shareVideoId;
+  try{
+    if(navigator.share){ await navigator.share({ title: "ReelHub Video", text: "Watch on ReelHub 🎬", url }); }
+    else { await navigator.clipboard.writeText(url); toast("Link copied"); }
+    hideModal("shareSheet");
+  }catch(e){}
+});
+
+$("shareWhatsApp")?.addEventListener("click", ()=>{
+  if(!shareVideoId) return;
+  const url = location.origin + location.pathname + "?video=" + shareVideoId;
+  window.open("https://wa.me/?text=" + encodeURIComponent("Watch this on ReelHub 🎬: " + url), "_blank");
+  hideModal("shareSheet");
+});
+
+$("shareInstagram")?.addEventListener("click", async ()=>{
+  if(!shareVideoId) return;
+  const url = location.origin + location.pathname + "?video=" + shareVideoId;
+  try{ await navigator.clipboard.writeText(url); toast("Link copied — Instagram pe paste karo"); window.open("https://www.instagram.com/", "_blank"); }
+  catch(e){ toast("Copy failed"); }
+  hideModal("shareSheet");
+});
+
+$("shareFacebook")?.addEventListener("click", ()=>{
+  if(!shareVideoId) return;
+  const url = location.origin + location.pathname + "?video=" + shareVideoId;
+  window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank");
+  hideModal("shareSheet");
+});
+
+$("shareTwitter")?.addEventListener("click", ()=>{
+  if(!shareVideoId) return;
+  const url = location.origin + location.pathname + "?video=" + shareVideoId;
+  window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent("Watch this 🎬") + "&url=" + encodeURIComponent(url), "_blank");
+  hideModal("shareSheet");
+});
+
+/* ============================================================
+   DEEP LINK
+============================================================ */
+function getVideoIdFromURL(){
+  const params = new URLSearchParams(location.search);
+  return params.get("video");
+}
+
+async function openVideoByDeepLink(videoId){
+  if(!videoId) return;
+  let attempts = 0;
+  while(videosCache.length === 0 && attempts < 20){ await new Promise(r => setTimeout(r, 300)); attempts++; }
+  const v = videosCache.find(x => x.id === videoId);
+  if(!v){ toast("Video not found"); return; }
+  if(v.visibility === "private" && v.userId !== currentUser?.uid){ toast("Private video"); return; }
+  if(isUserBlocked(v.userId)){ toast("Video unavailable"); return; }
+  const canView = await canViewUserVideos(v.userId);
+  if(!canView){ toast("Private account"); return; }
+  await trackView(videoId);
+  const banner = $("deepLinkBanner");
+  if(banner){ banner.classList.add("show"); setTimeout(()=> banner.classList.remove("show"), 3000); }
+  window.openVideoPlayer(videoId);
+}
+
+async function checkDeepLink(){
+  if(deepLinkChecked) return;
+  const vid = getVideoIdFromURL();
+  if(!vid) return;
+  deepLinkChecked = true;
+  await openVideoByDeepLink(vid);
+}
+
+/* ============================================================
+   MONETIZATION
+============================================================ */
+async function renderMonetizationTab(){
+  const container = $("monetizationTab");
+  if(!container || !currentUser) return;
+  try{
+    const profile = await getProfile(currentUser.uid);
+    const followers = Number(profile.followers || 0);
+    const watchTime = Number(profile.totalWatchTime || 0);
+    const views = Number(profile.totalViews || 0);
+    const status = profile.monetizationStatus || "none";
+    const followersComplete = followers >= MONETIZATION_REQUIREMENTS.followers;
+    const watchTimeComplete = watchTime >= MONETIZATION_REQUIREMENTS.watchTime;
+    const viewsComplete = views >= MONETIZATION_REQUIREMENTS.views;
+    const allComplete = followersComplete && watchTimeComplete && viewsComplete;
+
+    let statusBadge = "", actionButton = "";
+    if(status === "approved"){ statusBadge = `<div class="monetization-status-badge approved">✅ Active</div>`; actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">🎉 Monetized!</p>`; }
+    else if(status === "pending"){ statusBadge = `<div class="monetization-status-badge pending">⏳ Pending</div>`; actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Under review.</p>`; }
+    else if(status === "rejected"){ statusBadge = `<div class="monetization-status-badge rejected">❌ Rejected</div>`; actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Try again.</p>`; }
+    else {
+      statusBadge = `<div class="monetization-status-badge none">💰 Not Applied</div>`;
+      actionButton = allComplete ? `<button class="monetization-apply-btn" id="openMonetizationModalBtn">💰 Apply</button>` : `<button class="monetization-apply-btn" disabled>🔒 Complete requirements</button>`;
+    }
+
+    container.innerHTML = `
+      <div class="monetization-tab">
+        <div class="monetization-card">
+          <span class="icon">💰</span>
+          <h3>Monetize Your Channel</h3>
+          <p>Earn money from your content.</p>
+          ${statusBadge}
+          ${actionButton}
+        </div>
+        <div class="req-list-tab">
+          <div class="title">📋 Requirements</div>
+          <div class="req-row ${followersComplete ? 'completed' : ''}"><span class="req-icon">👥</span><span class="req-text">Followers</span><span class="req-count">${followers} / ${MONETIZATION_REQUIREMENTS.followers}</span><span class="req-status">${followersComplete ? '✅' : '⏳'}</span></div>
+          <div class="req-row ${watchTimeComplete ? 'completed' : ''}"><span class="req-icon">⏱️</span><span class="req-text">Watch Time</span><span class="req-count">${Math.floor(watchTime / 60)} min / 60 min</span><span class="req-status">${watchTimeComplete ? '✅' : '⏳'}</span></div>
+          <div class="req-row ${viewsComplete ? 'completed' : ''}"><span class="req-icon">👁️</span><span class="req-text">Total Views</span><span class="req-count">${views} / ${MONETIZATION_REQUIREMENTS.views}</span><span class="req-status">${viewsComplete ? '✅' : '⏳'}</span></div>
+        </div>
+      </div>`;
+    $("openMonetizationModalBtn")?.addEventListener("click", () => openMonetizationModal(followers, watchTime, views));
+  }catch(e){ container.innerHTML = `<div class="yt-empty" style="padding:30px">Error</div>`; }
+}
+
+function openMonetizationModal(followers, watchTime, views){
+  const followersComplete = followers >= MONETIZATION_REQUIREMENTS.followers;
+  const watchTimeComplete = watchTime >= MONETIZATION_REQUIREMENTS.watchTime;
+  const viewsComplete = views >= MONETIZATION_REQUIREMENTS.views;
+  $("reqFollowersCount").textContent = followers;
+  $("reqWatchTimeCount").textContent = watchTime;
+  $("reqViewsCount").textContent = views;
+  $("reqFollowersStatus").textContent = followersComplete ? "✅" : "⏳";
+  $("reqWatchTimeStatus").textContent = watchTimeComplete ? "✅" : "⏳";
+  $("reqViewsStatus").textContent = viewsComplete ? "✅" : "⏳";
+  const p1 = Math.min(100, (followers / MONETIZATION_REQUIREMENTS.followers) * 100);
+  const p2 = Math.min(100, (watchTime / MONETIZATION_REQUIREMENTS.watchTime) * 100);
+  const p3 = Math.min(100, (views / MONETIZATION_REQUIREMENTS.views) * 100);
+  const overallProgress = Math.round((p1 + p2 + p3) / 3);
+  $("reqProgressBar").style.width = overallProgress + "%";
+  $("reqProgressPercent").textContent = overallProgress + "%";
+  if(currentProfile?.upiId) $("monetizationUpiId").value = currentProfile.upiId;
+  const allComplete = followersComplete && watchTimeComplete && viewsComplete;
+  if($("submitMonetizationBtn")) $("submitMonetizationBtn").disabled = !allComplete;
+  showModal("monetizationModal");
+}
+
+$("submitMonetizationBtn")?.addEventListener("click", async () => {
+  if(!currentUser) return;
+  const upiId = $("monetizationUpiId").value.trim();
+  const statusEl = $("monetizationStatus");
+  if(!upiId){ statusEl.textContent = "Enter UPI ID"; statusEl.style.color = "#ef4444"; return; }
+  if(!upiId.includes("@") || upiId.length < 5){ statusEl.textContent = "Invalid UPI"; statusEl.style.color = "#ef4444"; return; }
+  const btn = $("submitMonetizationBtn");
+  btn.disabled = true; btn.textContent = "Submitting...";
+  try{
+    const profile = await getProfile(currentUser.uid);
+    await updateDoc(doc(db, "profiles", currentUser.uid), { upiId, monetizationStatus: "pending", monetizationRequestedAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    await addDoc(collection(db, "monetization_requests"), {
+      userId: currentUser.uid, userName: profile.name || "User", username: profile.username || "",
+      userPhoto: profile.photo || "", followers: profile.followers || 0,
+      totalWatchTime: profile.totalWatchTime || 0, totalViews: profile.totalViews || 0,
+      upiId, status: "pending", createdAt: serverTimestamp()
+    });
+    statusEl.textContent = "✅ Submitted!"; statusEl.style.color = "#22c55e";
+    currentProfile = await getProfile(currentUser.uid);
+    setTimeout(() => { hideModal("monetizationModal"); renderMonetizationTab(); }, 1200);
+  }catch(e){ statusEl.textContent = "Error"; statusEl.style.color = "#ef4444"; btn.disabled = false; btn.textContent = "Submit"; }
+});
+
+/* ============================================================
+   VAULT
+============================================================ */
+async function saveVaultPin(pin){
+  if(!currentUser) return false;
+  try{
+    const pinHash = btoa("reelhub_vault_" + pin);
+    await updateDoc(doc(db, "profiles", currentUser.uid), { vaultPin: pinHash, vaultEnabled: true, vaultCreatedAt: serverTimestamp() });
+    currentProfile.vaultPin = pinHash;
+    currentProfile.vaultEnabled = true;
+    return true;
+  }catch(e){ return false; }
+}
+async function hasVaultPin(){ return !!(currentProfile && currentProfile.vaultPin); }
+async function verifyVaultPin(pin){
+  if(!currentProfile || !currentProfile.vaultPin) return false;
+  const hash = btoa("reelhub_vault_" + pin);
+  return currentProfile.vaultPin === hash;
+}
+
+function startVaultListener(){
+  if(vaultUnsubscribe){ vaultUnsubscribe(); vaultUnsubscribe = null; }
+  if(!currentUser) return;
+  vaultUnsubscribe = onSnapshot(query(collection(db, "vault_files"), where("userId", "==", currentUser.uid)),
+    snapshot=>{
+      vaultFilesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      vaultFilesCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
+      if($("vaultViewerModal")?.classList.contains("show")) renderVaultContent();
+    }, error=>console.error("Vault listener error:", error));
+}
+
+async function openVaultFlow(){
+  if(!currentUser) return;
+  currentProfile = await getProfile(currentUser.uid);
+  const hasPin = await hasVaultPin();
+  if(!hasPin){
+    $("newPinInput").value = ""; $("confirmPinInput").value = ""; $("pinSetupStatus").textContent = "";
+    hideModal("settingsModal"); hideModal("advancedSettingsModal");
+    showModal("pinSetupModal"); return;
+  }
+  if(vaultPinVerified && (Date.now() - vaultUnlockTime) < VAULT_AUTO_LOCK_MS){
+    hideModal("settingsModal"); hideModal("advancedSettingsModal");
+    openVaultViewer(); return;
+  }
+  vaultPinVerified = false;
+  $("vaultPinInput").value = ""; $("pinEntryStatus").textContent = "";
+  hideModal("settingsModal"); hideModal("advancedSettingsModal");
+  showModal("pinEntryModal");
+  setTimeout(() => $("vaultPinInput").focus(), 300);
+}
+
+$("savePinBtn")?.addEventListener("click", async () => {
+  const pin = $("newPinInput").value.trim();
+  const confirm = $("confirmPinInput").value.trim();
+  const status = $("pinSetupStatus");
+  if(!/^\d{4}$/.test(pin)){ status.style.color = "#ed4956"; status.textContent = "PIN must be 4 digits"; return; }
+  if(pin !== confirm){ status.style.color = "#ed4956"; status.textContent = "PINs don't match"; return; }
+  status.style.color = "#7c3aed"; status.textContent = "Saving...";
+  const ok = await saveVaultPin(pin);
+  if(ok){
+    status.style.color = "#22c55e"; status.textContent = "✅ PIN set!";
+    vaultPinVerified = true; vaultUnlockTime = Date.now();
+    setTimeout(() => { hideModal("pinSetupModal"); openVaultViewer(); }, 600);
+  } else { status.style.color = "#ed4956"; status.textContent = "Failed"; }
+});
+
+$("unlockVaultBtn")?.addEventListener("click", async () => {
+  const pin = $("vaultPinInput").value.trim();
+  const status = $("pinEntryStatus");
+  const input = $("vaultPinInput");
+  if(!/^\d{4}$/.test(pin)){
+    status.textContent = "Enter 4-digit PIN";
+    input.classList.add("pin-error");
+    setTimeout(() => input.classList.remove("pin-error"), 400);
+    return;
+  }
+  const valid = await verifyVaultPin(pin);
+  if(valid){
+    status.style.color = "#22c55e"; status.textContent = "✅ Unlocked!";
+    vaultPinVerified = true; vaultUnlockTime = Date.now();
+    setTimeout(() => { hideModal("pinEntryModal"); openVaultViewer(); }, 400);
+  } else {
+    status.style.color = "#ed4956"; status.textContent = "❌ Wrong PIN";
+    input.value = ""; input.classList.add("pin-error");
+    setTimeout(() => input.classList.remove("pin-error"), 400);
+  }
+});
+$("vaultPinInput")?.addEventListener("keydown", (e) => { if(e.key === "Enter") $("unlockVaultBtn")?.click(); });
+
+function openVaultViewer(){
+  renderVaultContent();
+  updateVaultFileCount();
+  showModal("vaultViewerModal");
+  startVaultListener();
+}
+function updateVaultFileCount(){
+  const countEl = $("vaultFileCount");
+  if(countEl) countEl.textContent = vaultFilesCache.length + " file" + (vaultFilesCache.length === 1 ? "" : "s");
+}
+function renderVaultContent(){
+  const container = $("vaultContent");
+  if(!container) return;
+  if(!vaultFilesCache.length){
+    container.innerHTML = `<div class="vault-empty"><span class="icon">🔐</span><h3>Vault is empty</h3><p>Tap "Add Files" to add photos/videos</p></div>`;
+    updateVaultFileCount(); return;
+  }
+  let html = `<div class="vault-grid">`;
+  vaultFilesCache.forEach(f => {
+    if(f.mediaType === "video") html += `<div class="vault-item" data-vault-file="${esc(f.id)}"><video src="${esc(f.mediaURL)}" preload="metadata" muted></video><span class="vault-item-type">🎬</span></div>`;
+    else html += `<div class="vault-item" data-vault-file="${esc(f.id)}"><img src="${esc(f.mediaURL)}" alt=""><span class="vault-item-type">📷</span></div>`;
+  });
+  html += `</div>`;
+  container.innerHTML = html;
+  updateVaultFileCount();
+}
+
+$("vaultAddFilesBtn")?.addEventListener("click", (e) => {
+  e.preventDefault(); e.stopPropagation();
+  if(vaultUploading){ toast("Upload in progress..."); return; }
+  const input = $("vaultFileInput");
+  if(input){ input.value = ""; input.click(); }
+});
+
+$("vaultFileInput")?.addEventListener("change", async (e) => {
+  const files = Array.from(e.target.files || []);
+  if(!files.length) return;
+  if(!currentUser){ toast("Login required"); e.target.value = ""; return; }
+  if(vaultFilesCache.length + files.length > VAULT_MAX_FILES){ toast(`Max ${VAULT_MAX_FILES} files`); e.target.value = ""; return; }
+  for(const f of files){ if(f.size > VAULT_MAX_FILE_SIZE){ toast(`"${f.name}" too large`); e.target.value = ""; return; } }
+  vaultUploading = true;
+  const progressWrap = $("vaultUploadProgress");
+  const progressBar = $("vaultUploadBar");
+  const progressLabel = $("vaultUploadLabel");
+  if(progressWrap) progressWrap.style.display = "block";
+  let completed = 0, failed = 0;
+  for(let i = 0; i < files.length; i++){
+    const file = files[i];
+    const mediaType = file.type.startsWith("video/") ? "video" : "image";
+    if(progressLabel) progressLabel.textContent = `Uploading ${i + 1}/${files.length}: ${file.name}`;
+    try{
+      const url = await uploadToCloudinary(file, (pct)=>{ if(progressBar) progressBar.style.width = pct + "%"; });
+      await addDoc(collection(db, "vault_files"), { userId: currentUser.uid, mediaURL: url, mediaType: mediaType, fileName: file.name, fileSize: file.size, createdAt: serverTimestamp() });
+      completed++;
+    }catch(err){ failed++; }
+  }
+  vaultUploading = false;
+  if(progressBar) progressBar.style.width = "0%";
+  if(progressWrap) progressWrap.style.display = "none";
+  e.target.value = "";
+  if(completed > 0) toast(`✅ ${completed} added`);
+  else toast("❌ Failed");
+});
+
+document.addEventListener("click", (e) => {
+  const vaultItem = e.target.closest("[data-vault-file]");
+  if(vaultItem){
+    e.preventDefault(); e.stopPropagation();
+    const fileId = vaultItem.dataset.vaultFile;
+    const f = vaultFilesCache.find(x => x.id === fileId);
+    if(!f) return;
+    if(f.mediaType === "video") openVaultVideoPlayer(f);
+    else { if($("largeChatImage")) $("largeChatImage").src = f.mediaURL; showModal("imageViewerModal"); }
+  }
+});
+
+function openVaultVideoPlayer(f){
+  hideModal("vaultViewerModal");
+  const videoEl = $("videoPlayerVideo");
+  if(videoEl){ videoEl.src = f.mediaURL; videoEl.play().catch(()=>{}); }
+  if($("videoPlayerTitle")) $("videoPlayerTitle").textContent = f.fileName || "Vault Video";
+  if($("videoPlayerMeta")) $("videoPlayerMeta").textContent = timeAgo(f.createdAt);
+  ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn", "videoPlayerDownloadBtn"].forEach(id => { const btn = $(id); if(btn) btn.style.display = "none"; });
+  showModal("videoPlayerModal");
+}
+
+$("advancedSettingsBtn")?.addEventListener("click", () => { hideModal("settingsModal"); showModal("advancedSettingsModal"); });
+$("openVaultBtn")?.addEventListener("click", () => { openVaultFlow(); });
+$("changePinBtn")?.addEventListener("click", async () => {
+  if(!confirm("Change vault PIN?")) return;
+  hideModal("advancedSettingsModal");
+  $("newPinInput").value = ""; $("confirmPinInput").value = ""; $("pinSetupStatus").textContent = "";
+  showModal("pinSetupModal");
+});
+$("vaultSettingsBtn")?.addEventListener("click", () => { hideModal("advancedSettingsModal"); showModal("vaultSettingsModal"); updateVaultAutoLockUI(); });
+
+function updateVaultAutoLockUI(){
+  const toggle = $("vaultAutoLockToggle");
+  if(!toggle) return;
+  toggle.textContent = vaultAutoLockEnabled ? "ON" : "OFF";
+  toggle.style.color = vaultAutoLockEnabled ? "#22c55e" : "var(--muted)";
+}
+$("vaultAutoLockBtn")?.addEventListener("click", () => {
+  vaultAutoLockEnabled = !vaultAutoLockEnabled;
+  localStorage.setItem("reelhubVaultAutoLock", vaultAutoLockEnabled ? "1" : "0");
+  updateVaultAutoLockUI();
+});
+if(localStorage.getItem("reelhubVaultAutoLock") === "0") vaultAutoLockEnabled = false;
+
+$("clearVaultBtn")?.addEventListener("click", async () => {
+  if(!vaultFilesCache.length){ toast("Empty"); return; }
+  if(!confirm(`Delete all ${vaultFilesCache.length} files?`)) return;
+  let count = 0;
+  for(const f of vaultFilesCache){ try{ await deleteDoc(doc(db, "vault_files", f.id)); count++; }catch(e){} }
+  toast(`🗑️ ${count} deleted`);
+  hideModal("vaultSettingsModal");
+});
+
+$("removeVaultBtn")?.addEventListener("click", async () => {
+  if(!confirm("Remove Vault completely?")) return;
+  for(const f of vaultFilesCache){ try{ await deleteDoc(doc(db, "vault_files", f.id)); }catch(e){} }
+  await updateDoc(doc(db, "profiles", currentUser.uid), { vaultPin: "", vaultEnabled: false, updatedAt: serverTimestamp() });
+  currentProfile.vaultPin = ""; currentProfile.vaultEnabled = false;
+  vaultFilesCache = []; vaultPinVerified = false;
+  toast("✅ Removed");
+  hideModal("vaultSettingsModal"); hideModal("advancedSettingsModal"); hideModal("vaultViewerModal");
+});
+
+/* ============================================================
+   ADMIN — SONG LIBRARY
+============================================================ */
+function openAdminSongLibrary(){
+  if(!isAdminUser()){ toast("Only admin"); return; }
+  hideModal("advancedSettingsModal");
+  showModal("adminSongLibraryModal");
+  renderAdminSongLibrary();
+  startSongLibraryListener();
+}
+
+function renderAdminSongLibrary(){
+  const container = $("songLibraryList");
+  if(!container) return;
+  const countEl = $("songCount");
+  if(countEl) countEl.textContent = songLibraryCache.length + " songs";
+  if(!songLibraryCache.length){
+    container.innerHTML = `<div class="song-library-empty"><span class="icon">🎵</span><h3>No songs yet</h3><p>Tap "Add New Song" to add</p></div>`;
+    return;
+  }
+  container.innerHTML = songLibraryCache.map(s => `
+    <div class="song-library-item">
+      <div class="song-thumb">🎵</div>
+      <div class="song-info">
+        <strong>${esc(s.name || "Untitled")}</strong>
+        <small>${esc(s.artist || "Unknown")} · ${esc(s.category || "Other")}</small>
+      </div>
+      <div class="song-actions">
+        <button class="play-btn" data-play-song="${esc(s.id)}">▶</button>
+        <button class="edit-btn" data-edit-song="${esc(s.id)}">✏️</button>
+        <button class="delete-btn" data-delete-song="${esc(s.id)}">🗑️</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function openAddSongModal(){
+  editingSongId = null; pendingSongFile = null;
+  $("addSongTitle").textContent = "➕ Add Song";
+  $("songName").value = ""; $("songArtist").value = "";
+  $("songCategory").value = "Bollywood";
+  $("songFile").value = "";
+  $("songFileSelected").style.display = "none";
+  $("songUploadStatus").textContent = "";
+  $("songUploadProgress").classList.remove("active");
+  $("songUploadProgressBar").style.width = "0%";
+  hideModal("adminSongLibraryModal");
+  showModal("addSongModal");
+}
+
+function openEditSongModal(songId){
+  const song = songLibraryCache.find(s => s.id === songId);
+  if(!song) return;
+  editingSongId = songId; pendingSongFile = null;
+  $("addSongTitle").textContent = "✏️ Edit Song";
+  $("songName").value = song.name || "";
+  $("songArtist").value = song.artist || "";
+  $("songCategory").value = song.category || "Bollywood";
+  $("songFile").value = "";
+  $("songFileName").textContent = song.name + " (current)";
+  $("songFileSelected").style.display = "flex";
+  $("songUploadStatus").textContent = "";
+  hideModal("adminSongLibraryModal");
+  showModal("addSongModal");
+}
+
+$("songUploadZone")?.addEventListener("click", () => { $("songFile")?.click(); });
+
+$("songFile")?.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 100 * 1024 * 1024){ toast("File too large"); e.target.value = ""; return; }
+  pendingSongFile = file;
+  $("songFileName").textContent = file.name;
+  $("songFileSelected").style.display = "flex";
+});
+
+$("songFileRemoveBtn")?.addEventListener("click", (e) => {
+  e.preventDefault(); e.stopPropagation();
+  pendingSongFile = null;
+  $("songFile").value = "";
+  $("songFileSelected").style.display = "none";
+});
+
+$("saveSongBtn")?.addEventListener("click", async () => {
+  const name = $("songName").value.trim();
+  const artist = $("songArtist").value.trim();
+  const category = $("songCategory").value;
+  const status = $("songUploadStatus");
+  if(!name){ status.style.color = "#ef4444"; status.textContent = "Name required"; return; }
+  if(!editingSongId && !pendingSongFile){ status.style.color = "#ef4444"; status.textContent = "Select file"; return; }
+  const btn = $("saveSongBtn");
+  btn.disabled = true; btn.textContent = "Saving...";
+  status.style.color = "#a78bfa"; status.textContent = "Saving...";
+  try{
+    let audioURL = "";
+    if(pendingSongFile){
+      status.textContent = "Uploading...";
+      $("songUploadProgress").classList.add("active");
+      audioURL = await uploadAudioToCloudinary(pendingSongFile, (pct) => {
+        $("songUploadProgressBar").style.width = pct + "%";
+        status.textContent = "Uploading " + pct + "%";
+      });
+    } else if(editingSongId){
+      const existing = songLibraryCache.find(s => s.id === editingSongId);
+      audioURL = existing?.audioURL || "";
+    }
+    if(editingSongId){
+      await updateDoc(doc(db, "song_library", editingSongId), { name, artist, category, audioURL, updatedAt: serverTimestamp() });
+      toast("✅ Updated");
+    } else {
+      await addDoc(collection(db, "song_library"), { name, artist, category, audioURL, createdBy: currentUser.uid, createdByName: currentProfile?.name || "Admin", createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+      toast("✅ Song added");
+    }
+    status.style.color = "#22c55e"; status.textContent = "✅ Saved!";
+    setTimeout(() => { hideModal("addSongModal"); showModal("adminSongLibraryModal"); }, 700);
+  } catch(err) {
+    console.error(err);
+    status.style.color = "#ef4444"; status.textContent = "Error: " + err.message;
+  } finally {
+    btn.disabled = false; btn.textContent = "✅ Save Song";
+    $("songUploadProgress").classList.remove("active");
+  }
+});
+
+$("addSongModalClose")?.addEventListener("click", () => { hideModal("addSongModal"); });
+$("cancelSongBtn")?.addEventListener("click", () => { hideModal("addSongModal"); });
+
+function playSongPreview(songId){
+  const song = songLibraryCache.find(s => s.id === songId);
+  if(!song || !song.audioURL){ toast("No audio"); return; }
+  if(previewAudio){ previewAudio.pause(); previewAudio = null; }
+  previewAudio = new Audio(song.audioURL);
+  previewAudio.play().then(() => toast("▶ " + song.name)).catch(() => toast("Play failed"));
+  previewAudio.onended = () => { previewAudio = null; };
+}
+
+async function deleteSong(songId){
+  const song = songLibraryCache.find(s => s.id === songId);
+  if(!song) return;
+  if(!confirm(`Delete "${song.name}"?`)) return;
+  try{ await deleteDoc(doc(db, "song_library", songId)); toast("🗑️ Deleted"); }
+  catch(e){ toast("Failed"); }
+}
+
+document.addEventListener("click", (e)=>{
+  const t = e.target;
+  const adminBtn = t.closest("#adminSongLibraryBtn");
+  if(adminBtn){ e.preventDefault(); e.stopPropagation(); openAdminSongLibrary(); return; }
+  const addBtn = t.closest("#addSongBtn");
+  if(addBtn){ e.preventDefault(); e.stopPropagation(); openAddSongModal(); return; }
+  const playBtn = t.closest("[data-play-song]");
+  if(playBtn){ e.preventDefault(); e.stopPropagation(); playSongPreview(playBtn.dataset.playSong); return; }
+  const editBtn = t.closest("[data-edit-song]");
+  if(editBtn){ e.preventDefault(); e.stopPropagation(); openEditSongModal(editBtn.dataset.editSong); return; }
+  const delBtn = t.closest("[data-delete-song]");
+  if(delBtn){ e.preventDefault(); e.stopPropagation(); deleteSong(delBtn.dataset.deleteSong); return; }
+});
+
+/* ============================================================
+   GLOBAL CLICK HANDLER
+============================================================ */
+document.addEventListener("click", async (e)=>{
+  const t = e.target;
+
+  const acceptReq = t.closest("[data-accept-request]");
+  if(acceptReq){ e.preventDefault(); e.stopPropagation(); const uid = acceptReq.dataset.acceptRequest; if(uid) await acceptFollowRequest(uid); return; }
+
+  const rejectReq = t.closest("[data-reject-request]");
+  if(rejectReq){ e.preventDefault(); e.stopPropagation(); const uid = rejectReq.dataset.rejectRequest; if(uid) await rejectFollowRequest(uid); return; }
+
+  const openUser = t.closest(".post-open-user");
+  if(openUser){ e.preventDefault(); e.stopPropagation(); const uid = openUser.dataset.uid; if(uid) openPublicProfile(uid); return; }
+
+  const followBtn = t.closest('[data-action="follow"]');
+  if(followBtn){ e.preventDefault(); e.stopPropagation(); const uid = followBtn.dataset.followUid; if(uid) toggleFollow(uid, followBtn); return; }
+
+  const likeBtn = t.closest("[data-like-video]");
+  if(likeBtn){ e.preventDefault(); e.stopPropagation(); const vid = likeBtn.dataset.likeVideo; const isReel = likeBtn.dataset.reel === "true"; if(vid) toggleLike(vid, likeBtn, isReel); return; }
+
+  const commentBtn = t.closest("[data-comment-video]");
+  if(commentBtn){ e.preventDefault(); e.stopPropagation(); const vid = commentBtn.dataset.commentVideo; if(vid) openComments(vid); return; }
+
+  const shareBtn = t.closest("[data-share-video]");
+  if(shareBtn){ e.preventDefault(); e.stopPropagation(); const vid = shareBtn.dataset.shareVideo; if(vid) openShareSheet(vid); return; }
+
+  const saveBtn = t.closest("[data-save-video]");
+  if(saveBtn){ e.preventDefault(); e.stopPropagation(); const vid = saveBtn.dataset.saveVideo; if(vid) toggleSave(vid, saveBtn); return; }
+
+  const deleteBtn = t.closest("[data-delete-video]");
+  if(deleteBtn){ e.preventDefault(); e.stopPropagation(); const vid = deleteBtn.dataset.deleteVideo; if(vid) window.deleteVideo(vid); return; }
+
+  const editBtn = t.closest("[data-edit-video]");
+  if(editBtn){ e.preventDefault(); e.stopPropagation(); const vid = editBtn.dataset.editVideo; if(vid) openEditVideo(vid); return; }
+
+  const openVideoBtn = t.closest("[data-open-video]");
+  if(openVideoBtn){
+    const insideStop = t.closest("[data-stop-propagation]");
+    if(!insideStop){
+      e.preventDefault(); e.stopPropagation();
+      const vid = openVideoBtn.dataset.openVideo;
+      if(vid){ hideModal("playlistDetailModal"); hideModal("publicProfileModal"); hideModal("watchHistoryModal"); setTimeout(()=> window.openVideoPlayer(vid), 100); }
+    }
+    return;
+  }
+
+  const searchOpen = t.closest(".search-open-btn");
+  if(searchOpen){ e.preventDefault(); e.stopPropagation(); const uid = searchOpen.dataset.uid; if(uid){ hideModal("searchModal"); setTimeout(()=> openPublicProfile(uid), 150); } return; }
+
+  const peopleOpen = t.closest(".people-open-btn");
+  if(peopleOpen){ e.preventDefault(); e.stopPropagation(); const uid = peopleOpen.dataset.uid; if(uid){ hideModal("peopleModal"); hideModal("followRequestsModal"); hideModal("blockedUsersModal"); setTimeout(()=> openPublicProfile(uid), 150); } return; }
+
+  const delC = t.closest("[data-delete-comment]");
+  if(delC){ e.preventDefault(); e.stopPropagation(); const [vid, cid] = delC.dataset.deleteComment.split("|"); if(vid && cid) await deleteComment(vid, cid); return; }
+
+  const chatItem = t.closest("[data-open-chat]");
+  if(chatItem){ e.preventDefault(); e.stopPropagation(); const uid = chatItem.dataset.openChat; if(uid) openChat(uid); return; }
+
+  const sharedVid = t.closest("[data-open-shared]");
+  if(sharedVid){ e.preventDefault(); e.stopPropagation(); const vid = sharedVid.dataset.openShared; if(vid) window.openVideoPlayer(vid); return; }
+
+  const chatImage = t.closest("[data-open-image]");
+  if(chatImage){ e.preventDefault(); e.stopPropagation(); const url = chatImage.dataset.openImage; if(url){ if($("largeChatImage")) $("largeChatImage").src = url; showModal("imageViewerModal"); } return; }
+
+  const chatFile = t.closest("[data-open-file]");
+  if(chatFile){
+    e.preventDefault(); e.stopPropagation();
+    const url = chatFile.dataset.openFile;
+    const name = chatFile.dataset.fileName || "file";
+    if(url){ const a = document.createElement("a"); a.href = url; a.download = name; a.target = "_blank"; document.body.appendChild(a); a.click(); document.body.removeChild(a); toast("Opening..."); }
+    return;
+  }
+
+  const openP = t.closest("[data-open-playlist]");
+  if(openP){ e.preventDefault(); e.stopPropagation(); const pid = openP.dataset.openPlaylist; if(pid) await openPlaylistDetail(pid); return; }
+
+  const delP = t.closest("[data-delete-playlist]");
+  if(delP){
+    e.preventDefault(); e.stopPropagation();
+    const pid = delP.dataset.deletePlaylist;
+    if(pid && confirm("Delete playlist?")){
+      try{
+        const items = await getDocs(collection(db, "playlists", pid, "items"));
+        for(const item of items.docs) await deleteDoc(item.ref);
+        await deleteDoc(doc(db, "playlists", pid));
+        toast("🗑️ Deleted");
+        if(currentPlaylistView === pid){ hideModal("playlistDetailModal"); currentPlaylistView = null; }
+      }catch(err){ toast("Failed"); }
+    }
+    return;
+  }
+
+  const toggleP = t.closest("[data-toggle-playlist]");
+  if(toggleP){
+    e.preventDefault(); e.stopPropagation();
+    const pid = toggleP.dataset.togglePlaylist;
+    if(selectedPlaylists.has(pid)){ selectedPlaylists.delete(pid); toggleP.classList.remove("checked"); const check = toggleP.querySelector(".playlist-select-check"); if(check) check.textContent = ""; }
+    else { selectedPlaylists.add(pid); toggleP.classList.add("checked"); const check = toggleP.querySelector(".playlist-select-check"); if(check) check.textContent = "✓"; }
+    return;
+  }
+
+  const rmFromP = t.closest("[data-remove-from-playlist]");
+  if(rmFromP){
+    e.preventDefault(); e.stopPropagation();
+    const [vid, pid] = rmFromP.dataset.removeFromPlaylist.split("|");
+    if(vid && pid){
+      try{
+        await deleteDoc(doc(db, "playlists", pid, "items", pid + "_" + vid));
+        await syncAllPlaylistCounts();
+        toast("Removed");
+        if(currentPlaylistView === pid) await renderPlaylistDetail(pid);
+      }catch(err){ toast("Failed"); }
+    }
+    return;
+  }
+
+  const openPV = t.closest("[data-playlist-video]");
+  if(openPV){ e.preventDefault(); e.stopPropagation(); const vid = openPV.dataset.playlistVideo; if(vid){ hideModal("playlistDetailModal"); setTimeout(()=> window.openVideoPlayer(vid), 200); } return; }
+
+  const chip = t.closest("[data-share-user]");
+  if(chip){ e.preventDefault(); e.stopPropagation(); shareToUser(chip.dataset.shareUser); return; }
+});
+
+/* ============================================================
+   MODAL CLOSE / BACK
+============================================================ */
+document.querySelectorAll("[data-close]").forEach(btn=>{
+  btn.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    const id = btn.dataset.close;
+    hideModal(id);
+    if(id === "commentsModal"){ currentCommentVideoId = null; if(commentsUnsubscribe){ commentsUnsubscribe(); commentsUnsubscribe = null; } }
+    if(id === "publicProfileModal"){ delete $("publicProfileModal").dataset.uid; $("privateAccountNotice")?.classList.add("hidden"); viewingProfileUid = null; }
+    if(id === "playlistDetailModal") currentPlaylistView = null;
+    if(id === "videoPlayerModal") resetVideoPlayer();
+    if(id === "imageViewerModal"){ if($("largeChatImage")) $("largeChatImage").src = ""; }
+    if(id === "groupChatModal"){ if(groupChatUnsubscribe){ groupChatUnsubscribe(); groupChatUnsubscribe = null; } currentGroupId = null; }
+  });
+});
+
+document.querySelectorAll(".modal").forEach(modal=>{
+  modal.addEventListener("click", e=>{
+    if(e.target === modal){
+      modal.classList.remove("show");
+      if(modal.id === "commentsModal"){ currentCommentVideoId = null; if(commentsUnsubscribe){ commentsUnsubscribe(); commentsUnsubscribe = null; } }
+      if(modal.id === "publicProfileModal"){ delete $("publicProfileModal").dataset.uid; $("privateAccountNotice")?.classList.add("hidden"); viewingProfileUid = null; }
+      if(modal.id === "playlistDetailModal") currentPlaylistView = null;
+      if(modal.id === "videoPlayerModal") resetVideoPlayer();
+      if(modal.id === "imageViewerModal"){ if($("largeChatImage")) $("largeChatImage").src = ""; }
+    }
+  });
+});
+
+$("shareSheet")?.addEventListener("click", e=>{ if(e.target === $("shareSheet")) $("shareSheet").classList.remove("show"); });
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+document.querySelectorAll(".nav-btn").forEach(btn => {
+  btn.addEventListener("click", ()=>{
+    const panelId = btn.dataset.panel;
+    document.querySelectorAll(".panel").forEach(p => p.classList.add("hidden"));
+    $(panelId)?.classList.remove("hidden");
+    document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
+    btn.classList.add("active");
+    if(panelId === "shortsPanel") $("mainTopbar")?.classList.add("hidden");
+    else $("mainTopbar")?.classList.remove("hidden");
+    if(panelId === "profilePanel"){ loadProfile(); loadMyVideos(); loadMyPlaylists(); }
+    if(panelId === "messagesPanel"){
+      const inbox = $("dmInboxView");
+      const chat = $("dmChatView");
+      if(inbox){ inbox.classList.remove("hidden"); inbox.style.display = "flex"; }
+      if(chat){ chat.classList.add("hidden"); chat.style.display = "none"; }
+      if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
+      currentChatId = null; currentChatUser = null;
+      showDMInbox();
+    }
+    if(panelId === "shortsPanel") setTimeout(setupReelsObserver, 100);
+    if(panelId === "uploadPanel") loadDraftIfExists();
+  });
+});
+
+function openPanel(id){
+  document.querySelectorAll(".panel").forEach(p => p.classList.add("hidden"));
+  $(id)?.classList.remove("hidden");
+  document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
+  document.querySelector(`[data-panel="${id}"]`)?.classList.add("active");
+  if(id === "shortsPanel"){ $("mainTopbar")?.classList.add("hidden"); setTimeout(setupReelsObserver, 100); }
+  else $("mainTopbar")?.classList.remove("hidden");
+  if(id === "messagesPanel"){
+    const inbox = $("dmInboxView");
+    const chat = $("dmChatView");
+    if(inbox){ inbox.classList.remove("hidden"); inbox.style.display = "flex"; }
+    if(chat){ chat.classList.add("hidden"); chat.style.display = "none"; }
+    showDMInbox();
+  }
+}
+
+/* ============================================================
+   START / INIT
+============================================================ */
+prepareInitialState();
+openPanel("homePanel");
+
+setTimeout(() => { if(!splashHidden) hideSplash(); }, 1000);
+
+setTimeout(() => {
+  if(!authResolved){
+    hideSplash();
+    if(!currentUser){ $("loginPage")?.classList.remove("hidden"); $("app")?.classList.add("hidden"); }
+  }
+}, 3000);
+
+window.addEventListener("popstate", (e) => {
+  const storyViewer = $("storyViewer");
+  if(storyViewer && storyViewer.classList.contains("show")){
+    closeStoryViewer();
+    try{ window.history.pushState({ reelhubModal: true }, "", window.location.href); }catch(err){}
+    return;
+  }
+  const openModals = document.querySelectorAll(".modal.show");
+  if(openModals.length > 0){
+    const topModal = openModals[openModals.length - 1];
+    const id = topModal.id;
+    if(id === "videoPlayerModal") resetVideoPlayer();
+    topModal.classList.remove("show");
+    const idx = modalHistoryStack.indexOf(id);
+    if(idx > -1) modalHistoryStack.splice(idx, 1);
+    try{ window.history.pushState({ reelhubModal: true }, "", window.location.href); }catch(err){}
+    return;
+  }
+}, { passive: true });
+
+/* ERROR CATCHER */
+window.addEventListener("error", (e) => { console.error("🚨 RUNTIME ERROR:", e.message, e.filename, e.lineno); });
+window.addEventListener("unhandledrejection", (e) => { console.error("🚨 PROMISE ERROR:", e.reason); });
+
+/* AD SYSTEM AUTO INIT */
+window.addEventListener("load", function(){
+  setTimeout(function(){
+    if(typeof window.showMyAd === "function" && typeof window.reloadAds === "function"){
+      window.reloadAds();
+      console.log("✅ Ads reloaded after page load");
+    }
+  }, 2000);
+});
+
+/* FINAL LOG */
+console.log("✅ ReelHub app.js FULL loaded!");
+console.log("🎉 All features active:");
+console.log("  ✅ Video Feed + Shorts + Upload");
+console.log("  ✅ Stories + DM Chat");
+console.log("  ✅ Groups + Comments + Share");
+console.log("  ✅ Vault + Monetization + Song Library");
