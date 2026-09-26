@@ -37,9 +37,6 @@ import {
   increment
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
-/* ============================================================
-   FIREBASE CONFIG
-============================================================ */
 const firebaseConfig = {
   apiKey: "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
   authDomain: "reelhu.firebaseapp.com",
@@ -55,9 +52,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-/* ============================================================
-   CONSTANTS
-============================================================ */
 const CLOUDINARY_CLOUD_NAME = "s3eresx6";
 const CLOUDINARY_UPLOAD_PRESET = "reelhub_upload";
 
@@ -127,7 +121,6 @@ let currentPlaylistView = null;
 let deepLinkChecked = false;
 let viewingProfileUid = null;
 
-/* Stories */
 let storiesCache = [];
 let groupedStories = [];
 let currentStoryUserIndex = 0;
@@ -142,23 +135,19 @@ let storyMediaType = null;
 let currentStoryId = null;
 let currentStoryData = null;
 
-/* Story Editor */
 let pendingStorySong = null;
 let pendingStorySticker = null;
 let pendingStoryTrim = { start: 0, end: 0, applied: false };
 
-/* Video Editor */
 let pendingVideoSong = null;
 let pendingVideoSticker = null;
 let pendingVideoTrim = { start: 0, end: 0, applied: false };
 let pendingVideoRotation = 0;
 let pendingVideoMuted = false;
 
-/* Trim */
 let trimVideoElement = null;
 let trimVideoDuration = 0;
 
-/* Group */
 let myGroupsCache = [];
 let currentGroupId = null;
 let currentGroupData = null;
@@ -168,7 +157,6 @@ let myGroupsUnsubscribe = null;
 let groupRequestsUnsubscribe = null;
 let groupChatUnsubscribe = null;
 
-/* Song */
 let songLibraryCache = [];
 let songLibraryUnsubscribe = null;
 let selectedSongForApply = null;
@@ -179,39 +167,32 @@ let selectedStickerEmoji = null;
 let selectedStickerText = null;
 let previewAudio = null;
 
-/* Song Editor */
 let editingSongId = null;
 let pendingSongFile = null;
 
-/* Modals */
 let modalHistoryStack = [];
 
-/* Vault */
 let vaultPinVerified = false;
 let vaultUnlockTime = 0;
 let vaultAutoLockEnabled = true;
 let vaultFilesCache = [];
 let vaultUploading = false;
 
-/* Splash */
 let splashHidden = false;
 let authResolved = false;
 
-/* Presence listeners map */
 const presenceListenersMap = new Map();
 
-/* Prevention */
 const processingMessages = new Set();
 let lastSentMessageTime = 0;
 const processingLikes = new Set();
 const processingViews = new Set();
 const processingSaves = new Set();
 
-/* Watch session */
 let currentWatchSession = { videoId: null, startTime: null };
 
 /* ============================================================
-   ✅ AD CONTROL STATE (NEW)
+   ✅ AD CONTROL STATE
 ============================================================ */
 let adSettings = {
   masterDisabled: false,
@@ -356,7 +337,7 @@ function isAdminUser(){
 }
 
 /* ============================================================
-   ✅ AD CONTROL — Check + Render + Listener (NEW)
+   ✅ AD CONTROL — Check + Render + Listener
 ============================================================ */
 function canShowAd(adType, userId){
   if(adSettings.masterDisabled === true) return false;
@@ -891,7 +872,6 @@ onAuthStateChanged(auth, async user => {
     await loadMySaves();
     await loadMySentRequests();
 
-    // Start listeners
     if(typeof startRealtimeVideos === "function") startRealtimeVideos();
     if(typeof startNotifications === "function") startNotifications();
     if(typeof startChatsListListener === "function") startChatsListListener();
@@ -904,7 +884,6 @@ onAuthStateChanged(auth, async user => {
     if(typeof startSongLibraryListener === "function") startSongLibraryListener();
     if(typeof updateAdminVisibility === "function") updateAdminVisibility();
 
-    // ✅ AD SETTINGS LISTENER START
     if(typeof startAdSettingsListener === "function") startAdSettingsListener();
 
     try{ window.history.replaceState({ reelhubHome: true }, "", window.location.href); }catch(e){}
@@ -945,7 +924,6 @@ onAuthStateChanged(auth, async user => {
     if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
     if(heartbeatInterval){ clearInterval(heartbeatInterval); heartbeatInterval = null; }
 
-    // ✅ AD SETTINGS LISTENER STOP
     if(adSettingsUnsubscribe){ adSettingsUnsubscribe(); adSettingsUnsubscribe = null; }
     if(userAdsUnsubscribe){ userAdsUnsubscribe(); userAdsUnsubscribe = null; }
     adSettings = {
@@ -970,14 +948,11 @@ onAuthStateChanged(auth, async user => {
 });
 
 console.log("✅ app.js PART A loaded — Auth + Profile + Ad System ready!");
-/* ============================================================
-   ReelHub - app.js
-   PART B — Videos + Shorts + Stories + Story Editor + Video Editor
-============================================================ */
 
 /* ============================================================
-   VIDEO CARD
+   PART B — Videos + Shorts + Stories + Editors
 ============================================================ */
+
 function createVideoCard(v){
   const views = Number(v.views || 0);
   const mine = currentUser && v.userId === currentUser.uid;
@@ -1091,9 +1066,6 @@ function startRealtimeVideos(){
   );
 }
 
-/* ============================================================
-   SHORTS
-============================================================ */
 function renderShorts(){
   const container = $("reelsContainer");
   if(!container) return;
@@ -1174,9 +1146,6 @@ function setupReelsObserver(){
   videos.forEach(v => reelObserver.observe(v));
 }
 
-/* ============================================================
-   STORIES LISTENER
-============================================================ */
 function startStoriesListener(){
   if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
   if(!currentUser) return;
@@ -1271,9 +1240,6 @@ document.addEventListener("click", (e)=>{
   }
 });
 
-/* ============================================================
-   CREATE STORY MODAL
-============================================================ */
 function openCreateStoryModal(){
   storyUploadFile = null;
   storyMediaType = null;
@@ -1394,9 +1360,6 @@ $("storyUploadBtn")?.addEventListener("click", async ()=>{
   }
 });
 
-/* ============================================================
-   STORY VIEWER
-============================================================ */
 function openStoryViewer(userIndex, storyIndex){
   if(!groupedStories.length) return;
   currentStoryUserIndex = userIndex;
@@ -1687,9 +1650,6 @@ document.addEventListener("keydown", (e)=>{
   else if(e.key === "Escape") closeStoryViewer();
 });
 
-/* ============================================================
-   STORY MENU — Edit/Delete
-============================================================ */
 $("storyMoreBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   const group = groupedStories[currentStoryUserIndex];
@@ -1813,9 +1773,6 @@ $("storyMenuDeleteBtn")?.addEventListener("click", async (e)=>{
   }catch(e){ toast("Failed to delete"); }
 });
 
-/* ============================================================
-   SONG LIBRARY LISTENER
-============================================================ */
 function startSongLibraryListener(){
   if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
   songLibraryUnsubscribe = onSnapshot(
@@ -1834,9 +1791,6 @@ function updateAdminVisibility(){
   adminBtn.style.display = isAdminUser() ? "flex" : "none";
 }
 
-/* ============================================================
-   SONG PICKER
-============================================================ */
 function openSongPicker(context){
   songPickerContext = context || "story";
   selectedSongForApply = null;
@@ -1962,9 +1916,6 @@ function removeSongFromStoryEdit(){
   toast("🔇 Song removed");
 }
 
-/* ============================================================
-   STICKER PICKER
-============================================================ */
 function openStickerPicker(context){
   stickerPickerContext = context || "story";
   selectedStickerEmoji = null;
@@ -2094,9 +2045,6 @@ function removeStickerFromStoryEdit(){
   toast("Sticker removed");
 }
 
-/* ============================================================
-   BUTTON HANDLERS
-============================================================ */
 $("storyAddSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("story"); });
 $("storyAddStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openStickerPicker("story"); });
 $("editVideoSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("video"); });
@@ -2137,9 +2085,6 @@ $("editStoryChangeStickerBtn")?.addEventListener("click", (e)=>{
   }, 300);
 });
 
-/* ============================================================
-   VIDEO EDITOR — Rotate / Mute / Preview
-============================================================ */
 $("editVideoRotateBtn")?.addEventListener("click", (e)=>{
   e.preventDefault(); e.stopPropagation();
   const videoEl = $("uploadPreview");
@@ -2214,9 +2159,6 @@ $("editVideoPreviewBtn")?.addEventListener("click", (e)=>{
   }
 });
 
-/* ============================================================
-   VIDEO TRIM MODAL
-============================================================ */
 function openVideoTrimModal(videoEl){
   if(!videoEl || !videoEl.src){ toast("No video selected"); return; }
   trimVideoElement = videoEl;
@@ -2289,9 +2231,6 @@ $("storyTrimBtn")?.addEventListener("click", (e)=>{
   openVideoTrimModal($("storyVideoPreview"));
 });
 
-/* ============================================================
-   SHOW EDIT BARS
-============================================================ */
 $("videoFile")?.addEventListener("change", ()=>{
   setTimeout(()=>{
     const editBar = $("videoEditBar");
@@ -2303,6 +2242,7 @@ console.log("✅ app.js PART B loaded — Videos + Shorts + Stories ready!");
 /* ============================================================
    ReelHub - app.js
    PART C — Upload + Playlists + Comments + DM + Groups + Vault + Admin + Init
+   ✅ FIXES: Messages badge + Notifications badge
 ============================================================ */
 
 /* ============================================================
@@ -3582,7 +3522,7 @@ $("shareAppBtn")?.addEventListener("click", async()=>{
 });
 
 /* ============================================================
-   NOTIFICATIONS
+   ✅ NOTIFICATIONS — FIXED (sirf unread count)
 ============================================================ */
 function startNotifications(){
   if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
@@ -3593,9 +3533,19 @@ function startNotifications(){
       const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       list.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
 
+      // ✅ FIX: Sirf UNREAD notifications count karo
+      const lastSeen = Number(localStorage.getItem("notifLastSeen_" + currentUser.uid) || 0);
+      const unreadCount = list.filter(n => timeValue(n.createdAt) > lastSeen).length;
+
       const badge = $("alertsBadge");
-      if(list.length > 0){ badge.textContent = Math.min(list.length, 99); badge.classList.remove("hidden"); }
-      else badge.classList.add("hidden");
+      if(badge){
+        if(unreadCount > 0){ 
+          badge.textContent = Math.min(unreadCount, 99); 
+          badge.classList.remove("hidden"); 
+        } else { 
+          badge.classList.add("hidden"); 
+        }
+      }
 
       if(!list.length){
         $("notificationsList").innerHTML = `<div class="yt-empty" style="padding:30px"><div style="font-size:42px;margin-bottom:10px">🔔</div><p>No notifications</p></div>`;
@@ -3612,7 +3562,19 @@ function startNotifications(){
   );
 }
 
-$("topAlertsBtn")?.addEventListener("click", ()=> showModal("alertsModal"));
+/* ✅ FIX: Bell click pe "sab read" mark karo */
+$("topAlertsBtn")?.addEventListener("click", ()=>{
+  showModal("alertsModal");
+  
+  if(currentUser){
+    localStorage.setItem("notifLastSeen_" + currentUser.uid, Date.now().toString());
+  }
+  
+  setTimeout(()=>{
+    const badge = $("alertsBadge");
+    if(badge) badge.classList.add("hidden");
+  }, 100);
+});
 
 /* ============================================================
    PRESENCE
@@ -3692,15 +3654,23 @@ function getOnlineText(uid){
   return "";
 }
 
+/* ============================================================
+   ✅ CHAT READ STATUS — FIXED
+============================================================ */
 async function markChatAsRead(chatId){
   if(!currentUser || !chatId) return;
+  
+  // ✅ IMMEDIATE: cache clear karo (badge turant hat jaye)
+  unreadChatsCache[chatId] = 0;
+  chatLastReadCache[chatId] = Date.now();
+  updateMsgBadge();
+  
   try{
     const userKey = "readBy_" + currentUser.uid;
     await updateDoc(doc(db, "chats", chatId), { [userKey]: serverTimestamp() });
-    chatLastReadCache[chatId] = Date.now();
-    unreadChatsCache[chatId] = 0;
-    updateMsgBadge();
-  }catch(e){}
+  }catch(e){
+    console.warn("markChatAsRead failed:", e.message);
+  }
 }
 
 async function countUnreadMessages(chatId, lastReadTimestamp){
@@ -3727,8 +3697,17 @@ function updateMsgBadge(){
 }
 
 async function calculateAllUnread(){
-  if(!currentUser || !myChatsCache.length){ updateMsgBadge(); return; }
+  if(!currentUser || !myChatsCache.length){ 
+    unreadChatsCache = {};
+    updateMsgBadge(); 
+    return; 
+  }
   for(const chat of myChatsCache){
+    // ✅ FIX: Current open chat ko skip karo
+    if(chat.id === currentChatId){
+      unreadChatsCache[chat.id] = 0;
+      continue;
+    }
     try{
       const userKey = "readBy_" + currentUser.uid;
       const lastRead = timeValue(chat[userKey]);
@@ -3739,7 +3718,7 @@ async function calculateAllUnread(){
 }
 
 /* ============================================================
-   DM CHAT
+   ✅ DM CHAT — FIXED (badge turant clear)
 ============================================================ */
 function startChatsListListener(){
   if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
@@ -3808,7 +3787,11 @@ async function openChat(uid){
   const p = await getProfile(uid);
   currentChatUser = p;
   currentChatId = [currentUser.uid, uid].sort().join("_");
-  setTimeout(()=> markChatAsRead(currentChatId), 500);
+  
+  // ✅ FIX: Badge turant clear karo (500ms delay hatao)
+  unreadChatsCache[currentChatId] = 0;
+  updateMsgBadge();
+  markChatAsRead(currentChatId);
 
   const avatarEl = $("dmChatAvatar");
   const nameEl = $("dmChatName");
@@ -3861,6 +3844,10 @@ function startChatListener(){
       list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
       const container = $("dmMessages");
       if(!container) return;
+      
+      // ✅ Naya message aaya toh bhi read mark karo
+      if(currentChatId) markChatAsRead(currentChatId);
+      
       if(!list.length){
         container.innerHTML = `<div class="yt-empty" style="padding:40px 20px;color:var(--muted)"><p style="font-size:13px">No messages yet. Say hi! 👋</p></div>`;
         return;
@@ -4478,7 +4465,6 @@ $("saveGroupEditBtn")?.addEventListener("click", async ()=>{
   }finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Save Changes"; } }
 });
 
-/* Group Click Handlers */
 document.addEventListener("click", async (e)=>{
   const t = e.target;
 
@@ -4546,7 +4532,6 @@ document.addEventListener("click", (e)=>{
   else switchToChatsTab();
 });
 
-/* Group Chat */
 async function openGroupChat(groupId){
   if(!groupId) return;
   try{
@@ -5704,7 +5689,6 @@ setTimeout(() => {
   }
 }, 3000);
 
-/* BACK BUTTON */
 window.addEventListener("popstate", (e) => {
   const storyViewer = $("storyViewer");
   if(storyViewer && storyViewer.classList.contains("show")){
@@ -5738,10 +5722,9 @@ window.addEventListener("unhandledrejection", (e) => {
 });
 
 /* ============================================================
-   ✅ AD SYSTEM — AUTO INIT
+   AD SYSTEM — AUTO INIT
 ============================================================ */
 window.addEventListener("load", function(){
-  // Agar user already logged in hai, aur ad system ready hai
   setTimeout(function(){
     if(typeof window.showMyAd === "function" && typeof window.reloadAds === "function"){
       window.reloadAds();
@@ -5764,16 +5747,7 @@ console.log("  ✅ Song Library (Admin)");
 console.log("  ✅ Video Editor (Trim/Rotate/Mute)");
 console.log("  ✅ Vault + Monetization + Notifications");
 console.log("  ✅ Ad Control System (Master + Ad Type + Per User)");
-console.log("🔧 FIXES APPLIED:");
-console.log("  ✅ FIX 1: Cloudinary PDF/raw support + XHR timeout");
-console.log("  ✅ FIX 2: Removed `await` from non-async song delete handler");
-console.log("  ✅ FIX 3: Presence listeners via Map (multi-user support)");
-console.log("  ✅ FIX 4: Error callbacks on all onSnapshot listeners");
-console.log("  ✅ FIX 5: Follow requests cache refresh on accept");
-console.log("  ✅ FIX 6: try/catch added to deleteComment");
-console.log("  ✅ FIX 7: Splash hidden only after suspension check");
-console.log("  ✅ FIX 8: Audio upload timeout added");
-console.log("🎛️ AD SYSTEM:");
-console.log("  ✅ showMyAd(adType, uid, callback) — global helper");
-console.log("  ✅ canShowAd(adType, uid) — priority check");
-console.log("  ✅ startAdSettingsListener() — live Firebase sync");
+console.log("🔧 BADGE FIXES APPLIED:");
+console.log("  ✅ Messages badge — chat kholne pe turant clear");
+console.log("  ✅ Notifications badge — bell kholne pe turant clear");
+console.log("  ✅ Sirf unread count dikhta hai (read/unread ka fark)");
