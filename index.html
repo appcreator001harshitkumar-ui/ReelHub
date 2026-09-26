@@ -124,6 +124,7 @@
     </div>
     <div class="category-chips" id="categoryChips">
       <button class="chip active" data-cat="all">All</button>
+      <button class="chip" data-cat="trending">🔥 Trending</button>
       <button class="chip" data-cat="music">Music</button>
       <button class="chip" data-cat="gaming">Gaming</button>
       <button class="chip" data-cat="news">News</button>
@@ -133,6 +134,13 @@
       <button class="chip" data-cat="sports">Sports</button>
       <button class="chip" data-cat="learning">Learning</button>
     </div>
+
+    <!-- ✅ Continue Watching Section -->
+    <div id="continueWatchingSection" style="display:none;margin-bottom:16px">
+      <div style="padding:10px 16px;font-size:14px;font-weight:700;color:var(--text)">▶️ Continue Watching</div>
+      <div id="continueWatchingList" style="display:flex;gap:10px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none"></div>
+    </div>
+
     <div id="feed" class="video-grid"></div>
   </section>
 
@@ -185,6 +193,21 @@
         <img id="thumbnailPreview" class="yt-preview hidden" alt="" style="max-width:100%;border-radius:12px">
         <input type="file" id="thumbnailFile" accept="image/*" class="hidden">
         <button class="yt-mini-btn danger" id="removeThumbnailBtn" style="display:none;margin-top:10px;width:100%">❌ Remove Thumbnail</button>
+      </div>
+
+      <div class="yt-card">
+        <div class="yt-card-title">📂 Category</div>
+        <select id="videoCategory" class="yt-input">
+          <option value="all">All</option>
+          <option value="music">Music</option>
+          <option value="gaming">Gaming</option>
+          <option value="news">News</option>
+          <option value="live">Live</option>
+          <option value="movies">Movies</option>
+          <option value="comedy">Comedy</option>
+          <option value="sports">Sports</option>
+          <option value="learning">Learning</option>
+        </select>
       </div>
 
       <div class="yt-card" id="videoEditBar" style="display:none">
@@ -413,13 +436,83 @@
 
 <!-- ============ MODALS ============ -->
 
+<!-- ✅ VIDEO OPTIONS MENU MODAL -->
+<div id="videoMenuModal" class="modal">
+  <div class="modal-box" style="max-width:340px">
+    <div class="modal-header">
+      <h2>Video Options</h2>
+      <button class="close" data-close="videoMenuModal">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:none" id="videoMenuEditBtn">✏️ Edit Video</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="videoMenuPinBtn">📌 Pin to Profile</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:none" id="videoMenuDownloadBtn">📥 Download</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:none" id="videoMenuDeleteBtn">🗑️ Delete Video</button>
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left" id="videoMenuBlockBtn">🚫 Block User</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;color:#f59e0b" id="videoMenuReportBtn">⚠️ Report Video</button>
+    </div>
+  </div>
+</div>
+
+<!-- ✅ REPORT MODAL -->
+<div id="reportModal" class="modal">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-header">
+      <h2>⚠️ Report</h2>
+      <button class="close" data-close="reportModal">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px" id="reportTargetLabel">What's the issue?</p>
+    <label class="yt-label">Reason</label>
+    <select id="reportReason" class="yt-input" style="margin-bottom:14px">
+      <option value="spam">🚫 Spam / Misleading</option>
+      <option value="violence">💢 Violence / Dangerous</option>
+      <option value="nudity">🔞 Nudity / Sexual content</option>
+      <option value="hate">😠 Hate speech / Harassment</option>
+      <option value="copyright">©️ Copyright violation</option>
+      <option value="child">👶 Child safety</option>
+      <option value="other">📌 Other</option>
+    </select>
+    <label class="yt-label">Details (optional)</label>
+    <textarea id="reportDetails" class="yt-textarea" maxlength="300" placeholder="Describe the issue..." style="margin-bottom:14px"></textarea>
+    <p id="reportStatus" style="text-align:center;font-size:13px;color:var(--muted);min-height:18px;margin-bottom:10px"></p>
+    <button class="yt-publish-btn" id="submitReportBtn">Submit Report</button>
+  </div>
+</div>
+
+<!-- ✅ BLOCKED USERS MODAL -->
+<div id="blockedUsersModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>🚫 Blocked Users</h2>
+      <button class="close" data-close="blockedUsersModal">×</button>
+    </div>
+    <div id="blockedUsersList"></div>
+  </div>
+</div>
+
+<!-- ✅ WATCH HISTORY MODAL -->
+<div id="watchHistoryModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>📺 Watch History</h2>
+      <button class="close" data-close="watchHistoryModal">×</button>
+    </div>
+    <div id="watchHistoryList"></div>
+  </div>
+</div>
+
+<!-- SEARCH (with Users/Videos tabs) -->
 <div id="searchModal" class="modal">
   <div class="modal-box">
     <div class="modal-header">
       <h2>Search</h2>
       <button class="close" data-close="searchModal">×</button>
     </div>
-    <input id="searchInput" class="yt-input" placeholder="Search users..." style="margin-bottom:14px">
+    <input id="searchInput" class="yt-input" placeholder="Search users & videos..." style="margin-bottom:14px">
+    <div class="yt-tabs" id="searchTabs" style="margin:0 -20px 14px;padding:0 20px">
+      <div class="yt-tab active" data-stab="users">👤 Users</div>
+      <div class="yt-tab" data-stab="videos">🎬 Videos</div>
+    </div>
     <div id="searchResults"></div>
   </div>
 </div>
@@ -487,7 +580,11 @@
         <span>📬 Follow Requests</span>
         <span id="followRequestsBadge" style="background:var(--danger);color:white;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:bold;display:none">0</span>
       </button>
-      <button class="yt-mini-btn" style="padding:14px;text-align:left">🔔 Notifications</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="watchHistoryBtn">📺 Watch History</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="blockedUsersBtn">
+        <span>🚫 Blocked Users</span>
+        <span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
       <button class="yt-mini-btn" style="padding:14px;text-align:left" id="privacyPolicyBtn">📄 Privacy Policy</button>
       <button class="yt-mini-btn" style="padding:14px;text-align:left" id="termsOfServiceBtn">📋 Terms of Service</button>
       <button class="yt-mini-btn" style="padding:14px;text-align:left" id="deleteAccountBtn">🗑️ Delete Account</button>
@@ -1305,7 +1402,7 @@
 <div id="toast" class="toast"></div>
 
 <!-- ============================================================
-     🛡️ POPUP BLOCKER — Video click se ad site na khule
+     🛡️ POPUP BLOCKER
 ============================================================ -->
 <script>
 (function(){
@@ -1313,7 +1410,6 @@
 
   console.log("🛡️ Popup Blocker: Active");
 
-  // ✅ Whitelist — sirf ye sites allowed hain
   const ALLOWED_HOSTS = [
     "firebaseapp.com",
     "googleapis.com",
@@ -1331,23 +1427,14 @@
     "reelhub"
   ];
 
-  // ✅ Original window.open save karo
   const originalWindowOpen = window.open;
 
-  // ✅ window.open override karo
   window.open = function(url, name, features){
-    if(!url){
-      return originalWindowOpen.apply(this, arguments);
-    }
-
+    if(!url) return originalWindowOpen.apply(this, arguments);
     try{
       const urlObj = new URL(url, location.href);
       const hostname = urlObj.hostname.toLowerCase();
-
-      // Check karo ki allowed hai ya nahi
       const isAllowed = ALLOWED_HOSTS.some(h => hostname.includes(h));
-
-      // Ad network domains block karo
       const isAdNetwork = 
         hostname.includes("profitableratecpm") ||
         hostname.includes("popunder") ||
@@ -1364,66 +1451,19 @@
         return null;
       }
     }catch(e){
-      // Invalid URL — block karo
-      console.log("🚫 Blocked invalid popup:", url);
       return null;
     }
-
     return originalWindowOpen.apply(this, arguments);
   };
 
-  // ✅ document.createElement override — naye iframe/script detect karo
-  const originalCreateElement = document.createElement.bind(document);
-  document.createElement = function(tagName, options){
-    const el = originalCreateElement(tagName, options);
-    
-    if(tagName.toLowerCase() === "a"){
-      // Anchor elements ke liye click handler
-      el.addEventListener("click", function(e){
-        const href = el.href || "";
-        if(href.includes("profitableratecpm") || href.includes("popunder") || href.includes("pl31")){
-          e.preventDefault();
-          e.stopPropagation();
-          console.log("🚫 Blocked ad link:", href);
-          return false;
-        }
-      }, true);
-    }
-    
-    return el;
-  };
-
-  // ✅ Anchor click intercept — ad network links block
   document.addEventListener("click", function(e){
     const link = e.target.closest("a");
     if(!link) return;
-    
     const href = link.href || "";
-    if(href.includes("profitableratecpm") || 
-       href.includes("popunder") || 
-       href.includes("popads") ||
-       href.includes("clickadu") ||
-       href.includes("adsterra") ||
-       href.includes("propellerads") ||
-       href.includes("pl31")){
+    if(href.includes("profitableratecpm") || href.includes("popunder") || href.includes("pl31")){
       e.preventDefault();
       e.stopPropagation();
-      console.log("🚫 Blocked ad link click:", href);
-      return false;
-    }
-  }, true);
-
-  // ✅ Target=_blank intercept
-  document.addEventListener("click", function(e){
-    const link = e.target.closest("a[target='_blank']");
-    if(!link) return;
-    
-    const href = link.href || "";
-    // Ad network links block
-    if(href.includes("profitableratecpm") || href.includes("pl31")){
-      e.preventDefault();
-      e.stopPropagation();
-      console.log("🚫 Blocked target=_blank ad:", href);
+      console.log("🚫 Blocked ad link:", href);
       return false;
     }
   }, true);
@@ -1435,7 +1475,7 @@
 <script type="module" src="app.js"></script>
 
 <!-- ============================================================
-   🎛️ AD SYSTEM — SANDBOX IFRAME (popup blocked)
+   🎛️ AD SYSTEM — SANDBOX IFRAME
 ============================================================ -->
 <script>
 (function(){
@@ -1444,24 +1484,15 @@
   const VIDEO_AD_SCRIPT = "https://pl31503868.profitableratecpmnetwork.com/cf/d0/ed/cfd0edbe231c0f6240271057001d998c.js";
   const AD_CONTAINER_ID = "container-1fe6d8ff04cda98725422466b9ea6b14";
 
-  let currentLoadedVideoId = null;
-
-  /* ✅ Ad render in SANDBOX IFRAME
-     — Ad script iframe ke andar chalti hai
-     — Popup/popunder bahar nahi khul sakta
-     — Sirf iframe ke andar ad dikhta hai
-  */
   function renderVideoAd(){
     const slot = document.getElementById("adSlotVideoPlayer");
     const container = document.getElementById("adContainerVideoPlayer");
     if(!slot || !container) return;
 
-    // Container clear karo
     container.innerHTML = "";
     container.style.minHeight = "250px";
     container.style.width = "100%";
 
-    // ✅ Sandbox iframe banao
     const iframe = document.createElement("iframe");
     iframe.style.width = "100%";
     iframe.style.height = "250px";
@@ -1473,13 +1504,10 @@
     iframe.setAttribute("frameborder", "0");
     iframe.setAttribute("allowtransparency", "true");
     iframe.setAttribute("referrerpolicy", "no-referrer");
-    // ⚠️ IMPORTANT: allow-popups NAHI diya → popup block
-    // ⚠️ allow-top-navigation NAHI diya → top navigation block
     iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
 
     container.appendChild(iframe);
 
-    // ✅ Iframe ke andar ad script inject karo
     try {
       const doc = iframe.contentDocument || iframe.contentWindow.document;
       doc.open();
@@ -1490,22 +1518,11 @@
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1">
           <style>
-            html, body {
-              margin: 0;
-              padding: 0;
-              overflow: hidden;
-              background: #ffffff;
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-              width: 100%;
-              height: 100%;
-            }
-            * { max-width: 100%; }
-            iframe { border: 0 !important; }
-            img, video { max-width: 100%; height: auto; }
-            #${AD_CONTAINER_ID} {
-              width: 100%;
-              min-height: 250px;
-            }
+            html, body { margin:0; padding:0; overflow:hidden; background:#fff; width:100%; height:100%; }
+            * { max-width:100%; }
+            iframe { border:0 !important; }
+            img, video { max-width:100%; height:auto; }
+            #${AD_CONTAINER_ID} { width:100%; min-height:250px; }
           </style>
         </head>
         <body>
@@ -1515,27 +1532,19 @@
         </html>
       `);
       doc.close();
-    } catch(e){
-      console.error("Ad iframe inject error:", e);
-    }
+    } catch(e){ console.error("Ad iframe inject error:", e); }
 
-    // Slot dikhao
     slot.style.display = "block";
-    slot.style.minHeight = "270px";
-
-    console.log("✅ Video ad rendered in SANDBOX IFRAME (popup blocked)");
+    console.log("✅ Video ad rendered in SANDBOX IFRAME");
   }
 
-  /* ✅ Ad clear karo */
   function clearVideoAd(){
     const slot = document.getElementById("adSlotVideoPlayer");
     const container = document.getElementById("adContainerVideoPlayer");
     if(slot) slot.style.display = "none";
     if(container) container.innerHTML = "";
-    console.log("🧹 Video ad cleared");
   }
 
-  /* ✅ Ad system ready hone ka wait */
   function waitForAdSystem(callback, maxTries){
     maxTries = maxTries || 50;
     let tries = 0;
@@ -1546,12 +1555,10 @@
         callback();
       } else if(tries >= maxTries){
         clearInterval(interval);
-        console.warn("⚠️ Ad system not loaded after 5s");
       }
     }, 100);
   }
 
-  /* ✅ Video player open hone pe ad dikhao */
   window.addEventListener("videoPlayerOpened", function(){
     clearVideoAd();
     waitForAdSystem(function(){
@@ -1561,13 +1568,11 @@
     });
   });
 
-  /* ✅ Video close hone pe ad hatao */
   document.addEventListener("click", function(e){
     const closeBtn = e.target.closest('[data-close="videoPlayerModal"]');
     if(closeBtn){ setTimeout(clearVideoAd, 300); }
   });
 
-  /* ✅ Backdrop click se bhi clear */
   const playerModal = document.getElementById("videoPlayerModal");
   if(playerModal){
     playerModal.addEventListener("click", function(e){
@@ -1575,24 +1580,18 @@
     });
   }
 
-  /* ✅ App load pe log */
   window.addEventListener("load", function(){
     waitForAdSystem(function(){
       console.log("✅ Ad Control Loader initialized (Video-only + Sandbox mode)");
     });
   });
 
-  /* ✅ Manual reload */
-  window.reloadAds = function(){
-    clearVideoAd();
-    console.log("🔄 Ads reset");
-  };
+  window.reloadAds = function(){ clearVideoAd(); };
 
   console.log("✅ Ad System: Video-player only mode with SANDBOX IFRAME");
 })();
 </script>
 
-<!-- 🚨 EMERGENCY SPLASH FIX -->
 <script>
   setTimeout(function() {
     var splash = document.getElementById("splashScreen");
@@ -1616,7 +1615,7 @@
     console.error("🚨 PROMISE ERROR:", e.reason);
   });
 
-  console.log("✅ index.html loaded with popup blocker");
+  console.log("✅ index.html loaded");
 </script>
 
 </body>
