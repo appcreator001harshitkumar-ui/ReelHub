@@ -1584,3 +1584,2018 @@ $("editVideoTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.st
 $("storyTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(storyMediaType !== "video"){ toast("Trim only for videos"); return; } window.__trimContext = "story"; openVideoTrimModal($("storyVideoPreview")); });
 
 console.log("✅ Part 1/3 complete");
+/* ============================================================
+   ReelHub - app.js PART 2/3
+   Video Menu + Player + Upload + DM + Block/Report + Watch History
+============================================================ */
+
+/* ============================================================
+   VIDEO MENU MODAL (⋮)
+============================================================ */
+window.openVideoMenuModal = function(videoId){
+  const v = videosCache.find(x => x.id === videoId);
+  if(!v){ toast("Not found"); return; }
+  videoMenuVideoId = videoId;
+  const mine = currentUser && v.userId === currentUser.uid;
+  const isAdmin = isAdminUser();
+  const isPinned = currentProfile?.pinnedVideos?.includes(videoId);
+
+  const editBtn = $("videoMenuEditBtn");
+  const pinBtn = $("videoMenuPinBtn");
+  const downloadBtn = $("videoMenuDownloadBtn");
+  const deleteBtn = $("videoMenuDeleteBtn");
+  const blockBtn = $("videoMenuBlockBtn");
+  const reportBtn = $("videoMenuReportBtn");
+
+  if(editBtn) editBtn.style.display = mine ? "block" : "none";
+  if(deleteBtn) deleteBtn.style.display = (mine || isAdmin) ? "block" : "none";
+  if(downloadBtn) downloadBtn.style.display = "block";
+  if(pinBtn){
+    if(mine){ pinBtn.style.display = "block"; pinBtn.innerHTML = isPinned ? "📌 Unpin Video" : "📌 Pin to Profile"; pinBtn.dataset.pinned = isPinned ? "true" : "false"; }
+    else pinBtn.style.display = "none";
+  }
+  if(blockBtn) blockBtn.style.display = (!mine && currentUser) ? "block" : "none";
+  if(reportBtn) reportBtn.style.display = (!mine && currentUser) ? "block" : "none";
+  showModal("videoMenuModal");
+};
+
+$("videoMenuEditBtn")?.addEventListener("click", ()=>{ if(!videoMenuVideoId) return; hideModal("videoMenuModal"); openEditVideo(videoMenuVideoId); });
+
+$("videoMenuPinBtn")?.addEventListener("click", async ()=>{
+  if(!videoMenuVideoId || !currentUser) return;
+  const v = videosCache.find(x => x.id === videoMenuVideoId);
+  if(!v || v.userId !== currentUser.uid){ toast("Not your video"); return; }
+  const currentPinned = Array.isArray(currentProfile?.pinnedVideos) ? [...currentProfile.pinnedVideos] : [];
+  const isPinned = currentPinned.includes(videoMenuVideoId);
+  let newPinned;
+  if(isPinned) newPinned = currentPinned.filter(id => id !== videoMenuVideoId);
+  else { if(currentPinned.length >= 3){ toast("Max 3 videos can be pinned"); return; } newPinned = [...currentPinned, videoMenuVideoId]; }
+  try{
+    await updateDoc(doc(db, "profiles", currentUser.uid), { pinnedVideos: newPinned });
+    currentProfile.pinnedVideos = newPinned;
+    toast(isPinned ? "📌 Unpinned" : "📌 Pinned to profile");
+    hideModal("videoMenuModal");
+    renderFeed();
+    loadMyVideos();
+  }catch(e){ toast("Failed"); }
+});
+
+$("videoMenuDownloadBtn")?.addEventListener("click", ()=>{ if(!videoMenuVideoId) return; hideModal("videoMenuModal"); downloadVideo(videoMenuVideoId); });
+$("videoMenuDeleteBtn")?.addEventListener("click", ()=>{ if(!videoMenuVideoId) return; hideModal("videoMenuModal"); window.deleteVideo(videoMenuVideoId); });
+
+$("videoMenuBlockBtn")?.addEventListener("click", async ()=>{
+  if(!videoMenuVideoId || !currentUser) return;
+  const v = videosCache.find(x => x.id === videoMenuVideoId);
+  if(!v) return;
+  const targetUid = v.userId;
+  if(targetUid === currentUser.uid){ toast("Can't block yourself"); return; }
+  hideModal("videoMenuModal");
+  if(!confirm(`Block ${v.userName || "this user"}? You won't see their videos, stories, or messages.`)) return;
+  await blockUser(targetUid);
+});
+
+$("videoMenuReportBtn")?.addEventListener("click", ()=>{
+  if(!videoMenuVideoId) return;
+  const v = videosCache.find(x => x.id === videoMenuVideoId);
+  if(!v) return;
+  hideModal("videoMenuModal");
+  openReportModal("video", videoMenuVideoId, `Report "${v.title || "video"}"`);
+});
+
+/* ============================================================
+   REPORT SYSTEM
+============================================================ */
+function openReportModal(type, id, label){
+  reportTargetType = type;
+  reportTargetId = id;
+  const labelEl = $("reportTargetLabel");
+  if(labelEl) labelEl.textContent = label || "What's the issue?";
+  const statusEl = $("reportStatus");
+  if(statusEl) statusEl.textContent = "";
+  const detailsEl = $("reportDetails");
+  if(detailsEl) detailsEl.value = "";
+  const reasonEl = $("reportReason");
+  if(reasonEl) reasonEl.value = "spam";
+  showModal("reportModal");
+}
+
+$("submitReportBtn")?.addEventListener("click", async ()=>{
+  if(!currentUser){ toast("Login required"); return; }
+  if(!reportTargetId){ toast("Invalid target"); return; }
+  const reason = $("reportReason")?.value || "other";
+  const details = $("reportDetails")?.value.trim() || "";
+  const status = $("reportStatus");
+  const btn = $("submitReportBtn");
+  if(btn){ btn.disabled = true; btn.textContent = "Submitting..."; }
+  if(status){ status.textContent = "Submitting..."; status.style.color = "#7c3aed"; }
+  try{
+    await addDoc(collection(db, "reports"), {
+      type: reportTargetType, targetId: reportTargetId,
+      reporterId: currentUser.uid, reporterName: currentProfile?.name || "User",
+      reason, details, status: "pending", createdAt: serverTimestamp()
+    });
+    if(status){ status.textContent = "✅ Report submitted. Thank you!"; status.style.color = "#22c55e"; }
+    toast("✅ Report submitted");
+    setTimeout(()=>{ hideModal("reportModal"); }, 1200);
+  }catch(e){
+    if(status){ status.textContent = "Failed: " + e.message; status.style.color = "#ef4444"; }
+  }finally{
+    if(btn){ btn.disabled = false; btn.textContent = "Submit Report"; }
+  }
+});
+
+/* ============================================================
+   BLOCK USER
+============================================================ */
+async function blockUser(targetUid){
+  if(!currentUser || !targetUid) return;
+  if(targetUid === currentUser.uid){ toast("Can't block yourself"); return; }
+  const blockId = currentUser.uid + "_" + targetUid;
+  try{
+    await setDoc(doc(db, "blocked_users", blockId), {
+      blockerId: currentUser.uid, blockedId: targetUid, createdAt: serverTimestamp()
+    });
+    blockedUsersCache.add(targetUid);
+    toast("🚫 User blocked");
+    renderFeed();
+    renderShorts();
+    renderStoriesBar();
+    if(typeof renderDMInbox === "function") renderDMInbox();
+    if($("publicProfileModal")?.classList.contains("show")) hideModal("publicProfileModal");
+  }catch(e){ toast("Failed to block"); }
+}
+
+async function unblockUser(targetUid){
+  if(!currentUser || !targetUid) return;
+  const blockId = currentUser.uid + "_" + targetUid;
+  try{
+    await deleteDoc(doc(db, "blocked_users", blockId));
+    blockedUsersCache.delete(targetUid);
+    toast("✅ User unblocked");
+    renderBlockedUsers();
+    renderFeed();
+    renderShorts();
+    renderStoriesBar();
+  }catch(e){ toast("Failed to unblock"); }
+}
+
+async function renderBlockedUsers(){
+  const container = $("blockedUsersList");
+  if(!container) return;
+  if(!blockedUsersCache.size){
+    container.innerHTML = `<div class="yt-empty" style="padding:30px"><div style="font-size:42px;margin-bottom:10px">🚫</div><p>No blocked users</p></div>`;
+    return;
+  }
+  container.innerHTML = `<div class="yt-empty" style="padding:20px">Loading...</div>`;
+  const users = [];
+  for(const uid of blockedUsersCache){
+    try{ const p = await getProfile(uid); users.push(p); }catch(e){}
+  }
+  container.innerHTML = users.map(p => `
+    <div class="person-item">
+      <img src="${avatar(p.photo, p.name)}" class="people-open-btn" data-uid="${esc(p.uid)}">
+      <div class="info people-open-btn" data-uid="${esc(p.uid)}">
+        <strong>${esc(p.name || "User")}</strong>
+        <small>@${esc(p.username || "user")}</small>
+      </div>
+      <button class="follow-btn following" data-unblock-user="${esc(p.uid)}">Unblock</button>
+    </div>
+  `).join("");
+}
+
+$("blockedUsersBtn")?.addEventListener("click", ()=>{
+  hideModal("settingsModal");
+  showModal("blockedUsersModal");
+  renderBlockedUsers();
+});
+
+document.addEventListener("click", async (e)=>{
+  const unblockBtn = e.target.closest("[data-unblock-user]");
+  if(unblockBtn){
+    e.preventDefault(); e.stopPropagation();
+    const uid = unblockBtn.dataset.unblockUser;
+    if(uid && confirm("Unblock this user?")) await unblockUser(uid);
+    return;
+  }
+});
+
+/* ============================================================
+   WATCH HISTORY + CONTINUE WATCHING
+============================================================ */
+async function saveWatchProgress(videoId, progress, duration){
+  if(!currentUser || !videoId) return;
+  try{
+    const historyId = currentUser.uid + "_" + videoId;
+    await setDoc(doc(db, "watch_history", historyId), {
+      userId: currentUser.uid, videoId,
+      progress: Math.floor(progress || 0),
+      duration: Math.floor(duration || 0),
+      watchedAt: serverTimestamp()
+    }, { merge: true });
+  }catch(e){}
+}
+
+async function removeFromHistory(videoId){
+  if(!currentUser || !videoId) return;
+  try{
+    await deleteDoc(doc(db, "watch_history", currentUser.uid + "_" + videoId));
+    toast("Removed from history");
+    renderWatchHistory();
+  }catch(e){}
+}
+
+function renderWatchHistory(){
+  const container = $("watchHistoryList");
+  if(!container) return;
+  if(!watchHistoryCache.length){
+    container.innerHTML = `<div class="yt-empty" style="padding:30px"><div style="font-size:42px;margin-bottom:10px">📺</div><p>No watch history</p></div>`;
+    return;
+  }
+  const videos = watchHistoryCache.map(h => {
+    const v = videosCache.find(x => x.id === h.videoId);
+    return v ? { ...v, _history: h } : null;
+  }).filter(Boolean);
+
+  if(!videos.length){
+    container.innerHTML = `<div class="yt-empty" style="padding:30px"><p>No videos available</p></div>`;
+    return;
+  }
+  container.innerHTML = videos.map(v => {
+    const progressPct = v._history.duration > 0 ? Math.min(100, (v._history.progress / v._history.duration) * 100) : 0;
+    return `
+      <div class="yt-video-item" data-open-video="${esc(v.id)}" style="position:relative">
+        <div class="yt-video-thumb">
+          ${v.isPhoto ? `<img src="${esc(v.videoURL)}" style="width:100%;height:100%;object-fit:cover">` : (v.thumbnail ? `<img src="${esc(v.thumbnail)}" style="width:100%;height:100%;object-fit:cover">` : `<video src="${esc(v.videoURL)}" preload="metadata" muted></video>`)}
+          <div class="view-badge">${timeAgo(v._history.watchedAt)}</div>
+          ${progressPct > 0 ? `<div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(0,0,0,0.5)"><div style="height:100%;width:${progressPct}%;background:#7c3aed"></div></div>` : ""}
+        </div>
+        <div class="yt-video-meta">
+          <h4>${esc(v.title || "Untitled")}</h4>
+          <div class="views">${formatViews(v.views)} · ${timeAgo(v.createdAt)}</div>
+          <div class="btns" data-stop-propagation style="margin-top:6px">
+            <button class="yt-mini-btn danger" data-remove-history="${esc(v.id)}">Remove</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+document.addEventListener("click", async (e)=>{
+  const rmHist = e.target.closest("[data-remove-history]");
+  if(rmHist){
+    e.preventDefault(); e.stopPropagation();
+    await removeFromHistory(rmHist.dataset.removeHistory);
+    return;
+  }
+});
+
+function renderContinueWatching(){
+  const section = $("continueWatchingSection");
+  const container = $("continueWatchingList");
+  if(!section || !container) return;
+  if(!continueWatchingCache.length){ section.style.display = "none"; return; }
+  const videos = continueWatchingCache.map(h => {
+    const v = videosCache.find(x => x.id === h.videoId);
+    return v ? { ...v, _history: h } : null;
+  }).filter(Boolean);
+  if(!videos.length){ section.style.display = "none"; return; }
+  section.style.display = "block";
+  container.innerHTML = videos.map(v => {
+    const progressPct = v._history.duration > 0 ? Math.min(100, (v._history.progress / v._history.duration) * 100) : 0;
+    return `
+      <div class="cw-card" data-open-video="${esc(v.id)}" style="min-width:180px;max-width:180px;cursor:pointer">
+        <div style="position:relative;width:100%;height:100px;border-radius:10px;overflow:hidden;background:#000">
+          ${v.isPhoto ? `<img src="${esc(v.videoURL)}" style="width:100%;height:100%;object-fit:cover">` : (v.thumbnail ? `<img src="${esc(v.thumbnail)}" style="width:100%;height:100%;object-fit:cover">` : `<video src="${esc(v.videoURL)}#t=1" preload="metadata" muted style="width:100%;height:100%;object-fit:cover"></video>`)}
+          <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(0,0,0,0.6)"><div style="height:100%;width:${progressPct}%;background:#7c3aed"></div></div>
+        </div>
+        <div style="font-size:12px;font-weight:600;margin-top:6px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(v.title || "Untitled")}</div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:2px">${formatDuration(v._history.progress)} / ${formatDuration(v._history.duration)}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+$("watchHistoryBtn")?.addEventListener("click", ()=>{
+  hideModal("settingsModal");
+  showModal("watchHistoryModal");
+  renderWatchHistory();
+});
+
+/* ============================================================
+   VIDEO PLAYER
+============================================================ */
+window.openVideoPlayer = function(videoId){
+  const v = videosCache.find(x => x.id === videoId);
+  if(!v){ toast("Video not found"); return; }
+  if(v.visibility === "private" && v.userId !== currentUser?.uid){ toast("Private video"); return; }
+
+  trackView(videoId);
+
+  if(v.isPhoto){
+    const imgEl = $("largeChatImage");
+    if(imgEl){
+      imgEl.src = v.videoURL;
+      showModal("imageViewerModal");
+      console.log("📷 Photo opened:", v.title);
+    }
+    return;
+  }
+
+  const videoEl = $("videoPlayerVideo");
+  if(videoEl){
+    videoEl.dataset.videoId = videoId;
+    videoEl.src = v.videoURL;
+    videoEl.playbackRate = v.uploadSpeed || 1;
+    videoEl.muted = v.muted || false;
+    videoEl.style.filter = v.filter && v.filter !== "none" ? v.filter : "";
+
+    if(v.rotation){
+      videoEl.style.transition = "transform 0.3s ease";
+      if(v.rotation === 90 || v.rotation === 270) videoEl.style.transform = `rotate(${v.rotation}deg) scale(1.3)`;
+      else videoEl.style.transform = `rotate(${v.rotation}deg)`;
+    } else videoEl.style.transform = "";
+
+    const hist = watchHistoryCache.find(h => h.videoId === videoId);
+    if(hist && hist.progress > 3 && hist.duration > 0 && hist.progress < (hist.duration - 5)){
+      videoEl.addEventListener("loadedmetadata", ()=>{ try{ videoEl.currentTime = hist.progress; }catch(e){} }, { once: true });
+    }
+    videoEl.play().catch(()=>{});
+
+    let saveTimer = null;
+    videoEl.addEventListener("timeupdate", ()=>{
+      if(saveTimer) return;
+      saveTimer = setTimeout(()=>{ saveWatchProgress(videoId, videoEl.currentTime, videoEl.duration); saveTimer = null; }, 5000);
+    });
+    videoEl.addEventListener("ended", ()=>{ saveWatchProgress(videoId, 0, videoEl.duration); });
+  }
+
+  if(v.song && v.song.audioURL){
+    if(window.__videoAudio) window.__videoAudio.pause();
+    window.__videoAudio = new Audio(v.song.audioURL);
+    window.__videoAudio.loop = true;
+    window.__videoAudio.volume = 0.5;
+    window.__videoAudio.play().catch(()=>{});
+  }
+
+  document.querySelectorAll(".speed-btn").forEach(btn => {
+    const speed = Number(btn.dataset.speed);
+    if(speed === (v.uploadSpeed || 1)){ btn.style.background = "#7c3aed"; btn.classList.add("active"); }
+    else { btn.style.background = "rgba(255,255,255,0.15)"; btn.classList.remove("active"); }
+  });
+
+  if($("videoPlayerTitle")) $("videoPlayerTitle").textContent = v.title || "Untitled";
+  const metaEl = $("videoPlayerMeta");
+  if(metaEl){
+    let extraInfo = [];
+    if(v.song) extraInfo.push(`🎵 ${v.song.name}`);
+    if(v.muted) extraInfo.push("🔇 Muted");
+    if(v.rotation) extraInfo.push(`🔄 ${v.rotation}°`);
+    if(v.uploadSpeed && v.uploadSpeed !== 1) extraInfo.push(`⚡ ${v.uploadSpeed}x`);
+    const baseMeta = formatViews(v.views) + " · " + timeAgo(v.createdAt);
+    if(extraInfo.length) metaEl.innerHTML = `${baseMeta}<br><span style="font-size:11px;color:var(--primary)">${extraInfo.join(" · ")}</span>`;
+    else metaEl.textContent = baseMeta;
+  }
+
+  if($("videoPlayerDesc")){
+    $("videoPlayerDesc").textContent = v.description || "";
+    $("videoPlayerDesc").style.display = v.description ? "block" : "none";
+  }
+  if($("videoPlayerLikes")) $("videoPlayerLikes").textContent = (v.likes || 0);
+
+  ["videoPlayerLikeBtn", "videoPlayerShareBtn", "videoPlayerCommentBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn", "videoPlayerDownloadBtn"].forEach(id => { const btn = $(id); if(btn) btn.style.display = ""; });
+
+  updateVideoPlayerLike(videoId);
+  updateVideoPlayerSave(videoId);
+
+  const likeBtn = $("videoPlayerLikeBtn");
+  if(likeBtn) likeBtn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); toggleLike(videoId, likeBtn, false); setTimeout(async () => { const snap = await getDoc(doc(db, "videos", videoId)); if(snap.exists()){ if($("videoPlayerLikes")) $("videoPlayerLikes").textContent = snap.data().likes || 0; } }, 500); };
+
+  const commentBtn = $("videoPlayerCommentBtn");
+  if(commentBtn) commentBtn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); hideModal("videoPlayerModal"); setTimeout(() => openComments(videoId), 200); };
+
+  const shareBtn = $("videoPlayerShareBtn");
+  if(shareBtn) shareBtn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); openShareSheet(videoId); };
+
+  const downloadBtn = $("videoPlayerDownloadBtn");
+  if(downloadBtn) downloadBtn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); downloadVideo(videoId); };
+
+  const saveBtn = $("videoPlayerSaveBtn");
+  if(saveBtn) saveBtn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); toggleSave(videoId, saveBtn); };
+
+  const playlistBtn = $("videoPlayerPlaylistBtn");
+  if(playlistBtn) playlistBtn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); openAddToPlaylist(videoId); };
+
+  const speedBtn = $("videoPlayerSpeedBtn");
+  if(speedBtn) speedBtn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); const sc = $("speedControl"); if(sc) sc.style.display = sc.style.display === "none" ? "block" : "none"; };
+
+  document.querySelectorAll(".speed-btn").forEach(btn => {
+    btn.onclick = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      const speed = Number(btn.dataset.speed);
+      if($("videoPlayerVideo")) $("videoPlayerVideo").playbackRate = speed;
+      document.querySelectorAll(".speed-btn").forEach(b => { b.style.background = "rgba(255,255,255,0.15)"; b.classList.remove("active"); });
+      btn.style.background = "#7c3aed"; btn.classList.add("active");
+      toast(`Speed: ${speed}x`);
+      setTimeout(() => { const sc = $("speedControl"); if(sc) sc.style.display = "none"; }, 800);
+    };
+  });
+
+  showModal("videoPlayerModal");
+  try{ window.dispatchEvent(new Event("videoPlayerOpened")); }catch(e){}
+};
+
+async function updateVideoPlayerSave(videoId){
+  if(!currentUser) return;
+  const saveBtn = $("videoPlayerSaveBtn");
+  if(!saveBtn) return;
+  const isSaved = mySavesCache.has(videoId);
+  const icon = saveBtn.querySelector(".icon");
+  const label = saveBtn.querySelector("small");
+  if(isSaved){ if(icon) icon.textContent = "🔖"; if(label) label.textContent = "Saved"; saveBtn.style.color = "var(--primary)"; }
+  else { if(icon) icon.textContent = "📑"; if(label) label.textContent = "Save"; saveBtn.style.color = ""; }
+}
+
+async function updateVideoPlayerLike(videoId){
+  if(!currentUser) return;
+  try{
+    const likeRef = doc(db,"videos",videoId,"likes",currentUser.uid);
+    const snap = await getDoc(likeRef);
+    const btn = $("videoPlayerLikeBtn");
+    if(!btn) return;
+    if(snap.exists()){ btn.classList.add("liked"); btn.querySelector(".icon").textContent = "❤️"; }
+    else { btn.classList.remove("liked"); btn.querySelector(".icon").textContent = "🤍"; }
+  }catch(e){}
+}
+
+function resetVideoPlayer(){
+  const videoEl = $("videoPlayerVideo");
+  if(videoEl){ videoEl.pause(); videoEl.playbackRate = 1; videoEl.style.transform = ""; videoEl.muted = false; videoEl.style.filter = ""; delete videoEl.dataset.videoId; }
+  const sc = $("speedControl");
+  if(sc) sc.style.display = "none";
+  if(window.__videoAudio){ window.__videoAudio.pause(); window.__videoAudio = null; }
+  stopWatchTimer();
+}
+
+/* DOWNLOAD */
+async function downloadVideo(videoId){
+  const v = videosCache.find(x => x.id === videoId);
+  if(!v || !v.videoURL){ toast("Video not found"); return; }
+  try{
+    toast("📥 Preparing download...");
+    let downloadURL = v.videoURL;
+    if(downloadURL.includes("cloudinary.com") && downloadURL.includes("/upload/")) downloadURL = downloadURL.replace("/upload/", "/upload/fl_attachment/");
+    const cleanTitle = (v.title || "ReelHub_File").replace(/[^a-zA-Z0-9_\- ]/g, "").trim().replace(/\s+/g, "_").slice(0, 50) || "ReelHub_File";
+    const ext = v.isPhoto ? ".jpg" : ".mp4";
+    const a = document.createElement("a");
+    a.href = downloadURL;
+    a.download = cleanTitle + ext;
+    a.target = "_blank";
+    a.rel = "noopener";
+    a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { if(a.parentNode) document.body.removeChild(a); }, 1000);
+    toast("✅ Download started — Check phone Downloads");
+  }catch(err){ window.open(v.videoURL, "_blank"); }
+}
+
+/* DELETE VIDEO */
+window.deleteVideo = async function(videoId){
+  if(!currentUser) return;
+  const ref = doc(db, "videos", videoId);
+  const snap = await getDoc(ref);
+  if(!snap.exists()){ toast("Video not found"); return; }
+  const videoData = snap.data();
+  const ownerId = videoData.userId;
+  const isOwnerUser = ownerId === currentUser.uid;
+  const isAdmin = isAdminUser();
+  if(!isOwnerUser && !isAdmin){ toast("You can't delete this video"); return; }
+  if(!confirm(isAdmin && !isOwnerUser ? "ADMIN: Delete this video?" : "Delete this video?")) return;
+  try{
+    const comments = await getDocs(collection(db, "videos", videoId, "comments"));
+    for(const c of comments.docs) await deleteDoc(c.ref);
+    const likes = await getDocs(collection(db, "videos", videoId, "likes"));
+    for(const l of likes.docs) await deleteDoc(l.ref);
+    const views = await getDocs(collection(db, "videos", videoId, "views"));
+    for(const v of views.docs) await deleteDoc(v.ref);
+    await deleteDoc(ref);
+    const q = query(collection(db, "videos"), where("userId", "==", ownerId));
+    const ownerVideos = await getDocs(q);
+    await updateDoc(doc(db, "profiles", ownerId), { videos: ownerVideos.size });
+    toast("🗑️ Video deleted");
+  }catch(e){ toast("Failed: " + e.message); }
+};
+
+/* EDIT VIDEO */
+async function openEditVideo(videoId){
+  const snap = await getDoc(doc(db,"videos",videoId));
+  if(!snap.exists()) return;
+  const v = snap.data();
+  if(v.userId !== currentUser.uid && !isAdminUser()){ toast("Not yours"); return; }
+  $("editVideoId").value = videoId;
+  $("editVideoTitle").value = v.title || "";
+  $("editVideoDescription").value = v.description || "";
+  $("editVideoVisibility").value = v.visibility || "public";
+  $("editVideoType").value = v.type || "long";
+  showModal("editVideoModal");
+}
+
+$("saveVideoEditBtn")?.addEventListener("click", async ()=>{
+  const id = $("editVideoId").value;
+  if(!id) return;
+  try{
+    const ref = doc(db,"videos",id);
+    const snap = await getDoc(ref);
+    if(!snap.exists()) return;
+    if(snap.data().userId !== currentUser.uid && !isAdminUser()) return;
+    await updateDoc(ref, {
+      title: $("editVideoTitle").value.trim(),
+      description: $("editVideoDescription").value.trim(),
+      visibility: $("editVideoVisibility").value,
+      type: $("editVideoType").value,
+      updatedAt: serverTimestamp()
+    });
+    hideModal("editVideoModal");
+    toast("✅ Updated");
+  }catch(e){ toast("Update failed"); }
+});
+
+/* TRACK VIEW / LIKE / SAVE */
+async function trackView(videoId){
+  if(!currentUser || !videoId) return;
+  if(processingViews.has(videoId)) return;
+  processingViews.add(videoId);
+  try{
+    const viewRef = doc(db, "videos", videoId, "views", currentUser.uid);
+    const snap = await getDoc(viewRef);
+    if(!snap.exists()){
+      await setDoc(viewRef, { userId: currentUser.uid, viewedAt: serverTimestamp() });
+      const videoRef = doc(db, "videos", videoId);
+      await updateDoc(videoRef, { views: increment(1) });
+      try{
+        const videoSnap = await getDoc(videoRef);
+        if(videoSnap.exists()){
+          const ownerId = videoSnap.data().userId;
+          if(ownerId && ownerId !== currentUser.uid) await updateDoc(doc(db, "profiles", ownerId), { totalViews: increment(1) });
+        }
+      }catch(err){}
+    }
+  }catch(e){}
+  finally { setTimeout(() => processingViews.delete(videoId), 5000); }
+}
+
+document.addEventListener("play", (e)=>{ if(e.target.tagName === "VIDEO"){ const vid = e.target.dataset.videoId; if(vid){ trackView(vid); startWatchTimer(vid); } } }, true);
+document.addEventListener("pause", (e)=>{ if(e.target.tagName === "VIDEO"){ const vid = e.target.dataset.videoId; if(vid) stopWatchTimer(); } }, true);
+document.addEventListener("ended", (e)=>{ if(e.target.tagName === "VIDEO"){ const vid = e.target.dataset.videoId; if(vid) stopWatchTimer(); } }, true);
+
+async function toggleLike(videoId, btnEl, isReel=false){
+  if(!currentUser){ toast("Login required"); return; }
+  if(!videoId) return;
+  if(processingLikes.has(videoId)) return;
+  processingLikes.add(videoId);
+  try{
+    const likeRef = doc(db,"videos",videoId,"likes",currentUser.uid);
+    const videoRef = doc(db,"videos",videoId);
+    const [likeSnap, videoSnap] = await Promise.all([getDoc(likeRef), getDoc(videoRef)]);
+    if(!videoSnap.exists()) return;
+    const ownerId = videoSnap.data().userId;
+    const wasLiked = likeSnap.exists();
+    if(wasLiked){
+      await deleteDoc(likeRef);
+      await updateDoc(videoRef, { likes: increment(-1) });
+      if(btnEl){ btnEl.classList.remove("liked"); const icon = btnEl.querySelector(".icon"); if(icon) icon.textContent = "🤍"; }
+    } else {
+      await setDoc(likeRef, { userId: currentUser.uid, createdAt: serverTimestamp() });
+      await updateDoc(videoRef, { likes: increment(1) });
+      if(btnEl){ btnEl.classList.add("liked"); const icon = btnEl.querySelector(".icon"); if(icon) icon.textContent = "❤️"; }
+      if(ownerId !== currentUser.uid){
+        await addDoc(collection(db,"notifications"), { to: ownerId, from: currentUser.uid, title: "❤️ New Like", message: (currentProfile?.name || "Someone") + " liked your video", createdAt: serverTimestamp() });
+      }
+    }
+    const freshSnap = await getDoc(videoRef);
+    if(freshSnap.exists()){
+      const newCount = Math.max(0, Number(freshSnap.data().likes || 0));
+      if(btnEl){ const count = btnEl.querySelector(".like-count"); if(count) count.textContent = newCount; }
+    }
+  }catch(e){}
+  finally { setTimeout(() => processingLikes.delete(videoId), 1000); }
+}
+
+async function toggleSave(videoId, btnEl){
+  if(!currentUser){ toast("Login required"); return; }
+  if(!videoId) return;
+  if(processingSaves.has(videoId)) return;
+  processingSaves.add(videoId);
+  const saveId = currentUser.uid + "_" + videoId;
+  const saveRef = doc(db, "saves", saveId);
+  try{
+    const snap = await getDoc(saveRef);
+    if(snap.exists()){
+      await deleteDoc(saveRef);
+      mySavesCache.delete(videoId);
+      updateAllSaveButtons(videoId, false);
+      updateProfileTabCounts();
+      renderSavedVideos();
+      updateVideoPlayerSave(videoId);
+      toast("Removed from saved");
+    } else {
+      await setDoc(saveRef, { userId: currentUser.uid, videoId: videoId, savedAt: serverTimestamp() });
+      mySavesCache.add(videoId);
+      updateAllSaveButtons(videoId, true);
+      updateProfileTabCounts();
+      renderSavedVideos();
+      updateVideoPlayerSave(videoId);
+      toast("✅ Saved");
+    }
+  }catch(e){ toast("Save failed"); }
+  finally { setTimeout(() => processingSaves.delete(videoId), 1500); }
+}
+
+function updateAllSaveButtons(videoId, isSaved){
+  document.querySelectorAll(`[data-save-video="${videoId}"]`).forEach(btn=>{
+    btn.classList.toggle("saved", isSaved);
+    const icon = btn.querySelector(".icon");
+    if(icon) icon.textContent = isSaved ? "🔖" : "📑";
+  });
+}
+
+/* PROFILE TABS */
+function updateProfileTabCounts(){
+  const vc = $("tabVideosCount");
+  const sc = $("tabSavedCount");
+  const pc = $("tabPlaylistsCount");
+  if(vc) vc.textContent = videosCache.filter(v => v.userId === currentUser?.uid).length;
+  if(sc) sc.textContent = mySavesCache.size;
+  if(pc) pc.textContent = myPlaylistsCache.length;
+}
+
+document.querySelectorAll("#profileTabs .yt-tab").forEach(tab=>{
+  tab.addEventListener("click", ()=>{
+    const tabName = tab.dataset.tab;
+    if(!tabName) return;
+    document.querySelectorAll("#profileTabs .yt-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    currentProfileTab = tabName;
+    $("myVideos")?.classList.add("hidden");
+    $("playlistsTab")?.classList.add("hidden");
+    $("savedVideos")?.classList.add("hidden");
+    $("monetizationTab")?.classList.add("hidden");
+    $("aboutTab")?.classList.add("hidden");
+    if(tabName === "videos") $("myVideos")?.classList.remove("hidden");
+    else if(tabName === "saved"){ $("savedVideos")?.classList.remove("hidden"); renderSavedVideos(); }
+    else if(tabName === "playlists"){ $("playlistsTab")?.classList.remove("hidden"); renderPlaylistsTab(); }
+    else if(tabName === "monetization"){ $("monetizationTab")?.classList.remove("hidden"); renderMonetizationTab(); }
+    else if(tabName === "about"){ $("aboutTab")?.classList.remove("hidden"); renderAboutTab(); }
+  });
+});
+
+function renderAboutTab(){
+  const container = $("aboutTab");
+  if(!container || !currentProfile) return;
+  let rows = [];
+  rows.push(`<div style="padding:12px 16px;border-bottom:1px solid var(--border)"><div style="font-size:12px;color:var(--muted)">Name</div><div style="font-size:14px;font-weight:500;margin-top:2px">${esc(currentProfile.name || "User")}</div></div>`);
+  rows.push(`<div style="padding:12px 16px;border-bottom:1px solid var(--border)"><div style="font-size:12px;color:var(--muted)">Username</div><div style="font-size:14px;font-weight:500;margin-top:2px">@${esc(currentProfile.username || "user")}</div></div>`);
+  if(currentProfile.age) rows.push(`<div style="padding:12px 16px;border-bottom:1px solid var(--border)"><div style="font-size:12px;color:var(--muted)">Age</div><div style="font-size:14px;font-weight:500;margin-top:2px">${esc(currentProfile.age)}</div></div>`);
+  if(currentProfile.gender) rows.push(`<div style="padding:12px 16px;border-bottom:1px solid var(--border)"><div style="font-size:12px;color:var(--muted)">Gender</div><div style="font-size:14px;font-weight:500;margin-top:2px">${esc(currentProfile.gender)}</div></div>`);
+  if(currentProfile.bio) rows.push(`<div style="padding:12px 16px"><div style="font-size:12px;color:var(--muted)">Bio</div><div style="font-size:14px;margin-top:2px;line-height:1.5">${esc(currentProfile.bio)}</div></div>`);
+  container.innerHTML = rows.join("");
+}
+
+function renderSavedVideos(){
+  const container = $("savedVideos");
+  if(!container) return;
+  if(!mySavesCache.size){ container.innerHTML = `<div class="saved-empty"><span class="icon">📑</span><h3>No saved videos</h3><p>Videos you save will appear here</p></div>`; return; }
+  const savedList = videosCache.filter(v => mySavesCache.has(v.id));
+  if(!savedList.length){ container.innerHTML = `<div class="saved-empty"><span class="icon">📑</span><h3>No saved videos</h3><p>Videos you save will appear here</p></div>`; return; }
+  container.innerHTML = savedList.map(v => createYTVideoItem(v, v.userId === currentUser?.uid)).join("");
+}
+
+/* PLAYLISTS */
+async function loadMyPlaylists(){
+  if(!currentUser) return;
+  try{
+    const snap = await getDocs(query(collection(db, "playlists"), where("userId", "==", currentUser.uid)));
+    myPlaylistsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    myPlaylistsCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
+    updateProfileTabCounts();
+    renderPlaylistsTab();
+  }catch(e){}
+}
+
+function startPlaylistsListener(){
+  if(playlistsUnsubscribe){ playlistsUnsubscribe(); playlistsUnsubscribe = null; }
+  if(!currentUser) return;
+  playlistsUnsubscribe = onSnapshot(query(collection(db,"playlists"), where("userId","==",currentUser.uid)),
+    snapshot=>{
+      myPlaylistsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      myPlaylistsCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
+      updateProfileTabCounts();
+      renderPlaylistsTab();
+      if(currentPlaylistView) renderPlaylistDetail(currentPlaylistView);
+    }, error=>console.error("Playlists listener error:", error));
+}
+
+function renderPlaylistsTab(){
+  const container = $("playlistsTab");
+  if(!container) return;
+  if(!myPlaylistsCache.length){
+    container.innerHTML = `<div class="playlist-empty"><span class="icon">🎵</span><h3>No playlists yet</h3><p>Organize your favorite videos into playlists</p><button class="playlist-create-btn" id="createFirstPlaylistBtn">➕ Create Playlist</button></div>`;
+    $("createFirstPlaylistBtn")?.addEventListener("click", ()=>{ $("playlistName").value = ""; $("playlistDesc").value = ""; showModal("createPlaylistModal"); });
+    return;
+  }
+  container.innerHTML = `
+    <button class="playlist-create-btn" id="createNewPlaylistBtn" style="margin-bottom:14px">➕ New Playlist</button>
+    ${myPlaylistsCache.map(p => {
+      const count = p.videoCount || 0;
+      const firstVideo = p.coverVideoURL || "";
+      return `
+      <div class="playlist-card" data-open-playlist="${esc(p.id)}">
+        <div class="playlist-cover">${firstVideo ? `<video src="${esc(firstVideo)}" preload="metadata" muted></video><span class="cover-icon">▶️</span>` : `<span class="cover-icon">🎵</span>`}</div>
+        <div class="playlist-info"><h4>${esc(p.name || "Untitled")}</h4><div class="meta">${count} ${count === 1 ? "video" : "videos"}</div></div>
+        <div class="playlist-actions"><button class="playlist-delete-btn" data-delete-playlist="${esc(p.id)}">Delete</button></div>
+      </div>`;
+    }).join("")}
+  `;
+  $("createNewPlaylistBtn")?.addEventListener("click", ()=>{ $("playlistName").value = ""; $("playlistDesc").value = ""; showModal("createPlaylistModal"); });
+}
+
+async function openPlaylistDetail(playlistId){
+  const playlist = myPlaylistsCache.find(p => p.id === playlistId);
+  if(!playlist) return;
+  currentPlaylistView = playlistId;
+  $("playlistDetailTitle").textContent = playlist.name || "Playlist";
+  showModal("playlistDetailModal");
+  await renderPlaylistDetail(playlistId);
+}
+
+async function renderPlaylistDetail(playlistId){
+  const playlist = myPlaylistsCache.find(p => p.id === playlistId);
+  if(!playlist) return;
+  const container = $("playlistDetailContent");
+  container.innerHTML = `<div class="yt-empty" style="padding:30px">Loading...</div>`;
+  try{
+    const itemsSnap = await getDocs(collection(db, "playlists", playlistId, "items"));
+    const items = itemsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+    items.sort((a,b)=> timeValue(b.addedAt) - timeValue(a.addedAt));
+    const videoIds = items.map(i => i.videoId);
+    const videos = videosCache.filter(v => videoIds.includes(v.id));
+    const firstVideo = videos[0];
+    container.innerHTML = `
+      <div class="playlist-detail-header">
+        <div class="playlist-detail-cover">${firstVideo ? `<video src="${esc(firstVideo.videoURL)}" preload="metadata" muted></video>` : `🎵`}</div>
+        <div class="playlist-detail-info"><h3>${esc(playlist.name)}</h3><div class="meta">${videos.length} ${videos.length === 1 ? "video" : "videos"}</div></div>
+      </div>
+      ${videos.length === 0 ? `<div class="playlist-empty" style="padding:30px"><span class="icon">📭</span><p>No videos</p></div>` : videos.map(v => `
+            <div class="playlist-video-item" data-playlist-video="${esc(v.id)}">
+              <div class="thumb"><video src="${esc(v.videoURL)}" preload="metadata" muted></video></div>
+              <div class="info"><h4>${esc(v.title || "Untitled")}</h4><div class="stats">${formatViews(v.views)} · ${timeAgo(v.createdAt)}</div></div>
+              <button class="remove-btn" data-remove-from-playlist="${esc(v.id)}|${esc(playlistId)}">Remove</button>
+            </div>`).join("")}
+    `;
+  }catch(e){ container.innerHTML = `<div class="yt-empty" style="padding:30px">Error</div>`; }
+}
+
+$("createPlaylistBtn")?.addEventListener("click", async()=>{
+  if(!currentUser) return;
+  const name = $("playlistName").value.trim();
+  const description = $("playlistDesc").value.trim();
+  if(!name){ toast("Playlist name डालो"); return; }
+  try{
+    $("createPlaylistBtn").disabled = true;
+    await addDoc(collection(db, "playlists"), { userId: currentUser.uid, userName: currentProfile?.name || "User", name, description, videoCount: 0, coverVideoURL: "", createdAt: serverTimestamp() });
+    hideModal("createPlaylistModal");
+    toast("✅ Playlist created");
+  }catch(e){ toast("Failed"); }
+  finally { $("createPlaylistBtn").disabled = false; }
+});
+
+async function openAddToPlaylist(videoId){
+  currentPlaylistVideoId = videoId;
+  selectedPlaylists = new Set();
+  showModal("addToPlaylistModal");
+  const container = $("playlistSelectList");
+  container.innerHTML = `<div class="yt-empty" style="padding:20px">Loading...</div>`;
+  if(!myPlaylistsCache.length){ container.innerHTML = `<div class="playlist-empty" style="padding:20px"><p style="font-size:13px">No playlists yet</p></div>`; return; }
+  for(const p of myPlaylistsCache){
+    try{
+      const itemId = p.id + "_" + videoId;
+      const snap = await getDoc(doc(db, "playlists", p.id, "items", itemId));
+      if(snap.exists()) selectedPlaylists.add(p.id);
+    }catch(e){}
+  }
+  container.innerHTML = myPlaylistsCache.map(p => {
+    const checked = selectedPlaylists.has(p.id);
+    return `<div class="playlist-select-item ${checked ? "checked" : ""}" data-toggle-playlist="${esc(p.id)}"><div class="playlist-select-check">${checked ? "✓" : ""}</div><div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">${esc(p.name)}</div><div style="font-size:12px;color:var(--muted)">${p.videoCount || 0} videos</div></div></div>`;
+  }).join("");
+}
+
+$("saveToPlaylistBtn")?.addEventListener("click", async()=>{
+  if(!currentPlaylistVideoId){ toast("Video not found"); return; }
+  const btn = $("saveToPlaylistBtn");
+  if(btn){ btn.disabled = true; btn.textContent = "Saving..."; }
+  try{
+    let savedCount = 0, removedCount = 0;
+    for(const p of myPlaylistsCache){
+      const itemId = p.id + "_" + currentPlaylistVideoId;
+      const itemRef = doc(db, "playlists", p.id, "items", itemId);
+      const snap = await getDoc(itemRef);
+      if(selectedPlaylists.has(p.id)){ if(!snap.exists()){ await setDoc(itemRef, { videoId: currentPlaylistVideoId, addedAt: serverTimestamp() }); savedCount++; } }
+      else { if(snap.exists()){ await deleteDoc(itemRef); removedCount++; } }
+    }
+    for(const p of myPlaylistsCache){
+      const items = await getDocs(collection(db, "playlists", p.id, "items"));
+      let coverVideoURL = "";
+      if(items.size > 0){ const firstItem = items.docs[0].data(); const v = videosCache.find(x => x.id === firstItem.videoId); if(v) coverVideoURL = v.videoURL; }
+      await updateDoc(doc(db, "playlists", p.id), { videoCount: items.size, coverVideoURL });
+    }
+    await loadMyPlaylists();
+    hideModal("addToPlaylistModal");
+    if(savedCount > 0) toast(`✅ Saved`);
+    else if(removedCount > 0) toast(`Removed`);
+    else toast("No changes");
+  }catch(e){ toast("Failed"); }
+  finally { if(btn){ btn.disabled = false; btn.textContent = "Done"; } }
+});
+
+async function syncAllPlaylistCounts(){
+  for(const p of myPlaylistsCache){
+    try{
+      const items = await getDocs(collection(db, "playlists", p.id, "items"));
+      let coverVideoURL = "";
+      if(items.size > 0){ const firstItem = items.docs[0].data(); const v = videosCache.find(x => x.id === firstItem.videoId); if(v) coverVideoURL = v.videoURL; }
+      await updateDoc(doc(db, "playlists", p.id), { videoCount: items.size, coverVideoURL });
+    }catch(e){}
+  }
+}
+
+$("newPlaylistFromAddBtn")?.addEventListener("click", ()=>{ hideModal("addToPlaylistModal"); $("playlistName").value = ""; $("playlistDesc").value = ""; showModal("createPlaylistModal"); });
+
+/* ============================================================
+   UPLOAD
+============================================================ */
+document.addEventListener("click", (e)=>{
+  const typeRadio = e.target.closest("#contentTypeGroup .yt-radio");
+  if(typeRadio){
+    e.preventDefault(); e.stopPropagation();
+    document.querySelectorAll("#contentTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
+    typeRadio.classList.add("selected");
+    uploadContentType = typeRadio.dataset.value;
+    const title = $("selectMediaTitle");
+    const dz = $("dropzone");
+    const thumbCard = $("thumbnailCard");
+    const editBar = $("videoEditBar");
+    if(uploadContentType === "photo"){
+      if(title) title.textContent = "📷 Select Photo";
+      if(dz) dz.querySelector(".main-text").textContent = "Click to select photo";
+      if(dz) dz.querySelector(".sub-text").textContent = "JPG, PNG · Max 20MB";
+      if(thumbCard) thumbCard.style.display = "none";
+      if(editBar) editBar.style.display = "none";
+    } else {
+      if(title) title.textContent = "📹 Select Video";
+      if(dz) dz.querySelector(".main-text").textContent = "Click to select video";
+      if(dz) dz.querySelector(".sub-text").textContent = "MP4, WebM, MOV · Max 100MB";
+      if(thumbCard) thumbCard.style.display = "none";
+    }
+  }
+});
+
+const dropzoneEl = $("dropzone");
+if(dropzoneEl){
+  dropzoneEl.addEventListener("click", ()=>{
+    if(uploadContentType === "photo") $("photoFile")?.click();
+    else $("videoFile")?.click();
+  });
+}
+
+$("photoFile")?.addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith("image/")){ toast("❌ Please select an image file"); e.target.value = ""; return; }
+  if(file.size > 20 * 1024 * 1024){ toast("Photo too large (max 20MB)"); e.target.value = ""; return; }
+  const preview = $("photoPreview");
+  if(preview){
+    preview.src = URL.createObjectURL(file);
+    preview.classList.remove("hidden");
+    preview.style.maxWidth = "100%";
+    preview.style.borderRadius = "12px";
+    preview.style.display = "block";
+  }
+  $("dropzone")?.classList.add("hidden");
+  $("uploadPreview")?.classList.add("hidden");
+  const thumbCard = $("thumbnailCard");
+  if(thumbCard) thumbCard.style.display = "block";
+  const publishBtn = $("publishBtn");
+  if(publishBtn) publishBtn.disabled = false;
+  toast("✅ Photo selected");
+});
+
+$("videoFile")?.addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  if(!file.type.startsWith("video/")){ toast("❌ Video file select karo (MP4/WebM/MOV)"); e.target.value = ""; return; }
+  if(file.size > 100 * 1024 * 1024){ toast("Video too large (max 100MB)"); e.target.value = ""; return; }
+  const preview = $("uploadPreview");
+  preview.src = URL.createObjectURL(file);
+  preview.classList.remove("hidden");
+  $("dropzone")?.classList.add("hidden");
+  $("photoPreview")?.classList.add("hidden");
+  setTimeout(()=>{
+    const editBar = $("videoEditBar");
+    if(editBar) editBar.style.display = "block";
+    const thumbCard = $("thumbnailCard");
+    if(thumbCard) thumbCard.style.display = "block";
+  }, 200);
+  toast("✅ Video selected");
+});
+
+$("thumbnailZone")?.addEventListener("click", ()=>{ $("thumbnailFile")?.click(); });
+
+$("thumbnailFile")?.addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  if(file.size > 5 * 1024 * 1024){ toast("Thumbnail too large (max 5MB)"); e.target.value = ""; return; }
+  pendingThumbnailFile = file;
+  const prev = $("thumbnailPreview");
+  if(prev){ prev.src = URL.createObjectURL(file); prev.classList.remove("hidden"); }
+  $("thumbnailZone")?.classList.add("hidden");
+  $("removeThumbnailBtn").style.display = "block";
+});
+
+$("removeThumbnailBtn")?.addEventListener("click", (e)=>{
+  e.preventDefault(); e.stopPropagation();
+  pendingThumbnailFile = null;
+  $("thumbnailFile").value = "";
+  $("thumbnailPreview")?.classList.add("hidden");
+  $("thumbnailZone")?.classList.remove("hidden");
+  $("removeThumbnailBtn").style.display = "none";
+});
+
+document.addEventListener("click", (e)=>{
+  const btn = e.target.closest(".filter-btn");
+  if(!btn) return;
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll(".filter-btn").forEach(b => { b.classList.remove("active"); b.style.borderColor = "var(--border)"; });
+  btn.classList.add("active");
+  btn.style.borderColor = "var(--primary)";
+  pendingVideoFilter = btn.dataset.filter || "none";
+  const videoEl = $("uploadPreview");
+  if(videoEl) videoEl.style.filter = pendingVideoFilter === "none" ? "" : pendingVideoFilter;
+  const photoEl = $("photoPreview");
+  if(photoEl) photoEl.style.filter = pendingVideoFilter === "none" ? "" : pendingVideoFilter;
+});
+
+$("speedSlider")?.addEventListener("input", (e)=>{
+  const val = parseFloat(e.target.value);
+  pendingVideoSpeed = val;
+  const speedVal = $("speedValue");
+  if(speedVal) speedVal.textContent = val + "x";
+  const videoEl = $("uploadPreview");
+  if(videoEl) videoEl.playbackRate = val;
+});
+
+$("textOverlayInput")?.addEventListener("input", (e)=>{ pendingTextOverlay = e.target.value; });
+
+document.addEventListener("click", (e)=>{
+  const posBtn = e.target.closest(".text-pos-btn");
+  if(!posBtn) return;
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll(".text-pos-btn").forEach(b => { b.classList.remove("active"); b.style.background = "var(--card)"; b.style.color = "var(--text)"; });
+  posBtn.classList.add("active");
+  posBtn.style.background = "var(--primary)";
+  posBtn.style.color = "white";
+  pendingTextPosition = posBtn.dataset.pos;
+});
+
+$("saveDraftBtn")?.addEventListener("click", ()=>{
+  if(!currentUser){ toast("Login required"); return; }
+  const draft = { title: $("videoTitle")?.value || "", description: $("videoDescription")?.value || "", visibility: uploadVisibility, type: uploadType, category: uploadCategory, contentType: uploadContentType, filter: pendingVideoFilter, speed: pendingVideoSpeed, textOverlay: pendingTextOverlay, textPosition: pendingTextPosition, savedAt: Date.now() };
+  localStorage.setItem("reelhubDraft_" + currentUser.uid, JSON.stringify(draft));
+  toast("💾 Draft saved");
+});
+
+function loadDraftIfExists(){
+  if(!currentUser) return;
+  try{
+    const draft = JSON.parse(localStorage.getItem("reelhubDraft_" + currentUser.uid) || "null");
+    if(!draft) return;
+    setTimeout(()=>{
+      if($("videoTitle") && draft.title) $("videoTitle").value = draft.title;
+      if($("videoDescription") && draft.description) $("videoDescription").value = draft.description;
+      if(draft.filter && $("uploadPreview")) $("uploadPreview").style.filter = draft.filter === "none" ? "" : draft.filter;
+      if(draft.textOverlay && $("textOverlayInput")) $("textOverlayInput").value = draft.textOverlay;
+      if(draft.category && $("videoCategory")) $("videoCategory").value = draft.category;
+      pendingVideoFilter = draft.filter || "none";
+      pendingVideoSpeed = draft.speed || 1;
+      pendingTextOverlay = draft.textOverlay || "";
+      pendingTextPosition = draft.textPosition || "top";
+    }, 500);
+  }catch(e){}
+}
+
+$("visibilityGroup")?.addEventListener("click", e=>{
+  const el = e.target.closest(".yt-radio");
+  if(!el) return;
+  $("visibilityGroup").querySelectorAll(".yt-radio").forEach(x => x.classList.remove("selected"));
+  el.classList.add("selected");
+  uploadVisibility = el.dataset.value;
+});
+
+$("typeGroup")?.addEventListener("click", e=>{
+  const el = e.target.closest(".yt-radio");
+  if(!el) return;
+  $("typeGroup").querySelectorAll(".yt-radio").forEach(x => x.classList.remove("selected"));
+  el.classList.add("selected");
+  uploadType = el.dataset.value;
+});
+
+$("videoCategory")?.addEventListener("change", e=>{ uploadCategory = e.target.value || "all"; });
+
+$("publishBtn")?.addEventListener("click", async()=>{
+  const isPhoto = uploadContentType === "photo";
+  const photoEl = $("photoFile");
+  const videoEl = $("videoFile");
+  const file = isPhoto ? (photoEl?.files?.[0] || null) : (videoEl?.files?.[0] || null);
+  const title = $("videoTitle").value.trim();
+  const description = $("videoDescription").value.trim();
+  const category = $("videoCategory")?.value || "all";
+
+  if(!file){ toast(isPhoto ? "❌ Select photo first" : "❌ Select video first"); return; }
+  if(!title){ toast("Title डालो"); return; }
+  if(!currentUser){ toast("Login required"); return; }
+
+  $("publishBtn").disabled = true;
+  $("uploadProgressWrap").classList.add("active");
+  $("uploadStatus").textContent = "Uploading...";
+
+  try{
+    const url = await uploadToCloudinary(file, pct=>{
+      $("uploadProgressBar").style.width = pct + "%";
+      $("uploadStatus").textContent = "Uploading " + pct + "%";
+    });
+
+    let thumbnailURL = "";
+    if(pendingThumbnailFile && !isPhoto){
+      $("uploadStatus").textContent = "Uploading thumbnail...";
+      thumbnailURL = await uploadToCloudinary(pendingThumbnailFile, (pct)=>{
+        $("uploadProgressBar").style.width = pct + "%";
+        $("uploadStatus").textContent = "Thumbnail " + pct + "%";
+      });
+    }
+
+    const videoData = {
+      userId: currentUser.uid,
+      userName: currentProfile?.name || currentUser.displayName || "User",
+      username: currentProfile?.username || "",
+      userPhoto: currentProfile?.photo || currentUser.photoURL || "",
+      videoURL: url,
+      title, description, category,
+      visibility: uploadVisibility,
+      type: isPhoto ? "photo" : uploadType,
+      likes: 0, views: 0, watchTime: 0,
+      createdAt: serverTimestamp()
+    };
+
+    if(isPhoto) videoData.isPhoto = true;
+    if(thumbnailURL) videoData.thumbnail = thumbnailURL;
+    if(pendingVideoFilter && pendingVideoFilter !== "none") videoData.filter = pendingVideoFilter;
+    if(pendingVideoRotation) videoData.rotation = pendingVideoRotation;
+    if(pendingVideoMuted) videoData.muted = true;
+    if(pendingVideoSong) videoData.song = pendingVideoSong;
+    if(pendingVideoSticker) videoData.sticker = pendingVideoSticker;
+    if(pendingVideoTrim.applied){ videoData.trimStart = pendingVideoTrim.start; videoData.trimEnd = pendingVideoTrim.end; }
+    if(pendingTextOverlay && pendingTextOverlay.trim()){ videoData.textOverlay = pendingTextOverlay.trim(); videoData.textPosition = pendingTextPosition; }
+    if(pendingVideoSpeed && pendingVideoSpeed !== 1) videoData.uploadSpeed = pendingVideoSpeed;
+
+    await addDoc(collection(db,"videos"), videoData);
+    await syncVideoCount(currentUser.uid);
+
+    $("videoFile").value = "";
+    if($("photoFile")) $("photoFile").value = "";
+    if($("thumbnailFile")) $("thumbnailFile").value = "";
+    $("videoTitle").value = "";
+    $("videoDescription").value = "";
+    $("uploadPreview").classList.add("hidden");
+    if($("photoPreview")) $("photoPreview").classList.add("hidden");
+    $("dropzone").classList.remove("hidden");
+    $("uploadProgressBar").style.width = "0%";
+    $("uploadProgressWrap").classList.remove("active");
+    $("uploadStatus").textContent = "";
+    $("videoEditBar").style.display = "none";
+    if($("thumbnailCard")) $("thumbnailCard").style.display = "none";
+    if($("thumbnailPreview")) $("thumbnailPreview").classList.add("hidden");
+    if($("thumbnailZone")) $("thumbnailZone").classList.remove("hidden");
+    if($("removeThumbnailBtn")) $("removeThumbnailBtn").style.display = "none";
+
+    pendingVideoSong = null;
+    pendingVideoSticker = null;
+    pendingVideoTrim = { start: 0, end: 0, applied: false };
+    pendingVideoRotation = 0;
+    pendingVideoMuted = false;
+    pendingThumbnailFile = null;
+    pendingVideoFilter = "none";
+    pendingVideoSpeed = 1;
+    pendingTextOverlay = "";
+    pendingTextPosition = "top";
+
+    localStorage.removeItem("reelhubDraft_" + currentUser.uid);
+    toast("✅ " + (isPhoto ? "Photo" : "Video") + " published!");
+    openPanel("homePanel");
+  }catch(error){
+    $("uploadStatus").textContent = "Error: " + error.message;
+    toast("Upload failed");
+  }finally{
+    $("publishBtn").disabled = false;
+  }
+});
+
+async function syncVideoCount(uid){
+  try{
+    const snap = await getDocs(query(collection(db,"videos"), where("userId","==",uid)));
+    await updateDoc(doc(db,"profiles",uid), { videos: snap.size });
+    if(currentProfile && currentProfile.uid === uid){ currentProfile.videos = snap.size; $("videosCount").textContent = snap.size; }
+  }catch(e){}
+}
+
+/* BANNER */
+function applyBanner(profile){
+  const bannerEl = document.querySelector("#profilePanel .yt-banner");
+  if(!bannerEl || !profile) return;
+  if(profile.bannerType === "image" && profile.bannerURL){
+    bannerEl.style.background = `url(${profile.bannerURL}) center/cover no-repeat`;
+    bannerEl.classList.add("banner-image");
+  } else if(profile.bannerGradient){
+    bannerEl.style.background = profile.bannerGradient;
+    bannerEl.classList.remove("banner-image");
+  }
+}
+
+function addBannerEditButton(){
+  const bannerEl = document.querySelector("#profilePanel .yt-banner");
+  if(!bannerEl) return;
+  bannerEl.querySelector(".banner-edit-btn")?.remove();
+  const btn = document.createElement("button");
+  btn.className = "banner-edit-btn";
+  btn.innerHTML = "🎨 Edit";
+  btn.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); showModal("bannerOptionsModal"); });
+  bannerEl.style.position = "relative";
+  bannerEl.appendChild(btn);
+}
+
+$("changeBannerBtn")?.addEventListener("click", ()=>{ hideModal("settingsModal"); showModal("bannerOptionsModal"); });
+$("uploadBannerBtn")?.addEventListener("click", ()=>{ hideModal("bannerOptionsModal"); $("bannerFile")?.click(); });
+$("chooseGradientBtn")?.addEventListener("click", ()=>{ hideModal("bannerOptionsModal"); showModal("bannerGradientModal"); });
+
+document.querySelectorAll(".banner-gradient-item").forEach(item => {
+  item.addEventListener("click", async () => {
+    const gradient = item.dataset.gradient;
+    if(!gradient || !currentUser) return;
+    try{
+      await updateDoc(doc(db, "profiles", currentUser.uid), { bannerType: "gradient", bannerGradient: gradient, bannerURL: "", updatedAt: serverTimestamp() });
+      currentProfile.bannerType = "gradient";
+      currentProfile.bannerGradient = gradient;
+      currentProfile.bannerURL = "";
+      applyBanner(currentProfile);
+      document.querySelectorAll(".banner-gradient-item").forEach(i => i.classList.remove("selected"));
+      item.classList.add("selected");
+      hideModal("bannerGradientModal");
+      toast("✅ Banner updated");
+    }catch(e){ toast("Failed"); }
+  });
+});
+
+$("bannerFile")?.addEventListener("change", async (e)=>{
+  const file = e.target.files[0];
+  if(!file || !currentUser) return;
+  try{
+    toast("Uploading banner...");
+    const url = await uploadToCloudinary(file);
+    await updateDoc(doc(db, "profiles", currentUser.uid), { bannerType: "image", bannerURL: url, bannerGradient: "", updatedAt: serverTimestamp() });
+    currentProfile.bannerType = "image";
+    currentProfile.bannerURL = url;
+    currentProfile.bannerGradient = "";
+    applyBanner(currentProfile);
+    toast("✅ Banner updated");
+  }catch(e){ toast("Failed"); }
+  finally { e.target.value = ""; }
+});
+
+/* FOLLOW SYSTEM */
+async function canViewUser(uid){
+  if(!uid) return false;
+  if(uid === currentUser?.uid) return true;
+  const profile = await getProfile(uid);
+  if(!profile.private) return true;
+  if(myFollowsCache.has(uid)) return true;
+  return false;
+}
+async function canViewUserVideos(uid){ return await canViewUser(uid); }
+
+async function sendFollowRequest(targetUid){
+  if(!currentUser || targetUid === currentUser.uid) return;
+  const reqId = currentUser.uid + "_" + targetUid;
+  try{
+    await setDoc(doc(db, "follow_requests", reqId), { from: currentUser.uid, fromName: currentProfile?.name || "User", fromPhoto: currentProfile?.photo || "", to: targetUid, status: "pending", createdAt: serverTimestamp() });
+    mySentRequestsCache.add(targetUid);
+    await addDoc(collection(db, "notifications"), { to: targetUid, from: currentUser.uid, title: "🔒 Follow Request", message: (currentProfile?.name || "Someone") + " wants to follow you", createdAt: serverTimestamp() });
+    toast("✅ Follow request sent");
+  }catch(e){ toast("Request failed"); }
+}
+
+async function cancelFollowRequest(targetUid){
+  if(!currentUser) return;
+  try{
+    await deleteDoc(doc(db, "follow_requests", currentUser.uid + "_" + targetUid));
+    mySentRequestsCache.delete(targetUid);
+    toast("Request cancelled");
+  }catch(e){}
+}
+
+async function acceptFollowRequest(fromUid){
+  if(!currentUser) return;
+  try{
+    await setDoc(doc(db, "follows", fromUid + "_" + currentUser.uid), { follower: fromUid, following: currentUser.uid, createdAt: serverTimestamp() });
+    await deleteDoc(doc(db, "follow_requests", fromUid + "_" + currentUser.uid));
+    await syncFollowCounts(fromUid);
+    await syncFollowCounts(currentUser.uid);
+    myFollowsCache.add(fromUid);
+    mySentRequestsCache.delete(fromUid);
+    updateAllFollowButtons(fromUid, true);
+    await addDoc(collection(db, "notifications"), { to: fromUid, from: currentUser.uid, title: "✅ Request Accepted", message: (currentProfile?.name || "User") + " accepted your follow request", createdAt: serverTimestamp() });
+    toast("✅ Request accepted");
+    renderFollowRequests();
+  }catch(e){ toast("Failed"); }
+}
+
+async function rejectFollowRequest(fromUid){
+  if(!currentUser) return;
+  try{
+    await deleteDoc(doc(db, "follow_requests", fromUid + "_" + currentUser.uid));
+    toast("Request rejected");
+    renderFollowRequests();
+  }catch(e){ toast("Failed"); }
+}
+
+function startFollowRequestsListener(){
+  if(followRequestsUnsubscribe){ followRequestsUnsubscribe(); followRequestsUnsubscribe = null; }
+  if(!currentUser) return;
+  followRequestsUnsubscribe = onSnapshot(query(collection(db, "follow_requests"), where("to", "==", currentUser.uid)),
+    snapshot=>{
+      myFollowRequestsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      const badge = $("followRequestsBadge");
+      if(badge){
+        if(myFollowRequestsCache.length > 0){ badge.textContent = myFollowRequestsCache.length; badge.style.display = "inline"; }
+        else badge.style.display = "none";
+      }
+    }, error=>console.error("Follow requests listener error:", error));
+}
+
+async function renderFollowRequests(){
+  const container = $("followRequestsList");
+  if(!container) return;
+  if(!myFollowRequestsCache.length){
+    container.innerHTML = `<div class="yt-empty" style="padding:40px 20px"><div style="font-size:48px;margin-bottom:12px">📬</div><h3 style="font-size:16px;margin-bottom:6px">No requests</h3></div>`;
+    return;
+  }
+  const reqs = [];
+  for(const req of myFollowRequestsCache){
+    const p = await getProfile(req.from);
+    reqs.push({ uid: req.from, name: p.name || "User", username: p.username || "", photo: p.photo || "" });
+  }
+  container.innerHTML = reqs.map(r=>`
+    <div class="person-item">
+      <img src="${avatar(r.photo, r.name)}" class="people-open-btn" data-uid="${esc(r.uid)}">
+      <div class="info people-open-btn" data-uid="${esc(r.uid)}"><strong>${esc(r.name)}</strong><small>@${esc(r.username)}</small></div>
+      <button class="follow-btn" data-accept-request="${esc(r.uid)}" style="background:#22c55e">Accept</button>
+      <button class="follow-btn following" data-reject-request="${esc(r.uid)}">Reject</button>
+    </div>
+  `).join("");
+}
+
+$("privateAccountBtn")?.addEventListener("click", async()=>{
+  if(!currentUser || !currentProfile) return;
+  const newValue = !currentProfile.private;
+  if(newValue && !confirm("Make private?")) return;
+  if(!newValue && !confirm("Make public?")) return;
+  try{
+    await updateDoc(doc(db, "profiles", currentUser.uid), { private: newValue });
+    currentProfile.private = newValue;
+    updatePrivateToggleUI();
+    toast(newValue ? "🔒 Private" : "🌍 Public");
+  }catch(e){ toast("Failed"); }
+});
+
+$("followRequestsBtn")?.addEventListener("click", ()=>{ hideModal("settingsModal"); showModal("followRequestsModal"); renderFollowRequests(); });
+
+async function toggleFollow(targetUid, btnEl){
+  if(!currentUser || targetUid === currentUser.uid) return;
+  if(btnEl){ btnEl.disabled = true; btnEl.style.opacity = "0.6"; }
+  const id = currentUser.uid + "_" + targetUid;
+  const ref = doc(db,"follows",id);
+  try{
+    const snap = await getDoc(ref);
+    const targetProfile = await getProfile(targetUid);
+    if(snap.exists()){
+      await deleteDoc(ref);
+      myFollowsCache.delete(targetUid);
+      updateAllFollowButtons(targetUid, false);
+      await syncFollowCounts(currentUser.uid);
+      await syncFollowCounts(targetUid);
+    } else {
+      if(targetProfile.private){
+        if(mySentRequestsCache.has(targetUid)){ await cancelFollowRequest(targetUid); updateAllFollowButtons(targetUid, "cancelled"); }
+        else { await sendFollowRequest(targetUid); updateAllFollowButtons(targetUid, "requested"); }
+      } else {
+        await setDoc(ref, { follower: currentUser.uid, following: targetUid, createdAt: serverTimestamp() });
+        myFollowsCache.add(targetUid);
+        updateAllFollowButtons(targetUid, true);
+        await addDoc(collection(db,"notifications"), { to: targetUid, from: currentUser.uid, title: "👤 New Follower", message: (currentProfile?.name || "Someone") + " started following you", createdAt: serverTimestamp() });
+        await syncFollowCounts(currentUser.uid);
+        await syncFollowCounts(targetUid);
+      }
+    }
+    if($("publicProfileModal")?.classList.contains("show")){
+      const uid = $("publicProfileModal").dataset.uid;
+      if(uid === targetUid){ await updateFollowButtonState(targetUid); await loadPublicVideos(targetUid); }
+    }
+  }catch(e){ toast("Follow failed"); }
+  finally { if(btnEl){ btnEl.disabled = false; btnEl.style.opacity = "1"; } }
+}
+
+function updateAllFollowButtons(targetUid, state){
+  document.querySelectorAll(`[data-follow-uid="${targetUid}"]`).forEach(btn=>{
+    if(state === true){ btn.textContent = "Following"; btn.classList.add("following"); }
+    else if(state === false){ btn.textContent = "Follow"; btn.classList.remove("following"); }
+    else if(state === "requested"){ btn.textContent = "Requested"; btn.classList.remove("following"); }
+    else if(state === "cancelled"){ btn.textContent = "Follow"; btn.classList.remove("following"); }
+  });
+}
+
+async function updateFollowButtonState(targetUid){
+  const followed = myFollowsCache.has(targetUid);
+  const requested = mySentRequestsCache.has(targetUid);
+  const btn = $("publicFollowBtn");
+  if(!btn) return;
+  if(followed){ btn.textContent = "Following"; btn.className = "yt-btn yt-btn-gray"; }
+  else if(requested){ btn.textContent = "Requested"; btn.className = "yt-btn yt-btn-gray"; }
+  else { btn.textContent = "Follow"; btn.className = "yt-btn yt-btn-primary"; }
+}
+
+async function syncFollowCounts(uid){
+  try{
+    const [followersSnap, followingSnap] = await Promise.all([
+      getDocs(query(collection(db,"follows"), where("following","==",uid))),
+      getDocs(query(collection(db,"follows"), where("follower","==",uid)))
+    ]);
+    await updateDoc(doc(db,"profiles",uid), { followers: followersSnap.size, following: followingSnap.size });
+    if(currentProfile && currentProfile.uid === uid){
+      currentProfile.followers = followersSnap.size;
+      currentProfile.following = followingSnap.size;
+      $("followersCount").textContent = followersSnap.size;
+      $("followingCount").textContent = followingSnap.size;
+    }
+  }catch(e){}
+}
+
+/* PUBLIC PROFILE */
+async function openPublicProfile(uid){
+  if(!uid){ toast("Invalid user"); return; }
+  if(isUserBlocked(uid)){ toast("User is blocked"); return; }
+  try{
+    viewingProfileUid = uid;
+    const p = await getProfile(uid);
+    $("publicProfileModal").dataset.uid = uid;
+    $("publicPhoto").src = avatar(p.photo, p.name);
+    $("publicName").textContent = p.name || "User";
+    $("publicUsername").textContent = "@" + (p.username || "user");
+    let extra = [];
+    if(p.age) extra.push("Age: " + p.age);
+    if(p.gender) extra.push(p.gender);
+    if(p.private) extra.push("🔒 Private");
+    if(p.suspended) extra.push("🚫 Suspended");
+    if(p.monetizationStatus === "approved") extra.push("💰 Monetized");
+    $("publicExtra").textContent = extra.join(" · ");
+    $("publicFollowers").textContent = p.followers || 0;
+    $("publicFollowing").textContent = p.following || 0;
+    $("publicVideos").textContent = p.videos || 0;
+    const publicBanner = document.querySelector("#publicProfileModal .yt-banner");
+    if(publicBanner){
+      if(p.bannerType === "image" && p.bannerURL) publicBanner.style.background = `url(${p.bannerURL}) center/cover no-repeat`;
+      else if(p.bannerGradient) publicBanner.style.background = p.bannerGradient;
+    }
+    const followBtn = $("publicFollowBtn");
+    const newFollowBtn = followBtn.cloneNode(true);
+    followBtn.parentNode.replaceChild(newFollowBtn, followBtn);
+    const msgBtn = $("publicMessageBtn");
+    const newMsgBtn = msgBtn.cloneNode(true);
+    msgBtn.parentNode.replaceChild(newMsgBtn, msgBtn);
+    const canView = await canViewUser(uid);
+    if(currentUser && uid === currentUser.uid){
+      newFollowBtn.style.display = "none";
+      newMsgBtn.style.display = "none";
+      $("privateAccountNotice").classList.add("hidden");
+    } else {
+      newFollowBtn.style.display = "";
+      newMsgBtn.style.display = "";
+      await updateFollowButtonState(uid);
+      newFollowBtn.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); toggleFollow(uid, newFollowBtn); });
+      newMsgBtn.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openChatFromProfile(uid); });
+      if(!canView && p.private) $("privateAccountNotice").classList.remove("hidden");
+      else $("privateAccountNotice").classList.add("hidden");
+    }
+    await loadPublicVideos(uid);
+    const fBtn = $("publicFollowersBtn");
+    const newFBtn = fBtn.cloneNode(true);
+    fBtn.parentNode.replaceChild(newFBtn, fBtn);
+    newFBtn.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openPeople(uid, "followers"); });
+    const fwBtn = $("publicFollowingBtn");
+    const newFwBtn = fwBtn.cloneNode(true);
+    fwBtn.parentNode.replaceChild(newFwBtn, fwBtn);
+    newFwBtn.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openPeople(uid, "following"); });
+    startPresenceListener([uid]);
+    showModal("publicProfileModal");
+  }catch(e){ console.error("openPublicProfile:", e); toast("Error"); }
+}
+
+async function loadPublicVideos(uid){
+  const canView = await canViewUserVideos(uid);
+  const container = $("publicVideosList");
+  if(!canView){ container.innerHTML = ""; return; }
+  const list = videosCache.filter(v => v.userId === uid && (v.visibility !== "private" || uid === currentUser?.uid));
+  if(!list.length){ container.innerHTML = `<div class="yt-empty" style="padding:30px 0;font-size:13px">No videos yet</div>`; return; }
+  container.innerHTML = list.map(v => createYTVideoItem(v, uid === currentUser?.uid)).join("");
+}
+
+function createYTVideoItem(v, isMine){
+  const views = Number(v.views || 0);
+  const filterStyle = v.filter && v.filter !== "none" ? `filter:${v.filter};` : "";
+  const isPhoto = v.isPhoto === true;
+  let thumbHTML;
+  if(isPhoto){
+    thumbHTML = `<img src="${esc(v.videoURL)}" style="width:100%;height:100%;object-fit:cover;${filterStyle}" loading="lazy">`;
+  } else if(v.thumbnail){
+    thumbHTML = `<img src="${esc(v.thumbnail)}" style="width:100%;height:100%;object-fit:cover;${filterStyle}">`;
+  } else {
+    thumbHTML = `<video src="${esc(v.videoURL)}" preload="metadata" muted style="${filterStyle}"></video>`;
+  }
+  return `
+  <div class="yt-video-item" data-open-video="${esc(v.id)}">
+    <div class="yt-video-thumb">
+      ${thumbHTML}
+      <div class="view-badge">${isPhoto ? "📷" : "▶️"} ${formatViewsShort(views)}</div>
+    </div>
+    <div class="yt-video-meta">
+      <h4>${esc(v.title || "Untitled")}</h4>
+      <div class="views">${formatViews(views)}</div>
+      <div class="stats">${v.likes || 0} likes · ${timeAgo(v.createdAt)}</div>
+      ${isMine ? `<div class="btns" data-stop-propagation>
+        <button class="yt-mini-btn primary" data-edit-video="${esc(v.id)}">Edit</button>
+        <button class="yt-mini-btn danger" data-delete-video="${esc(v.id)}">Delete</button>
+      </div>` : ""}
+    </div>
+  </div>`;
+}
+
+async function loadMyVideos(){
+  if(!currentUser) return;
+  let list = videosCache.filter(v => v.userId === currentUser.uid);
+  const container = $("myVideos");
+  if(!container) return;
+  if(!list.length){
+    container.innerHTML = `<div class="yt-empty" style="padding:40px 20px"><div style="font-size:48px;margin-bottom:12px">📹</div><h3 style="font-size:16px;margin-bottom:6px">No videos yet</h3><p style="font-size:13px">Upload your first video</p></div>`;
+    return;
+  }
+  if(currentProfile?.pinnedVideos?.length){
+    const pinned = [];
+    const rest = [];
+    list.forEach(v => { if(currentProfile.pinnedVideos.includes(v.id)) pinned.push(v); else rest.push(v); });
+    list = [...pinned, ...rest];
+  }
+  container.innerHTML = list.map(v => createYTVideoItem(v, true)).join("");
+  updateProfileTabCounts();
+}
+
+async function openPeople(uid, type){
+  if(!uid) return;
+  $("peopleTitle").textContent = type === "followers" ? "Followers" : "Following";
+  $("peopleList").innerHTML = `<div class="yt-empty" style="padding:30px">Loading...</div>`;
+  showModal("peopleModal");
+  try{
+    const q = type === "followers" ? query(collection(db,"follows"), where("following","==",uid)) : query(collection(db,"follows"), where("follower","==",uid));
+    const snap = await getDocs(q);
+    if(!snap.size){ $("peopleList").innerHTML = `<div class="yt-empty" style="padding:30px">No users yet</div>`; return; }
+    const people = [];
+    for(const d of snap.docs){
+      const data = d.data();
+      const personUid = type === "followers" ? data.follower : data.following;
+      try{ people.push(await getProfile(personUid)); }catch(e){}
+    }
+    $("peopleList").innerHTML = people.map(p=>{
+      const followed = myFollowsCache.has(p.uid);
+      const requested = mySentRequestsCache.has(p.uid);
+      const isMe = currentUser && p.uid === currentUser.uid;
+      let btnText = "Follow";
+      if(followed) btnText = "Following";
+      else if(requested) btnText = "Requested";
+      return `<div class="person-item">
+        <img class="people-open-btn" data-uid="${esc(p.uid)}" src="${avatar(p.photo, p.name)}">
+        <div class="info people-open-btn" data-uid="${esc(p.uid)}"><strong>${esc(p.name)}</strong><small>@${esc(p.username)}</small></div>
+        ${!isMe && currentUser ? `<button class="follow-btn ${followed?"following":""}" data-follow-uid="${esc(p.uid)}" data-action="follow">${btnText}</button>` : ""}
+      </div>`;
+    }).join("");
+  }catch(e){ $("peopleList").innerHTML = `<div class="yt-empty" style="padding:30px">Error</div>`; }
+}
+
+$("myFollowersBtn")?.addEventListener("click", ()=>{ if(currentUser) openPeople(currentUser.uid, "followers"); });
+$("myFollowingBtn")?.addEventListener("click", ()=>{ if(currentUser) openPeople(currentUser.uid, "following"); });
+
+/* SEARCH */
+let searchTab = "users";
+$("topSearchBtn")?.addEventListener("click", ()=>{ showModal("searchModal"); setTimeout(()=> $("searchInput").focus(), 100); });
+
+document.querySelectorAll("#searchTabs .yt-tab").forEach(tab => {
+  tab.addEventListener("click", ()=>{
+    document.querySelectorAll("#searchTabs .yt-tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    searchTab = tab.dataset.stab || "users";
+    const q = $("searchInput")?.value.trim() || "";
+    if(q) doSearch(q);
+  });
+});
+
+let searchTimeout = null;
+$("searchInput")?.addEventListener("input", e=>{
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(()=> doSearch(e.target.value), 300);
+});
+
+async function doSearch(value){
+  value = value.trim().toLowerCase();
+  const container = $("searchResults");
+  if(!value){ container.innerHTML = ""; return; }
+  container.innerHTML = `<div class="yt-empty" style="padding:20px">Searching...</div>`;
+
+  if(searchTab === "videos"){
+    const results = videosCache.filter(v => {
+      if(isUserBlocked(v.userId)) return false;
+      if(v.visibility === "private" && v.userId !== currentUser?.uid) return false;
+      return (v.title || "").toLowerCase().includes(value) || (v.description || "").toLowerCase().includes(value);
+    }).slice(0, 30);
+
+    if(!results.length){ container.innerHTML = `<div class="yt-empty" style="padding:20px">No videos found</div>`; return; }
+    container.innerHTML = results.map(v => {
+      const filterStyle = v.filter && v.filter !== "none" ? `filter:${v.filter};` : "";
+      const isPhoto = v.isPhoto === true;
+      return `
+        <div class="yt-video-item" data-open-video="${esc(v.id)}" style="cursor:pointer;margin-bottom:12px">
+          <div class="yt-video-thumb" style="width:120px;height:70px">
+            ${isPhoto ? `<img src="${esc(v.videoURL)}" style="width:100%;height:100%;object-fit:cover;${filterStyle}">` : (v.thumbnail ? `<img src="${esc(v.thumbnail)}" style="width:100%;height:100%;object-fit:cover;${filterStyle}">` : `<video src="${esc(v.videoURL)}" preload="metadata" muted style="${filterStyle}"></video>`)}
+          </div>
+          <div class="yt-video-meta">
+            <h4>${esc(v.title || "Untitled")}</h4>
+            <div class="stats">${formatViewsShort(v.views)} views · ${timeAgo(v.createdAt)}</div>
+            <div class="views" style="font-size:11px">@${esc(v.username || v.userName || "user")}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+    return;
+  }
+
+  try{
+    const snap = await getDocs(collection(db,"profiles"));
+    const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }))
+      .filter(p => !isUserBlocked(p.uid) && (String(p.name||"").toLowerCase().includes(value) || String(p.username||"").toLowerCase().includes(value.replace("@",""))))
+      .slice(0,30);
+    if(!users.length){ container.innerHTML = `<div class="yt-empty" style="padding:20px">No user found</div>`; return; }
+    container.innerHTML = users.map(p=>{
+      const followed = myFollowsCache.has(p.uid);
+      const requested = mySentRequestsCache.has(p.uid);
+      const isMe = currentUser && p.uid === currentUser.uid;
+      let btnText = "Follow";
+      if(followed) btnText = "Following";
+      else if(requested) btnText = "Requested";
+      return `<div class="person-item">
+        <img class="search-open-btn" data-uid="${esc(p.uid)}" src="${avatar(p.photo, p.name)}">
+        <div class="info search-open-btn" data-uid="${esc(p.uid)}"><strong>${esc(p.name)}${p.private ? " 🔒" : ""}</strong><small>@${esc(p.username)}</small></div>
+        ${!isMe && currentUser ? `<button class="follow-btn ${followed?"following":""}" data-follow-uid="${esc(p.uid)}" data-action="follow">${btnText}</button>` : ""}
+      </div>`;
+    }).join("");
+  }catch(e){ container.innerHTML = `<div class="yt-empty" style="padding:20px">Error</div>`; }
+}
+
+/* EDIT PROFILE / SETTINGS */
+$("editProfileBtn")?.addEventListener("click", async()=>{
+  const p = await getProfile(currentUser.uid);
+  $("editName").value = p.name || "";
+  $("editUsername").value = p.username || "";
+  $("editAge").value = p.age || "";
+  $("editGender").value = p.gender || "";
+  $("editBio").value = p.bio || "";
+  $("editPhotoPreview").src = avatar(p.photo, p.name);
+  $("profilePhotoFile").value = "";
+  showModal("editProfileModal");
+});
+
+$("profilePhotoFile")?.addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(file) $("editPhotoPreview").src = URL.createObjectURL(file);
+});
+
+$("saveProfileBtn")?.addEventListener("click", async()=>{
+  if(!currentUser) return;
+  const name = $("editName").value.trim();
+  const username = $("editUsername").value.trim().toLowerCase().replace(/^@/,"").replace(/[^a-z0-9_]/g,"");
+  const age = $("editAge").value.trim();
+  const gender = $("editGender").value;
+  const bio = $("editBio").value.trim();
+  if(!name){ toast("Name डालो"); return; }
+  if(!username){ toast("Username डालो"); return; }
+  try{
+    $("profileSaveStatus").textContent = "Saving...";
+    $("saveProfileBtn").disabled = true;
+    const snap = await getDocs(query(collection(db,"profiles"), where("username","==",username)));
+    if(snap.docs.some(d => d.id !== currentUser.uid)){ $("profileSaveStatus").textContent = "Username taken"; $("saveProfileBtn").disabled = false; return; }
+    let photo = currentProfile?.photo || "";
+    const file = $("profilePhotoFile").files[0];
+    if(file){ $("profileSaveStatus").textContent = "Uploading photo..."; photo = await uploadToCloudinary(file); }
+    await updateDoc(doc(db,"profiles",currentUser.uid), { name, username, age, gender, bio, photo, updatedAt: serverTimestamp() });
+    await loadProfile();
+    hideModal("editProfileModal");
+    $("profileSaveStatus").textContent = "";
+    toast("✅ Profile updated");
+  }catch(e){ $("profileSaveStatus").textContent = e.message; }
+  finally { $("saveProfileBtn").disabled = false; }
+});
+
+$("settingsBtn")?.addEventListener("click", ()=> showModal("settingsModal"));
+$("darkModeBtn")?.addEventListener("click", ()=>{
+  document.body.classList.toggle("dark");
+  localStorage.setItem("reelhubDark", document.body.classList.contains("dark") ? "1" : "0");
+});
+if(localStorage.getItem("reelhubDark") === "1") document.body.classList.add("dark");
+
+$("privacyPolicyBtn")?.addEventListener("click", ()=>{ window.location.href = "/ReelHub/privacy.html"; });
+$("termsOfServiceBtn")?.addEventListener("click", ()=>{ window.location.href = "/ReelHub/terms.html"; });
+$("deleteAccountBtn")?.addEventListener("click", ()=>{ window.location.href = "/ReelHub/delete-account.html"; });
+$("contactUsBtn")?.addEventListener("click", ()=>{ window.location.href = "/ReelHub/contact.html"; });
+
+$("logoutBtn")?.addEventListener("click", async()=>{
+  if(!confirm("Logout?")) return;
+  await markOffline();
+  await signOut(auth);
+});
+
+$("shareAppBtn")?.addEventListener("click", async()=>{
+  const data = { title: "ReelHub", text: "Join me on ReelHub 🎬", url: location.href };
+  try{ if(navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(location.href); toast("Link copied"); } }catch(e){}
+});
+
+/* NOTIFICATIONS */
+function startNotifications(){
+  if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
+  if(!currentUser) return;
+  notificationsUnsubscribe = onSnapshot(query(collection(db,"notifications"), where("to","==",currentUser.uid)),
+    snapshot=>{
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
+      const lastSeen = Number(localStorage.getItem("notifLastSeen_" + currentUser.uid) || 0);
+      const unreadCount = list.filter(n => timeValue(n.createdAt) > lastSeen).length;
+      const badge = $("alertsBadge");
+      if(badge){
+        if(unreadCount > 0){ badge.textContent = Math.min(unreadCount, 99); badge.classList.remove("hidden"); }
+        else badge.classList.add("hidden");
+      }
+      if(!list.length){
+        $("notificationsList").innerHTML = `<div class="yt-empty" style="padding:30px"><div style="font-size:42px;margin-bottom:10px">🔔</div><p>No notifications</p></div>`;
+        return;
+      }
+      $("notificationsList").innerHTML = list.slice(0,50).map(n=>`
+        <div style="padding:14px 0;border-bottom:1px solid var(--border)">
+          <strong style="font-size:14px">${esc(n.title || "")}</strong>
+          <p style="font-size:13px;color:var(--muted);margin-top:4px">${esc(n.message || "")}</p>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">${timeAgo(n.createdAt)}</div>
+        </div>`).join("");
+    }, error=>console.error("Notifications listener error:", error));
+}
+
+$("topAlertsBtn")?.addEventListener("click", ()=>{
+  showModal("alertsModal");
+  if(currentUser){ localStorage.setItem("notifLastSeen_" + currentUser.uid, Date.now().toString()); }
+  setTimeout(()=>{ const badge = $("alertsBadge"); if(badge) badge.classList.add("hidden"); }, 100);
+});
+
+/* PRESENCE */
+async function updatePresence(){
+  if(!currentUser) return;
+  try{
+    await setDoc(doc(db, "presence", currentUser.uid), { userId: currentUser.uid, userName: currentProfile?.name || "User", userPhoto: currentProfile?.photo || "", lastSeen: serverTimestamp(), online: true }, { merge: true });
+  }catch(e){}
+}
+async function markOffline(){
+  if(!currentUser) return;
+  try{ await updateDoc(doc(db, "presence", currentUser.uid), { online: false, lastSeen: serverTimestamp() }); }catch(e){}
+}
+function startPresenceListener(uids){
+  if(!uids || !uids.length) return;
+  const uniqueUids = [...new Set(uids)].filter(u => u && u !== currentUser?.uid);
+  if(!uniqueUids.length) return;
+  uniqueUids.forEach(uid => {
+    if(presenceListenersMap.has(uid)) return;
+    const unsub = onSnapshot(doc(db, "presence", uid),
+      snap=>{ if(snap.exists()){ const data = snap.data(); onlineUsersCache[uid] = { online: data.online, lastSeen: data.lastSeen }; updateOnlineIndicators(); } },
+      error => console.error("Presence listener error:", error));
+    presenceListenersMap.set(uid, unsub);
+  });
+}
+function updateOnlineIndicators(){
+  document.querySelectorAll("[data-presence-uid]").forEach(el=>{
+    const uid = el.dataset.presenceUid;
+    const status = onlineUsersCache[uid];
+    if(!status){ el.classList.remove("online"); el.classList.add("offline"); el.textContent = ""; return; }
+    if(status.online){ el.classList.add("online"); el.classList.remove("offline"); el.textContent = "Active now"; }
+    else { el.classList.remove("online"); el.classList.add("offline"); el.textContent = ""; }
+  });
+  document.querySelectorAll("[data-dot-uid]").forEach(el=>{
+    const uid = el.dataset.dotUid;
+    const status = onlineUsersCache[uid];
+    el.style.display = status?.online ? "block" : "none";
+  });
+}
+function getOnlineText(uid){
+  const status = onlineUsersCache[uid];
+  if(!status) return "";
+  if(status.online) return "Active now";
+  return "";
+}
+
+/* CHAT READ STATUS */
+async function markChatAsRead(chatId){
+  if(!currentUser || !chatId) return;
+  unreadChatsCache[chatId] = 0;
+  chatLastReadCache[chatId] = Date.now();
+  updateMsgBadge();
+  try{
+    const userKey = "readBy_" + currentUser.uid;
+    await updateDoc(doc(db, "chats", chatId), { [userKey]: serverTimestamp() });
+  }catch(e){}
+}
+async function countUnreadMessages(chatId, lastReadTimestamp){
+  if(!currentUser) return 0;
+  try{
+    const snap = await getDocs(collection(db, "chats", chatId, "messages"));
+    let unreadCount = 0;
+    snap.forEach(d => {
+      const msg = d.data();
+      if(msg.userId === currentUser.uid) return;
+      if(timeValue(msg.createdAt) > lastReadTimestamp) unreadCount++;
+    });
+    return unreadCount;
+  }catch(e){ return 0; }
+}
+function updateMsgBadge(){
+  const badge = $("msgBadge");
+  if(!badge) return;
+  let unreadChatCount = 0;
+  Object.values(unreadChatsCache).forEach(count => { if(count > 0) unreadChatCount++; });
+  if(unreadChatCount > 0){ badge.textContent = unreadChatCount; badge.classList.remove("hidden"); }
+  else badge.classList.add("hidden");
+}
+async function calculateAllUnread(){
+  if(!currentUser || !myChatsCache.length){ unreadChatsCache = {}; updateMsgBadge(); return; }
+  for(const chat of myChatsCache){
+    if(chat.id === currentChatId){ unreadChatsCache[chat.id] = 0; continue; }
+    try{
+      const userKey = "readBy_" + currentUser.uid;
+      const lastRead = timeValue(chat[userKey]);
+      unreadChatsCache[chat.id] = await countUnreadMessages(chat.id, lastRead);
+    }catch(e){ unreadChatsCache[chat.id] = 0; }
+  }
+  updateMsgBadge();
+}
+
+/* DM CHAT */
+function startChatsListListener(){
+  if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
+  if(!currentUser) return;
+  chatsListUnsubscribe = onSnapshot(query(collection(db,"chats"), where("members","array-contains",currentUser.uid)),
+    async snapshot=>{
+      myChatsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      myChatsCache.sort((a,b)=> timeValue(b.updatedAt) - timeValue(a.updatedAt));
+      await calculateAllUnread();
+      const inbox = $("dmInboxView");
+      if(inbox && !inbox.classList.contains("hidden")) renderDMInbox();
+      const chatUids = myChatsCache.map(c => c.members.find(uid => uid !== currentUser.uid));
+      if(chatUids.length) startPresenceListener(chatUids);
+    }, error=>console.error("Chats list listener error:", error));
+}
+
+function showDMInbox(){
+  const inbox = $("dmInboxView");
+  const chat = $("dmChatView");
+  if(inbox){ inbox.classList.remove("hidden"); inbox.style.display = "flex"; }
+  if(chat){ chat.classList.add("hidden"); chat.style.display = "none"; }
+  if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
+  currentChatId = null; currentChatUser = null;
+  renderDMInbox();
+}
+
+function renderDMInbox(){
+  const container = $("dmInboxList");
+  if(!container) return;
+  const visibleChats = myChatsCache.filter(c => {
+    const otherUid = c.members.find(uid => uid !== currentUser.uid);
+    return otherUid && !isUserBlocked(otherUid);
+  });
+  if(!visibleChats.length){
+    container.innerHTML = `<div class="dm-empty"><span class="icon">💬</span><h3>No messages yet</h3><p>Start a conversation</p></div>`;
+    return;
+  }
+  container.innerHTML = visibleChats.map(c=>{
+    const otherUid = c.members.find(uid => uid !== currentUser.uid);
+    const unreadCount = unreadChatsCache[c.id] || 0;
+    const unreadDot = unreadCount > 0 ? `<span class="dm-unread-dot"></span>` : "";
+    return `<div class="dm-inbox-item ${unreadCount > 0 ? 'unread' : ''}" data-open-chat="${esc(otherUid)}">
+      <div class="avatar-wrapper">
+        <img src="${avatar("", "U")}" class="dm-inbox-avatar-${esc(otherUid)}">
+        <span class="online-indicator" data-dot-uid="${esc(otherUid)}" style="display:none"></span>
+      </div>
+      <div class="dm-inbox-info">
+        <strong class="dm-inbox-name-${esc(otherUid)}">${unreadDot}Loading...</strong>
+        <small>${esc(c.lastMessage || "Started a chat")}</small>
+      </div>
+      <div class="dm-inbox-time">${timeAgo(c.updatedAt)}</div>
+    </div>`;
+  }).join("");
+  visibleChats.forEach(async c=>{
+    const otherUid = c.members.find(uid => uid !== currentUser.uid);
+    try{
+      const p = await getProfile(otherUid);
+      document.querySelectorAll(".dm-inbox-avatar-" + otherUid).forEach(img=>{ img.src = avatar(p.photo, p.name); });
+      document.querySelectorAll(".dm-inbox-name-" + otherUid).forEach(el=>{ el.innerHTML = (unreadChatsCache[c.id] > 0 ? `<span class="dm-unread-dot"></span>` : "") + p.name; });
+    }catch(e){}
+  });
+  updateOnlineIndicators();
+}
+
+async function openChat(uid){
+  if(!currentUser || uid === currentUser.uid) return;
+  if(isUserBlocked(uid)){ toast("User is blocked"); return; }
+  const p = await getProfile(uid);
+  currentChatUser = p;
+  currentChatId = [currentUser.uid, uid].sort().join("_");
+  unreadChatsCache[currentChatId] = 0;
+  updateMsgBadge();
+  markChatAsRead(currentChatId);
+  const avatarEl = $("dmChatAvatar");
+  const nameEl = $("dmChatName");
+  const inbox = $("dmInboxView");
+  const chat = $("dmChatView");
+  if(avatarEl) avatarEl.src = avatar(p.photo, p.name);
+  if(nameEl) nameEl.textContent = p.name || "User";
+  if(inbox){ inbox.classList.add("hidden"); inbox.style.display = "none"; }
+  if(chat){ chat.classList.remove("hidden"); chat.style.display = "flex"; }
+  const statusEl = document.querySelector(".dm-chat-header .info small");
+  if(statusEl){
+    statusEl.dataset.presenceUid = uid;
+    statusEl.textContent = getOnlineText(uid);
+    statusEl.classList.add("dm-chat-status");
+    if(getOnlineText(uid) === "") statusEl.classList.add("offline");
+    else statusEl.classList.remove("offline");
+  }
+  const profileBtn = $("dmChatProfileBtn");
+  if(profileBtn) profileBtn.onclick = (e)=>{ e.preventDefault(); e.stopPropagation(); openPublicProfile(uid); };
+  hideModal("publicProfileModal");
+  hideModal("searchModal");
+  startPresenceListener([uid]);
+  try{ await setDoc(doc(db,"chats",currentChatId), { members: [currentUser.uid, uid], updatedAt: serverTimestamp() }, { merge: true }); }catch(e){}
+  startChatListener();
+}
+
+function openChatFromProfile(uid){
+  if(!uid) return;
+  hideModal("publicProfileModal");
+  hideModal("searchModal");
+  document.querySelectorAll(".panel").forEach(p => p.classList.add("hidden"));
+  $("messagesPanel").classList.remove("hidden");
+  $("mainTopbar").classList.remove("hidden");
+  document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
+  document.querySelector('[data-panel="messagesPanel"]')?.classList.add("active");
+  setTimeout(()=> openChat(uid), 200);
+}
+
+function startChatListener(){
+  if(chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
+  if(!currentChatId) return;
+  chatUnsubscribe = onSnapshot(collection(db,"chats",currentChatId,"messages"),
+    snapshot=>{
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
+      const container = $("dmMessages");
+      if(!container) return;
+      if(currentChatId) markChatAsRead(currentChatId);
+      if(!list.length){
+        container.innerHTML = `<div class="yt-empty" style="padding:40px 20px;color:var(--muted)"><p style="font-size:13px">No messages yet. Say hi! 👋</p></div>`;
+        return;
+      }
+      container.innerHTML = list.map(m=>{
+        const mine = m.userId === currentUser.uid;
+        if(m.type === "shared_video" && m.videoId){
+          return `<div class="dm-msg ${mine?"me":"them"}"><div class="dm-shared-video" data-open-shared="${esc(m.videoId)}"><video src="${esc(m.videoURL || "")}" muted preload="metadata"></video><div class="info"><strong>${esc(m.videoTitle || "Video")}</strong></div></div><small>${timeAgo(m.createdAt)}</small></div>`;
+        }
+        if(m.type === "image" && m.imageURL){
+          return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent"><div class="dm-msg-image" data-open-image="${esc(m.imageURL)}"><img src="${esc(m.imageURL)}" alt="Photo"></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
+        }
+        if(m.type === "chat_video" && m.videoURL){
+          return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent"><div class="dm-msg-image"><video src="${esc(m.videoURL)}" controls playsinline preload="metadata" style="width:100%;display:block;border-radius:12px;max-height:280px;background:#000"></video></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
+        }
+        if(m.type === "file" && m.fileURL){
+          const fInfo = getFileIcon(m.fileName, m.fileType);
+          return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent"><div class="group-msg-file" data-open-file="${esc(m.fileURL)}" data-file-name="${esc(m.fileName)}"><div class="file-icon ${fInfo.cls}">${fInfo.icon}</div><div class="file-info"><strong>${esc(m.fileName || "File")}</strong><small>${formatFileSize(m.fileSize || 0)}</small></div><div class="file-download">⬇️</div></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
+        }
+        return `<div class="dm-msg ${mine?"me":"them"}">${esc(m.text)}<small>${timeAgo(m.createdAt)}</small></div>`;
+      }).join("");
+      container.scrollTop = container.scrollHeight;
+    }, error=>console.error("Chat messages listener error:", error));
+}
+
+$("dmSendBtn")?.addEventListener("click", sendDM);
+$("dmInput")?.addEventListener("keydown", e=>{ if(e.key === "Enter"){ e.preventDefault(); sendDM(); } });
+
+async function sendDM(){
+  const input = $("dmInput");
+  if(!input) return;
+  const text = input.value.trim();
+  if(!text || !currentChatId) return;
+  if(processingMessages.has(text)) return;
+  const now = Date.now();
+  if(now - lastSentMessageTime < MESSAGE_COOLDOWN) return;
+  processingMessages.add(text); lastSentMessageTime = now;
+  input.value = "";
+  try{
+    await addDoc(collection(db,"chats",currentChatId,"messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", text, type: "text", createdAt: serverTimestamp() });
+    await updateDoc(doc(db,"chats",currentChatId), { lastMessage: text, updatedAt: serverTimestamp() });
+  }catch(e){ toast("Send failed"); input.value = text; }
+  finally { setTimeout(() => processingMessages.delete(text), 2000); }
+}
+
+$("dmBackBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(currentChatId) markChatAsRead(currentChatId); showDMInbox(); });
+$("newMsgBtn")?.addEventListener("click", ()=>{ showModal("searchModal"); setTimeout(()=> $("searchInput").focus(), 100); });
+
+$("dmAttachBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("dmAttachMenu")?.classList.toggle("show"); });
+
+document.addEventListener("click", (e)=>{
+  const menu = $("dmAttachMenu");
+  const btn = $("dmAttachBtn");
+  if(!menu || !btn) return;
+  if(!menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove("show");
+});
+
+$("attachPhotoBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("dmAttachMenu")?.classList.remove("show"); $("dmPhotoFile")?.click(); });
+$("attachVideoBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("dmAttachMenu")?.classList.remove("show"); $("dmVideoFile")?.click(); });
+$("attachPdfBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("dmAttachMenu")?.classList.remove("show"); $("dmPdfFile")?.click(); });
+
+$("dmPhotoFile")?.addEventListener("change", async (e)=>{ const file = e.target.files[0]; if(!file || !currentChatId) return; await sendPhotoInChat(file); e.target.value = ""; });
+$("dmVideoFile")?.addEventListener("change", async (e)=>{ const file = e.target.files[0]; if(!file || !currentChatId) return; await sendChatVideo(file); e.target.value = ""; });
+$("dmPdfFile")?.addEventListener("change", async (e)=>{ const file = e.target.files[0]; if(!file || !currentChatId) return; await sendPdfInChat(file); e.target.value = ""; });
+
+async function sendPhotoInChat(file){
+  try{
+    toast("Uploading photo...");
+    const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("Photo " + pct + "%"); });
+    await addDoc(collection(db,"chats",currentChatId,"messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", text: "", type: "image", imageURL: url, createdAt: serverTimestamp() });
+    await updateDoc(doc(db,"chats",currentChatId), { lastMessage: "📷 Photo", updatedAt: serverTimestamp() });
+    toast("✅ Photo sent");
+  }catch(e){ toast("Photo failed"); }
+}
+
+async function sendChatVideo(file){
+  try{
+    toast("Uploading video...");
+    const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("Video " + pct + "%"); });
+    await addDoc(collection(db,"chats",currentChatId,"messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", text: "", type: "chat_video", videoURL: url, createdAt: serverTimestamp() });
+    await updateDoc(doc(db,"chats",currentChatId), { lastMessage: "🎥 Video", updatedAt: serverTimestamp() });
+    toast("✅ Video sent");
+  }catch(e){ toast("Video failed"); }
+}
+
+async function sendPdfInChat(file){
+  try{
+    if(file.size > GROUP_MAX_PDF_SIZE){ toast("File too large (max 50MB)"); return; }
+    toast("Uploading file...");
+    const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("File " + pct + "%"); });
+    await addDoc(collection(db,"chats",currentChatId,"messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", text: "", type: "file", fileURL: url, fileName: file.name, fileSize: file.size, fileType: file.type, createdAt: serverTimestamp() });
+    await updateDoc(doc(db,"chats",currentChatId), { lastMessage: "📄 File", updatedAt: serverTimestamp() });
+    toast("✅ File sent");
+  }catch(e){ toast("File failed"); }
+}
+
+$("dmSearchInput")?.addEventListener("input", e=>{
+  const val = e.target.value.toLowerCase().trim();
+  document.querySelectorAll("#dmInboxList .dm-inbox-item").forEach(item=>{
+    const name = item.querySelector("strong")?.textContent.toLowerCase() || "";
+    item.style.display = name.includes(val) ? "" : "none";
+  });
+});
+
+console.log("✅ Part 2/3 loaded");
