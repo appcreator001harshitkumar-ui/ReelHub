@@ -1544,4 +1544,4 @@ $("trimSaveBtn")?.addEventListener("click", ()=>{
 $("editVideoTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); window.__trimContext = "video"; openVideoTrimModal($("uploadPreview")); });
 $("storyTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(storyMediaType !== "video"){ toast("Trim only for videos"); return; } window.__trimContext = "story"; openVideoTrimModal($("storyVideoPreview")); });
 
-console.log("✅ Part 1/3 complete");
+console.log("✅ Part 1/3 complete"); 
