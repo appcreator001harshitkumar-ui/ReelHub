@@ -1,6 +1,5 @@
 /* ============================================================
    ReelHub - app.js PART 1/3
-   Config + State + Helpers + Ad + Auth + Profile + Videos + Stories
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -37,7 +36,6 @@ const GROUP_MAX_VIDEO_SIZE = 100 * 1024 * 1024;
 const GROUP_MAX_PHOTO_SIZE = 20 * 1024 * 1024;
 const MONETIZATION_REQUIREMENTS = { followers: 10, watchTime: 3600, views: 50 };
 
-/* STATE */
 let currentUser = null;
 let currentProfile = null;
 let videosCache = [];
@@ -144,126 +142,26 @@ const processingLikes = new Set();
 const processingViews = new Set();
 const processingSaves = new Set();
 let currentWatchSession = { videoId: null, startTime: null };
-
 let adSettings = { masterDisabled: false, typeDisabled: { banner: false, popup: false, video: false }, userDisabled: {} };
 let adSettingsUnsubscribe = null;
 let userAdsUnsubscribe = null;
 
-/* HELPERS */
 const $ = id => document.getElementById(id);
-
-function esc(v){
-  return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
-}
-function timeValue(v){
-  if(!v) return 0;
-  if(typeof v.toMillis === "function") return v.toMillis();
-  return new Date(v).getTime() || 0;
-}
-function avatar(url, name){
-  return url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(name || "User") + "&background=7c3aed&color=fff";
-}
-function toast(msg){
-  const el = $("toast");
-  if(!el) return;
-  el.textContent = msg;
-  el.classList.add("show");
-  clearTimeout(window.__toastTimer);
-  window.__toastTimer = setTimeout(()=> el.classList.remove("show"), 2500);
-}
-function timeAgo(v){
-  const t = timeValue(v);
-  if(!t) return "";
-  const diff = Date.now() - t;
-  const sec = Math.floor(diff/1000);
-  if(sec < 60) return "just now";
-  const min = Math.floor(sec/60);
-  if(min < 60) return min + "m";
-  const hr = Math.floor(min/60);
-  if(hr < 24) return hr + "h";
-  const day = Math.floor(hr/24);
-  if(day < 7) return day + "d";
-  const wk = Math.floor(day/7);
-  if(wk < 4) return wk + "w";
-  return new Date(t).toLocaleDateString();
-}
-function timeAgoShort(v){
-  const t = timeValue(v);
-  if(!t) return "";
-  const diff = Date.now() - t;
-  const sec = Math.floor(diff/1000);
-  if(sec < 60) return "now";
-  const min = Math.floor(sec/60);
-  if(min < 60) return min + "m";
-  const hr = Math.floor(min/60);
-  if(hr < 24) return hr + "h";
-  return Math.floor(hr/24) + "d";
-}
-function timeAgoYouTube(v){
-  const t = timeValue(v);
-  if(!t) return "";
-  const diff = Date.now() - t;
-  const sec = Math.floor(diff/1000);
-  if(sec < 60) return "just now";
-  const min = Math.floor(sec/60);
-  if(min < 60) return min + " minutes ago";
-  const hr = Math.floor(min/60);
-  if(hr < 24) return hr + " hours ago";
-  const day = Math.floor(hr/24);
-  if(day < 7) return day + " days ago";
-  const wk = Math.floor(day/7);
-  if(wk < 4) return wk + " weeks ago";
-  const mo = Math.floor(day/30);
-  if(mo < 12) return mo + " months ago";
-  return Math.floor(day/365) + " years ago";
-}
-function formatViews(num){
-  num = Number(num || 0);
-  if(num < 1000) return num + " views";
-  if(num < 1000000) return (num/1000).toFixed(1).replace(".0","") + "K views";
-  if(num < 1000000000) return (num/1000000).toFixed(1).replace(".0","") + "M views";
-  return (num/1000000000).toFixed(1) + "B views";
-}
-function formatViewsShort(num){
-  num = Number(num || 0);
-  if(num < 1000) return String(num);
-  if(num < 1000000) return (num/1000).toFixed(1).replace(".0","") + "K";
-  if(num < 1000000000) return (num/1000000).toFixed(1).replace(".0","") + "M";
-  return (num/1000000000).toFixed(1) + "B";
-}
-function formatDuration(seconds){
-  if(!seconds || isNaN(seconds) || !isFinite(seconds)) return "0:00";
-  const s = Math.floor(seconds);
-  const h = Math.floor(s / 3600);
-  const m = Math.floor((s % 3600) / 60);
-  const sec = s % 60;
-  if(h > 0) return h + ":" + String(m).padStart(2,"0") + ":" + String(sec).padStart(2,"0");
-  return m + ":" + String(sec).padStart(2,"0");
-}
-function formatFileSize(bytes){
-  if(!bytes) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return (bytes / Math.pow(k, i)).toFixed(1) + " " + sizes[i];
-}
-function getFileIcon(fileName, fileType){
-  const name = (fileName || "").toLowerCase();
-  const type = (fileType || "").toLowerCase();
-  if(type.includes("pdf") || name.endsWith(".pdf")) return { icon: "📄", cls: "pdf" };
-  if(name.endsWith(".doc") || name.endsWith(".docx")) return { icon: "📝", cls: "doc" };
-  if(name.endsWith(".zip") || name.endsWith(".rar")) return { icon: "🗜️", cls: "zip" };
-  if(name.endsWith(".ppt") || name.endsWith(".pptx")) return { icon: "📊", cls: "doc" };
-  if(name.endsWith(".xls") || name.endsWith(".xlsx")) return { icon: "📊", cls: "doc" };
-  if(name.endsWith(".txt")) return { icon: "📃", cls: "other" };
-  return { icon: "📎", cls: "other" };
-}
-function isAdminUser(){
-  return currentUser && ADMIN_EMAILS.includes(currentUser.email);
-}
+function esc(v){ return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;"); }
+function timeValue(v){ if(!v) return 0; if(typeof v.toMillis === "function") return v.toMillis(); return new Date(v).getTime() || 0; }
+function avatar(url, name){ return url || "https://ui-avatars.com/api/?name=" + encodeURIComponent(name || "User") + "&background=7c3aed&color=fff"; }
+function toast(msg){ const el = $("toast"); if(!el) return; el.textContent = msg; el.classList.add("show"); clearTimeout(window.__toastTimer); window.__toastTimer = setTimeout(()=> el.classList.remove("show"), 2500); }
+function timeAgo(v){ const t = timeValue(v); if(!t) return ""; const diff = Date.now() - t; const sec = Math.floor(diff/1000); if(sec < 60) return "just now"; const min = Math.floor(sec/60); if(min < 60) return min + "m"; const hr = Math.floor(min/60); if(hr < 24) return hr + "h"; const day = Math.floor(hr/24); if(day < 7) return day + "d"; const wk = Math.floor(day/7); if(wk < 4) return wk + "w"; return new Date(t).toLocaleDateString(); }
+function timeAgoShort(v){ const t = timeValue(v); if(!t) return ""; const diff = Date.now() - t; const sec = Math.floor(diff/1000); if(sec < 60) return "now"; const min = Math.floor(sec/60); if(min < 60) return min + "m"; const hr = Math.floor(min/60); if(hr < 24) return hr + "h"; return Math.floor(hr/24) + "d"; }
+function timeAgoYouTube(v){ const t = timeValue(v); if(!t) return ""; const diff = Date.now() - t; const sec = Math.floor(diff/1000); if(sec < 60) return "just now"; const min = Math.floor(sec/60); if(min < 60) return min + " minutes ago"; const hr = Math.floor(min/60); if(hr < 24) return hr + " hours ago"; const day = Math.floor(hr/24); if(day < 7) return day + " days ago"; const wk = Math.floor(day/7); if(wk < 4) return wk + " weeks ago"; const mo = Math.floor(day/30); if(mo < 12) return mo + " months ago"; return Math.floor(day/365) + " years ago"; }
+function formatViews(num){ num = Number(num || 0); if(num < 1000) return num + " views"; if(num < 1000000) return (num/1000).toFixed(1).replace(".0","") + "K views"; if(num < 1000000000) return (num/1000000).toFixed(1).replace(".0","") + "M views"; return (num/1000000000).toFixed(1) + "B views"; }
+function formatViewsShort(num){ num = Number(num || 0); if(num < 1000) return String(num); if(num < 1000000) return (num/1000).toFixed(1).replace(".0","") + "K"; if(num < 1000000000) return (num/1000000).toFixed(1).replace(".0","") + "M"; return (num/1000000000).toFixed(1) + "B"; }
+function formatDuration(seconds){ if(!seconds || isNaN(seconds) || !isFinite(seconds)) return "0:00"; const s = Math.floor(seconds); const h = Math.floor(s / 3600); const m = Math.floor((s % 3600) / 60); const sec = s % 60; if(h > 0) return h + ":" + String(m).padStart(2,"0") + ":" + String(sec).padStart(2,"0"); return m + ":" + String(sec).padStart(2,"0"); }
+function formatFileSize(bytes){ if(!bytes) return "0 B"; const k = 1024; const sizes = ["B", "KB", "MB", "GB"]; const i = Math.floor(Math.log(bytes) / Math.log(k)); return (bytes / Math.pow(k, i)).toFixed(1) + " " + sizes[i]; }
+function getFileIcon(fileName, fileType){ const name = (fileName || "").toLowerCase(); const type = (fileType || "").toLowerCase(); if(type.includes("pdf") || name.endsWith(".pdf")) return { icon: "📄", cls: "pdf" }; if(name.endsWith(".doc") || name.endsWith(".docx")) return { icon: "📝", cls: "doc" }; if(name.endsWith(".zip") || name.endsWith(".rar")) return { icon: "🗜️", cls: "zip" }; if(name.endsWith(".ppt") || name.endsWith(".pptx")) return { icon: "📊", cls: "doc" }; if(name.endsWith(".xls") || name.endsWith(".xlsx")) return { icon: "📊", cls: "doc" }; if(name.endsWith(".txt")) return { icon: "📃", cls: "other" }; return { icon: "📎", cls: "other" }; }
+function isAdminUser(){ return currentUser && ADMIN_EMAILS.includes(currentUser.email); }
 function isUserBlocked(uid){ return blockedUsersCache.has(uid); }
 
-/* AD CONTROL */
 function canShowAd(adType, userId){
   if(adSettings.masterDisabled === true) return false;
   if(userId && adSettings.userDisabled[userId] === true) return false;
@@ -271,71 +169,28 @@ function canShowAd(adType, userId){
   return true;
 }
 window.showMyAd = function(adType, targetUserId, adCallback){
-  if(!canShowAd(adType, targetUserId || currentUser?.uid)){
-    console.log("🚫 Ad blocked:", adType);
-    return;
-  }
+  if(!canShowAd(adType, targetUserId || currentUser?.uid)){ console.log("🚫 Ad blocked:", adType); return; }
   if(typeof adCallback === "function") adCallback();
 };
 function startAdSettingsListener(){
   if(adSettingsUnsubscribe){ adSettingsUnsubscribe(); adSettingsUnsubscribe = null; }
   if(userAdsUnsubscribe){ userAdsUnsubscribe(); userAdsUnsubscribe = null; }
-  adSettingsUnsubscribe = onSnapshot(doc(db, "ad_settings", "global"),
-    snap => {
-      if(snap.exists()){
-        const d = snap.data();
-        adSettings.masterDisabled = d.masterDisabled === true;
-        adSettings.typeDisabled = d.typeDisabled || { banner: false, popup: false, video: false };
-      }
-    }, error => console.error("Ad settings listener error:", error));
-  userAdsUnsubscribe = onSnapshot(collection(db, "ad_settings", "global", "users"),
-    snap => {
-      const map = {};
-      snap.forEach(d => { map[d.id] = d.data().disabled === true; });
-      adSettings.userDisabled = map;
-    }, error => console.error("User ads listener error:", error));
+  adSettingsUnsubscribe = onSnapshot(doc(db, "ad_settings", "global"), snap => { if(snap.exists()){ const d = snap.data(); adSettings.masterDisabled = d.masterDisabled === true; adSettings.typeDisabled = d.typeDisabled || { banner: false, popup: false, video: false }; } }, error => console.error("Ad settings listener error:", error));
+  userAdsUnsubscribe = onSnapshot(collection(db, "ad_settings", "global", "users"), snap => { const map = {}; snap.forEach(d => { map[d.id] = d.data().disabled === true; }); adSettings.userDisabled = map; }, error => console.error("User ads listener error:", error));
 }
 
-/* MODAL */
-function showModal(id){
-  const el = $(id);
-  if(!el) return;
-  if(el.classList.contains("show")) return;
-  el.classList.add("show");
-  try{ window.history.pushState({ modalId: id, reelhubModal: true }, "", window.location.href); modalHistoryStack.push(id); }catch(e){}
-}
+function showModal(id){ const el = $(id); if(!el) return; if(el.classList.contains("show")) return; el.classList.add("show"); try{ window.history.pushState({ modalId: id, reelhubModal: true }, "", window.location.href); modalHistoryStack.push(id); }catch(e){} }
 function hideModal(id){
-  const el = $(id);
-  if(!el) return;
-  if(!el.classList.contains("show")) return;
-  el.classList.remove("show");
-  const idx = modalHistoryStack.indexOf(id);
-  if(idx > -1) modalHistoryStack.splice(idx, 1);
-  if(id === "videoPlayerModal"){
-    const videoEl = $("videoPlayerVideo");
-    if(videoEl){ videoEl.pause(); videoEl.src = ""; videoEl.style.transform = ""; videoEl.muted = false; }
-    if(window.__videoAudio){ window.__videoAudio.pause(); window.__videoAudio = null; }
-  }
+  const el = $(id); if(!el) return; if(!el.classList.contains("show")) return; el.classList.remove("show");
+  const idx = modalHistoryStack.indexOf(id); if(idx > -1) modalHistoryStack.splice(idx, 1);
+  if(id === "videoPlayerModal"){ const videoEl = $("videoPlayerVideo"); if(videoEl){ videoEl.pause(); videoEl.src = ""; videoEl.style.transform = ""; videoEl.muted = false; } if(window.__videoAudio){ window.__videoAudio.pause(); window.__videoAudio = null; } }
 }
 
-/* SPLASH */
-function hideSplash(){
-  if(splashHidden) return;
-  splashHidden = true;
-  document.body.classList.add("app-ready");
-  const splash = $("splashScreen");
-  if(splash){ splash.classList.add("fade-out"); setTimeout(()=> splash.remove(), 500); }
-}
-function prepareInitialState(){
-  $("loginPage")?.classList.add("hidden");
-  $("app")?.classList.add("hidden");
-  document.body.classList.remove("app-ready");
-}
+function hideSplash(){ if(splashHidden) return; splashHidden = true; document.body.classList.add("app-ready"); const splash = $("splashScreen"); if(splash){ splash.classList.add("fade-out"); setTimeout(()=> splash.remove(), 500); } }
+function prepareInitialState(){ $("loginPage")?.classList.add("hidden"); $("app")?.classList.add("hidden"); document.body.classList.remove("app-ready"); }
 
-/* SUSPENSION */
 function showSuspensionScreen(profile){
-  const screen = $("suspensionScreen");
-  if(!screen) return;
+  const screen = $("suspensionScreen"); if(!screen) return;
   const reason = profile.suspendReason || "Violation of Terms";
   const duration = profile.suspendDuration || "Temporary";
   const until = profile.suspendUntil ? new Date(timeValue(profile.suspendUntil)).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : "Permanent";
@@ -344,10 +199,7 @@ function showSuspensionScreen(profile){
   if($("suspensionDuration")) $("suspensionDuration").textContent = duration;
   if($("suspensionUntil")) $("suspensionUntil").textContent = until;
   if($("suspensionDate")) $("suspensionDate").textContent = date;
-  $("loginPage")?.classList.add("hidden");
-  $("app")?.classList.add("hidden");
-  hideSplash();
-  screen.classList.remove("hidden");
+  $("loginPage")?.classList.add("hidden"); $("app")?.classList.add("hidden"); hideSplash(); screen.classList.remove("hidden");
 }
 async function checkSuspension(uid){
   if(!uid) return false;
@@ -358,29 +210,14 @@ async function checkSuspension(uid){
     if(!profileData.suspended) return false;
     if(profileData.suspendUntil){
       const untilTime = timeValue(profileData.suspendUntil);
-      if(Date.now() > untilTime){
-        await updateDoc(doc(db, "profiles", snap.docs[0].id), { suspended: false, suspendReason: "", suspendDuration: "", suspendUntil: null, autoUnsuspendedAt: serverTimestamp() });
-        toast("✅ Suspension ended");
-        return false;
-      }
+      if(Date.now() > untilTime){ await updateDoc(doc(db, "profiles", snap.docs[0].id), { suspended: false, suspendReason: "", suspendDuration: "", suspendUntil: null, autoUnsuspendedAt: serverTimestamp() }); toast("✅ Suspension ended"); return false; }
     }
-    showSuspensionScreen(profileData);
-    return true;
+    showSuspensionScreen(profileData); return true;
   }catch(e){ console.error("Suspension check error:", e); return false; }
 }
+$("suspensionLogoutBtn")?.addEventListener("click", async ()=>{ if(!confirm("Logout?")) return; try{ await signOut(auth); window.location.reload(); }catch(e){} });
 
-$("suspensionLogoutBtn")?.addEventListener("click", async ()=>{
-  if(!confirm("Logout?")) return;
-  try{ await signOut(auth); window.location.reload(); }catch(e){}
-});
-
-/* WATCH TIME */
-function startWatchTimer(videoId){
-  if(!currentUser || !videoId) return;
-  if(currentWatchSession.videoId === videoId && currentWatchSession.startTime) return;
-  if(currentWatchSession.videoId && currentWatchSession.startTime) stopWatchTimer();
-  currentWatchSession = { videoId, startTime: Date.now() };
-}
+function startWatchTimer(videoId){ if(!currentUser || !videoId) return; if(currentWatchSession.videoId === videoId && currentWatchSession.startTime) return; if(currentWatchSession.videoId && currentWatchSession.startTime) stopWatchTimer(); currentWatchSession = { videoId, startTime: Date.now() }; }
 async function stopWatchTimer(){
   if(!currentWatchSession.videoId || !currentWatchSession.startTime) return;
   if(!currentUser) return;
@@ -388,20 +225,11 @@ async function stopWatchTimer(){
   const videoId = currentWatchSession.videoId;
   currentWatchSession = { videoId: null, startTime: null };
   if(elapsed < 3) return;
-  try{
-    const videoRef = doc(db, "videos", videoId);
-    const videoSnap = await getDoc(videoRef);
-    if(!videoSnap.exists()) return;
-    const ownerId = videoSnap.data().userId;
-    if(ownerId === currentUser.uid) return;
-    await updateDoc(videoRef, { watchTime: increment(elapsed) });
-    await updateDoc(doc(db, "profiles", ownerId), { totalWatchTime: increment(elapsed) });
-  }catch(e){}
+  try{ const videoRef = doc(db, "videos", videoId); const videoSnap = await getDoc(videoRef); if(!videoSnap.exists()) return; const ownerId = videoSnap.data().userId; if(ownerId === currentUser.uid) return; await updateDoc(videoRef, { watchTime: increment(elapsed) }); await updateDoc(doc(db, "profiles", ownerId), { totalWatchTime: increment(elapsed) }); }catch(e){}
 }
 document.addEventListener("visibilitychange", () => { if(document.visibilityState === "hidden") stopWatchTimer(); });
 window.addEventListener("beforeunload", () => { stopWatchTimer(); });
 
-/* CLOUDINARY */
 function uploadToCloudinary(file, onProgress){
   return new Promise((resolve,reject)=>{
     let resource = "image";
@@ -439,9 +267,6 @@ function uploadAudioToCloudinary(file, onProgress){
   });
 }
 
-/* ============================================================
-   AUTH — Email + Signup + Forgot Password
-============================================================ */
 document.querySelectorAll(".auth-tab").forEach(tab => {
   tab.addEventListener("click", () => {
     const tabName = tab.dataset.tab;
@@ -460,14 +285,8 @@ $("loginForm")?.addEventListener("submit", async (e) => {
   const status = $("loginStatus");
   if(!email || !password){ if(status){ status.textContent = "Email and password required"; status.style.color = "#ed4956"; } return; }
   if(status){ status.textContent = "Logging in..."; status.style.color = "#7c3aed"; }
-  try{ 
-    await signInWithEmailAndPassword(auth, email, password); 
-    if(status){ status.textContent = ""; status.style.color = "#ed4956"; } 
-  }
-  catch(err){ 
-    console.error("Login error:", err);
-    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } 
-  }
+  try{ await signInWithEmailAndPassword(auth, email, password); if(status){ status.textContent = ""; status.style.color = "#ed4956"; } }
+  catch(err){ console.error("Login error:", err); if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } }
 });
 $("signupForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -478,122 +297,56 @@ $("signupForm")?.addEventListener("submit", async (e) => {
   if(!name || !email || !password){ if(status){ status.textContent = "All fields required"; status.style.color = "#ed4956"; } return; }
   if(password.length < 6){ if(status){ status.textContent = "Password must be 6+ chars"; status.style.color = "#ed4956"; } return; }
   if(status){ status.textContent = "Creating account..."; status.style.color = "#7c3aed"; }
-  try{
-    const userCred = await createUserWithEmailAndPassword(auth, email, password);
-    await updateProfile(userCred.user, { displayName: name });
-    try{ await sendEmailVerification(userCred.user); }catch(e){}
-    if(status){ status.textContent = "✅ Account created!"; status.style.color = "#22c55e"; }
-  }catch(err){ 
-    console.error("Signup error:", err);
-    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } 
-  }
+  try{ const userCred = await createUserWithEmailAndPassword(auth, email, password); await updateProfile(userCred.user, { displayName: name }); try{ await sendEmailVerification(userCred.user); }catch(e){} if(status){ status.textContent = "✅ Account created!"; status.style.color = "#22c55e"; } }
+  catch(err){ console.error("Signup error:", err); if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } }
 });
 $("forgotPasswordBtn")?.addEventListener("click", async () => {
   const email = $("loginEmail").value.trim();
   const status = $("loginStatus");
   if(!email){ if(status){ status.textContent = "Enter your email first"; status.style.color = "#ed4956"; } return; }
-  try{ 
-    await sendPasswordResetEmail(auth, email); 
-    if(status){ status.textContent = "✅ Reset email sent!"; status.style.color = "#22c55e"; } 
-    setTimeout(() => { if(status) status.style.color = "#ed4956"; }, 4000); 
-  }
-  catch(err){ 
-    console.error("Reset error:", err);
-    if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } 
-  }
+  try{ await sendPasswordResetEmail(auth, email); if(status){ status.textContent = "✅ Reset email sent!"; status.style.color = "#22c55e"; } setTimeout(() => { if(status) status.style.color = "#ed4956"; }, 4000); }
+  catch(err){ console.error("Reset error:", err); if(status){ status.textContent = getAuthError(err.code); status.style.color = "#ed4956"; } }
 });
 function getAuthError(code){
-  const errors = {
-    "auth/email-already-in-use": "This email is already registered",
-    "auth/invalid-email": "Invalid email address",
-    "auth/weak-password": "Password too weak (min 6 characters)",
-    "auth/user-not-found": "No account found with this email",
-    "auth/wrong-password": "Incorrect password",
-    "auth/invalid-credential": "Invalid email or password",
-    "auth/too-many-requests": "Too many attempts. Try again later",
-    "auth/network-request-failed": "Network error. Check your internet",
-    "auth/user-disabled": "This account has been disabled",
-    "auth/operation-not-allowed": "Email/Password login is not enabled"
-  };
+  const errors = { "auth/email-already-in-use": "This email is already registered", "auth/invalid-email": "Invalid email address", "auth/weak-password": "Password too weak (min 6 characters)", "auth/user-not-found": "No account found with this email", "auth/wrong-password": "Incorrect password", "auth/invalid-credential": "Invalid email or password", "auth/too-many-requests": "Too many attempts. Try again later", "auth/network-request-failed": "Network error. Check your internet", "auth/user-disabled": "This account has been disabled", "auth/operation-not-allowed": "Email/Password login is not enabled" };
   return errors[code] || "Something went wrong. Please try again";
 }
 
-/* ============================================================
-   ✅ GOOGLE LOGIN — SIMPLE VERSION
-============================================================ */
 function attachGoogleLogin(){
   const btn = document.getElementById("googleLogin");
-  if(!btn){
-    console.error("❌ googleLogin button nahi mila!");
-    return false;
-  }
+  if(!btn){ console.error("❌ googleLogin button not found"); return false; }
   if(btn.dataset.listenerAttached === "1") return true;
   btn.dataset.listenerAttached = "1";
-
   btn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log("🔵 Google button clicked");
-
+    e.preventDefault(); e.stopPropagation();
     const status = document.getElementById("loginStatus");
     if(status){ status.textContent = "Opening Google..."; status.style.color = "#7c3aed"; }
-
-    try {
+    try{
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      console.log("✅ Google login success:", result.user.email);
       if(status){ status.textContent = "✅ Login successful!"; status.style.color = "#22c55e"; }
-    } catch(error) {
+    }catch(error){
       console.error("❌ Google error:", error);
       alert("❌ Google Login Error\n\nCode: " + (error.code || "unknown") + "\n\nMessage: " + (error.message || "no message"));
       if(status){ status.textContent = "❌ " + (error.code || "error"); status.style.color = "#ed4956"; }
     }
   });
-
-  console.log("✅ Google login listener attached");
   return true;
 }
+if(document.readyState === "loading"){ document.addEventListener("DOMContentLoaded", () => { if(!attachGoogleLogin()){ setTimeout(attachGoogleLogin, 500); setTimeout(attachGoogleLogin, 1500); } }); }
+else { if(!attachGoogleLogin()){ setTimeout(attachGoogleLogin, 500); setTimeout(attachGoogleLogin, 1500); } }
 
-if(document.readyState === "loading"){
-  document.addEventListener("DOMContentLoaded", () => {
-    if(!attachGoogleLogin()){
-      setTimeout(attachGoogleLogin, 500);
-      setTimeout(attachGoogleLogin, 1500);
-    }
-  });
-} else {
-  if(!attachGoogleLogin()){
-    setTimeout(attachGoogleLogin, 500);
-    setTimeout(attachGoogleLogin, 1500);
-  }
-}
-
-/* ============================================================
-   PROFILE
-============================================================ */
 async function createProfile(){
   const ref = doc(db, "profiles", currentUser.uid);
   const snap = await getDoc(ref);
   if(!snap.exists()){
     const displayName = currentUser.displayName || (currentUser.email ? currentUser.email.split("@")[0] : "User");
-    await setDoc(ref, {
-      uid: currentUser.uid,
-      name: displayName,
-      username: displayName.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,20) || "user" + Date.now().toString().slice(-5),
-      age: "", gender: "", bio: "", photo: currentUser.photoURL || "",
-      followers: 0, following: 0, videos: 0, private: false, suspended: false,
-      suspendReason: "", suspendDuration: "", suspendUntil: null, suspendedAt: null,
-      bannerType: "gradient", bannerGradient: "linear-gradient(135deg, #7c3aed, #ec4899)", bannerURL: "",
-      vaultPin: "", vaultEnabled: false, totalWatchTime: 0, totalViews: 0,
-      monetizationStatus: "none", upiId: "", pinnedVideos: [], createdAt: serverTimestamp()
-    });
+    await setDoc(ref, { uid: currentUser.uid, name: displayName, username: displayName.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,20) || "user" + Date.now().toString().slice(-5), age: "", gender: "", bio: "", photo: currentUser.photoURL || "", followers: 0, following: 0, videos: 0, private: false, suspended: false, suspendReason: "", suspendDuration: "", suspendUntil: null, suspendedAt: null, bannerType: "gradient", bannerGradient: "linear-gradient(135deg, #7c3aed, #ec4899)", bannerURL: "", vaultPin: "", vaultEnabled: false, totalWatchTime: 0, totalViews: 0, monetizationStatus: "none", upiId: "", pinnedVideos: [], createdAt: serverTimestamp() });
   }
 }
 async function getProfile(uid){
   const snap = await getDoc(doc(db, "profiles", uid));
-  if(!snap.exists()){
-    return { uid, name:"User", username:"user", age:"", gender:"", bio:"", photo:"", followers:0, following:0, videos:0, private:false, suspended:false, bannerType:"gradient", bannerGradient:"linear-gradient(135deg, #7c3aed, #ec4899)", bannerURL:"", vaultPin: "", vaultEnabled: false, totalWatchTime: 0, totalViews: 0, monetizationStatus: "none", upiId: "", pinnedVideos: [] };
-  }
+  if(!snap.exists()) return { uid, name:"User", username:"user", age:"", gender:"", bio:"", photo:"", followers:0, following:0, videos:0, private:false, suspended:false, bannerType:"gradient", bannerGradient:"linear-gradient(135deg, #7c3aed, #ec4899)", bannerURL:"", vaultPin: "", vaultEnabled: false, totalWatchTime: 0, totalViews: 0, monetizationStatus: "none", upiId: "", pinnedVideos: [] };
   const d = snap.data();
   return { uid, ...d, followers: Number(d.followers || 0), following: Number(d.following || 0), videos: Number(d.videos || 0), private: d.private === true, suspended: d.suspended === true, bannerType: d.bannerType || "gradient", bannerGradient: d.bannerGradient || "linear-gradient(135deg, #7c3aed, #ec4899)", bannerURL: d.bannerURL || "", vaultPin: d.vaultPin || "", vaultEnabled: d.vaultEnabled === true, totalWatchTime: Number(d.totalWatchTime || 0), totalViews: Number(d.totalViews || 0), monetizationStatus: d.monetizationStatus || "none", upiId: d.upiId || "", pinnedVideos: Array.isArray(d.pinnedVideos) ? d.pinnedVideos : [] };
 }
@@ -617,74 +370,34 @@ async function loadProfile(){
   applyBanner(currentProfile);
   addBannerEditButton();
 }
-function updatePrivateToggleUI(){
-  const toggle = $("privateAccountToggle");
-  if(!toggle) return;
-  if(currentProfile?.private){ toggle.textContent = "ON"; toggle.style.color = "#22c55e"; }
-  else { toggle.textContent = "OFF"; toggle.style.color = "var(--muted)"; }
-}
-async function loadMyFollows(){
-  if(!currentUser) return;
-  myFollowsCache = new Set();
-  try{ const snap = await getDocs(query(collection(db,"follows"), where("follower","==",currentUser.uid))); snap.forEach(d => myFollowsCache.add(d.data().following)); }catch(e){}
-}
-async function loadMySaves(){
-  if(!currentUser) return;
-  mySavesCache = new Set();
-  try{ const snap = await getDocs(query(collection(db,"saves"), where("userId","==",currentUser.uid))); snap.forEach(d => mySavesCache.add(d.data().videoId)); }catch(e){}
-}
-async function loadMySentRequests(){
-  if(!currentUser) return;
-  mySentRequestsCache = new Set();
-  try{ const snap = await getDocs(query(collection(db,"follow_requests"), where("from","==",currentUser.uid))); snap.forEach(d => mySentRequestsCache.add(d.data().to)); }catch(e){}
-}
-async function loadBlockedUsers(){
-  if(!currentUser) return;
-  blockedUsersCache = new Set();
-  try{ const snap = await getDocs(query(collection(db, "blocked_users"), where("blockerId", "==", currentUser.uid))); snap.forEach(d => blockedUsersCache.add(d.data().blockedId)); }catch(e){}
-}
+function updatePrivateToggleUI(){ const toggle = $("privateAccountToggle"); if(!toggle) return; if(currentProfile?.private){ toggle.textContent = "ON"; toggle.style.color = "#22c55e"; } else { toggle.textContent = "OFF"; toggle.style.color = "var(--muted)"; } }
+async function loadMyFollows(){ if(!currentUser) return; myFollowsCache = new Set(); try{ const snap = await getDocs(query(collection(db,"follows"), where("follower","==",currentUser.uid))); snap.forEach(d => myFollowsCache.add(d.data().following)); }catch(e){} }
+async function loadMySaves(){ if(!currentUser) return; mySavesCache = new Set(); try{ const snap = await getDocs(query(collection(db,"saves"), where("userId","==",currentUser.uid))); snap.forEach(d => mySavesCache.add(d.data().videoId)); }catch(e){} }
+async function loadMySentRequests(){ if(!currentUser) return; mySentRequestsCache = new Set(); try{ const snap = await getDocs(query(collection(db,"follow_requests"), where("from","==",currentUser.uid))); snap.forEach(d => mySentRequestsCache.add(d.data().to)); }catch(e){} }
+async function loadBlockedUsers(){ if(!currentUser) return; blockedUsersCache = new Set(); try{ const snap = await getDocs(query(collection(db, "blocked_users"), where("blockerId", "==", currentUser.uid))); snap.forEach(d => blockedUsersCache.add(d.data().blockedId)); }catch(e){} }
 function startBlockedUsersListener(){
   if(blockedUsersUnsubscribe){ blockedUsersUnsubscribe(); blockedUsersUnsubscribe = null; }
   if(!currentUser) return;
-  blockedUsersUnsubscribe = onSnapshot(query(collection(db, "blocked_users"), where("blockerId", "==", currentUser.uid)),
-    snapshot=>{
-      blockedUsersCache = new Set();
-      snapshot.forEach(d => blockedUsersCache.add(d.data().blockedId));
-      renderFeed();
-      renderShorts();
-    }, error=>console.error("Blocked listener error:", error));
+  blockedUsersUnsubscribe = onSnapshot(query(collection(db, "blocked_users"), where("blockerId", "==", currentUser.uid)), snapshot=>{ blockedUsersCache = new Set(); snapshot.forEach(d => blockedUsersCache.add(d.data().blockedId)); renderFeed(); renderShorts(); }, error=>console.error("Blocked listener error:", error));
 }
 async function loadWatchHistory(){
   if(!currentUser) return;
-  watchHistoryCache = [];
-  continueWatchingCache = [];
+  watchHistoryCache = []; continueWatchingCache = [];
   try{
     const snap = await getDocs(query(collection(db, "watch_history"), where("userId", "==", currentUser.uid)));
     const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     items.sort((a,b)=> timeValue(b.watchedAt) - timeValue(a.watchedAt));
     watchHistoryCache = items;
     continueWatchingCache = items.filter(i => i.progress > 3 && i.duration > 0 && i.progress < (i.duration - 5)).slice(0, 10);
-    renderWatchHistory();
-    renderContinueWatching();
+    renderWatchHistory(); renderContinueWatching();
   }catch(e){}
 }
 function startWatchHistoryListener(){
   if(watchHistoryUnsubscribe){ watchHistoryUnsubscribe(); watchHistoryUnsubscribe = null; }
   if(!currentUser) return;
-  watchHistoryUnsubscribe = onSnapshot(query(collection(db, "watch_history"), where("userId", "==", currentUser.uid)),
-    snapshot=>{
-      const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      items.sort((a,b)=> timeValue(b.watchedAt) - timeValue(a.watchedAt));
-      watchHistoryCache = items;
-      continueWatchingCache = items.filter(i => i.progress > 3 && i.duration > 0 && i.progress < (i.duration - 5)).slice(0, 10);
-      renderWatchHistory();
-      renderContinueWatching();
-    }, error=>console.error("Watch history listener error:", error));
+  watchHistoryUnsubscribe = onSnapshot(query(collection(db, "watch_history"), where("userId", "==", currentUser.uid)), snapshot=>{ const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() })); items.sort((a,b)=> timeValue(b.watchedAt) - timeValue(a.watchedAt)); watchHistoryCache = items; continueWatchingCache = items.filter(i => i.progress > 3 && i.duration > 0 && i.progress < (i.duration - 5)).slice(0, 10); renderWatchHistory(); renderContinueWatching(); }, error=>console.error("Watch history listener error:", error));
 }
-function stopAllPresenceListeners(){
-  presenceListenersMap.forEach(unsub => { try{ unsub(); }catch(e){} });
-  presenceListenersMap.clear();
-}
+function stopAllPresenceListeners(){ presenceListenersMap.forEach(unsub => { try{ unsub(); }catch(e){} }); presenceListenersMap.clear(); }
 function startPresenceHeartbeat(){
   if(!currentUser) return;
   if(heartbeatInterval) clearInterval(heartbeatInterval);
@@ -692,26 +405,19 @@ function startPresenceHeartbeat(){
   heartbeatInterval = setInterval(updatePresence, 30000);
   if(!window.__presenceVisibilityBound){
     window.__presenceVisibilityBound = true;
-    document.addEventListener("visibilitychange", ()=>{ 
-      if(document.visibilityState === "hidden") markOffline(); 
-      else updatePresence(); 
-    });
+    document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState === "hidden") markOffline(); else updatePresence(); });
     window.addEventListener("beforeunload", markOffline);
   }
 }
 
-/* AUTH STATE */
 onAuthStateChanged(auth, async user => {
   if(user){
     currentUser = user;
     $("loginPage")?.classList.add("hidden");
-    
     const isSuspended = await checkSuspension(user.uid);
     if(isSuspended){ hideSplash(); authResolved = true; return; }
-    
     $("app")?.classList.remove("hidden");
     hideSplash();
-    
     await createProfile();
     await loadProfile();
     await loadMyFollows();
@@ -719,7 +425,6 @@ onAuthStateChanged(auth, async user => {
     await loadMySentRequests();
     await loadBlockedUsers();
     await loadWatchHistory();
-
     if(typeof startRealtimeVideos === "function") startRealtimeVideos();
     if(typeof startNotifications === "function") startNotifications();
     if(typeof startChatsListListener === "function") startChatsListListener();
@@ -734,32 +439,14 @@ onAuthStateChanged(auth, async user => {
     if(typeof startAdSettingsListener === "function") startAdSettingsListener();
     if(typeof startBlockedUsersListener === "function") startBlockedUsersListener();
     if(typeof startWatchHistoryListener === "function") startWatchHistoryListener();
-
     try{ window.history.replaceState({ reelhubHome: true }, "", window.location.href); }catch(e){}
     try{ window.history.pushState({ reelhubApp: true }, "", window.location.href); }catch(e){}
     setTimeout(() => { if(typeof checkDeepLink === "function") checkDeepLink(); }, 1500);
     authResolved = true;
   } else {
     if(currentUser && typeof markOffline === "function") await markOffline();
-    currentUser = null;
-    currentProfile = null;
-    videosCache = [];
-    storiesCache = [];
-    groupedStories = [];
-    vaultFilesCache = [];
-    myGroupsCache = [];
-    songLibraryCache = [];
-    watchHistoryCache = [];
-    continueWatchingCache = [];
-    myFollowsCache.clear();
-    mySavesCache.clear();
-    mySentRequestsCache.clear();
-    blockedUsersCache.clear();
-    onlineUsersCache = {};
-    unreadChatsCache = {};
-    chatLastReadCache = {};
-    modalHistoryStack = [];
-    vaultPinVerified = false;
+    currentUser = null; currentProfile = null; videosCache = []; storiesCache = []; groupedStories = []; vaultFilesCache = []; myGroupsCache = []; songLibraryCache = []; watchHistoryCache = []; continueWatchingCache = [];
+    myFollowsCache.clear(); mySavesCache.clear(); mySentRequestsCache.clear(); blockedUsersCache.clear(); onlineUsersCache = {}; unreadChatsCache = {}; chatLastReadCache = {}; modalHistoryStack = []; vaultPinVerified = false;
     if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
     if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
     if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
@@ -779,771 +466,11 @@ onAuthStateChanged(auth, async user => {
     if(watchHistoryUnsubscribe){ watchHistoryUnsubscribe(); watchHistoryUnsubscribe = null; }
     adSettings = { masterDisabled: false, typeDisabled: { banner: false, popup: false, video: false }, userDisabled: {} };
     stopAllPresenceListeners();
-    processingLikes.clear();
-    processingSaves.clear();
-    processingViews.clear();
-    processingMessages.clear();
-    $("app")?.classList.add("hidden");
-    $("loginPage")?.classList.remove("hidden");
-    $("suspensionScreen")?.classList.add("hidden");
-    hideSplash();
-    authResolved = true;
+    processingLikes.clear(); processingSaves.clear(); processingViews.clear(); processingMessages.clear();
+    $("app")?.classList.add("hidden"); $("loginPage")?.classList.remove("hidden"); $("suspensionScreen")?.classList.add("hidden");
+    hideSplash(); authResolved = true;
   }
 });
-console.log("✅ Part 1/3 loaded — Auth + Profile");
-
-/* ============================================================
-   VIDEO CARD + FEED + SHORTS
-============================================================ */
-function createVideoCard(v){
-  const views = Number(v.views || 0);
-  const mine = currentUser && v.userId === currentUser.uid;
-  const isAdmin = isAdminUser();
-  const isPinned = currentProfile?.pinnedVideos?.includes(v.id);
-  const isPhoto = v.isPhoto === true;
-  let songBadge = "";
-  if(v.song && v.song.name){ songBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(124,58,237,0.15);color:var(--primary);font-size:10px;font-weight:600;border-radius:8px;margin-top:4px">🎵 ${esc(v.song.name)}</span>`; }
-  let stickerBadge = "";
-  if(v.sticker){ const icon = v.sticker.type === "emoji" ? v.sticker.icon : v.sticker.text; if(icon){ stickerBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(236,72,153,0.15);color:#ec4899;font-size:10px;font-weight:600;border-radius:8px;margin-top:4px;margin-left:4px">${esc(icon)}</span>`; } }
-  const rotationStyle = v.rotation ? `transform: rotate(${v.rotation}deg);` : "";
-  const scaleStyle = (v.rotation === 90 || v.rotation === 270) ? "scale(1.3);" : "";
-  const filterStyle = v.filter && v.filter !== "none" ? `filter: ${v.filter};` : "";
-  let thumbnailHTML;
-  if(isPhoto){ thumbnailHTML = `<img src="${esc(v.videoURL)}" alt="" style="width:100%;height:100%;object-fit:cover;${filterStyle}" loading="lazy">`; }
-  else if(v.thumbnail){ thumbnailHTML = `<img src="${esc(v.thumbnail)}" alt="" style="width:100%;height:100%;object-fit:cover;${filterStyle}">`; }
-  else { thumbnailHTML = `<video src="${esc(v.videoURL)}#t=0.5" preload="metadata" muted playsinline style="${rotationStyle}${scaleStyle}${filterStyle}"></video>`; }
-  return `
-  <div class="video-card" data-id="${esc(v.id)}" data-open-video="${esc(v.id)}">
-    <div class="thumbnail" style="position:relative">
-      ${thumbnailHTML}
-      ${!isPhoto ? `<span class="duration" data-duration-for="${esc(v.id)}">0:00</span>` : `<span class="duration" style="background:rgba(124,58,237,0.9)">📷</span>`}
-      ${v.muted ? `<span style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:white;font-size:11px;padding:3px 8px;border-radius:8px;font-weight:600">🔇</span>` : ""}
-      ${isPinned ? `<span style="position:absolute;top:8px;left:8px;background:rgba(124,58,237,0.9);color:white;font-size:10px;padding:3px 8px;border-radius:8px;font-weight:700">📌 PINNED</span>` : ""}
-    </div>
-    <div class="video-info">
-      <img class="channel-avatar post-open-user" data-uid="${esc(v.userId)}" src="${avatar(v.userPhoto, v.userName)}" alt="${esc(v.userName)}">
-      <div class="video-details">
-        <h3 class="video-title">${esc(v.title || "Untitled")}</h3>
-        <p class="channel-name">${esc(v.username || v.userName || "User")} <span class="verified">✓</span></p>
-        <p class="video-meta">${formatViewsShort(views)} views <span class="dot">•</span> ${timeAgoYouTube(v.createdAt)}</p>
-        ${songBadge || stickerBadge ? `<div style="display:flex;flex-wrap:wrap;gap:4px">${songBadge}${stickerBadge}</div>` : ""}
-      </div>
-      ${mine || isAdmin ? `<button class="video-more" onclick="event.stopPropagation();event.preventDefault();openVideoMenuModal('${esc(v.id)}')">⋮</button>` : ""}
-    </div>
-  </div>`;
-}
-
-function renderFeed(){
-  const feed = $("feed");
-  if(!feed) return;
-  let list = videosCache.filter(v => v.type !== "short" && (v.visibility !== "private" || v.userId === currentUser?.uid) && !isUserBlocked(v.userId));
-  if(currentCategory === "trending"){
-    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-    list = list.filter(v => timeValue(v.createdAt) > sevenDaysAgo);
-    list.sort((a,b)=> (b.views || 0) - (a.views || 0));
-    list = list.slice(0, 50);
-  } else if(currentCategory !== "all"){ list = list.filter(v => v.category === currentCategory); }
-  if(currentCategory === "all" && currentProfile?.pinnedVideos?.length){
-    const pinned = [];
-    const rest = [];
-    list.forEach(v => { if(currentProfile.pinnedVideos.includes(v.id) && v.userId === currentUser?.uid) pinned.push(v); else rest.push(v); });
-    list = [...pinned, ...rest];
-  }
-  if(!list.length){
-    feed.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><span class="icon">📹</span><h3>No videos yet</h3><p>Upload your first video or follow creators</p></div>`;
-    return;
-  }
-  feed.innerHTML = list.map(v => createVideoCard(v)).join("");
-  list.filter(v => !v.isPhoto).forEach(v => loadVideoDuration(v.id, v.videoURL));
-}
-
-document.querySelectorAll("#categoryChips .chip").forEach(chip => {
-  chip.addEventListener("click", ()=>{
-    document.querySelectorAll("#categoryChips .chip").forEach(c => c.classList.remove("active"));
-    chip.classList.add("active");
-    currentCategory = chip.dataset.cat || "all";
-    renderFeed();
-  });
-});
-
-function loadVideoDuration(videoId, videoURL){
-  if(!videoURL) return;
-  const tempVideo = document.createElement("video");
-  tempVideo.preload = "metadata";
-  tempVideo.src = videoURL;
-  tempVideo.addEventListener("loadedmetadata", () => {
-    const duration = formatDuration(tempVideo.duration);
-    const badge = document.querySelector(`[data-duration-for="${videoId}"]`);
-    if(badge) badge.textContent = duration;
-    tempVideo.src = "";
-  });
-  tempVideo.addEventListener("error", () => {
-    const badge = document.querySelector(`[data-duration-for="${videoId}"]`);
-    if(badge) badge.textContent = "0:00";
-  });
-}
-
-function startRealtimeVideos(){
-  if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
-  videosUnsubscribe = onSnapshot(collection(db,"videos"),
-    snapshot=>{
-      videosCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      videosCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
-      renderFeed();
-      renderShorts();
-      loadMyVideos();
-      if(mySavesCache.size > 0){ renderSavedVideos(); updateProfileTabCounts(); }
-      if($("publicProfileModal")?.classList.contains("show")){
-        const uid = $("publicProfileModal").dataset.uid;
-        if(uid) loadPublicVideos(uid);
-      }
-    }, error => console.error("Videos listener error:", error));
-}
-
-function renderShorts(){
-  const container = $("reelsContainer");
-  if(!container) return;
-  const list = videosCache.filter(v => v.type === "short" && (v.visibility !== "private" || v.userId === currentUser?.uid) && !isUserBlocked(v.userId));
-  if(!list.length){
-    container.innerHTML = `<div class="reel-empty"><div style="font-size:56px;margin-bottom:14px">🎞️</div><h3 style="font-size:17px;margin-bottom:6px">No Shorts yet</h3><p>Upload your first Short to see it here</p></div>`;
-    return;
-  }
-  container.innerHTML = list.map(v => createReel(v)).join("");
-  setTimeout(setupReelsObserver, 100);
-}
-
-function createReel(v){
-  const isFollowing = myFollowsCache.has(v.userId);
-  const mine = currentUser && v.userId === currentUser.uid;
-  const isSaved = mySavesCache.has(v.id);
-  const views = Number(v.views || 0);
-  return `
-  <div class="reel-item" data-id="${esc(v.id)}">
-    <video src="${esc(v.videoURL)}" loop playsinline webkit-playsinline preload="metadata" muted data-video-id="${esc(v.id)}"></video>
-    <div class="reel-overlay">
-      <div class="reel-info">
-        <div class="reel-user">
-          <img class="post-open-user" data-uid="${esc(v.userId)}" src="${avatar(v.userPhoto, v.userName)}">
-          <strong>@${esc(v.username || v.userName)}</strong>
-          ${!mine ? `<button class="follow-btn-sm" data-follow-uid="${esc(v.userId)}" data-action="follow">${isFollowing ? "Following" : "Follow"}</button>` : ""}
-        </div>
-        ${v.title ? `<div class="reel-title">${esc(v.title)}</div>` : ""}
-        ${v.description ? `<div class="reel-desc">${esc(v.description)}</div>` : ""}
-      </div>
-    </div>
-    <div class="reel-views">👁️ ${formatViewsShort(views)}</div>
-    <div class="reel-actions">
-      <div class="reel-action like-btn" id="reel-like-${esc(v.id)}" data-like-video="${esc(v.id)}" data-reel="true"><span class="icon">🤍</span><small class="like-count">${v.likes || 0}</small></div>
-      <div class="reel-action" data-comment-video="${esc(v.id)}"><span class="icon">💬</span><small>Comment</small></div>
-      <div class="reel-action" data-share-video="${esc(v.id)}"><span class="icon">📤</span><small>Share</small></div>
-      <div class="reel-action save-btn ${isSaved?"saved":""}" data-save-video="${esc(v.id)}"><span class="icon">${isSaved ? "🔖" : "📑"}</span><small>Save</small></div>
-    </div>
-  </div>`;
-}
-
-let reelObserver = null;
-function setupReelsObserver(){
-  if(reelObserver) reelObserver.disconnect();
-  const container = $("reelsContainer");
-  if(!container) return;
-  const videos = container.querySelectorAll("video");
-  reelObserver = new IntersectionObserver(entries=>{
-    entries.forEach(entry=>{
-      const vid = entry.target;
-      if(entry.isIntersecting) vid.play().catch(()=>{});
-      else vid.pause();
-    });
-  }, { threshold: 0.6, root: container });
-  videos.forEach(v => reelObserver.observe(v));
-}
-
-/* STORIES */
-function startStoriesListener(){
-  if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
-  if(!currentUser) return;
-  storiesUnsubscribe = onSnapshot(collection(db, "stories"),
-    snapshot=>{
-      const now = Date.now();
-      storiesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => (now - timeValue(s.createdAt)) < STORY_LIFETIME_MS && !isUserBlocked(s.userId));
-      storiesCache.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
-      groupStories();
-      renderStoriesBar();
-    }, error=>console.error("Stories listener error:", error));
-}
-function groupStories(){
-  const map = {};
-  storiesCache.forEach(s=>{
-    if(!map[s.userId]){ map[s.userId] = { userId: s.userId, userName: s.userName || "User", userPhoto: s.userPhoto || "", stories: [], latestAt: 0 }; }
-    map[s.userId].stories.push(s);
-    const t = timeValue(s.createdAt);
-    if(t > map[s.userId].latestAt) map[s.userId].latestAt = t;
-  });
-  groupedStories = Object.values(map);
-  groupedStories.forEach(g=>{ g.stories.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt)); });
-  groupedStories.sort((a,b)=>{
-    if(a.userId === currentUser?.uid) return -1;
-    if(b.userId === currentUser?.uid) return 1;
-    return b.latestAt - a.latestAt;
-  });
-}
-function renderStoriesBar(){
-  const bar = $("storiesBar");
-  if(!bar) return;
-  if(!currentUser){ bar.innerHTML = ""; return; }
-  const myGroup = groupedStories.find(g => g.userId === currentUser.uid);
-  const otherGroups = groupedStories.filter(g => g.userId !== currentUser.uid);
-  let html = "";
-  const myPhoto = currentProfile?.photo || "";
-  const myName = currentProfile?.name || "You";
-  const myHasStory = myGroup && myGroup.stories.length > 0;
-  html += `<div class="story-item" data-my-story="true"><div class="story-ring ${myHasStory ? 'active' : 'yours'}"><img src="${avatar(myPhoto, myName)}" alt="You">${!myHasStory ? `<span class="add-icon">+</span>` : ""}</div><div class="story-name">Your Story</div></div>`;
-  otherGroups.forEach((g)=>{
-    html += `<div class="story-item" data-story-user="${esc(g.userId)}"><div class="story-ring active"><img src="${avatar(g.userPhoto, g.userName)}" alt="${esc(g.userName)}"></div><div class="story-name">${esc(g.userName.split(" ")[0])}</div></div>`;
-  });
-  bar.innerHTML = html;
-}
-document.addEventListener("click", (e)=>{
-  const myStory = e.target.closest("[data-my-story]");
-  if(myStory){
-    e.preventDefault(); e.stopPropagation();
-    const myGroup = groupedStories.find(g => g.userId === currentUser?.uid);
-    if(myGroup && myGroup.stories.length > 0){
-      const idx = groupedStories.findIndex(g => g.userId === currentUser.uid);
-      openStoryViewer(idx, 0);
-    } else openCreateStoryModal();
-    return;
-  }
-  const storyUser = e.target.closest("[data-story-user]");
-  if(storyUser){
-    e.preventDefault(); e.stopPropagation();
-    const uid = storyUser.dataset.storyUser;
-    const idx = groupedStories.findIndex(g => g.userId === uid);
-    if(idx >= 0) openStoryViewer(idx, 0);
-    return;
-  }
-});
-
-function openCreateStoryModal(){
-  storyUploadFile = null; storyMediaType = null; pendingStorySong = null; pendingStorySticker = null; pendingStoryTrim = { start: 0, end: 0, applied: false };
-  const imgPrev = $("storyImagePreview"); const vidPrev = $("storyVideoPreview"); const zone = $("storyUploadZone"); const btn = $("storyUploadBtn"); const prog = $("storyUploadProgress"); const status = $("storyUploadStatus"); const tools = $("storyEditorTools");
-  if(imgPrev){ imgPrev.src = ""; imgPrev.classList.add("hidden"); }
-  if(vidPrev){ vidPrev.src = ""; vidPrev.classList.add("hidden"); }
-  if(zone) zone.classList.remove("hidden");
-  if(btn) btn.disabled = true;
-  if(prog) prog.classList.remove("active");
-  if(status) status.textContent = "";
-  if(tools) tools.classList.add("hidden");
-  const songBtn = $("storyAddSongBtn");
-  if(songBtn){ songBtn.innerHTML = "🎵 Song"; songBtn.style.borderColor = ""; songBtn.style.color = ""; }
-  const stickerBtn = $("storyAddStickerBtn");
-  if(stickerBtn){ stickerBtn.innerHTML = "😀 Sticker"; stickerBtn.style.borderColor = ""; stickerBtn.style.color = ""; }
-  const progressBar = $("storyUploadProgressBar");
-  if(progressBar) progressBar.style.width = "0%";
-  showModal("createStoryModal");
-}
-$("storyUploadZone")?.addEventListener("click", ()=>{ $("storyFile")?.click(); });
-$("storyFile")?.addEventListener("change", (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  if(file.size > 30 * 1024 * 1024){ toast("File too large (max 30MB)"); e.target.value = ""; return; }
-  storyUploadFile = file;
-  storyMediaType = file.type.startsWith("video/") ? "video" : "image";
-  const imgPrev = $("storyImagePreview"); const vidPrev = $("storyVideoPreview"); const zone = $("storyUploadZone"); const btn = $("storyUploadBtn"); const tools = $("storyEditorTools");
-  if(zone) zone.classList.add("hidden");
-  if(tools) tools.classList.remove("hidden");
-  const url = URL.createObjectURL(file);
-  if(storyMediaType === "image"){ if(imgPrev){ imgPrev.src = url; imgPrev.classList.remove("hidden"); } if(vidPrev){ vidPrev.src = ""; vidPrev.classList.add("hidden"); } }
-  else { if(vidPrev){ vidPrev.src = url; vidPrev.classList.remove("hidden"); } if(imgPrev){ imgPrev.src = ""; imgPrev.classList.add("hidden"); } }
-  if(btn) btn.disabled = false;
-});
-$("storyUploadBtn")?.addEventListener("click", async ()=>{
-  if(!storyUploadFile || !currentUser){ toast("Select a file first"); return; }
-  const btn = $("storyUploadBtn"); const prog = $("storyUploadProgress"); const progBar = $("storyUploadProgressBar"); const status = $("storyUploadStatus");
-  if(btn) btn.disabled = true;
-  if(prog) prog.classList.add("active");
-  if(status) status.textContent = "Uploading...";
-  try{
-    const url = await uploadToCloudinary(storyUploadFile, (pct)=>{
-      if(progBar) progBar.style.width = pct + "%";
-      if(status) status.textContent = "Uploading " + pct + "%";
-    });
-    const expiresAt = new Date(Date.now() + STORY_LIFETIME_MS);
-    const storyData = { userId: currentUser.uid, userName: currentProfile?.name || currentUser.displayName || "User", userPhoto: currentProfile?.photo || currentUser.photoURL || "", username: currentProfile?.username || "", mediaURL: url, mediaType: storyMediaType, createdAt: serverTimestamp(), expiresAt: expiresAt };
-    if(pendingStorySong) storyData.song = pendingStorySong;
-    if(pendingStorySticker) storyData.sticker = pendingStorySticker;
-    if(pendingStoryTrim.applied){ storyData.trimStart = pendingStoryTrim.start; storyData.trimEnd = pendingStoryTrim.end; }
-    await addDoc(collection(db, "stories"), storyData);
-    if(status) status.textContent = "✅ Story shared!";
-    toast("✅ Story added");
-    setTimeout(()=>{ hideModal("createStoryModal"); }, 500);
-  }catch(err){ if(status) status.textContent = "Error: " + err.message; toast("Story upload failed"); }
-  finally{ if(btn) btn.disabled = false; }
-});
-
-function openStoryViewer(userIndex, storyIndex){
-  if(!groupedStories.length) return;
-  currentStoryUserIndex = userIndex;
-  currentStoryIndex = storyIndex || 0;
-  const viewer = $("storyViewer");
-  if(viewer){ viewer.classList.add("show"); try{ window.history.pushState({ storyViewer: true }, "", window.location.href); }catch(e){} }
-  loadCurrentStory();
-}
-function closeStoryViewer(){
-  const viewer = $("storyViewer");
-  if(viewer) viewer.classList.remove("show");
-  stopStoryTimer();
-  if(window.__storyAudio){ window.__storyAudio.pause(); window.__storyAudio = null; }
-  const media = $("storyMedia");
-  if(media) media.innerHTML = "";
-  const songOverlay = $("storySongOverlay");
-  if(songOverlay) songOverlay.classList.add("hidden");
-  const stickerOverlay = $("storyStickerOverlay");
-  if(stickerOverlay){ stickerOverlay.style.display = "none"; stickerOverlay.textContent = ""; }
-}
-function loadCurrentStory(){
-  stopStoryTimer();
-  if(window.__storyAudio){ window.__storyAudio.pause(); window.__storyAudio = null; }
-  const group = groupedStories[currentStoryUserIndex];
-  if(!group || !group.stories.length){ closeStoryViewer(); return; }
-  const story = group.stories[currentStoryIndex];
-  if(!story){
-    if(currentStoryUserIndex < groupedStories.length - 1){ currentStoryUserIndex++; currentStoryIndex = 0; loadCurrentStory(); }
-    else closeStoryViewer();
-    return;
-  }
-  const avatarEl = $("storyViewerAvatar"); const nameEl = $("storyViewerName"); const timeEl = $("storyViewerTime");
-  if(avatarEl) avatarEl.src = avatar(group.userPhoto, group.userName);
-  if(nameEl) nameEl.textContent = group.userName;
-  if(timeEl) timeEl.textContent = timeAgoShort(story.createdAt) + " ago";
-  renderStoryProgress(group.stories.length, currentStoryIndex);
-  const mediaContainer = $("storyMedia");
-  if(mediaContainer){
-    mediaContainer.innerHTML = "";
-    if(story.mediaType === "video"){
-      const vid = document.createElement("video");
-      vid.src = story.mediaURL;
-      vid.autoplay = true; vid.playsInline = true; vid.muted = false; vid.preload = "auto";
-      vid.addEventListener("loadedmetadata", ()=>{
-        const dur = Math.min((vid.duration || 5) * 1000, STORY_DURATION_VIDEO_MAX);
-        startStoryTimer(dur);
-        if(story.trimStart && story.trimEnd){ vid.currentTime = story.trimStart; vid.addEventListener("timeupdate", ()=>{ if(vid.currentTime >= story.trimEnd){ vid.currentTime = story.trimStart; } }); }
-      });
-      vid.addEventListener("ended", ()=>{ nextStory(); });
-      vid.addEventListener("error", ()=>{ nextStory(); });
-      mediaContainer.appendChild(vid);
-      vid.play().catch(()=>{});
-    } else {
-      const img = document.createElement("img");
-      img.src = story.mediaURL;
-      img.alt = "";
-      img.addEventListener("load", ()=>{ startStoryTimer(STORY_DURATION_IMAGE); });
-      img.addEventListener("error", ()=>{ nextStory(); });
-      mediaContainer.appendChild(img);
-    }
-  }
-  const songOverlay = $("storySongOverlay");
-  if(songOverlay){
-    if(story.song && story.song.audioURL){
-      songOverlay.classList.remove("hidden");
-      $("storySongTitle").textContent = story.song.name || "Song";
-      $("storySongArtist").textContent = story.song.artist || "Unknown";
-      window.__storyAudio = new Audio(story.song.audioURL);
-      window.__storyAudio.loop = true; window.__storyAudio.volume = 0.5;
-      window.__storyAudio.play().catch(()=>{});
-    } else songOverlay.classList.add("hidden");
-  }
-  const stickerOverlay = $("storyStickerOverlay");
-  if(stickerOverlay){
-    if(story.sticker){
-      stickerOverlay.style.display = "block";
-      if(story.sticker.type === "emoji"){ stickerOverlay.textContent = story.sticker.icon || "😀"; stickerOverlay.style.fontSize = "80px"; stickerOverlay.style.textShadow = "0 2px 8px rgba(0,0,0,0.4)"; }
-      else if(story.sticker.type === "text"){ stickerOverlay.textContent = story.sticker.text || ""; stickerOverlay.style.color = story.sticker.color || "#ffffff"; stickerOverlay.style.fontSize = "40px"; stickerOverlay.style.fontWeight = "900"; stickerOverlay.style.textShadow = "2px 2px 8px rgba(0,0,0,0.6)"; }
-    } else { stickerOverlay.style.display = "none"; stickerOverlay.textContent = ""; }
-  }
-  const viewsCounter = $("storyViewsCounter");
-  if(viewsCounter) viewsCounter.classList.add("hidden");
-  if(story.userId !== currentUser?.uid) markStoryViewed(story.id);
-  const footer = $("storyFooter");
-  if(footer){
-    if(story.userId === currentUser?.uid) footer.style.display = "none";
-    else { footer.style.display = "flex"; const input = $("storyReplyInput"); if(input) input.value = ""; }
-  }
-}
-function renderStoryProgress(total, current){
-  const bar = $("storyProgressBar");
-  if(!bar) return;
-  let html = "";
-  for(let i = 0; i < total; i++){
-    let fillClass = i < current ? "complete" : "";
-    html += `<div class="story-progress-segment"><div class="story-progress-fill ${fillClass}" data-seg="${i}"></div></div>`;
-  }
-  bar.innerHTML = html;
-}
-function startStoryTimer(duration){ stopStoryTimer(); storyDuration = duration; storyStartTime = Date.now(); storyElapsed = 0; storyPaused = false; updateStoryProgressLoop(); }
-function updateStoryProgressLoop(){
-  if(storyPaused) return;
-  const elapsed = Date.now() - storyStartTime;
-  storyElapsed = elapsed;
-  const pct = Math.min((elapsed / storyDuration) * 100, 100);
-  const fill = document.querySelector(`[data-seg="${currentStoryIndex}"]`);
-  if(fill) fill.style.width = pct + "%";
-  if(elapsed >= storyDuration){ nextStory(); return; }
-  storyProgressRAF = requestAnimationFrame(updateStoryProgressLoop);
-}
-function stopStoryTimer(){ if(storyProgressRAF){ cancelAnimationFrame(storyProgressRAF); storyProgressRAF = null; } }
-function pauseStoryTimer(){ if(storyPaused) return; storyPaused = true; storyElapsed = Date.now() - storyStartTime; if(window.__storyAudio) window.__storyAudio.pause(); if(storyProgressRAF){ cancelAnimationFrame(storyProgressRAF); storyProgressRAF = null; } }
-function resumeStoryTimer(){ if(!storyPaused) return; storyPaused = false; storyStartTime = Date.now() - storyElapsed; if(window.__storyAudio) window.__storyAudio.play().catch(()=>{}); updateStoryProgressLoop(); }
-function nextStory(){
-  stopStoryTimer();
-  const group = groupedStories[currentStoryUserIndex];
-  if(!group){ closeStoryViewer(); return; }
-  if(currentStoryIndex < group.stories.length - 1){ currentStoryIndex++; loadCurrentStory(); }
-  else { if(currentStoryUserIndex < groupedStories.length - 1){ currentStoryUserIndex++; currentStoryIndex = 0; loadCurrentStory(); } else closeStoryViewer(); }
-}
-function prevStory(){
-  stopStoryTimer();
-  if(currentStoryIndex > 0){ currentStoryIndex--; loadCurrentStory(); }
-  else { if(currentStoryUserIndex > 0){ currentStoryUserIndex--; const group = groupedStories[currentStoryUserIndex]; currentStoryIndex = group ? group.stories.length - 1 : 0; loadCurrentStory(); } }
-}
-async function markStoryViewed(storyId){
-  if(!currentUser || !storyId) return;
-  try{ const viewRef = doc(db, "stories", storyId, "views", currentUser.uid); const snap = await getDoc(viewRef); if(!snap.exists()) await setDoc(viewRef, { userId: currentUser.uid, viewedAt: serverTimestamp() }); }catch(e){}
-}
-$("storyProgressBar")?.addEventListener("click", (e)=>{ const seg = e.target.closest("[data-seg]"); if(!seg) return; const idx = Number(seg.dataset.seg); if(!Number.isNaN(idx)){ currentStoryIndex = idx; loadCurrentStory(); } });
-$("storyNextZone")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); nextStory(); });
-$("storyPrevZone")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); prevStory(); });
-$("storyCloseBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); closeStoryViewer(); });
-
-let storyHoldTimer = null;
-const storyMediaEl = $("storyMedia");
-if(storyMediaEl){
-  storyMediaEl.addEventListener("touchstart", ()=>{ storyHoldTimer = setTimeout(()=>{ pauseStoryTimer(); }, 250); }, { passive: true });
-  storyMediaEl.addEventListener("touchend", ()=>{ if(storyHoldTimer){ clearTimeout(storyHoldTimer); storyHoldTimer = null; } resumeStoryTimer(); }, { passive: true });
-  storyMediaEl.addEventListener("mousedown", ()=>{ storyHoldTimer = setTimeout(()=>{ pauseStoryTimer(); }, 250); });
-  storyMediaEl.addEventListener("mouseup", ()=>{ if(storyHoldTimer){ clearTimeout(storyHoldTimer); storyHoldTimer = null; } resumeStoryTimer(); });
-  storyMediaEl.addEventListener("mouseleave", ()=>{ if(storyHoldTimer){ clearTimeout(storyHoldTimer); storyHoldTimer = null; } resumeStoryTimer(); });
-}
-$("storySendBtn")?.addEventListener("click", async (e)=>{ e.preventDefault(); e.stopPropagation(); await sendStoryReply(); });
-$("storyReplyInput")?.addEventListener("keydown", (e)=>{ if(e.key === "Enter"){ e.preventDefault(); sendStoryReply(); } });
-async function sendStoryReply(){
-  const input = $("storyReplyInput");
-  if(!input) return;
-  const text = input.value.trim();
-  if(!text) return;
-  const group = groupedStories[currentStoryUserIndex];
-  if(!group || group.userId === currentUser?.uid) return;
-  const targetUid = group.userId;
-  const chatId = [currentUser.uid, targetUid].sort().join("_");
-  try{
-    await setDoc(doc(db, "chats", chatId), { members: [currentUser.uid, targetUid], updatedAt: serverTimestamp() }, { merge: true });
-    await addDoc(collection(db, "chats", chatId, "messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", text: "📸 Replied to story: " + text, type: "text", createdAt: serverTimestamp() });
-    await updateDoc(doc(db, "chats", chatId), { lastMessage: "📸 Replied to story", updatedAt: serverTimestamp() });
-    input.value = "";
-    toast("✅ Reply sent");
-  }catch(err){ toast("Reply failed"); }
-}
-document.addEventListener("keydown", (e)=>{
-  const viewer = $("storyViewer");
-  if(!viewer || !viewer.classList.contains("show")) return;
-  if(e.key === "ArrowRight") nextStory();
-  else if(e.key === "ArrowLeft") prevStory();
-  else if(e.key === "Escape") closeStoryViewer();
-});
-$("storyMoreBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  const group = groupedStories[currentStoryUserIndex];
-  if(!group) return;
-  const story = group.stories[currentStoryIndex];
-  if(!story) return;
-  if(story.userId !== currentUser?.uid && !isAdminUser()){ toast("You can only manage your own story"); return; }
-  currentStoryId = story.id;
-  currentStoryData = story;
-  pauseStoryTimer();
-  showModal("storyMenuModal");
-});
-$("storyMenuEditBtn")?.addEventListener("click", async (e)=>{ e.preventDefault(); e.stopPropagation(); if(!currentStoryId) return; hideModal("storyMenuModal"); await openEditStoryModal(currentStoryId); });
-async function openEditStoryModal(storyId){
-  try{
-    const storySnap = await getDoc(doc(db, "stories", storyId));
-    if(!storySnap.exists()){ toast("Story not found"); return; }
-    const story = { id: storyId, ...storySnap.data() };
-    if(story.userId !== currentUser.uid && !isAdminUser()){ toast("Not your story"); return; }
-    if(story.mediaType === "video"){ $("editStoryPreview").classList.add("hidden"); $("editStoryVideoPreview").classList.remove("hidden"); $("editStoryVideoPreview").src = story.mediaURL; }
-    else { $("editStoryVideoPreview").classList.add("hidden"); $("editStoryPreview").classList.remove("hidden"); $("editStoryPreview").src = story.mediaURL; }
-    $("editStoryCaption").value = story.caption || "";
-    window.__editingStorySong = story.song || null;
-    window.__editingStorySticker = story.sticker || null;
-    $("editStoryStatus").textContent = "";
-    updateEditStoryButtons();
-    showModal("editStoryModal");
-  }catch(e){ toast("Failed to open"); }
-}
-function updateEditStoryButtons(){
-  const songBtn = $("editStoryChangeSongBtn");
-  if(songBtn){
-    if(window.__editingStorySong){ songBtn.innerHTML = `🎵 ${esc(window.__editingStorySong.name || "Song")} ✓`; songBtn.style.borderColor = "var(--primary)"; songBtn.style.color = "var(--primary)"; }
-    else { songBtn.innerHTML = "🎵 Add Song"; songBtn.style.borderColor = ""; songBtn.style.color = ""; }
-  }
-  const stickerBtn = $("editStoryChangeStickerBtn");
-  if(stickerBtn){
-    if(window.__editingStorySticker){ stickerBtn.innerHTML = `${window.__editingStorySticker.icon || "😀"} Sticker ✓`; stickerBtn.style.borderColor = "var(--primary)"; stickerBtn.style.color = "var(--primary)"; }
-    else { stickerBtn.innerHTML = "😀 Add Sticker"; stickerBtn.style.borderColor = ""; stickerBtn.style.color = ""; }
-  }
-}
-$("saveStoryEditBtn")?.addEventListener("click", async ()=>{
-  if(!currentStoryId) return;
-  const caption = $("editStoryCaption").value.trim();
-  const status = $("editStoryStatus");
-  const btn = $("saveStoryEditBtn");
-  if(btn){ btn.disabled = true; btn.textContent = "Saving..."; }
-  status.textContent = "Saving...";
-  status.style.color = "#7c3aed";
-  try{
-    await updateDoc(doc(db, "stories", currentStoryId), { caption, song: window.__editingStorySong || null, sticker: window.__editingStorySticker || null, updatedAt: serverTimestamp() });
-    status.textContent = "✅ Saved!";
-    status.style.color = "#22c55e";
-    toast("✅ Story updated");
-    setTimeout(async ()=>{ hideModal("editStoryModal"); closeStoryViewer(); await new Promise(r => setTimeout(r, 300)); startStoriesListener(); }, 700);
-  }catch(err){ status.textContent = "Error: " + err.message; status.style.color = "#ed4956"; }
-  finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Save Changes"; } }
-});
-$("storyMenuDeleteBtn")?.addEventListener("click", async (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  if(!currentStoryId) return;
-  if(!confirm("Delete this story permanently?")) return;
-  try{ await deleteDoc(doc(db, "stories", currentStoryId)); hideModal("storyMenuModal"); closeStoryViewer(); toast("🗑️ Story deleted"); }catch(e){}
-});
-
-/* SONG LIBRARY */
-function startSongLibraryListener(){
-  if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
-  songLibraryUnsubscribe = onSnapshot(query(collection(db, "song_library")),
-    snapshot=>{
-      songLibraryCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      songLibraryCache.sort((a, b) => timeValue(b.createdAt) - timeValue(a.createdAt));
-    }, error=>console.error("Song library listener:", error));
-}
-function updateAdminVisibility(){
-  const adminBtn = $("adminSongLibraryBtn");
-  if(!adminBtn) return;
-  adminBtn.style.display = isAdminUser() ? "flex" : "none";
-}
-function openSongPicker(context){
-  songPickerContext = context || "story";
-  selectedSongForApply = null;
-  showModal("songPickerModal");
-  renderSongPickerList("");
-}
-function renderSongPickerList(searchText){
-  const container = $("songPickerList");
-  if(!container) return;
-  const q = (searchText || "").toLowerCase().trim();
-  let list = songLibraryCache;
-  if(q) list = list.filter(s => (s.name || "").toLowerCase().includes(q) || (s.artist || "").toLowerCase().includes(q) || (s.category || "").toLowerCase().includes(q));
-  if(!list.length){ container.innerHTML = `<div class="song-library-empty"><span class="icon">🎵</span><h3>No songs ${q ? "found" : "yet"}</h3><p>${q ? "Try another search" : "Admin will add songs soon"}</p></div>`; return; }
-  container.innerHTML = list.map(s => `<div class="song-picker-item" data-pick-song="${esc(s.id)}"><div class="song-thumb">🎵</div><div class="song-info"><strong>${esc(s.name || "Untitled")}</strong><small>${esc(s.artist || "Unknown")} · ${esc(s.category || "")}</small></div><div class="check-icon"></div></div>`).join("");
-}
-$("songSearchInput")?.addEventListener("input", (e)=>{ renderSongPickerList(e.target.value); });
-document.addEventListener("click", (e)=>{
-  const pickerItem = e.target.closest("[data-pick-song]");
-  if(pickerItem){
-    e.preventDefault(); e.stopPropagation();
-    const songId = pickerItem.dataset.pickSong;
-    document.querySelectorAll("#songPickerList .song-picker-item").forEach(el => { el.classList.remove("selected"); const check = el.querySelector(".check-icon"); if(check) check.textContent = ""; });
-    pickerItem.classList.add("selected");
-    const check = pickerItem.querySelector(".check-icon"); if(check) check.textContent = "✓";
-    selectedSongForApply = songLibraryCache.find(s => s.id === songId) || null;
-  }
-});
-$("confirmSongBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  if(!selectedSongForApply){ toast("Select a song first"); return; }
-  if(songPickerContext === "story") applySongToStory(selectedSongForApply);
-  else if(songPickerContext === "video") applySongToVideo(selectedSongForApply);
-  else if(songPickerContext === "story_edit") applySongToStoryEdit(selectedSongForApply);
-  hideModal("songPickerModal");
-});
-$("removeSongBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  if(songPickerContext === "story") removeSongFromStory();
-  else if(songPickerContext === "video") removeSongFromVideo();
-  else if(songPickerContext === "story_edit") removeSongFromStoryEdit();
-  hideModal("songPickerModal");
-});
-function applySongToStory(song){ pendingStorySong = song; const btn = $("storyAddSongBtn"); if(btn){ btn.innerHTML = `🎵 ${esc(song.name).slice(0, 12)} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("🎵 Song added"); }
-function removeSongFromStory(){ pendingStorySong = null; const btn = $("storyAddSongBtn"); if(btn){ btn.innerHTML = "🎵 Song"; btn.style.borderColor = ""; btn.style.color = ""; } toast("🔇 Song removed"); }
-function applySongToVideo(song){ pendingVideoSong = song; const status = $("videoEditStatus"); if(status) status.textContent = "🎵 " + song.name + " selected"; const btn = $("editVideoSongBtn"); if(btn){ btn.innerHTML = `🎵 ${esc(song.name).slice(0, 10)} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("🎵 Song selected"); }
-function removeSongFromVideo(){ pendingVideoSong = null; const btn = $("editVideoSongBtn"); if(btn){ btn.innerHTML = "🎵 Song"; btn.style.borderColor = ""; btn.style.color = ""; } toast("🔇 Song removed"); }
-function applySongToStoryEdit(song){ window.__editingStorySong = song; updateEditStoryButtons(); hideModal("songPickerModal"); showModal("editStoryModal"); toast("🎵 " + song.name + " selected"); }
-function removeSongFromStoryEdit(){ window.__editingStorySong = null; updateEditStoryButtons(); hideModal("songPickerModal"); showModal("editStoryModal"); toast("🔇 Song removed"); }
-
-/* STICKER PICKER */
-function openStickerPicker(context){
-  stickerPickerContext = context || "story";
-  selectedStickerEmoji = null; selectedStickerColor = "#ffffff";
-  document.querySelectorAll("#stickerTabs .yt-tab").forEach(t => t.classList.remove("active"));
-  document.querySelector('#stickerTabs .yt-tab[data-stab="emoji"]')?.classList.add("active");
-  $("stickerEmojiTab")?.classList.remove("hidden");
-  $("stickerTextTab")?.classList.add("hidden");
-  document.querySelectorAll(".sticker-item").forEach(el=>{ el.style.background = ""; el.style.color = ""; });
-  if($("textStickerInput")) $("textStickerInput").value = "";
-  showModal("stickerPickerModal");
-}
-document.addEventListener("click", (e)=>{
-  const tab = e.target.closest("#stickerTabs .yt-tab");
-  if(!tab) return;
-  e.preventDefault(); e.stopPropagation();
-  const stab = tab.dataset.stab;
-  document.querySelectorAll("#stickerTabs .yt-tab").forEach(t => t.classList.remove("active"));
-  tab.classList.add("active");
-  if(stab === "emoji"){ $("stickerEmojiTab")?.classList.remove("hidden"); $("stickerTextTab")?.classList.add("hidden"); }
-  else { $("stickerEmojiTab")?.classList.add("hidden"); $("stickerTextTab")?.classList.remove("hidden"); }
-});
-document.addEventListener("click", (e)=>{
-  const item = e.target.closest(".sticker-item");
-  if(!item) return;
-  e.preventDefault(); e.stopPropagation();
-  document.querySelectorAll(".sticker-item").forEach(el=>{ el.style.background = ""; el.style.color = ""; });
-  item.style.background = "var(--primary)";
-  item.style.color = "white";
-  selectedStickerEmoji = item.dataset.sticker;
-});
-document.addEventListener("click", (e)=>{
-  const colorEl = e.target.closest(".text-sticker-color");
-  if(!colorEl) return;
-  e.preventDefault(); e.stopPropagation();
-  document.querySelectorAll(".text-sticker-color").forEach(el=>{ el.classList.remove("selected"); });
-  colorEl.classList.add("selected");
-  selectedStickerColor = colorEl.dataset.color;
-});
-$("confirmStickerBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  let sticker = null;
-  if(selectedStickerEmoji) sticker = { type: "emoji", icon: selectedStickerEmoji };
-  else { const text = $("textStickerInput")?.value.trim(); if(text) sticker = { type: "text", text: text, icon: text.slice(0, 3) || "✏️", color: selectedStickerColor }; }
-  if(!sticker){ toast("Select emoji or enter text"); return; }
-  if(stickerPickerContext === "story") applyStickerToStory(sticker);
-  else if(stickerPickerContext === "video") applyStickerToVideo(sticker);
-  else if(stickerPickerContext === "story_edit") applyStickerToStoryEdit(sticker);
-  hideModal("stickerPickerModal");
-});
-$("removeStickerBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  if(stickerPickerContext === "story") removeStickerFromStory();
-  else if(stickerPickerContext === "video") removeStickerFromVideo();
-  else if(stickerPickerContext === "story_edit") removeStickerFromStoryEdit();
-  hideModal("stickerPickerModal");
-});
-function applyStickerToStory(sticker){ pendingStorySticker = sticker; const btn = $("storyAddStickerBtn"); if(btn){ btn.innerHTML = `${sticker.icon || "😀"} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("😀 Sticker added"); }
-function removeStickerFromStory(){ pendingStorySticker = null; const btn = $("storyAddStickerBtn"); if(btn){ btn.innerHTML = "😀 Sticker"; btn.style.borderColor = ""; btn.style.color = ""; } toast("Sticker removed"); }
-function applyStickerToVideo(sticker){ pendingVideoSticker = sticker; const status = $("videoEditStatus"); if(status) status.textContent = `${sticker.icon || "😀"} Sticker selected`; const btn = $("editVideoStickerBtn"); if(btn){ btn.innerHTML = `${sticker.icon || "😀"} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("😀 Sticker selected"); }
-function removeStickerFromVideo(){ pendingVideoSticker = null; const btn = $("editVideoStickerBtn"); if(btn){ btn.innerHTML = "😀 Sticker"; btn.style.borderColor = ""; btn.style.color = ""; } toast("Sticker removed"); }
-function applyStickerToStoryEdit(sticker){ window.__editingStorySticker = sticker; updateEditStoryButtons(); hideModal("stickerPickerModal"); showModal("editStoryModal"); toast("😀 Sticker added"); }
-function removeStickerFromStoryEdit(){ window.__editingStorySticker = null; updateEditStoryButtons(); hideModal("stickerPickerModal"); showModal("editStoryModal"); toast("Sticker removed"); }
-
-$("storyAddSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("story"); });
-$("storyAddStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openStickerPicker("story"); });
-$("editVideoSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("video"); });
-$("editVideoStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openStickerPicker("video"); });
-$("editStoryChangeSongBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  selectedSongForApply = window.__editingStorySong;
-  hideModal("editStoryModal");
-  openSongPicker("story_edit");
-  setTimeout(()=>{ if(window.__editingStorySong){ const item = document.querySelector(`[data-pick-song="${window.__editingStorySong.id}"]`); if(item){ item.classList.add("selected"); const check = item.querySelector(".check-icon"); if(check) check.textContent = "✓"; } } }, 300);
-});
-$("editStoryChangeStickerBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  hideModal("editStoryModal");
-  openStickerPicker("story_edit");
-  setTimeout(()=>{
-    if(window.__editingStorySticker){
-      if(window.__editingStorySticker.type === "emoji"){ document.querySelectorAll(".sticker-item").forEach(el=>{ if(el.dataset.sticker === window.__editingStorySticker.icon){ el.style.background = "var(--primary)"; el.style.color = "white"; } }); }
-      if(window.__editingStorySticker.type === "text"){ $("stickerTabs")?.querySelector('[data-stab="text"]')?.click(); $("textStickerInput").value = window.__editingStorySticker.text || ""; }
-    }
-  }, 300);
-});
-
-/* VIDEO EDITOR */
-$("editVideoRotateBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  const videoEl = $("uploadPreview");
-  if(!videoEl || !videoEl.src){ toast("Select a video first"); return; }
-  pendingVideoRotation = (pendingVideoRotation + 90) % 360;
-  videoEl.style.transform = `rotate(${pendingVideoRotation}deg)`;
-  videoEl.style.transition = "transform 0.3s ease";
-  const btn = $("editVideoRotateBtn");
-  if(btn){ btn.innerHTML = `🔄 ${pendingVideoRotation}°`; if(pendingVideoRotation !== 0){ btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } else { btn.style.borderColor = ""; btn.style.color = ""; } }
-  const status = $("videoEditStatus");
-  if(status) status.textContent = `🔄 Rotated ${pendingVideoRotation}°`;
-  toast(`🔄 Rotated ${pendingVideoRotation}°`);
-});
-$("editVideoMuteBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  const videoEl = $("uploadPreview");
-  if(!videoEl || !videoEl.src){ toast("Select a video first"); return; }
-  pendingVideoMuted = !pendingVideoMuted;
-  videoEl.muted = pendingVideoMuted;
-  const btn = $("editVideoMuteBtn");
-  if(btn){ if(pendingVideoMuted){ btn.innerHTML = "🔇 Muted"; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } else { btn.innerHTML = "🔊 Sound"; btn.style.borderColor = ""; btn.style.color = ""; } }
-  const status = $("videoEditStatus");
-  if(status) status.textContent = pendingVideoMuted ? "🔇 Video muted" : "🔊 Sound on";
-  toast(pendingVideoMuted ? "🔇 Muted" : "🔊 Sound on");
-});
-$("editVideoPreviewBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  const videoEl = $("uploadPreview");
-  if(!videoEl || !videoEl.src){ toast("Select a video first"); return; }
-  const playerVideo = $("videoPlayerVideo");
-  if(playerVideo){
-    playerVideo.src = videoEl.src;
-    playerVideo.muted = pendingVideoMuted;
-    playerVideo.style.transform = `rotate(${pendingVideoRotation}deg)`;
-    ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn", "videoPlayerDownloadBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn"].forEach(id => { const btn = $(id); if(btn) btn.style.display = "none"; });
-    if($("videoPlayerTitle")) $("videoPlayerTitle").textContent = "🎬 Preview";
-    const metaEl = $("videoPlayerMeta");
-    if(metaEl){ let info = []; if(pendingVideoRotation) info.push(`Rotate: ${pendingVideoRotation}°`); if(pendingVideoMuted) info.push("Muted"); if(pendingVideoSong) info.push(`🎵 ${pendingVideoSong.name}`); metaEl.textContent = info.join(" · ") || "Original video"; }
-    if($("videoPlayerDesc")){ $("videoPlayerDesc").textContent = $("videoTitle")?.value || ""; $("videoPlayerDesc").style.display = $("videoPlayerDesc").textContent ? "block" : "none"; }
-    setTimeout(()=>{ playerVideo.play().catch(()=>{}); }, 300);
-    showModal("videoPlayerModal");
-  }
-});
-function openVideoTrimModal(videoEl){
-  if(!videoEl || !videoEl.src){ toast("No video selected"); return; }
-  trimVideoElement = videoEl;
-  const trimPreview = $("trimPreviewVideo");
-  trimPreview.src = videoEl.src;
-  trimPreview.load();
-  trimPreview.addEventListener("loadedmetadata", ()=>{
-    trimVideoDuration = trimPreview.duration || 0;
-    $("trimStartRange").max = trimVideoDuration; $("trimEndRange").max = trimVideoDuration;
-    $("trimStartRange").value = 0; $("trimEndRange").value = trimVideoDuration;
-    updateTrimLabels();
-  }, { once: true });
-  showModal("videoTrimModal");
-}
-function updateTrimLabels(){
-  const start = Number($("trimStartRange").value) || 0;
-  const end = Number($("trimEndRange").value) || 0;
-  $("trimStartLabel").textContent = formatDuration(start);
-  $("trimEndLabel").textContent = formatDuration(end);
-  $("trimDurationLabel").textContent = formatDuration(Math.max(0, end - start));
-}
-$("trimStartRange")?.addEventListener("input", ()=>{ const start = Number($("trimStartRange").value); const end = Number($("trimEndRange").value); if(start > end) $("trimEndRange").value = start; updateTrimLabels(); });
-$("trimEndRange")?.addEventListener("input", ()=>{ const start = Number($("trimStartRange").value); const end = Number($("trimEndRange").value); if(end < start) $("trimStartRange").value = end; updateTrimLabels(); });
-$("trimCancelBtn")?.addEventListener("click", ()=>{ hideModal("videoTrimModal"); trimVideoElement = null; });
-$("trimSaveBtn")?.addEventListener("click", ()=>{
-  const start = Number($("trimStartRange").value) || 0;
-  const end = Number($("trimEndRange").value) || 0;
-  if(end - start < 1){ toast("Minimum 1 second required"); return; }
-  const trimData = { start, end, applied: true, duration: end - start };
-  if(window.__trimContext === "story"){ pendingStoryTrim = trimData; const status = $("storySelectedMedia"); if(status) status.textContent = `✂️ Trimmed: ${formatDuration(start)} - ${formatDuration(end)}`; toast("✂️ Trim applied to story"); }
-  else if(window.__trimContext === "video"){ pendingVideoTrim = trimData; const status = $("videoEditStatus"); if(status) status.textContent = `✂️ Trimmed: ${formatDuration(start)} - ${formatDuration(end)}`; toast("✂️ Trim applied to video"); }
-  hideModal("videoTrimModal"); trimVideoElement = null;
-});
-$("editVideoTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); window.__trimContext = "video"; openVideoTrimModal($("uploadPreview")); });
-$("storyTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(storyMediaType !== "video"){ toast("Trim only for videos"); return; } window.__trimContext = "story"; openVideoTrimModal($("storyVideoPreview")); });
-
 console.log("✅ Part 1/3 complete");
 /* ============================================================
    ReelHub - app.js PART 2/3
@@ -2661,7 +1588,7 @@ $("publishBtn")?.addEventListener("click", async()=>{
 
     localStorage.removeItem("reelhubDraft_" + currentUser.uid);
     toast("✅ " + (isPhoto ? "Photo" : "Video") + " published!");
-    openPanel("homePanel");
+    if(typeof window.openPanel === "function") window.openPanel("homePanel");
   }catch(error){
     $("uploadStatus").textContent = "Error: " + error.message;
     toast("Upload failed");
@@ -3562,132 +2489,56 @@ $("dmSearchInput")?.addEventListener("input", e=>{
 console.log("✅ Part 2/3 loaded");
 /* ============================================================
    ReelHub - app.js PART 3/3
-   Groups + Comments + Share + Vault + Admin + Init
-   NOTE: uploadToCloudinary + uploadAudioToCloudinary Part 1 me hain
+   Groups + Comments + Share + Vault + Admin + Navigation + Init
 ============================================================ */
 
-/* ============================================================
-   GROUPS
-============================================================ */
+/* ---- GROUPS ---- */
 function openCreateGroupModal(){
-  $("groupName").value = "";
-  $("groupDescription").value = "";
-  $("createGroupStatus").textContent = "";
+  $("groupName").value = ""; $("groupDescription").value = ""; $("createGroupStatus").textContent = "";
   $("groupPhotoPreview").src = "https://ui-avatars.com/api/?name=G&size=200&background=7c3aed&color=fff";
   document.querySelectorAll("#groupTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
   document.querySelector('#groupTypeGroup .yt-radio[data-value="public"]')?.classList.add("selected");
-  window.__selectedGroupType = "public";
-  window.__groupPhotoFile = null;
-  hideModal("advancedSettingsModal");
-  showModal("createGroupModal");
+  window.__selectedGroupType = "public"; window.__groupPhotoFile = null;
+  hideModal("advancedSettingsModal"); showModal("createGroupModal");
 }
-
-document.addEventListener("click", (e)=>{
-  const typeRadio = e.target.closest("#groupTypeGroup .yt-radio");
-  if(typeRadio){
-    e.preventDefault(); e.stopPropagation();
-    document.querySelectorAll("#groupTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
-    typeRadio.classList.add("selected");
-    window.__selectedGroupType = typeRadio.dataset.value;
-  }
-});
-
+document.addEventListener("click", (e)=>{ const typeRadio = e.target.closest("#groupTypeGroup .yt-radio"); if(typeRadio){ e.preventDefault(); e.stopPropagation(); document.querySelectorAll("#groupTypeGroup .yt-radio").forEach(r => r.classList.remove("selected")); typeRadio.classList.add("selected"); window.__selectedGroupType = typeRadio.dataset.value; } });
 $("groupPhotoPick")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("groupPhotoFile")?.click(); });
-
-$("groupPhotoFile")?.addEventListener("change", (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  if(file.size > GROUP_MAX_PHOTO_SIZE){ toast("Photo too large"); e.target.value = ""; return; }
-  window.__groupPhotoFile = file;
-  $("groupPhotoPreview").src = URL.createObjectURL(file);
-});
-
+$("groupPhotoFile")?.addEventListener("change", (e)=>{ const file = e.target.files[0]; if(!file) return; if(file.size > GROUP_MAX_PHOTO_SIZE){ toast("Photo too large"); e.target.value = ""; return; } window.__groupPhotoFile = file; $("groupPhotoPreview").src = URL.createObjectURL(file); });
 $("createGroupBtn")?.addEventListener("click", async ()=>{
   if(!currentUser){ toast("Login required"); return; }
-  const name = $("groupName").value.trim();
-  const description = $("groupDescription").value.trim();
-  const type = window.__selectedGroupType || "public";
-  const status = $("createGroupStatus");
+  const name = $("groupName").value.trim(); const description = $("groupDescription").value.trim(); const type = window.__selectedGroupType || "public"; const status = $("createGroupStatus");
   if(!name){ status.style.color = "#ed4956"; status.textContent = "Group name required"; return; }
-  const btn = $("createGroupBtn");
-  if(btn){ btn.disabled = true; btn.textContent = "Creating..."; }
+  const btn = $("createGroupBtn"); if(btn){ btn.disabled = true; btn.textContent = "Creating..."; }
   status.style.color = "#7c3aed"; status.textContent = "Creating...";
   try{
     let photoURL = "";
-    if(window.__groupPhotoFile){
-      status.textContent = "Uploading photo...";
-      photoURL = await uploadToCloudinary(window.__groupPhotoFile, (pct)=>{ status.textContent = "Photo " + pct + "%"; });
-    }
-    const groupData = {
-      name, description, photo: photoURL, type,
-      createdBy: currentUser.uid,
-      createdByName: currentProfile?.name || "User",
-      createdByPhoto: currentProfile?.photo || "",
-      members: [currentUser.uid], admins: [currentUser.uid], memberCount: 1,
-      createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
-      lastMessage: "Group created", lastMessageAt: serverTimestamp()
-    };
+    if(window.__groupPhotoFile){ status.textContent = "Uploading photo..."; photoURL = await uploadToCloudinary(window.__groupPhotoFile, (pct)=>{ status.textContent = "Photo " + pct + "%"; }); }
+    const groupData = { name, description, photo: photoURL, type, createdBy: currentUser.uid, createdByName: currentProfile?.name || "User", createdByPhoto: currentProfile?.photo || "", members: [currentUser.uid], admins: [currentUser.uid], memberCount: 1, createdAt: serverTimestamp(), updatedAt: serverTimestamp(), lastMessage: "Group created", lastMessageAt: serverTimestamp() };
     const docRef = await addDoc(collection(db, "groups"), groupData);
-    await setDoc(doc(db, "groups", docRef.id, "members", currentUser.uid), {
-      userId: currentUser.uid, name: currentProfile?.name || "User",
-      username: currentProfile?.username || "", photo: currentProfile?.photo || "",
-      role: "admin", joinedAt: serverTimestamp()
-    });
-    await addDoc(collection(db, "groups", docRef.id, "messages"), {
-      userId: "system", userName: "System", text: `Group "${name}" was created`,
-      type: "system", createdAt: serverTimestamp()
-    });
-    status.style.color = "#22c55e"; status.textContent = "✅ Created!";
-    window.__groupPhotoFile = null;
-    toast("✅ Group created");
+    await setDoc(doc(db, "groups", docRef.id, "members", currentUser.uid), { userId: currentUser.uid, name: currentProfile?.name || "User", username: currentProfile?.username || "", photo: currentProfile?.photo || "", role: "admin", joinedAt: serverTimestamp() });
+    await addDoc(collection(db, "groups", docRef.id, "messages"), { userId: "system", userName: "System", text: `Group "${name}" was created`, type: "system", createdAt: serverTimestamp() });
+    status.style.color = "#22c55e"; status.textContent = "✅ Created!"; window.__groupPhotoFile = null; toast("✅ Group created");
     setTimeout(() => { hideModal("createGroupModal"); openGroupView(docRef.id); }, 600);
-  }catch(err){
-    console.error("Create group error:", err);
-    status.style.color = "#ed4956"; status.textContent = "Error: " + err.message;
-  }finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Create Group"; } }
+  }catch(err){ console.error("Create group error:", err); status.style.color = "#ed4956"; status.textContent = "Error: " + err.message; }
+  finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Create Group"; } }
 });
-
 function startMyGroupsListener(){
   if(myGroupsUnsubscribe){ myGroupsUnsubscribe(); myGroupsUnsubscribe = null; }
   if(!currentUser) return;
-  myGroupsUnsubscribe = onSnapshot(
-    query(collection(db, "groups"), where("members", "array-contains", currentUser.uid)),
-    snapshot=>{
-      myGroupsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      myGroupsCache.sort((a,b)=> timeValue(b.lastMessageAt || b.createdAt) - timeValue(a.lastMessageAt || a.createdAt));
-      renderGroupsList();
-    },
-    error=>console.error("My groups listener error:", error)
-  );
+  myGroupsUnsubscribe = onSnapshot(query(collection(db, "groups"), where("members", "array-contains", currentUser.uid)), snapshot=>{ myGroupsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() })); myGroupsCache.sort((a,b)=> timeValue(b.lastMessageAt || b.createdAt) - timeValue(a.lastMessageAt || a.createdAt)); renderGroupsList(); }, error=>console.error("My groups listener error:", error));
 }
-
 function renderGroupsList(){
-  const container = $("dmGroupsList");
-  if(!container) return;
+  const container = $("dmGroupsList"); if(!container) return;
   if(!currentUser){ container.innerHTML = ""; return; }
-  if(!myGroupsCache.length){
-    container.innerHTML = `<div class="group-empty"><span class="icon">👥</span><h3>No groups yet</h3><p>Create your first group</p><button class="create-btn" id="createFirstGroupBtn">➕ Create Group</button></div>`;
-    $("createFirstGroupBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openCreateGroupModal(); });
-    return;
-  }
-  container.innerHTML = myGroupsCache.map(g => {
-    const badge = g.type === "public" ? `<span class="group-type-badge public">🌍 Public</span>` : `<span class="group-type-badge private">🔒 Private</span>`;
-    return `<div class="group-inbox-item" data-open-group="${esc(g.id)}">
-      <img src="${avatar(g.photo, g.name)}" alt="">
-      <div class="group-inbox-info"><strong>${esc(g.name)} ${badge}</strong><small>${esc(g.lastMessage || "No messages")}</small></div>
-      <div class="group-inbox-time">${timeAgo(g.lastMessageAt || g.createdAt)}</div>
-    </div>`;
-  }).join("");
+  if(!myGroupsCache.length){ container.innerHTML = `<div class="group-empty"><span class="icon">👥</span><h3>No groups yet</h3><p>Create your first group</p><button class="create-btn" id="createFirstGroupBtn">➕ Create Group</button></div>`; $("createFirstGroupBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openCreateGroupModal(); }); return; }
+  container.innerHTML = myGroupsCache.map(g => { const badge = g.type === "public" ? `<span class="group-type-badge public">🌍 Public</span>` : `<span class="group-type-badge private">🔒 Private</span>`; return `<div class="group-inbox-item" data-open-group="${esc(g.id)}"><img src="${avatar(g.photo, g.name)}" alt=""><div class="group-inbox-info"><strong>${esc(g.name)} ${badge}</strong><small>${esc(g.lastMessage || "No messages")}</small></div><div class="group-inbox-time">${timeAgo(g.lastMessageAt || g.createdAt)}</div></div>`; }).join("");
 }
-
 async function openGroupView(groupId){
   if(!groupId){ toast("Invalid group"); return; }
   try{
     const groupSnap = await getDoc(doc(db, "groups", groupId));
     if(!groupSnap.exists()){ toast("Group not found"); return; }
-    currentGroupId = groupId;
-    currentGroupData = { id: groupId, ...groupSnap.data() };
-
+    currentGroupId = groupId; currentGroupData = { id: groupId, ...groupSnap.data() };
     $("groupViewModal").dataset.groupId = groupId;
     $("groupViewTitle").textContent = currentGroupData.name || "Group";
     $("groupViewPhoto").src = avatar(currentGroupData.photo, currentGroupData.name);
@@ -3695,804 +2546,294 @@ async function openGroupView(groupId){
     $("groupViewMeta").textContent = `${currentGroupData.memberCount || currentGroupData.members?.length || 0} members`;
     $("groupViewType").innerHTML = currentGroupData.type === "public" ? "🌍 Public Group" : "🔒 Private Group";
     $("groupViewDesc").textContent = currentGroupData.description || "No description";
-
     const isMember = currentGroupData.members?.includes(currentUser.uid);
     const isAdmin = currentGroupData.admins?.includes(currentUser.uid);
-
-    const joinBtn = $("groupJoinBtn");
-    const chatBtn = $("groupOpenChatBtn");
-    const leaveBtn = $("groupLeaveBtn");
-    const requestsTab = $("groupRequestsTab");
-
-    if(isMember){
-      if(joinBtn) joinBtn.style.display = "none";
-      if(chatBtn) chatBtn.style.display = "block";
-      if(leaveBtn) leaveBtn.style.display = "block";
-      if(requestsTab && isAdmin) requestsTab.style.display = "block";
-    } else {
-      if(joinBtn){
-        joinBtn.style.display = "block";
-        joinBtn.textContent = currentGroupData.type === "public" ? "Join Group" : "Request to Join";
-        joinBtn.onclick = async ()=>{
-          if(currentGroupData.type === "public") await joinPublicGroup(groupId);
-          else await sendGroupJoinRequest(groupId);
-        };
-      }
-      if(chatBtn) chatBtn.style.display = "none";
-      if(leaveBtn) leaveBtn.style.display = "none";
-      if(requestsTab) requestsTab.style.display = "none";
-    }
-
+    const joinBtn = $("groupJoinBtn"); const chatBtn = $("groupOpenChatBtn"); const leaveBtn = $("groupLeaveBtn"); const requestsTab = $("groupRequestsTab");
+    if(isMember){ if(joinBtn) joinBtn.style.display = "none"; if(chatBtn) chatBtn.style.display = "block"; if(leaveBtn) leaveBtn.style.display = "block"; if(requestsTab && isAdmin) requestsTab.style.display = "block"; }
+    else { if(joinBtn){ joinBtn.style.display = "block"; joinBtn.textContent = currentGroupData.type === "public" ? "Join Group" : "Request to Join"; joinBtn.onclick = async ()=>{ if(currentGroupData.type === "public") await joinPublicGroup(groupId); else await sendGroupJoinRequest(groupId); }; } if(chatBtn) chatBtn.style.display = "none"; if(leaveBtn) leaveBtn.style.display = "none"; if(requestsTab) requestsTab.style.display = "none"; }
     $("groupInfoCreator").textContent = currentGroupData.createdByName || "Unknown";
     $("groupInfoDate").textContent = new Date(timeValue(currentGroupData.createdAt)).toLocaleDateString();
     $("groupInfoId").textContent = groupId;
-
-    const editBtn = $("editGroupBtn");
-    if(editBtn) editBtn.style.display = (isAdmin || currentGroupData.createdBy === currentUser.uid) ? "flex" : "none";
-
+    const editBtn = $("editGroupBtn"); if(editBtn) editBtn.style.display = (isAdmin || currentGroupData.createdBy === currentUser.uid) ? "flex" : "none";
     await loadGroupMembers(groupId);
     if(isAdmin) startGroupRequestsListener(groupId);
-
     document.querySelectorAll("#groupTabs .yt-tab").forEach(t => t.classList.remove("active"));
     document.querySelector("#groupTabs .yt-tab[data-gtab='members']")?.classList.add("active");
-    $("groupMembersTab")?.classList.remove("hidden");
-    $("groupRequestsTabContent")?.classList.add("hidden");
-    $("groupInfoTab")?.classList.add("hidden");
-
+    $("groupMembersTab")?.classList.remove("hidden"); $("groupRequestsTabContent")?.classList.add("hidden"); $("groupInfoTab")?.classList.add("hidden");
     showModal("groupViewModal");
   }catch(e){ console.error("openGroupView:", e); toast("Error"); }
 }
-
 async function loadGroupMembers(groupId){
-  const container = $("groupMembersTab");
-  if(!container) return;
+  const container = $("groupMembersTab"); if(!container) return;
   try{
     const snap = await getDocs(collection(db, "groups", groupId, "members"));
     const members = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     if(!members.length){ container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No members</div>`; return; }
     const isAdmin = currentGroupData?.admins?.includes(currentUser.uid);
-    container.innerHTML = members.map(m => {
-      const isMemAdmin = currentGroupData?.admins?.includes(m.userId);
-      return `<div class="group-member-item">
-        <img src="${avatar(m.photo, m.name)}" class="group-member-open" data-uid="${esc(m.userId)}">
-        <div class="info group-member-open" data-uid="${esc(m.userId)}"><strong>${esc(m.name || "User")}</strong><small>@${esc(m.username || "user")}</small></div>
-        ${isMemAdmin ? `<span class="admin-badge">👑 Admin</span>` : ""}
-        ${isAdmin && m.userId !== currentUser.uid ? `<button class="remove-btn" data-remove-member="${esc(m.userId)}">Remove</button>` : ""}
-      </div>`;
-    }).join("");
+    container.innerHTML = members.map(m => { const isMemAdmin = currentGroupData?.admins?.includes(m.userId); return `<div class="group-member-item"><img src="${avatar(m.photo, m.name)}" class="group-member-open" data-uid="${esc(m.userId)}"><div class="info group-member-open" data-uid="${esc(m.userId)}"><strong>${esc(m.name || "User")}</strong><small>@${esc(m.username || "user")}</small></div>${isMemAdmin ? `<span class="admin-badge">👑 Admin</span>` : ""}${isAdmin && m.userId !== currentUser.uid ? `<button class="remove-btn" data-remove-member="${esc(m.userId)}">Remove</button>` : ""}</div>`; }).join("");
   }catch(e){ container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted)">Error</div>`; }
 }
-
 async function joinPublicGroup(groupId){
   if(!currentUser){ toast("Login required"); return; }
   try{
-    const groupSnap = await getDoc(doc(db, "groups", groupId));
-    if(!groupSnap.exists()) return;
+    const groupSnap = await getDoc(doc(db, "groups", groupId)); if(!groupSnap.exists()) return;
     const group = groupSnap.data();
     if(group.members?.includes(currentUser.uid)){ toast("Already member"); return; }
     if((group.memberCount || 0) >= GROUP_MAX_MEMBERS){ toast(`Group full`); return; }
-
-    await updateDoc(doc(db, "groups", groupId), {
-      members: [...(group.members || []), currentUser.uid],
-      memberCount: increment(1), updatedAt: serverTimestamp()
-    });
-    await setDoc(doc(db, "groups", groupId, "members", currentUser.uid), {
-      userId: currentUser.uid, name: currentProfile?.name || "User",
-      username: currentProfile?.username || "", photo: currentProfile?.photo || "",
-      role: "member", joinedAt: serverTimestamp()
-    });
-    await addDoc(collection(db, "groups", groupId, "messages"), {
-      userId: "system", userName: "System",
-      text: `${currentProfile?.name || "Someone"} joined the group`,
-      type: "system", createdAt: serverTimestamp()
-    });
-    toast("✅ Joined");
-    await openGroupView(groupId);
+    await updateDoc(doc(db, "groups", groupId), { members: [...(group.members || []), currentUser.uid], memberCount: increment(1), updatedAt: serverTimestamp() });
+    await setDoc(doc(db, "groups", groupId, "members", currentUser.uid), { userId: currentUser.uid, name: currentProfile?.name || "User", username: currentProfile?.username || "", photo: currentProfile?.photo || "", role: "member", joinedAt: serverTimestamp() });
+    await addDoc(collection(db, "groups", groupId, "messages"), { userId: "system", userName: "System", text: `${currentProfile?.name || "Someone"} joined the group`, type: "system", createdAt: serverTimestamp() });
+    toast("✅ Joined"); await openGroupView(groupId);
   }catch(e){ toast("Failed"); }
 }
-
 async function sendGroupJoinRequest(groupId){
   if(!currentUser) return;
   try{
     const reqId = currentUser.uid + "_" + groupId;
     const reqSnap = await getDoc(doc(db, "group_join_requests", reqId));
     if(reqSnap.exists()){ toast("Request already sent"); return; }
-
-    await setDoc(doc(db, "group_join_requests", reqId), {
-      groupId, userId: currentUser.uid,
-      userName: currentProfile?.name || "User",
-      userPhoto: currentProfile?.photo || "",
-      username: currentProfile?.username || "",
-      status: "pending", createdAt: serverTimestamp()
-    });
-
+    await setDoc(doc(db, "group_join_requests", reqId), { groupId, userId: currentUser.uid, userName: currentProfile?.name || "User", userPhoto: currentProfile?.photo || "", username: currentProfile?.username || "", status: "pending", createdAt: serverTimestamp() });
     const groupSnap = await getDoc(doc(db, "groups", groupId));
-    if(groupSnap.exists()){
-      const admins = groupSnap.data().admins || [];
-      for(const adminUid of admins){
-        await addDoc(collection(db, "notifications"), {
-          to: adminUid, from: currentUser.uid, title: "👥 Join Request",
-          message: `${currentProfile?.name || "Someone"} wants to join "${groupSnap.data().name}"`,
-          createdAt: serverTimestamp()
-        });
-      }
-    }
+    if(groupSnap.exists()){ const admins = groupSnap.data().admins || []; for(const adminUid of admins){ await addDoc(collection(db, "notifications"), { to: adminUid, from: currentUser.uid, title: "👥 Join Request", message: `${currentProfile?.name || "Someone"} wants to join "${groupSnap.data().name}"`, createdAt: serverTimestamp() }); } }
     toast("✅ Request sent");
   }catch(e){ toast("Failed"); }
 }
-
 function startGroupRequestsListener(groupId){
   if(groupRequestsUnsubscribe){ groupRequestsUnsubscribe(); groupRequestsUnsubscribe = null; }
   if(!groupId) return;
-  groupRequestsUnsubscribe = onSnapshot(
-    query(collection(db, "group_join_requests"), where("groupId", "==", groupId)),
-    snapshot=>{
-      groupJoinRequestsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      groupJoinRequestsCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
-      const badge = $("groupRequestsCount");
-      if(badge) badge.textContent = groupJoinRequestsCache.length ? `(${groupJoinRequestsCache.length})` : "";
-      renderGroupRequests();
-    },
-    error=>console.error("Group requests listener error:", error)
-  );
+  groupRequestsUnsubscribe = onSnapshot(query(collection(db, "group_join_requests"), where("groupId", "==", groupId)), snapshot=>{ groupJoinRequestsCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() })); groupJoinRequestsCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt)); const badge = $("groupRequestsCount"); if(badge) badge.textContent = groupJoinRequestsCache.length ? `(${groupJoinRequestsCache.length})` : ""; renderGroupRequests(); }, error=>console.error("Group requests listener error:", error));
 }
-
 function renderGroupRequests(){
-  const container = $("groupRequestsTabContent");
-  if(!container) return;
-  if(!groupJoinRequestsCache.length){
-    container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No pending requests</div>`;
-    return;
-  }
-  container.innerHTML = groupJoinRequestsCache.map(r => `
-    <div class="group-request-item">
-      <img src="${avatar(r.userPhoto, r.userName)}" class="group-request-open" data-uid="${esc(r.userId)}">
-      <div class="info group-request-open" data-uid="${esc(r.userId)}"><strong>${esc(r.userName)}</strong><small>@${esc(r.username || "user")}</small></div>
-      <div class="group-request-actions">
-        <button class="accept-btn" data-accept-group-request="${esc(r.id)}">Accept</button>
-        <button class="reject-btn" data-reject-group-request="${esc(r.id)}">Reject</button>
-      </div>
-    </div>
-  `).join("");
+  const container = $("groupRequestsTabContent"); if(!container) return;
+  if(!groupJoinRequestsCache.length){ container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No pending requests</div>`; return; }
+  container.innerHTML = groupJoinRequestsCache.map(r => `<div class="group-request-item"><img src="${avatar(r.userPhoto, r.userName)}" class="group-request-open" data-uid="${esc(r.userId)}"><div class="info group-request-open" data-uid="${esc(r.userId)}"><strong>${esc(r.userName)}</strong><small>@${esc(r.username || "user")}</small></div><div class="group-request-actions"><button class="accept-btn" data-accept-group-request="${esc(r.id)}">Accept</button><button class="reject-btn" data-reject-group-request="${esc(r.id)}">Reject</button></div></div>`).join("");
 }
-
 async function acceptGroupJoinRequest(reqId){
   try{
-    const reqSnap = await getDoc(doc(db, "group_join_requests", reqId));
-    if(!reqSnap.exists()) return;
-    const req = reqSnap.data();
-    const groupId = req.groupId;
-    const groupSnap = await getDoc(doc(db, "groups", groupId));
-    if(!groupSnap.exists()) return;
+    const reqSnap = await getDoc(doc(db, "group_join_requests", reqId)); if(!reqSnap.exists()) return;
+    const req = reqSnap.data(); const groupId = req.groupId;
+    const groupSnap = await getDoc(doc(db, "groups", groupId)); if(!groupSnap.exists()) return;
     const group = groupSnap.data();
     if((group.memberCount || 0) >= GROUP_MAX_MEMBERS){ toast("Group full"); return; }
-
-    await updateDoc(doc(db, "groups", groupId), {
-      members: [...(group.members || []), req.userId],
-      memberCount: increment(1), updatedAt: serverTimestamp()
-    });
-    await setDoc(doc(db, "groups", groupId, "members", req.userId), {
-      userId: req.userId, name: req.userName || "User",
-      username: req.username || "", photo: req.userPhoto || "",
-      role: "member", joinedAt: serverTimestamp()
-    });
-    await addDoc(collection(db, "groups", groupId, "messages"), {
-      userId: "system", userName: "System",
-      text: `${req.userName || "Someone"} joined the group`,
-      type: "system", createdAt: serverTimestamp()
-    });
-    await addDoc(collection(db, "notifications"), {
-      to: req.userId, from: currentUser.uid, title: "✅ Request Accepted",
-      message: `Your request to join "${group.name}" was accepted`,
-      createdAt: serverTimestamp()
-    });
-    await deleteDoc(doc(db, "group_join_requests", reqId));
-    toast("✅ Accepted");
+    await updateDoc(doc(db, "groups", groupId), { members: [...(group.members || []), req.userId], memberCount: increment(1), updatedAt: serverTimestamp() });
+    await setDoc(doc(db, "groups", groupId, "members", req.userId), { userId: req.userId, name: req.userName || "User", username: req.username || "", photo: req.userPhoto || "", role: "member", joinedAt: serverTimestamp() });
+    await addDoc(collection(db, "groups", groupId, "messages"), { userId: "system", userName: "System", text: `${req.userName || "Someone"} joined the group`, type: "system", createdAt: serverTimestamp() });
+    await addDoc(collection(db, "notifications"), { to: req.userId, from: currentUser.uid, title: "✅ Request Accepted", message: `Your request to join "${group.name}" was accepted`, createdAt: serverTimestamp() });
+    await deleteDoc(doc(db, "group_join_requests", reqId)); toast("✅ Accepted");
   }catch(e){ toast("Failed"); }
 }
-
 async function rejectGroupJoinRequest(reqId){
   try{
-    const reqSnap = await getDoc(doc(db, "group_join_requests", reqId));
-    if(!reqSnap.exists()) return;
+    const reqSnap = await getDoc(doc(db, "group_join_requests", reqId)); if(!reqSnap.exists()) return;
     const req = reqSnap.data();
-    await addDoc(collection(db, "notifications"), {
-      to: req.userId, from: currentUser.uid, title: "❌ Request Rejected",
-      message: "Your request was rejected", createdAt: serverTimestamp()
-    });
-    await deleteDoc(doc(db, "group_join_requests", reqId));
-    toast("Rejected");
+    await addDoc(collection(db, "notifications"), { to: req.userId, from: currentUser.uid, title: "❌ Request Rejected", message: "Your request was rejected", createdAt: serverTimestamp() });
+    await deleteDoc(doc(db, "group_join_requests", reqId)); toast("Rejected");
   }catch(e){ toast("Failed"); }
 }
-
 async function leaveGroup(groupId){
   if(!currentUser) return;
   try{
-    const groupSnap = await getDoc(doc(db, "groups", groupId));
-    if(!groupSnap.exists()) return;
+    const groupSnap = await getDoc(doc(db, "groups", groupId)); if(!groupSnap.exists()) return;
     const group = groupSnap.data();
     if(group.createdBy === currentUser.uid){ toast("You are creator. Delete instead."); return; }
-
-    await updateDoc(doc(db, "groups", groupId), {
-      members: (group.members || []).filter(uid => uid !== currentUser.uid),
-      memberCount: increment(-1), updatedAt: serverTimestamp()
-    });
+    await updateDoc(doc(db, "groups", groupId), { members: (group.members || []).filter(uid => uid !== currentUser.uid), memberCount: increment(-1), updatedAt: serverTimestamp() });
     await deleteDoc(doc(db, "groups", groupId, "members", currentUser.uid));
-    await addDoc(collection(db, "groups", groupId, "messages"), {
-      userId: "system", userName: "System",
-      text: `${currentProfile?.name || "Someone"} left the group`,
-      type: "system", createdAt: serverTimestamp()
-    });
-    hideModal("groupViewModal");
-    toast("✅ Left group");
+    await addDoc(collection(db, "groups", groupId, "messages"), { userId: "system", userName: "System", text: `${currentProfile?.name || "Someone"} left the group`, type: "system", createdAt: serverTimestamp() });
+    hideModal("groupViewModal"); toast("✅ Left group");
   }catch(e){ toast("Failed"); }
 }
-
-async function deleteGroup(groupId){
-  if(!currentUser) return;
-  try{
-    const groupSnap = await getDoc(doc(db, "groups", groupId));
-    if(!groupSnap.exists()) return;
-    const group = groupSnap.data();
-    if(group.createdBy !== currentUser.uid && !isAdminUser()){ toast("Only creator can delete"); return; }
-    if(!confirm(`Delete "${group.name}"?`)) return;
-
-    const messages = await getDocs(collection(db, "groups", groupId, "messages"));
-    for(const m of messages.docs) await deleteDoc(m.ref);
-    const members = await getDocs(collection(db, "groups", groupId, "members"));
-    for(const m of members.docs) await deleteDoc(m.ref);
-    const reqs = await getDocs(query(collection(db, "group_join_requests"), where("groupId", "==", groupId)));
-    for(const r of reqs.docs) await deleteDoc(r.ref);
-
-    await deleteDoc(doc(db, "groups", groupId));
-    hideModal("groupViewModal"); hideModal("groupMenuModal");
-    toast("🗑️ Group deleted");
-  }catch(e){ toast("Failed"); }
-}
-
 async function removeGroupMember(groupId, memberUid){
   if(!currentUser) return;
   try{
-    const groupSnap = await getDoc(doc(db, "groups", groupId));
-    if(!groupSnap.exists()) return;
+    const groupSnap = await getDoc(doc(db, "groups", groupId)); if(!groupSnap.exists()) return;
     const group = groupSnap.data();
     if(!group.admins?.includes(currentUser.uid)){ toast("Only admins"); return; }
     if(memberUid === currentUser.uid){ toast("Can't remove self"); return; }
-
-    await updateDoc(doc(db, "groups", groupId), {
-      members: (group.members || []).filter(uid => uid !== memberUid),
-      memberCount: increment(-1), updatedAt: serverTimestamp()
-    });
+    await updateDoc(doc(db, "groups", groupId), { members: (group.members || []).filter(uid => uid !== memberUid), memberCount: increment(-1), updatedAt: serverTimestamp() });
     await deleteDoc(doc(db, "groups", groupId, "members", memberUid));
-    toast("✅ Removed");
-    await loadGroupMembers(groupId);
+    toast("✅ Removed"); await loadGroupMembers(groupId);
   }catch(e){ toast("Failed"); }
 }
-
 async function openEditGroupModal(){
   if(!currentGroupId || !currentGroupData){ toast("Group not loaded"); return; }
   const isAdmin = currentGroupData.admins?.includes(currentUser.uid);
   const isCreator = currentGroupData.createdBy === currentUser.uid;
   if(!isAdmin && !isCreator){ toast("Only admins can edit"); return; }
-
-  $("editGroupName").value = currentGroupData.name || "";
-  $("editGroupDescription").value = currentGroupData.description || "";
-  $("editGroupPhotoPreview").src = avatar(currentGroupData.photo, currentGroupData.name);
-  $("editGroupPhotoFile").value = "";
-  $("editGroupStatus").textContent = "";
-
+  $("editGroupName").value = currentGroupData.name || ""; $("editGroupDescription").value = currentGroupData.description || "";
+  $("editGroupPhotoPreview").src = avatar(currentGroupData.photo, currentGroupData.name); $("editGroupPhotoFile").value = ""; $("editGroupStatus").textContent = "";
   document.querySelectorAll("#editGroupTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
   document.querySelector(`#editGroupTypeGroup .yt-radio[data-value="${currentGroupData.type}"]`)?.classList.add("selected");
-
-  window.__editGroupType = currentGroupData.type;
-  window.__editGroupPhotoFile = null;
-
-  hideModal("groupViewModal");
-  showModal("editGroupModal");
+  window.__editGroupType = currentGroupData.type; window.__editGroupPhotoFile = null;
+  hideModal("groupViewModal"); showModal("editGroupModal");
 }
-
-document.addEventListener("click", (e)=>{
-  const typeRadio = e.target.closest("#editGroupTypeGroup .yt-radio");
-  if(typeRadio){
-    e.preventDefault(); e.stopPropagation();
-    document.querySelectorAll("#editGroupTypeGroup .yt-radio").forEach(r => r.classList.remove("selected"));
-    typeRadio.classList.add("selected");
-    window.__editGroupType = typeRadio.dataset.value;
-  }
-});
-
+document.addEventListener("click", (e)=>{ const typeRadio = e.target.closest("#editGroupTypeGroup .yt-radio"); if(typeRadio){ e.preventDefault(); e.stopPropagation(); document.querySelectorAll("#editGroupTypeGroup .yt-radio").forEach(r => r.classList.remove("selected")); typeRadio.classList.add("selected"); window.__editGroupType = typeRadio.dataset.value; } });
 $("editGroupPhotoPick")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("editGroupPhotoFile")?.click(); });
-
-$("editGroupPhotoFile")?.addEventListener("change", (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  if(file.size > GROUP_MAX_PHOTO_SIZE){ toast("Too large"); e.target.value = ""; return; }
-  window.__editGroupPhotoFile = file;
-  $("editGroupPhotoPreview").src = URL.createObjectURL(file);
-});
-
+$("editGroupPhotoFile")?.addEventListener("change", (e)=>{ const file = e.target.files[0]; if(!file) return; if(file.size > GROUP_MAX_PHOTO_SIZE){ toast("Too large"); e.target.value = ""; return; } window.__editGroupPhotoFile = file; $("editGroupPhotoPreview").src = URL.createObjectURL(file); });
 $("saveGroupEditBtn")?.addEventListener("click", async ()=>{
   if(!currentGroupId) return;
-  const name = $("editGroupName").value.trim();
-  const description = $("editGroupDescription").value.trim();
-  const type = window.__editGroupType || "public";
-  const status = $("editGroupStatus");
+  const name = $("editGroupName").value.trim(); const description = $("editGroupDescription").value.trim(); const type = window.__editGroupType || "public"; const status = $("editGroupStatus");
   if(!name){ status.style.color = "#ed4956"; status.textContent = "Name required"; return; }
-
-  const btn = $("saveGroupEditBtn");
-  if(btn){ btn.disabled = true; btn.textContent = "Saving..."; }
+  const btn = $("saveGroupEditBtn"); if(btn){ btn.disabled = true; btn.textContent = "Saving..."; }
   status.style.color = "#7c3aed"; status.textContent = "Saving...";
-
   try{
     let photoURL = currentGroupData.photo || "";
-    if(window.__editGroupPhotoFile){
-      status.textContent = "Uploading photo...";
-      photoURL = await uploadToCloudinary(window.__editGroupPhotoFile, (pct)=>{ status.textContent = "Photo " + pct + "%"; });
-    }
-
-    await updateDoc(doc(db, "groups", currentGroupId), {
-      name, description, photo: photoURL, type, updatedAt: serverTimestamp()
-    });
-
-    await addDoc(collection(db, "groups", currentGroupId, "messages"), {
-      userId: "system", userName: "System",
-      text: `Group info was updated by ${currentProfile?.name || "admin"}`,
-      type: "system", createdAt: serverTimestamp()
-    });
-
-    status.style.color = "#22c55e"; status.textContent = "✅ Saved!";
-    window.__editGroupPhotoFile = null;
-    toast("✅ Group updated");
+    if(window.__editGroupPhotoFile){ status.textContent = "Uploading photo..."; photoURL = await uploadToCloudinary(window.__editGroupPhotoFile, (pct)=>{ status.textContent = "Photo " + pct + "%"; }); }
+    await updateDoc(doc(db, "groups", currentGroupId), { name, description, photo: photoURL, type, updatedAt: serverTimestamp() });
+    await addDoc(collection(db, "groups", currentGroupId, "messages"), { userId: "system", userName: "System", text: `Group info was updated by ${currentProfile?.name || "admin"}`, type: "system", createdAt: serverTimestamp() });
+    status.style.color = "#22c55e"; status.textContent = "✅ Saved!"; window.__editGroupPhotoFile = null; toast("✅ Group updated");
     setTimeout(() => { hideModal("editGroupModal"); openGroupView(currentGroupId); }, 700);
-  }catch(err){
-    status.style.color = "#ed4956"; status.textContent = "Error: " + err.message;
-  }finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Save Changes"; } }
+  }catch(err){ status.style.color = "#ed4956"; status.textContent = "Error: " + err.message; }
+  finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Save Changes"; } }
 });
-
 document.addEventListener("click", async (e)=>{
   const t = e.target;
-
-  const openGroup = t.closest("[data-open-group]");
-  if(openGroup){ e.preventDefault(); e.stopPropagation(); const gid = openGroup.dataset.openGroup; if(gid) await openGroupView(gid); return; }
-
-  const memberOpen = t.closest(".group-member-open");
-  if(memberOpen){ e.preventDefault(); e.stopPropagation(); const uid = memberOpen.dataset.uid; if(uid) openPublicProfile(uid); return; }
-
-  const reqOpen = t.closest(".group-request-open");
-  if(reqOpen){ e.preventDefault(); e.stopPropagation(); const uid = reqOpen.dataset.uid; if(uid) openPublicProfile(uid); return; }
-
-  const acceptReq = t.closest("[data-accept-group-request]");
-  if(acceptReq){ e.preventDefault(); e.stopPropagation(); const reqId = acceptReq.dataset.acceptGroupRequest; if(reqId) await acceptGroupJoinRequest(reqId); return; }
-
-  const rejectReq = t.closest("[data-reject-group-request]");
-  if(rejectReq){ e.preventDefault(); e.stopPropagation(); const reqId = rejectReq.dataset.rejectGroupRequest; if(reqId) await rejectGroupJoinRequest(reqId); return; }
-
-  const removeMember = t.closest("[data-remove-member]");
-  if(removeMember){
-    e.preventDefault(); e.stopPropagation();
-    const memberUid = removeMember.dataset.removeMember;
-    if(memberUid && currentGroupId && confirm("Remove this member?")) await removeGroupMember(currentGroupId, memberUid);
-    return;
-  }
-
-  const editGroupBtn = t.closest("#editGroupBtn");
-  if(editGroupBtn){ e.preventDefault(); e.stopPropagation(); await openEditGroupModal(); return; }
+  const openGroup = t.closest("[data-open-group]"); if(openGroup){ e.preventDefault(); e.stopPropagation(); const gid = openGroup.dataset.openGroup; if(gid) await openGroupView(gid); return; }
+  const memberOpen = t.closest(".group-member-open"); if(memberOpen){ e.preventDefault(); e.stopPropagation(); const uid = memberOpen.dataset.uid; if(uid) openPublicProfile(uid); return; }
+  const reqOpen = t.closest(".group-request-open"); if(reqOpen){ e.preventDefault(); e.stopPropagation(); const uid = reqOpen.dataset.uid; if(uid) openPublicProfile(uid); return; }
+  const acceptReq = t.closest("[data-accept-group-request]"); if(acceptReq){ e.preventDefault(); e.stopPropagation(); const reqId = acceptReq.dataset.acceptGroupRequest; if(reqId) await acceptGroupJoinRequest(reqId); return; }
+  const rejectReq = t.closest("[data-reject-group-request]"); if(rejectReq){ e.preventDefault(); e.stopPropagation(); const reqId = rejectReq.dataset.rejectGroupRequest; if(reqId) await rejectGroupJoinRequest(reqId); return; }
+  const removeMember = t.closest("[data-remove-member]"); if(removeMember){ e.preventDefault(); e.stopPropagation(); const memberUid = removeMember.dataset.removeMember; if(memberUid && currentGroupId && confirm("Remove this member?")) await removeGroupMember(currentGroupId, memberUid); return; }
+  const editGroupBtn = t.closest("#editGroupBtn"); if(editGroupBtn){ e.preventDefault(); e.stopPropagation(); await openEditGroupModal(); return; }
 });
-
 $("createGroupFromSettingsBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openCreateGroupModal(); });
-$("myGroupsBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  hideModal("advancedSettingsModal");
-  document.querySelectorAll(".panel").forEach(p => p.classList.add("hidden"));
-  $("messagesPanel")?.classList.remove("hidden");
-  document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
-  document.querySelector('[data-panel="messagesPanel"]')?.classList.add("active");
-  switchToGroupsTab();
-});
 $("newGroupBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openCreateGroupModal(); });
-
-function switchToChatsTab(){
-  document.querySelectorAll("#dmTabs .dm-tab").forEach(t => { t.classList.remove("active"); t.style.borderBottomColor = "transparent"; t.style.color = "var(--muted)"; });
-  const tab = document.querySelector('#dmTabs .dm-tab[data-dmtab="chats"]');
-  if(tab){ tab.classList.add("active"); tab.style.borderBottomColor = "var(--primary)"; tab.style.color = "var(--primary)"; }
-  $("dmInboxList")?.classList.remove("hidden");
-  $("dmGroupsList")?.classList.add("hidden");
-}
-
-function switchToGroupsTab(){
-  document.querySelectorAll("#dmTabs .dm-tab").forEach(t => { t.classList.remove("active"); t.style.borderBottomColor = "transparent"; t.style.color = "var(--muted)"; });
-  const tab = document.querySelector('#dmTabs .dm-tab[data-dmtab="groups"]');
-  if(tab){ tab.classList.add("active"); tab.style.borderBottomColor = "var(--primary)"; tab.style.color = "var(--primary)"; }
-  $("dmInboxList")?.classList.add("hidden");
-  $("dmGroupsList")?.classList.remove("hidden");
-  renderGroupsList();
-}
-
-document.addEventListener("click", (e)=>{
-  const tab = e.target.closest("#dmTabs .dm-tab");
-  if(!tab) return;
-  e.preventDefault(); e.stopPropagation();
-  if(tab.dataset.dmtab === "groups") switchToGroupsTab();
-  else switchToChatsTab();
-});
-
+function switchToChatsTab(){ document.querySelectorAll("#dmTabs .dm-tab").forEach(t => t.classList.remove("active")); const tab = document.querySelector('#dmTabs .dm-tab[data-dmtab="chats"]'); if(tab) tab.classList.add("active"); $("dmInboxList")?.classList.remove("hidden"); $("dmGroupsList")?.classList.add("hidden"); }
+function switchToGroupsTab(){ document.querySelectorAll("#dmTabs .dm-tab").forEach(t => t.classList.remove("active")); const tab = document.querySelector('#dmTabs .dm-tab[data-dmtab="groups"]'); if(tab) tab.classList.add("active"); $("dmInboxList")?.classList.add("hidden"); $("dmGroupsList")?.classList.remove("hidden"); renderGroupsList(); }
+document.addEventListener("click", (e)=>{ const tab = e.target.closest("#dmTabs .dm-tab"); if(!tab) return; e.preventDefault(); e.stopPropagation(); if(tab.dataset.dmtab === "groups") switchToGroupsTab(); else switchToChatsTab(); });
 async function openGroupChat(groupId){
   if(!groupId) return;
   try{
-    const groupSnap = await getDoc(doc(db, "groups", groupId));
-    if(!groupSnap.exists()) return;
-    currentGroupId = groupId;
-    currentGroupData = { id: groupId, ...groupSnap.data() };
-
+    const groupSnap = await getDoc(doc(db, "groups", groupId)); if(!groupSnap.exists()) return;
+    currentGroupId = groupId; currentGroupData = { id: groupId, ...groupSnap.data() };
     $("groupChatAvatar").src = avatar(currentGroupData.photo, currentGroupData.name);
     $("groupChatName").textContent = currentGroupData.name || "Group";
     $("groupChatMeta").textContent = `${currentGroupData.memberCount || 0} members`;
-
-    hideModal("groupViewModal");
-    showModal("groupChatModal");
-    startGroupChatListener(groupId);
+    hideModal("groupViewModal"); showModal("groupChatModal"); startGroupChatListener(groupId);
     setTimeout(()=> $("groupChatInput")?.focus(), 300);
   }catch(e){ toast("Error"); }
 }
-
 function startGroupChatListener(groupId){
   if(groupChatUnsubscribe){ groupChatUnsubscribe(); groupChatUnsubscribe = null; }
   if(!groupId) return;
-  groupChatUnsubscribe = onSnapshot(
-    query(collection(db, "groups", groupId, "messages")),
-    snapshot=>{
-      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
-      renderGroupMessages(list);
-    },
-    error=>console.error("Group chat listener error:", error)
-  );
+  groupChatUnsubscribe = onSnapshot(query(collection(db, "groups", groupId, "messages")), snapshot=>{ const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() })); list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt)); renderGroupMessages(list); }, error=>console.error("Group chat listener error:", error));
 }
-
 function renderGroupMessages(list){
-  const container = $("groupChatMessages");
-  if(!container) return;
-  if(!list.length){
-    container.innerHTML = `<div class="group-chat-empty"><span class="icon">💬</span><p>No messages yet</p></div>`;
-    return;
-  }
+  const container = $("groupChatMessages"); if(!container) return;
+  if(!list.length){ container.innerHTML = `<div class="group-chat-empty"><span class="icon">💬</span><p>No messages yet</p></div>`; return; }
   container.innerHTML = list.map(m => {
     const mine = m.userId === currentUser.uid;
-    if(m.type === "system"){
-      return `<div style="text-align:center;padding:10px 20px;font-size:11.5px;color:var(--muted);font-style:italic">${esc(m.text)}</div>`;
-    }
+    if(m.type === "system"){ return `<div style="text-align:center;padding:10px 20px;font-size:11.5px;color:var(--muted);font-style:italic">${esc(m.text)}</div>`; }
     const senderName = mine ? "" : `<span class="sender-name">${esc(m.userName || "User")}</span>`;
-    if(m.type === "text" || !m.type){
-      return `<div class="dm-msg ${mine?"me":"them"}">${senderName}${esc(m.text)}<small>${timeAgo(m.createdAt)}</small></div>`;
-    }
-    if(m.type === "image" && m.imageURL){
-      return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">${senderName}<div class="group-msg-image" data-open-group-image="${esc(m.imageURL)}"><img src="${esc(m.imageURL)}" alt="Photo"></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
-    }
-    if(m.type === "video" && m.videoURL){
-      return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">${senderName}<div class="group-msg-video"><video src="${esc(m.videoURL)}" controls playsinline preload="metadata"></video></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
-    }
-    if(m.type === "file" && m.fileURL){
-      const fInfo = getFileIcon(m.fileName, m.fileType);
-      return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">${senderName}<div class="group-msg-file" data-open-group-file="${esc(m.fileURL)}" data-file-name="${esc(m.fileName)}"><div class="file-icon ${fInfo.cls}">${fInfo.icon}</div><div class="file-info"><strong>${esc(m.fileName || "File")}</strong><small>${formatFileSize(m.fileSize || 0)}</small></div><div class="file-download">⬇️</div></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`;
-    }
+    if(m.type === "text" || !m.type){ return `<div class="dm-msg ${mine?"me":"them"}">${senderName}${esc(m.text)}<small>${timeAgo(m.createdAt)}</small></div>`; }
+    if(m.type === "image" && m.imageURL){ return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">${senderName}<div class="group-msg-image" data-open-group-image="${esc(m.imageURL)}"><img src="${esc(m.imageURL)}" alt="Photo"></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`; }
+    if(m.type === "video" && m.videoURL){ return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">${senderName}<div class="group-msg-video"><video src="${esc(m.videoURL)}" controls playsinline preload="metadata"></video></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`; }
+    if(m.type === "file" && m.fileURL){ const fInfo = getFileIcon(m.fileName, m.fileType); return `<div class="dm-msg ${mine?"me":"them"}" style="padding:5px;background:transparent">${senderName}<div class="group-msg-file" data-open-group-file="${esc(m.fileURL)}" data-file-name="${esc(m.fileName)}"><div class="file-icon ${fInfo.cls}">${fInfo.icon}</div><div class="file-info"><strong>${esc(m.fileName || "File")}</strong><small>${formatFileSize(m.fileSize || 0)}</small></div><div class="file-download">⬇️</div></div><small style="margin-left:8px">${timeAgo(m.createdAt)}</small></div>`; }
     return "";
   }).join("");
   container.scrollTop = container.scrollHeight;
 }
-
 $("groupChatSendBtn")?.addEventListener("click", sendGroupMessage);
 $("groupChatInput")?.addEventListener("keydown", (e)=>{ if(e.key === "Enter"){ e.preventDefault(); sendGroupMessage(); } });
-
 async function sendGroupMessage(){
-  const input = $("groupChatInput");
-  if(!input || !currentGroupId) return;
-  const text = input.value.trim();
-  if(!text) return;
-  const now = Date.now();
-  if(now - lastSentMessageTime < MESSAGE_COOLDOWN) return;
-  lastSentMessageTime = now;
-  input.value = "";
-  try{
-    await addDoc(collection(db, "groups", currentGroupId, "messages"), {
-      userId: currentUser.uid, userName: currentProfile?.name || "User",
-      userPhoto: currentProfile?.photo || "", text, type: "text",
-      createdAt: serverTimestamp()
-    });
-    await updateDoc(doc(db, "groups", currentGroupId), {
-      lastMessage: text, lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp()
-    });
-  }catch(e){ toast("Send failed"); input.value = text; }
+  const input = $("groupChatInput"); if(!input || !currentGroupId) return;
+  const text = input.value.trim(); if(!text) return;
+  const now = Date.now(); if(now - lastSentMessageTime < MESSAGE_COOLDOWN) return;
+  lastSentMessageTime = now; input.value = "";
+  try{ await addDoc(collection(db, "groups", currentGroupId, "messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", userPhoto: currentProfile?.photo || "", text, type: "text", createdAt: serverTimestamp() }); await updateDoc(doc(db, "groups", currentGroupId), { lastMessage: text, lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp() }); }
+  catch(e){ toast("Send failed"); input.value = text; }
 }
-
 $("groupAttachBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("groupAttachMenu")?.classList.toggle("show"); });
-
-document.addEventListener("click", (e)=>{
-  const menu = $("groupAttachMenu");
-  const btn = $("groupAttachBtn");
-  if(!menu || !btn) return;
-  if(!menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove("show");
-});
-
+document.addEventListener("click", (e)=>{ const menu = $("groupAttachMenu"); const btn = $("groupAttachBtn"); if(!menu || !btn) return; if(!menu.contains(e.target) && !btn.contains(e.target)) menu.classList.remove("show"); });
 $("groupAttachPhotoBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("groupAttachMenu")?.classList.remove("show"); $("groupPhotoFile2")?.click(); });
 $("groupAttachVideoBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("groupAttachMenu")?.classList.remove("show"); $("groupVideoFile2")?.click(); });
 $("groupAttachPdfBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); $("groupAttachMenu")?.classList.remove("show"); $("groupPdfFile")?.click(); });
-
 $("groupPhotoFile2")?.addEventListener("change", async (e)=>{ const f = e.target.files[0]; if(!f || !currentGroupId) return; await sendGroupPhoto(f); e.target.value = ""; });
 $("groupVideoFile2")?.addEventListener("change", async (e)=>{ const f = e.target.files[0]; if(!f || !currentGroupId) return; await sendGroupVideo(f); e.target.value = ""; });
 $("groupPdfFile")?.addEventListener("change", async (e)=>{ const f = e.target.files[0]; if(!f || !currentGroupId) return; await sendGroupPdf(f); e.target.value = ""; });
-
-async function sendGroupPhoto(file){
-  if(file.size > GROUP_MAX_PHOTO_SIZE){ toast("Photo too large"); return; }
-  try{
-    toast("Uploading photo...");
-    const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("Photo " + pct + "%"); });
-    await addDoc(collection(db, "groups", currentGroupId, "messages"), {
-      userId: currentUser.uid, userName: currentProfile?.name || "User",
-      userPhoto: currentProfile?.photo || "", text: "", type: "image", imageURL: url,
-      createdAt: serverTimestamp()
-    });
-    await updateDoc(doc(db, "groups", currentGroupId), { lastMessage: "📷 Photo", lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    toast("✅ Photo sent");
-  }catch(e){ toast("Photo failed"); }
-}
-
-async function sendGroupVideo(file){
-  if(file.size > GROUP_MAX_VIDEO_SIZE){ toast("Video too large"); return; }
-  try{
-    toast("Uploading video...");
-    const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("Video " + pct + "%"); });
-    await addDoc(collection(db, "groups", currentGroupId, "messages"), {
-      userId: currentUser.uid, userName: currentProfile?.name || "User",
-      userPhoto: currentProfile?.photo || "", text: "", type: "video", videoURL: url,
-      createdAt: serverTimestamp()
-    });
-    await updateDoc(doc(db, "groups", currentGroupId), { lastMessage: "🎥 Video", lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    toast("✅ Video sent");
-  }catch(e){ toast("Video failed"); }
-}
-
-async function sendGroupPdf(file){
-  if(file.size > GROUP_MAX_PDF_SIZE){ toast("File too large"); return; }
-  try{
-    toast("Uploading file...");
-    const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("File " + pct + "%"); });
-    await addDoc(collection(db, "groups", currentGroupId, "messages"), {
-      userId: currentUser.uid, userName: currentProfile?.name || "User",
-      userPhoto: currentProfile?.photo || "", text: "", type: "file",
-      fileURL: url, fileName: file.name, fileSize: file.size, fileType: file.type,
-      createdAt: serverTimestamp()
-    });
-    await updateDoc(doc(db, "groups", currentGroupId), { lastMessage: "📄 " + file.name, lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    toast("✅ File sent");
-  }catch(e){ toast("File failed"); }
-}
-
+async function sendGroupPhoto(file){ if(file.size > GROUP_MAX_PHOTO_SIZE){ toast("Photo too large"); return; } try{ toast("Uploading photo..."); const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("Photo " + pct + "%"); }); await addDoc(collection(db, "groups", currentGroupId, "messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", userPhoto: currentProfile?.photo || "", text: "", type: "image", imageURL: url, createdAt: serverTimestamp() }); await updateDoc(doc(db, "groups", currentGroupId), { lastMessage: "📷 Photo", lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp() }); toast("✅ Photo sent"); }catch(e){ toast("Photo failed"); } }
+async function sendGroupVideo(file){ if(file.size > GROUP_MAX_VIDEO_SIZE){ toast("Video too large"); return; } try{ toast("Uploading video..."); const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("Video " + pct + "%"); }); await addDoc(collection(db, "groups", currentGroupId, "messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", userPhoto: currentProfile?.photo || "", text: "", type: "video", videoURL: url, createdAt: serverTimestamp() }); await updateDoc(doc(db, "groups", currentGroupId), { lastMessage: "🎥 Video", lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp() }); toast("✅ Video sent"); }catch(e){ toast("Video failed"); } }
+async function sendGroupPdf(file){ if(file.size > GROUP_MAX_PDF_SIZE){ toast("File too large"); return; } try{ toast("Uploading file..."); const url = await uploadToCloudinary(file, (pct)=>{ if(pct % 25 === 0) toast("File " + pct + "%"); }); await addDoc(collection(db, "groups", currentGroupId, "messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", userPhoto: currentProfile?.photo || "", text: "", type: "file", fileURL: url, fileName: file.name, fileSize: file.size, fileType: file.type, createdAt: serverTimestamp() }); await updateDoc(doc(db, "groups", currentGroupId), { lastMessage: "📄 " + file.name, lastMessageAt: serverTimestamp(), updatedAt: serverTimestamp() }); toast("✅ File sent"); }catch(e){ toast("File failed"); } }
 document.addEventListener("click", (e)=>{
-  const img = e.target.closest("[data-open-group-image]");
-  if(img){
-    e.preventDefault(); e.stopPropagation();
-    const url = img.dataset.openGroupImage;
-    if(url){ if($("largeChatImage")) $("largeChatImage").src = url; showModal("imageViewerModal"); }
-    return;
-  }
-  const file = e.target.closest("[data-open-group-file]");
-  if(file){
-    e.preventDefault(); e.stopPropagation();
-    const url = file.dataset.openGroupFile;
-    const name = file.dataset.fileName || "file";
-    if(url){
-      const a = document.createElement("a");
-      a.href = url; a.download = name; a.target = "_blank";
-      document.body.appendChild(a); a.click(); document.body.removeChild(a);
-      toast("Opening...");
-    }
-    return;
-  }
+  const img = e.target.closest("[data-open-group-image]"); if(img){ e.preventDefault(); e.stopPropagation(); const url = img.dataset.openGroupImage; if(url){ if($("largeChatImage")) $("largeChatImage").src = url; showModal("imageViewerModal"); } return; }
+  const file = e.target.closest("[data-open-group-file]"); if(file){ e.preventDefault(); e.stopPropagation(); const url = file.dataset.openGroupFile; const name = file.dataset.fileName || "file"; if(url){ const a = document.createElement("a"); a.href = url; a.download = name; a.target = "_blank"; document.body.appendChild(a); a.click(); document.body.removeChild(a); toast("Opening..."); } return; }
 });
-
-$("groupChatInfoBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  hideModal("groupChatModal");
-  if(currentGroupId) openGroupView(currentGroupId);
-});
-
+$("groupChatInfoBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); hideModal("groupChatModal"); if(currentGroupId) openGroupView(currentGroupId); });
 $("groupOpenChatBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(currentGroupId) openGroupChat(currentGroupId); });
-
-$("groupLeaveBtn")?.addEventListener("click", async (e)=>{
-  e.preventDefault(); e.stopPropagation();
-  if(!currentGroupId) return;
-  if(confirm("Leave this group?")) await leaveGroup(currentGroupId);
-});
-
+$("groupLeaveBtn")?.addEventListener("click", async (e)=>{ e.preventDefault(); e.stopPropagation(); if(!currentGroupId) return; if(confirm("Leave this group?")) await leaveGroup(currentGroupId); });
 document.addEventListener("click", (e)=>{
-  const tab = e.target.closest("#groupTabs .yt-tab");
-  if(!tab) return;
+  const tab = e.target.closest("#groupTabs .yt-tab"); if(!tab) return;
   e.preventDefault(); e.stopPropagation();
-  const gtab = tab.dataset.gtab;
-  if(!gtab) return;
+  const gtab = tab.dataset.gtab; if(!gtab) return;
   document.querySelectorAll("#groupTabs .yt-tab").forEach(t => t.classList.remove("active"));
   tab.classList.add("active");
-  $("groupMembersTab")?.classList.add("hidden");
-  $("groupRequestsTabContent")?.classList.add("hidden");
-  $("groupInfoTab")?.classList.add("hidden");
+  $("groupMembersTab")?.classList.add("hidden"); $("groupRequestsTabContent")?.classList.add("hidden"); $("groupInfoTab")?.classList.add("hidden");
   if(gtab === "members") $("groupMembersTab")?.classList.remove("hidden");
   else if(gtab === "requests") $("groupRequestsTabContent")?.classList.remove("hidden");
   else if(gtab === "info") $("groupInfoTab")?.classList.remove("hidden");
 });
 
-/* ============================================================
-   COMMENTS
-============================================================ */
-function openComments(videoId){
-  currentCommentVideoId = videoId;
-  showModal("commentsModal");
-  loadComments(videoId);
-}
-
+/* ---- COMMENTS ---- */
+function openComments(videoId){ currentCommentVideoId = videoId; showModal("commentsModal"); loadComments(videoId); }
 function loadComments(videoId){
   if(commentsUnsubscribe){ commentsUnsubscribe(); commentsUnsubscribe = null; }
-  commentsUnsubscribe = onSnapshot(
-    collection(db,"videos",videoId,"comments"),
-    snapshot=>{
-      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
-      if(!list.length){
-        $("commentsList").innerHTML = `<div class="yt-empty"><div style="font-size:42px;margin-bottom:10px">💬</div><p>No comments yet</p></div>`;
-        return;
-      }
-      $("commentsList").innerHTML = list.map(c=>{
-        const mine = currentUser && c.userId === currentUser.uid;
-        return `<div class="comment-item">
-          <img src="${avatar(c.userPhoto, c.userName)}">
-          <div class="comment-content">
-            <div class="name">${esc(c.userName || "User")}</div>
-            <div class="text">${esc(c.text)}</div>
-            <div class="actions">
-              <span style="font-size:11px;color:var(--muted)">${timeAgo(c.createdAt)}</span>
-              ${mine || isAdminUser() ? `<button data-delete-comment="${esc(videoId)}|${esc(c.id)}">Delete</button>` : ""}
-            </div>
-          </div>
-        </div>`;
-      }).join("");
-    },
-    error=>console.error("Comments listener error:", error)
-  );
+  commentsUnsubscribe = onSnapshot(collection(db,"videos",videoId,"comments"), snapshot=>{
+    const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    list.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
+    if(!list.length){ $("commentsList").innerHTML = `<div class="yt-empty"><div style="font-size:42px;margin-bottom:10px">💬</div><p>No comments yet</p></div>`; return; }
+    $("commentsList").innerHTML = list.map(c=>{ const mine = currentUser && c.userId === currentUser.uid; return `<div class="comment-item"><img src="${avatar(c.userPhoto, c.userName)}"><div class="comment-content"><div class="name">${esc(c.userName || "User")}</div><div class="text">${esc(c.text)}</div><div class="actions"><span style="font-size:11px;color:var(--muted)">${timeAgo(c.createdAt)}</span>${mine || isAdminUser() ? `<button data-delete-comment="${esc(videoId)}|${esc(c.id)}">Delete</button>` : ""}</div></div></div>`; }).join("");
+  }, error=>console.error("Comments listener error:", error));
 }
-
 $("sendCommentBtn")?.addEventListener("click", sendComment);
 $("commentInput")?.addEventListener("keydown", e=>{ if(e.key === "Enter") sendComment(); });
-
 async function sendComment(){
   const text = $("commentInput").value.trim();
   if(!text || !currentCommentVideoId) return;
   try{
-    await addDoc(collection(db,"videos",currentCommentVideoId,"comments"), {
-      userId: currentUser.uid, userName: currentProfile?.name || "User",
-      userPhoto: currentProfile?.photo || "", text, createdAt: serverTimestamp()
-    });
+    await addDoc(collection(db,"videos",currentCommentVideoId,"comments"), { userId: currentUser.uid, userName: currentProfile?.name || "User", userPhoto: currentProfile?.photo || "", text, createdAt: serverTimestamp() });
     const videoSnap = await getDoc(doc(db,"videos",currentCommentVideoId));
-    if(videoSnap.exists()){
-      const ownerId = videoSnap.data().userId;
-      if(ownerId !== currentUser.uid){
-        await addDoc(collection(db,"notifications"), {
-          to: ownerId, from: currentUser.uid, title: "💬 New Comment",
-          message: (currentProfile?.name || "Someone") + ": " + text.slice(0,50),
-          createdAt: serverTimestamp()
-        });
-      }
-    }
+    if(videoSnap.exists()){ const ownerId = videoSnap.data().userId; if(ownerId !== currentUser.uid){ await addDoc(collection(db,"notifications"), { to: ownerId, from: currentUser.uid, title: "💬 New Comment", message: (currentProfile?.name || "Someone") + ": " + text.slice(0,50), createdAt: serverTimestamp() }); } }
     $("commentInput").value = "";
   }catch(e){ toast("Comment failed"); }
 }
-
 async function deleteComment(videoId, commentId){
-  try{
-    const ref = doc(db,"videos",videoId,"comments",commentId);
-    const snap = await getDoc(ref);
-    if(!snap.exists()) return;
-    if(snap.data().userId !== currentUser.uid && !isAdminUser()) return;
-    if(!confirm("Delete comment?")) return;
-    await deleteDoc(ref);
-    toast("🗑️ Comment deleted");
-  }catch(e){ toast("Delete failed"); }
+  try{ const ref = doc(db,"videos",videoId,"comments",commentId); const snap = await getDoc(ref); if(!snap.exists()) return; if(snap.data().userId !== currentUser.uid && !isAdminUser()) return; if(!confirm("Delete comment?")) return; await deleteDoc(ref); toast("🗑️ Comment deleted"); }catch(e){ toast("Delete failed"); }
 }
 
-/* ============================================================
-   SHARE
-============================================================ */
+/* ---- SHARE ---- */
 async function openShareSheet(videoId){
-  shareVideoId = videoId;
-  showModal("shareSheet");
-  const list = $("shareUserList");
-  list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">Loading...</div>`;
+  shareVideoId = videoId; showModal("shareSheet");
+  const list = $("shareUserList"); list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">Loading...</div>`;
   try{
-    const chatUids = new Set();
-    myChatsCache.forEach(c=>{ const other = c.members.find(uid => uid !== currentUser.uid); if(other && !isUserBlocked(other)) chatUids.add(other); });
+    const chatUids = new Set(); myChatsCache.forEach(c=>{ const other = c.members.find(uid => uid !== currentUser.uid); if(other && !isUserBlocked(other)) chatUids.add(other); });
     const followUids = [...myFollowsCache].filter(uid => !isUserBlocked(uid));
     const allUids = new Set([...followUids, ...chatUids]);
     if(!allUids.size){ list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">Follow users to share</div>`; return; }
     const chips = [];
-    for(const uid of Array.from(allUids).slice(0, 20)){
-      const p = await getProfile(uid);
-      chips.push(`<div class="share-user-chip" data-share-user="${esc(uid)}"><img src="${avatar(p.photo, p.name)}"><span>${esc(p.name.split(" ")[0])}</span></div>`);
-    }
+    for(const uid of Array.from(allUids).slice(0, 20)){ const p = await getProfile(uid); chips.push(`<div class="share-user-chip" data-share-user="${esc(uid)}"><img src="${avatar(p.photo, p.name)}"><span>${esc(p.name.split(" ")[0])}</span></div>`); }
     list.innerHTML = chips.join("");
   }catch(e){ list.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">Error</div>`; }
 }
-
 async function shareToUser(uid){
   if(!shareVideoId || !uid) return;
   if(isUserBlocked(uid)){ toast("User is blocked"); return; }
-  const v = videosCache.find(x => x.id === shareVideoId);
-  if(!v) return;
+  const v = videosCache.find(x => x.id === shareVideoId); if(!v) return;
   const chatId = [currentUser.uid, uid].sort().join("_");
   try{
     await setDoc(doc(db,"chats",chatId), { members: [currentUser.uid, uid], updatedAt: serverTimestamp() }, { merge: true });
-    await addDoc(collection(db,"chats",chatId,"messages"), {
-      userId: currentUser.uid, userName: currentProfile?.name || "User",
-      text: "", type: "shared_video", videoId: shareVideoId, videoURL: v.videoURL, videoTitle: v.title || "Video",
-      createdAt: serverTimestamp()
-    });
+    await addDoc(collection(db,"chats",chatId,"messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", text: "", type: "shared_video", videoId: shareVideoId, videoURL: v.videoURL, videoTitle: v.title || "Video", createdAt: serverTimestamp() });
     await updateDoc(doc(db,"chats",chatId), { lastMessage: "📹 Shared a video", updatedAt: serverTimestamp() });
-    hideModal("shareSheet");
-    toast("✅ Video shared");
+    hideModal("shareSheet"); toast("✅ Video shared");
   }catch(e){ toast("Share failed"); }
 }
+$("shareCopyLink")?.addEventListener("click", async()=>{ if(!shareVideoId) return; const url = location.origin + location.pathname + "?video=" + shareVideoId; try{ await navigator.clipboard.writeText(url); toast("Link copied"); hideModal("shareSheet"); }catch(e){ toast("Copy failed"); } });
+$("shareNative")?.addEventListener("click", async()=>{ if(!shareVideoId) return; const url = location.origin + location.pathname + "?video=" + shareVideoId; try{ if(navigator.share){ await navigator.share({ title: "ReelHub Video", text: "Watch on ReelHub 🎬", url }); } else { await navigator.clipboard.writeText(url); toast("Link copied"); } hideModal("shareSheet"); }catch(e){} });
+$("shareWhatsApp")?.addEventListener("click", ()=>{ if(!shareVideoId) return; const url = location.origin + location.pathname + "?video=" + shareVideoId; window.open("https://wa.me/?text=" + encodeURIComponent("Watch this on ReelHub 🎬: " + url), "_blank"); hideModal("shareSheet"); });
+$("shareInstagram")?.addEventListener("click", async ()=>{ if(!shareVideoId) return; const url = location.origin + location.pathname + "?video=" + shareVideoId; try{ await navigator.clipboard.writeText(url); toast("Link copied"); window.open("https://www.instagram.com/", "_blank"); }catch(e){} hideModal("shareSheet"); });
+$("shareFacebook")?.addEventListener("click", ()=>{ if(!shareVideoId) return; const url = location.origin + location.pathname + "?video=" + shareVideoId; window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank"); hideModal("shareSheet"); });
+$("shareTwitter")?.addEventListener("click", ()=>{ if(!shareVideoId) return; const url = location.origin + location.pathname + "?video=" + shareVideoId; window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent("Watch this 🎬") + "&url=" + encodeURIComponent(url), "_blank"); hideModal("shareSheet"); });
 
-$("shareCopyLink")?.addEventListener("click", async()=>{
-  if(!shareVideoId) return;
-  const url = location.origin + location.pathname + "?video=" + shareVideoId;
-  try{ await navigator.clipboard.writeText(url); toast("Link copied"); hideModal("shareSheet"); }
-  catch(e){ toast("Copy failed"); }
-});
-
-$("shareNative")?.addEventListener("click", async()=>{
-  if(!shareVideoId) return;
-  const url = location.origin + location.pathname + "?video=" + shareVideoId;
-  try{
-    if(navigator.share){ await navigator.share({ title: "ReelHub Video", text: "Watch on ReelHub 🎬", url }); }
-    else { await navigator.clipboard.writeText(url); toast("Link copied"); }
-    hideModal("shareSheet");
-  }catch(e){}
-});
-
-$("shareWhatsApp")?.addEventListener("click", ()=>{
-  if(!shareVideoId) return;
-  const url = location.origin + location.pathname + "?video=" + shareVideoId;
-  window.open("https://wa.me/?text=" + encodeURIComponent("Watch this on ReelHub 🎬: " + url), "_blank");
-  hideModal("shareSheet");
-});
-
-$("shareInstagram")?.addEventListener("click", async ()=>{
-  if(!shareVideoId) return;
-  const url = location.origin + location.pathname + "?video=" + shareVideoId;
-  try{ await navigator.clipboard.writeText(url); toast("Link copied — Instagram pe paste karo"); window.open("https://www.instagram.com/", "_blank"); }
-  catch(e){ toast("Copy failed"); }
-  hideModal("shareSheet");
-});
-
-$("shareFacebook")?.addEventListener("click", ()=>{
-  if(!shareVideoId) return;
-  const url = location.origin + location.pathname + "?video=" + shareVideoId;
-  window.open("https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url), "_blank");
-  hideModal("shareSheet");
-});
-
-$("shareTwitter")?.addEventListener("click", ()=>{
-  if(!shareVideoId) return;
-  const url = location.origin + location.pathname + "?video=" + shareVideoId;
-  window.open("https://twitter.com/intent/tweet?text=" + encodeURIComponent("Watch this 🎬") + "&url=" + encodeURIComponent(url), "_blank");
-  hideModal("shareSheet");
-});
-
-/* ============================================================
-   DEEP LINK
-============================================================ */
-function getVideoIdFromURL(){
-  const params = new URLSearchParams(location.search);
-  return params.get("video");
-}
-
+/* ---- DEEP LINK ---- */
+function getVideoIdFromURL(){ const params = new URLSearchParams(location.search); return params.get("video"); }
 async function openVideoByDeepLink(videoId){
   if(!videoId) return;
   let attempts = 0;
@@ -4504,233 +2845,109 @@ async function openVideoByDeepLink(videoId){
   const canView = await canViewUserVideos(v.userId);
   if(!canView){ toast("Private account"); return; }
   await trackView(videoId);
-  const banner = $("deepLinkBanner");
-  if(banner){ banner.classList.add("show"); setTimeout(()=> banner.classList.remove("show"), 3000); }
+  const banner = $("deepLinkBanner"); if(banner){ banner.classList.add("show"); setTimeout(()=> banner.classList.remove("show"), 3000); }
   window.openVideoPlayer(videoId);
 }
+async function checkDeepLink(){ if(deepLinkChecked) return; const vid = getVideoIdFromURL(); if(!vid) return; deepLinkChecked = true; await openVideoByDeepLink(vid); }
 
-async function checkDeepLink(){
-  if(deepLinkChecked) return;
-  const vid = getVideoIdFromURL();
-  if(!vid) return;
-  deepLinkChecked = true;
-  await openVideoByDeepLink(vid);
-}
-
-/* ============================================================
-   MONETIZATION
-============================================================ */
+/* ---- MONETIZATION ---- */
 async function renderMonetizationTab(){
-  const container = $("monetizationTab");
-  if(!container || !currentUser) return;
+  const container = $("monetizationTab"); if(!container || !currentUser) return;
   try{
     const profile = await getProfile(currentUser.uid);
-    const followers = Number(profile.followers || 0);
-    const watchTime = Number(profile.totalWatchTime || 0);
-    const views = Number(profile.totalViews || 0);
+    const followers = Number(profile.followers || 0); const watchTime = Number(profile.totalWatchTime || 0); const views = Number(profile.totalViews || 0);
     const status = profile.monetizationStatus || "none";
     const followersComplete = followers >= MONETIZATION_REQUIREMENTS.followers;
     const watchTimeComplete = watchTime >= MONETIZATION_REQUIREMENTS.watchTime;
     const viewsComplete = views >= MONETIZATION_REQUIREMENTS.views;
     const allComplete = followersComplete && watchTimeComplete && viewsComplete;
-
     let statusBadge = "", actionButton = "";
     if(status === "approved"){ statusBadge = `<div class="monetization-status-badge approved">✅ Active</div>`; actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">🎉 Monetized!</p>`; }
     else if(status === "pending"){ statusBadge = `<div class="monetization-status-badge pending">⏳ Pending</div>`; actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Under review.</p>`; }
     else if(status === "rejected"){ statusBadge = `<div class="monetization-status-badge rejected">❌ Rejected</div>`; actionButton = `<p style="font-size:13px;color:var(--muted);margin-top:10px">Try again.</p>`; }
-    else {
-      statusBadge = `<div class="monetization-status-badge none">💰 Not Applied</div>`;
-      actionButton = allComplete ? `<button class="monetization-apply-btn" id="openMonetizationModalBtn">💰 Apply</button>` : `<button class="monetization-apply-btn" disabled>🔒 Complete requirements</button>`;
-    }
-
-    container.innerHTML = `
-      <div class="monetization-tab">
-        <div class="monetization-card">
-          <span class="icon">💰</span>
-          <h3>Monetize Your Channel</h3>
-          <p>Earn money from your content.</p>
-          ${statusBadge}
-          ${actionButton}
-        </div>
-        <div class="req-list-tab">
-          <div class="title">📋 Requirements</div>
-          <div class="req-row ${followersComplete ? 'completed' : ''}"><span class="req-icon">👥</span><span class="req-text">Followers</span><span class="req-count">${followers} / ${MONETIZATION_REQUIREMENTS.followers}</span><span class="req-status">${followersComplete ? '✅' : '⏳'}</span></div>
-          <div class="req-row ${watchTimeComplete ? 'completed' : ''}"><span class="req-icon">⏱️</span><span class="req-text">Watch Time</span><span class="req-count">${Math.floor(watchTime / 60)} min / 60 min</span><span class="req-status">${watchTimeComplete ? '✅' : '⏳'}</span></div>
-          <div class="req-row ${viewsComplete ? 'completed' : ''}"><span class="req-icon">👁️</span><span class="req-text">Total Views</span><span class="req-count">${views} / ${MONETIZATION_REQUIREMENTS.views}</span><span class="req-status">${viewsComplete ? '✅' : '⏳'}</span></div>
-        </div>
-      </div>`;
+    else { statusBadge = `<div class="monetization-status-badge none">💰 Not Applied</div>`; actionButton = allComplete ? `<button class="monetization-apply-btn" id="openMonetizationModalBtn">💰 Apply</button>` : `<button class="monetization-apply-btn" disabled>🔒 Complete requirements</button>`; }
+    container.innerHTML = `<div class="monetization-tab"><div class="monetization-card"><span class="icon">💰</span><h3>Monetize Your Channel</h3><p>Earn money from your content.</p>${statusBadge}${actionButton}</div><div class="req-list-tab"><div class="title">📋 Requirements</div><div class="req-row ${followersComplete ? 'completed' : ''}"><span class="req-icon">👥</span><span class="req-text">Followers</span><span class="req-count">${followers} / ${MONETIZATION_REQUIREMENTS.followers}</span><span class="req-status">${followersComplete ? '✅' : '⏳'}</span></div><div class="req-row ${watchTimeComplete ? 'completed' : ''}"><span class="req-icon">⏱️</span><span class="req-text">Watch Time</span><span class="req-count">${Math.floor(watchTime / 60)} min / 60 min</span><span class="req-status">${watchTimeComplete ? '✅' : '⏳'}</span></div><div class="req-row ${viewsComplete ? 'completed' : ''}"><span class="req-icon">👁️</span><span class="req-text">Total Views</span><span class="req-count">${views} / ${MONETIZATION_REQUIREMENTS.views}</span><span class="req-status">${viewsComplete ? '✅' : '⏳'}</span></div></div></div>`;
     $("openMonetizationModalBtn")?.addEventListener("click", () => openMonetizationModal(followers, watchTime, views));
   }catch(e){ container.innerHTML = `<div class="yt-empty" style="padding:30px">Error</div>`; }
 }
-
 function openMonetizationModal(followers, watchTime, views){
   const followersComplete = followers >= MONETIZATION_REQUIREMENTS.followers;
   const watchTimeComplete = watchTime >= MONETIZATION_REQUIREMENTS.watchTime;
   const viewsComplete = views >= MONETIZATION_REQUIREMENTS.views;
-  $("reqFollowersCount").textContent = followers;
-  $("reqWatchTimeCount").textContent = watchTime;
-  $("reqViewsCount").textContent = views;
-  $("reqFollowersStatus").textContent = followersComplete ? "✅" : "⏳";
-  $("reqWatchTimeStatus").textContent = watchTimeComplete ? "✅" : "⏳";
-  $("reqViewsStatus").textContent = viewsComplete ? "✅" : "⏳";
+  $("reqFollowersCount").textContent = followers; $("reqWatchTimeCount").textContent = watchTime; $("reqViewsCount").textContent = views;
+  $("reqFollowersStatus").textContent = followersComplete ? "✅" : "⏳"; $("reqWatchTimeStatus").textContent = watchTimeComplete ? "✅" : "⏳"; $("reqViewsStatus").textContent = viewsComplete ? "✅" : "⏳";
   const p1 = Math.min(100, (followers / MONETIZATION_REQUIREMENTS.followers) * 100);
   const p2 = Math.min(100, (watchTime / MONETIZATION_REQUIREMENTS.watchTime) * 100);
   const p3 = Math.min(100, (views / MONETIZATION_REQUIREMENTS.views) * 100);
   const overallProgress = Math.round((p1 + p2 + p3) / 3);
-  $("reqProgressBar").style.width = overallProgress + "%";
-  $("reqProgressPercent").textContent = overallProgress + "%";
+  $("reqProgressBar").style.width = overallProgress + "%"; $("reqProgressPercent").textContent = overallProgress + "%";
   if(currentProfile?.upiId) $("monetizationUpiId").value = currentProfile.upiId;
   const allComplete = followersComplete && watchTimeComplete && viewsComplete;
   if($("submitMonetizationBtn")) $("submitMonetizationBtn").disabled = !allComplete;
   showModal("monetizationModal");
 }
-
 $("submitMonetizationBtn")?.addEventListener("click", async () => {
   if(!currentUser) return;
-  const upiId = $("monetizationUpiId").value.trim();
-  const statusEl = $("monetizationStatus");
+  const upiId = $("monetizationUpiId").value.trim(); const statusEl = $("monetizationStatus");
   if(!upiId){ statusEl.textContent = "Enter UPI ID"; statusEl.style.color = "#ef4444"; return; }
   if(!upiId.includes("@") || upiId.length < 5){ statusEl.textContent = "Invalid UPI"; statusEl.style.color = "#ef4444"; return; }
-  const btn = $("submitMonetizationBtn");
-  btn.disabled = true; btn.textContent = "Submitting...";
+  const btn = $("submitMonetizationBtn"); btn.disabled = true; btn.textContent = "Submitting...";
   try{
     const profile = await getProfile(currentUser.uid);
     await updateDoc(doc(db, "profiles", currentUser.uid), { upiId, monetizationStatus: "pending", monetizationRequestedAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    await addDoc(collection(db, "monetization_requests"), {
-      userId: currentUser.uid, userName: profile.name || "User", username: profile.username || "",
-      userPhoto: profile.photo || "", followers: profile.followers || 0,
-      totalWatchTime: profile.totalWatchTime || 0, totalViews: profile.totalViews || 0,
-      upiId, status: "pending", createdAt: serverTimestamp()
-    });
+    await addDoc(collection(db, "monetization_requests"), { userId: currentUser.uid, userName: profile.name || "User", username: profile.username || "", userPhoto: profile.photo || "", followers: profile.followers || 0, totalWatchTime: profile.totalWatchTime || 0, totalViews: profile.totalViews || 0, upiId, status: "pending", createdAt: serverTimestamp() });
     statusEl.textContent = "✅ Submitted!"; statusEl.style.color = "#22c55e";
     currentProfile = await getProfile(currentUser.uid);
     setTimeout(() => { hideModal("monetizationModal"); renderMonetizationTab(); }, 1200);
   }catch(e){ statusEl.textContent = "Error"; statusEl.style.color = "#ef4444"; btn.disabled = false; btn.textContent = "Submit"; }
 });
 
-/* ============================================================
-   VAULT
-============================================================ */
-async function saveVaultPin(pin){
-  if(!currentUser) return false;
-  try{
-    const pinHash = btoa("reelhub_vault_" + pin);
-    await updateDoc(doc(db, "profiles", currentUser.uid), { vaultPin: pinHash, vaultEnabled: true, vaultCreatedAt: serverTimestamp() });
-    currentProfile.vaultPin = pinHash;
-    currentProfile.vaultEnabled = true;
-    return true;
-  }catch(e){ return false; }
-}
+/* ---- VAULT ---- */
+async function saveVaultPin(pin){ if(!currentUser) return false; try{ const pinHash = btoa("reelhub_vault_" + pin); await updateDoc(doc(db, "profiles", currentUser.uid), { vaultPin: pinHash, vaultEnabled: true, vaultCreatedAt: serverTimestamp() }); currentProfile.vaultPin = pinHash; currentProfile.vaultEnabled = true; return true; }catch(e){ return false; } }
 async function hasVaultPin(){ return !!(currentProfile && currentProfile.vaultPin); }
-async function verifyVaultPin(pin){
-  if(!currentProfile || !currentProfile.vaultPin) return false;
-  const hash = btoa("reelhub_vault_" + pin);
-  return currentProfile.vaultPin === hash;
-}
-
+async function verifyVaultPin(pin){ if(!currentProfile || !currentProfile.vaultPin) return false; const hash = btoa("reelhub_vault_" + pin); return currentProfile.vaultPin === hash; }
 function startVaultListener(){
   if(vaultUnsubscribe){ vaultUnsubscribe(); vaultUnsubscribe = null; }
   if(!currentUser) return;
-  vaultUnsubscribe = onSnapshot(query(collection(db, "vault_files"), where("userId", "==", currentUser.uid)),
-    snapshot=>{
-      vaultFilesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      vaultFilesCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
-      if($("vaultViewerModal")?.classList.contains("show")) renderVaultContent();
-    }, error=>console.error("Vault listener error:", error));
+  vaultUnsubscribe = onSnapshot(query(collection(db, "vault_files"), where("userId", "==", currentUser.uid)), snapshot=>{ vaultFilesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() })); vaultFilesCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt)); if($("vaultViewerModal")?.classList.contains("show")) renderVaultContent(); }, error=>console.error("Vault listener error:", error));
 }
-
 async function openVaultFlow(){
   if(!currentUser) return;
   currentProfile = await getProfile(currentUser.uid);
   const hasPin = await hasVaultPin();
-  if(!hasPin){
-    $("newPinInput").value = ""; $("confirmPinInput").value = ""; $("pinSetupStatus").textContent = "";
-    hideModal("settingsModal"); hideModal("advancedSettingsModal");
-    showModal("pinSetupModal"); return;
-  }
-  if(vaultPinVerified && (Date.now() - vaultUnlockTime) < VAULT_AUTO_LOCK_MS){
-    hideModal("settingsModal"); hideModal("advancedSettingsModal");
-    openVaultViewer(); return;
-  }
-  vaultPinVerified = false;
-  $("vaultPinInput").value = ""; $("pinEntryStatus").textContent = "";
-  hideModal("settingsModal"); hideModal("advancedSettingsModal");
-  showModal("pinEntryModal");
+  if(!hasPin){ $("newPinInput").value = ""; $("confirmPinInput").value = ""; $("pinSetupStatus").textContent = ""; hideModal("settingsModal"); hideModal("advancedSettingsModal"); showModal("pinSetupModal"); return; }
+  if(vaultPinVerified && (Date.now() - vaultUnlockTime) < VAULT_AUTO_LOCK_MS){ hideModal("settingsModal"); hideModal("advancedSettingsModal"); openVaultViewer(); return; }
+  vaultPinVerified = false; $("vaultPinInput").value = ""; $("pinEntryStatus").textContent = "";
+  hideModal("settingsModal"); hideModal("advancedSettingsModal"); showModal("pinEntryModal");
   setTimeout(() => $("vaultPinInput").focus(), 300);
 }
-
 $("savePinBtn")?.addEventListener("click", async () => {
-  const pin = $("newPinInput").value.trim();
-  const confirm = $("confirmPinInput").value.trim();
-  const status = $("pinSetupStatus");
+  const pin = $("newPinInput").value.trim(); const confirm = $("confirmPinInput").value.trim(); const status = $("pinSetupStatus");
   if(!/^\d{4}$/.test(pin)){ status.style.color = "#ed4956"; status.textContent = "PIN must be 4 digits"; return; }
   if(pin !== confirm){ status.style.color = "#ed4956"; status.textContent = "PINs don't match"; return; }
   status.style.color = "#7c3aed"; status.textContent = "Saving...";
   const ok = await saveVaultPin(pin);
-  if(ok){
-    status.style.color = "#22c55e"; status.textContent = "✅ PIN set!";
-    vaultPinVerified = true; vaultUnlockTime = Date.now();
-    setTimeout(() => { hideModal("pinSetupModal"); openVaultViewer(); }, 600);
-  } else { status.style.color = "#ed4956"; status.textContent = "Failed"; }
+  if(ok){ status.style.color = "#22c55e"; status.textContent = "✅ PIN set!"; vaultPinVerified = true; vaultUnlockTime = Date.now(); setTimeout(() => { hideModal("pinSetupModal"); openVaultViewer(); }, 600); }
+  else { status.style.color = "#ed4956"; status.textContent = "Failed"; }
 });
-
 $("unlockVaultBtn")?.addEventListener("click", async () => {
-  const pin = $("vaultPinInput").value.trim();
-  const status = $("pinEntryStatus");
-  const input = $("vaultPinInput");
-  if(!/^\d{4}$/.test(pin)){
-    status.textContent = "Enter 4-digit PIN";
-    input.classList.add("pin-error");
-    setTimeout(() => input.classList.remove("pin-error"), 400);
-    return;
-  }
+  const pin = $("vaultPinInput").value.trim(); const status = $("pinEntryStatus"); const input = $("vaultPinInput");
+  if(!/^\d{4}$/.test(pin)){ status.textContent = "Enter 4-digit PIN"; input.classList.add("pin-error"); setTimeout(() => input.classList.remove("pin-error"), 400); return; }
   const valid = await verifyVaultPin(pin);
-  if(valid){
-    status.style.color = "#22c55e"; status.textContent = "✅ Unlocked!";
-    vaultPinVerified = true; vaultUnlockTime = Date.now();
-    setTimeout(() => { hideModal("pinEntryModal"); openVaultViewer(); }, 400);
-  } else {
-    status.style.color = "#ed4956"; status.textContent = "❌ Wrong PIN";
-    input.value = ""; input.classList.add("pin-error");
-    setTimeout(() => input.classList.remove("pin-error"), 400);
-  }
+  if(valid){ status.style.color = "#22c55e"; status.textContent = "✅ Unlocked!"; vaultPinVerified = true; vaultUnlockTime = Date.now(); setTimeout(() => { hideModal("pinEntryModal"); openVaultViewer(); }, 400); }
+  else { status.style.color = "#ed4956"; status.textContent = "❌ Wrong PIN"; input.value = ""; input.classList.add("pin-error"); setTimeout(() => input.classList.remove("pin-error"), 400); }
 });
 $("vaultPinInput")?.addEventListener("keydown", (e) => { if(e.key === "Enter") $("unlockVaultBtn")?.click(); });
-
-function openVaultViewer(){
-  renderVaultContent();
-  updateVaultFileCount();
-  showModal("vaultViewerModal");
-  startVaultListener();
-}
-function updateVaultFileCount(){
-  const countEl = $("vaultFileCount");
-  if(countEl) countEl.textContent = vaultFilesCache.length + " file" + (vaultFilesCache.length === 1 ? "" : "s");
-}
+function openVaultViewer(){ renderVaultContent(); updateVaultFileCount(); showModal("vaultViewerModal"); startVaultListener(); }
+function updateVaultFileCount(){ const countEl = $("vaultFileCount"); if(countEl) countEl.textContent = vaultFilesCache.length + " file" + (vaultFilesCache.length === 1 ? "" : "s"); }
 function renderVaultContent(){
-  const container = $("vaultContent");
-  if(!container) return;
-  if(!vaultFilesCache.length){
-    container.innerHTML = `<div class="vault-empty"><span class="icon">🔐</span><h3>Vault is empty</h3><p>Tap "Add Files" to add photos/videos</p></div>`;
-    updateVaultFileCount(); return;
-  }
+  const container = $("vaultContent"); if(!container) return;
+  if(!vaultFilesCache.length){ container.innerHTML = `<div class="vault-empty"><span class="icon">🔐</span><h3>Vault is empty</h3><p>Tap "Add Files" to add photos/videos</p></div>`; updateVaultFileCount(); return; }
   let html = `<div class="vault-grid">`;
-  vaultFilesCache.forEach(f => {
-    if(f.mediaType === "video") html += `<div class="vault-item" data-vault-file="${esc(f.id)}"><video src="${esc(f.mediaURL)}" preload="metadata" muted></video><span class="vault-item-type">🎬</span></div>`;
-    else html += `<div class="vault-item" data-vault-file="${esc(f.id)}"><img src="${esc(f.mediaURL)}" alt=""><span class="vault-item-type">📷</span></div>`;
-  });
-  html += `</div>`;
-  container.innerHTML = html;
-  updateVaultFileCount();
+  vaultFilesCache.forEach(f => { if(f.mediaType === "video") html += `<div class="vault-item" data-vault-file="${esc(f.id)}"><video src="${esc(f.mediaURL)}" preload="metadata" muted></video><span class="vault-item-type">🎬</span></div>`; else html += `<div class="vault-item" data-vault-file="${esc(f.id)}"><img src="${esc(f.mediaURL)}" alt=""><span class="vault-item-type">📷</span></div>`; });
+  html += `</div>`; container.innerHTML = html; updateVaultFileCount();
 }
-
-$("vaultAddFilesBtn")?.addEventListener("click", (e) => {
-  e.preventDefault(); e.stopPropagation();
-  if(vaultUploading){ toast("Upload in progress..."); return; }
-  const input = $("vaultFileInput");
-  if(input){ input.value = ""; input.click(); }
-});
-
+$("vaultAddFilesBtn")?.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); if(vaultUploading){ toast("Upload in progress..."); return; } const input = $("vaultFileInput"); if(input){ input.value = ""; input.click(); } });
 $("vaultFileInput")?.addEventListener("change", async (e) => {
   const files = Array.from(e.target.files || []);
   if(!files.length) return;
@@ -4738,379 +2955,230 @@ $("vaultFileInput")?.addEventListener("change", async (e) => {
   if(vaultFilesCache.length + files.length > VAULT_MAX_FILES){ toast(`Max ${VAULT_MAX_FILES} files`); e.target.value = ""; return; }
   for(const f of files){ if(f.size > VAULT_MAX_FILE_SIZE){ toast(`"${f.name}" too large`); e.target.value = ""; return; } }
   vaultUploading = true;
-  const progressWrap = $("vaultUploadProgress");
-  const progressBar = $("vaultUploadBar");
-  const progressLabel = $("vaultUploadLabel");
+  const progressWrap = $("vaultUploadProgress"); const progressBar = $("vaultUploadBar"); const progressLabel = $("vaultUploadLabel");
   if(progressWrap) progressWrap.style.display = "block";
   let completed = 0, failed = 0;
   for(let i = 0; i < files.length; i++){
-    const file = files[i];
-    const mediaType = file.type.startsWith("video/") ? "video" : "image";
+    const file = files[i]; const mediaType = file.type.startsWith("video/") ? "video" : "image";
     if(progressLabel) progressLabel.textContent = `Uploading ${i + 1}/${files.length}: ${file.name}`;
-    try{
-      const url = await uploadToCloudinary(file, (pct)=>{ if(progressBar) progressBar.style.width = pct + "%"; });
-      await addDoc(collection(db, "vault_files"), { userId: currentUser.uid, mediaURL: url, mediaType: mediaType, fileName: file.name, fileSize: file.size, createdAt: serverTimestamp() });
-      completed++;
-    }catch(err){ failed++; }
+    try{ const url = await uploadToCloudinary(file, (pct)=>{ if(progressBar) progressBar.style.width = pct + "%"; }); await addDoc(collection(db, "vault_files"), { userId: currentUser.uid, mediaURL: url, mediaType: mediaType, fileName: file.name, fileSize: file.size, createdAt: serverTimestamp() }); completed++; }
+    catch(err){ failed++; }
   }
   vaultUploading = false;
-  if(progressBar) progressBar.style.width = "0%";
-  if(progressWrap) progressWrap.style.display = "none";
+  if(progressBar) progressBar.style.width = "0%"; if(progressWrap) progressWrap.style.display = "none";
   e.target.value = "";
-  if(completed > 0) toast(`✅ ${completed} added`);
-  else toast("❌ Failed");
+  if(completed > 0) toast(`✅ ${completed} added`); else toast("❌ Failed");
 });
-
 document.addEventListener("click", (e) => {
   const vaultItem = e.target.closest("[data-vault-file]");
-  if(vaultItem){
-    e.preventDefault(); e.stopPropagation();
-    const fileId = vaultItem.dataset.vaultFile;
-    const f = vaultFilesCache.find(x => x.id === fileId);
-    if(!f) return;
-    if(f.mediaType === "video") openVaultVideoPlayer(f);
-    else { if($("largeChatImage")) $("largeChatImage").src = f.mediaURL; showModal("imageViewerModal"); }
-  }
+  if(vaultItem){ e.preventDefault(); e.stopPropagation(); const fileId = vaultItem.dataset.vaultFile; const f = vaultFilesCache.find(x => x.id === fileId); if(!f) return; if(f.mediaType === "video") openVaultVideoPlayer(f); else { if($("largeChatImage")) $("largeChatImage").src = f.mediaURL; showModal("imageViewerModal"); } }
 });
-
 function openVaultVideoPlayer(f){
   hideModal("vaultViewerModal");
-  const videoEl = $("videoPlayerVideo");
-  if(videoEl){ videoEl.src = f.mediaURL; videoEl.play().catch(()=>{}); }
+  const videoEl = $("videoPlayerVideo"); if(videoEl){ videoEl.src = f.mediaURL; videoEl.play().catch(()=>{}); }
   if($("videoPlayerTitle")) $("videoPlayerTitle").textContent = f.fileName || "Vault Video";
   if($("videoPlayerMeta")) $("videoPlayerMeta").textContent = timeAgo(f.createdAt);
   ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn", "videoPlayerSpeedBtn", "videoPlayerDownloadBtn"].forEach(id => { const btn = $(id); if(btn) btn.style.display = "none"; });
   showModal("videoPlayerModal");
 }
-
 $("advancedSettingsBtn")?.addEventListener("click", () => { hideModal("settingsModal"); showModal("advancedSettingsModal"); });
 $("openVaultBtn")?.addEventListener("click", () => { openVaultFlow(); });
-$("changePinBtn")?.addEventListener("click", async () => {
-  if(!confirm("Change vault PIN?")) return;
-  hideModal("advancedSettingsModal");
-  $("newPinInput").value = ""; $("confirmPinInput").value = ""; $("pinSetupStatus").textContent = "";
-  showModal("pinSetupModal");
-});
+$("changePinBtn")?.addEventListener("click", async () => { if(!confirm("Change vault PIN?")) return; hideModal("advancedSettingsModal"); $("newPinInput").value = ""; $("confirmPinInput").value = ""; $("pinSetupStatus").textContent = ""; showModal("pinSetupModal"); });
 $("vaultSettingsBtn")?.addEventListener("click", () => { hideModal("advancedSettingsModal"); showModal("vaultSettingsModal"); updateVaultAutoLockUI(); });
-
-function updateVaultAutoLockUI(){
-  const toggle = $("vaultAutoLockToggle");
-  if(!toggle) return;
-  toggle.textContent = vaultAutoLockEnabled ? "ON" : "OFF";
-  toggle.style.color = vaultAutoLockEnabled ? "#22c55e" : "var(--muted)";
-}
-$("vaultAutoLockBtn")?.addEventListener("click", () => {
-  vaultAutoLockEnabled = !vaultAutoLockEnabled;
-  localStorage.setItem("reelhubVaultAutoLock", vaultAutoLockEnabled ? "1" : "0");
-  updateVaultAutoLockUI();
-});
+function updateVaultAutoLockUI(){ const toggle = $("vaultAutoLockToggle"); if(!toggle) return; toggle.textContent = vaultAutoLockEnabled ? "ON" : "OFF"; toggle.style.color = vaultAutoLockEnabled ? "#22c55e" : "var(--muted)"; }
+$("vaultAutoLockBtn")?.addEventListener("click", () => { vaultAutoLockEnabled = !vaultAutoLockEnabled; localStorage.setItem("reelhubVaultAutoLock", vaultAutoLockEnabled ? "1" : "0"); updateVaultAutoLockUI(); });
 if(localStorage.getItem("reelhubVaultAutoLock") === "0") vaultAutoLockEnabled = false;
+$("clearVaultBtn")?.addEventListener("click", async () => { if(!vaultFilesCache.length){ toast("Empty"); return; } if(!confirm(`Delete all ${vaultFilesCache.length} files?`)) return; let count = 0; for(const f of vaultFilesCache){ try{ await deleteDoc(doc(db, "vault_files", f.id)); count++; }catch(e){} } toast(`🗑️ ${count} deleted`); hideModal("vaultSettingsModal"); });
+$("removeVaultBtn")?.addEventListener("click", async () => { if(!confirm("Remove Vault completely?")) return; for(const f of vaultFilesCache){ try{ await deleteDoc(doc(db, "vault_files", f.id)); }catch(e){} } await updateDoc(doc(db, "profiles", currentUser.uid), { vaultPin: "", vaultEnabled: false, updatedAt: serverTimestamp() }); currentProfile.vaultPin = ""; currentProfile.vaultEnabled = false; vaultFilesCache = []; vaultPinVerified = false; toast("✅ Removed"); hideModal("vaultSettingsModal"); hideModal("advancedSettingsModal"); hideModal("vaultViewerModal"); });
 
-$("clearVaultBtn")?.addEventListener("click", async () => {
-  if(!vaultFilesCache.length){ toast("Empty"); return; }
-  if(!confirm(`Delete all ${vaultFilesCache.length} files?`)) return;
-  let count = 0;
-  for(const f of vaultFilesCache){ try{ await deleteDoc(doc(db, "vault_files", f.id)); count++; }catch(e){} }
-  toast(`🗑️ ${count} deleted`);
-  hideModal("vaultSettingsModal");
-});
-
-$("removeVaultBtn")?.addEventListener("click", async () => {
-  if(!confirm("Remove Vault completely?")) return;
-  for(const f of vaultFilesCache){ try{ await deleteDoc(doc(db, "vault_files", f.id)); }catch(e){} }
-  await updateDoc(doc(db, "profiles", currentUser.uid), { vaultPin: "", vaultEnabled: false, updatedAt: serverTimestamp() });
-  currentProfile.vaultPin = ""; currentProfile.vaultEnabled = false;
-  vaultFilesCache = []; vaultPinVerified = false;
-  toast("✅ Removed");
-  hideModal("vaultSettingsModal"); hideModal("advancedSettingsModal"); hideModal("vaultViewerModal");
-});
-
-/* ============================================================
-   ADMIN — SONG LIBRARY
-============================================================ */
-function openAdminSongLibrary(){
-  if(!isAdminUser()){ toast("Only admin"); return; }
-  hideModal("advancedSettingsModal");
-  showModal("adminSongLibraryModal");
-  renderAdminSongLibrary();
-  startSongLibraryListener();
-}
-
+/* ---- ADMIN SONG LIBRARY ---- */
+function openAdminSongLibrary(){ if(!isAdminUser()){ toast("Only admin"); return; } hideModal("advancedSettingsModal"); showModal("adminSongLibraryModal"); renderAdminSongLibrary(); startSongLibraryListener(); }
 function renderAdminSongLibrary(){
-  const container = $("songLibraryList");
-  if(!container) return;
-  const countEl = $("songCount");
-  if(countEl) countEl.textContent = songLibraryCache.length + " songs";
-  if(!songLibraryCache.length){
-    container.innerHTML = `<div class="song-library-empty"><span class="icon">🎵</span><h3>No songs yet</h3><p>Tap "Add New Song" to add</p></div>`;
-    return;
-  }
-  container.innerHTML = songLibraryCache.map(s => `
-    <div class="song-library-item">
-      <div class="song-thumb">🎵</div>
-      <div class="song-info">
-        <strong>${esc(s.name || "Untitled")}</strong>
-        <small>${esc(s.artist || "Unknown")} · ${esc(s.category || "Other")}</small>
-      </div>
-      <div class="song-actions">
-        <button class="play-btn" data-play-song="${esc(s.id)}">▶</button>
-        <button class="edit-btn" data-edit-song="${esc(s.id)}">✏️</button>
-        <button class="delete-btn" data-delete-song="${esc(s.id)}">🗑️</button>
-      </div>
-    </div>
-  `).join("");
+  const container = $("songLibraryList"); if(!container) return;
+  const countEl = $("songCount"); if(countEl) countEl.textContent = songLibraryCache.length + " songs";
+  if(!songLibraryCache.length){ container.innerHTML = `<div class="song-library-empty"><span class="icon">🎵</span><h3>No songs yet</h3><p>Tap "Add New Song" to add</p></div>`; return; }
+  container.innerHTML = songLibraryCache.map(s => `<div class="song-library-item"><div class="song-thumb">🎵</div><div class="song-info"><strong>${esc(s.name || "Untitled")}</strong><small>${esc(s.artist || "Unknown")} · ${esc(s.category || "Other")}</small></div><div class="song-actions"><button class="play-btn" data-play-song="${esc(s.id)}">▶</button><button class="edit-btn" data-edit-song="${esc(s.id)}">✏️</button><button class="delete-btn" data-delete-song="${esc(s.id)}">🗑️</button></div></div>`).join("");
 }
-
 function openAddSongModal(){
   editingSongId = null; pendingSongFile = null;
-  $("addSongTitle").textContent = "➕ Add Song";
-  $("songName").value = ""; $("songArtist").value = "";
-  $("songCategory").value = "Bollywood";
-  $("songFile").value = "";
-  $("songFileSelected").style.display = "none";
-  $("songUploadStatus").textContent = "";
-  $("songUploadProgress").classList.remove("active");
-  $("songUploadProgressBar").style.width = "0%";
-  hideModal("adminSongLibraryModal");
-  showModal("addSongModal");
+  $("addSongTitle").textContent = "➕ Add Song"; $("songName").value = ""; $("songArtist").value = ""; $("songCategory").value = "Bollywood"; $("songFile").value = "";
+  $("songFileSelected").style.display = "none"; $("songUploadStatus").textContent = ""; $("songUploadProgress").classList.remove("active"); $("songUploadProgressBar").style.width = "0%";
+  hideModal("adminSongLibraryModal"); showModal("addSongModal");
 }
-
 function openEditSongModal(songId){
-  const song = songLibraryCache.find(s => s.id === songId);
-  if(!song) return;
+  const song = songLibraryCache.find(s => s.id === songId); if(!song) return;
   editingSongId = songId; pendingSongFile = null;
-  $("addSongTitle").textContent = "✏️ Edit Song";
-  $("songName").value = song.name || "";
-  $("songArtist").value = song.artist || "";
-  $("songCategory").value = song.category || "Bollywood";
-  $("songFile").value = "";
-  $("songFileName").textContent = song.name + " (current)";
-  $("songFileSelected").style.display = "flex";
-  $("songUploadStatus").textContent = "";
-  hideModal("adminSongLibraryModal");
-  showModal("addSongModal");
+  $("addSongTitle").textContent = "✏️ Edit Song"; $("songName").value = song.name || ""; $("songArtist").value = song.artist || ""; $("songCategory").value = song.category || "Bollywood"; $("songFile").value = "";
+  $("songFileName").textContent = song.name + " (current)"; $("songFileSelected").style.display = "flex"; $("songUploadStatus").textContent = "";
+  hideModal("adminSongLibraryModal"); showModal("addSongModal");
 }
-
 $("songUploadZone")?.addEventListener("click", () => { $("songFile")?.click(); });
-
-$("songFile")?.addEventListener("change", (e) => {
-  const file = e.target.files[0];
-  if(!file) return;
-  if(file.size > 100 * 1024 * 1024){ toast("File too large"); e.target.value = ""; return; }
-  pendingSongFile = file;
-  $("songFileName").textContent = file.name;
-  $("songFileSelected").style.display = "flex";
-});
-
-$("songFileRemoveBtn")?.addEventListener("click", (e) => {
-  e.preventDefault(); e.stopPropagation();
-  pendingSongFile = null;
-  $("songFile").value = "";
-  $("songFileSelected").style.display = "none";
-});
-
+$("songFile")?.addEventListener("change", (e) => { const file = e.target.files[0]; if(!file) return; if(file.size > 100 * 1024 * 1024){ toast("File too large"); e.target.value = ""; return; } pendingSongFile = file; $("songFileName").textContent = file.name; $("songFileSelected").style.display = "flex"; });
+$("songFileRemoveBtn")?.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); pendingSongFile = null; $("songFile").value = ""; $("songFileSelected").style.display = "none"; });
 $("saveSongBtn")?.addEventListener("click", async () => {
-  const name = $("songName").value.trim();
-  const artist = $("songArtist").value.trim();
-  const category = $("songCategory").value;
-  const status = $("songUploadStatus");
+  const name = $("songName").value.trim(); const artist = $("songArtist").value.trim(); const category = $("songCategory").value; const status = $("songUploadStatus");
   if(!name){ status.style.color = "#ef4444"; status.textContent = "Name required"; return; }
   if(!editingSongId && !pendingSongFile){ status.style.color = "#ef4444"; status.textContent = "Select file"; return; }
-  const btn = $("saveSongBtn");
-  btn.disabled = true; btn.textContent = "Saving...";
-  status.style.color = "#a78bfa"; status.textContent = "Saving...";
+  const btn = $("saveSongBtn"); btn.disabled = true; btn.textContent = "Saving..."; status.style.color = "#a78bfa"; status.textContent = "Saving...";
   try{
     let audioURL = "";
-    if(pendingSongFile){
-      status.textContent = "Uploading...";
-      $("songUploadProgress").classList.add("active");
-      audioURL = await uploadAudioToCloudinary(pendingSongFile, (pct) => {
-        $("songUploadProgressBar").style.width = pct + "%";
-        status.textContent = "Uploading " + pct + "%";
-      });
-    } else if(editingSongId){
-      const existing = songLibraryCache.find(s => s.id === editingSongId);
-      audioURL = existing?.audioURL || "";
-    }
-    if(editingSongId){
-      await updateDoc(doc(db, "song_library", editingSongId), { name, artist, category, audioURL, updatedAt: serverTimestamp() });
-      toast("✅ Updated");
-    } else {
-      await addDoc(collection(db, "song_library"), { name, artist, category, audioURL, createdBy: currentUser.uid, createdByName: currentProfile?.name || "Admin", createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-      toast("✅ Song added");
-    }
+    if(pendingSongFile){ status.textContent = "Uploading..."; $("songUploadProgress").classList.add("active"); audioURL = await uploadAudioToCloudinary(pendingSongFile, (pct) => { $("songUploadProgressBar").style.width = pct + "%"; status.textContent = "Uploading " + pct + "%"; }); }
+    else if(editingSongId){ const existing = songLibraryCache.find(s => s.id === editingSongId); audioURL = existing?.audioURL || ""; }
+    if(editingSongId){ await updateDoc(doc(db, "song_library", editingSongId), { name, artist, category, audioURL, updatedAt: serverTimestamp() }); toast("✅ Updated"); }
+    else { await addDoc(collection(db, "song_library"), { name, artist, category, audioURL, createdBy: currentUser.uid, createdByName: currentProfile?.name || "Admin", createdAt: serverTimestamp(), updatedAt: serverTimestamp() }); toast("✅ Song added"); }
     status.style.color = "#22c55e"; status.textContent = "✅ Saved!";
     setTimeout(() => { hideModal("addSongModal"); showModal("adminSongLibraryModal"); }, 700);
-  } catch(err) {
-    console.error(err);
-    status.style.color = "#ef4444"; status.textContent = "Error: " + err.message;
-  } finally {
-    btn.disabled = false; btn.textContent = "✅ Save Song";
-    $("songUploadProgress").classList.remove("active");
-  }
+  } catch(err) { status.style.color = "#ef4444"; status.textContent = "Error: " + err.message; }
+  finally { btn.disabled = false; btn.textContent = "✅ Save Song"; $("songUploadProgress").classList.remove("active"); }
 });
-
 $("addSongModalClose")?.addEventListener("click", () => { hideModal("addSongModal"); });
 $("cancelSongBtn")?.addEventListener("click", () => { hideModal("addSongModal"); });
-
-function playSongPreview(songId){
-  const song = songLibraryCache.find(s => s.id === songId);
-  if(!song || !song.audioURL){ toast("No audio"); return; }
-  if(previewAudio){ previewAudio.pause(); previewAudio = null; }
-  previewAudio = new Audio(song.audioURL);
-  previewAudio.play().then(() => toast("▶ " + song.name)).catch(() => toast("Play failed"));
-  previewAudio.onended = () => { previewAudio = null; };
-}
-
-async function deleteSong(songId){
-  const song = songLibraryCache.find(s => s.id === songId);
-  if(!song) return;
-  if(!confirm(`Delete "${song.name}"?`)) return;
-  try{ await deleteDoc(doc(db, "song_library", songId)); toast("🗑️ Deleted"); }
-  catch(e){ toast("Failed"); }
-}
-
+function playSongPreview(songId){ const song = songLibraryCache.find(s => s.id === songId); if(!song || !song.audioURL){ toast("No audio"); return; } if(previewAudio){ previewAudio.pause(); previewAudio = null; } previewAudio = new Audio(song.audioURL); previewAudio.play().then(() => toast("▶ " + song.name)).catch(() => toast("Play failed")); previewAudio.onended = () => { previewAudio = null; }; }
+async function deleteSong(songId){ const song = songLibraryCache.find(s => s.id === songId); if(!song) return; if(!confirm(`Delete "${song.name}"?`)) return; try{ await deleteDoc(doc(db, "song_library", songId)); toast("🗑️ Deleted"); }catch(e){ toast("Failed"); } }
 document.addEventListener("click", (e)=>{
   const t = e.target;
-  const adminBtn = t.closest("#adminSongLibraryBtn");
-  if(adminBtn){ e.preventDefault(); e.stopPropagation(); openAdminSongLibrary(); return; }
-  const addBtn = t.closest("#addSongBtn");
-  if(addBtn){ e.preventDefault(); e.stopPropagation(); openAddSongModal(); return; }
-  const playBtn = t.closest("[data-play-song]");
-  if(playBtn){ e.preventDefault(); e.stopPropagation(); playSongPreview(playBtn.dataset.playSong); return; }
-  const editBtn = t.closest("[data-edit-song]");
-  if(editBtn){ e.preventDefault(); e.stopPropagation(); openEditSongModal(editBtn.dataset.editSong); return; }
-  const delBtn = t.closest("[data-delete-song]");
-  if(delBtn){ e.preventDefault(); e.stopPropagation(); deleteSong(delBtn.dataset.deleteSong); return; }
+  const adminBtn = t.closest("#adminSongLibraryBtn"); if(adminBtn){ e.preventDefault(); e.stopPropagation(); openAdminSongLibrary(); return; }
+  const addBtn = t.closest("#addSongBtn"); if(addBtn){ e.preventDefault(); e.stopPropagation(); openAddSongModal(); return; }
+  const playBtn = t.closest("[data-play-song]"); if(playBtn){ e.preventDefault(); e.stopPropagation(); playSongPreview(playBtn.dataset.playSong); return; }
+  const editBtn = t.closest("[data-edit-song]"); if(editBtn){ e.preventDefault(); e.stopPropagation(); openEditSongModal(editBtn.dataset.editSong); return; }
+  const delBtn = t.closest("[data-delete-song]"); if(delBtn){ e.preventDefault(); e.stopPropagation(); deleteSong(delBtn.dataset.deleteSong); return; }
 });
 
-/* ============================================================
-   GLOBAL CLICK HANDLER
-============================================================ */
+/* ---- STICKER & SONG PICKER ---- */
+function openSongPicker(context){ songPickerContext = context || "story"; selectedSongForApply = null; showModal("songPickerModal"); renderSongPickerList(""); }
+function renderSongPickerList(searchText){
+  const container = $("songPickerList"); if(!container) return;
+  const q = (searchText || "").toLowerCase().trim();
+  let list = songLibraryCache;
+  if(q) list = list.filter(s => (s.name || "").toLowerCase().includes(q) || (s.artist || "").toLowerCase().includes(q) || (s.category || "").toLowerCase().includes(q));
+  if(!list.length){ container.innerHTML = `<div class="song-library-empty"><span class="icon">🎵</span><h3>No songs ${q ? "found" : "yet"}</h3><p>${q ? "Try another search" : "Admin will add songs soon"}</p></div>`; return; }
+  container.innerHTML = list.map(s => `<div class="song-picker-item" data-pick-song="${esc(s.id)}"><div class="song-thumb">🎵</div><div class="song-info"><strong>${esc(s.name || "Untitled")}</strong><small>${esc(s.artist || "Unknown")} · ${esc(s.category || "")}</small></div><div class="check-icon"></div></div>`).join("");
+}
+$("songSearchInput")?.addEventListener("input", (e)=>{ renderSongPickerList(e.target.value); });
+document.addEventListener("click", (e)=>{ const pickerItem = e.target.closest("[data-pick-song]"); if(pickerItem){ e.preventDefault(); e.stopPropagation(); const songId = pickerItem.dataset.pickSong; document.querySelectorAll("#songPickerList .song-picker-item").forEach(el => { el.classList.remove("selected"); const check = el.querySelector(".check-icon"); if(check) check.textContent = ""; }); pickerItem.classList.add("selected"); const check = pickerItem.querySelector(".check-icon"); if(check) check.textContent = "✓"; selectedSongForApply = songLibraryCache.find(s => s.id === songId) || null; } });
+$("confirmSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(!selectedSongForApply){ toast("Select a song first"); return; } if(songPickerContext === "story") applySongToStory(selectedSongForApply); else if(songPickerContext === "video") applySongToVideo(selectedSongForApply); else if(songPickerContext === "story_edit") applySongToStoryEdit(selectedSongForApply); hideModal("songPickerModal"); });
+$("removeSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(songPickerContext === "story") removeSongFromStory(); else if(songPickerContext === "video") removeSongFromVideo(); else if(songPickerContext === "story_edit") removeSongFromStoryEdit(); hideModal("songPickerModal"); });
+function applySongToStory(song){ pendingStorySong = song; const btn = $("storyAddSongBtn"); if(btn){ btn.innerHTML = `🎵 ${esc(song.name).slice(0, 12)} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("🎵 Song added"); }
+function removeSongFromStory(){ pendingStorySong = null; const btn = $("storyAddSongBtn"); if(btn){ btn.innerHTML = "🎵 Song"; btn.style.borderColor = ""; btn.style.color = ""; } toast("🔇 Song removed"); }
+function applySongToVideo(song){ pendingVideoSong = song; const status = $("videoEditStatus"); if(status) status.textContent = "🎵 " + song.name + " selected"; const btn = $("editVideoSongBtn"); if(btn){ btn.innerHTML = `🎵 ${esc(song.name).slice(0, 10)} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("🎵 Song selected"); }
+function removeSongFromVideo(){ pendingVideoSong = null; const btn = $("editVideoSongBtn"); if(btn){ btn.innerHTML = "🎵 Song"; btn.style.borderColor = ""; btn.style.color = ""; } toast("🔇 Song removed"); }
+function applySongToStoryEdit(song){ window.__editingStorySong = song; updateEditStoryButtons(); hideModal("songPickerModal"); showModal("editStoryModal"); toast("🎵 " + song.name + " selected"); }
+function removeSongFromStoryEdit(){ window.__editingStorySong = null; updateEditStoryButtons(); hideModal("songPickerModal"); showModal("editStoryModal"); toast("🔇 Song removed"); }
+function openStickerPicker(context){
+  stickerPickerContext = context || "story"; selectedStickerEmoji = null; selectedStickerColor = "#ffffff";
+  document.querySelectorAll("#stickerTabs .yt-tab").forEach(t => t.classList.remove("active"));
+  document.querySelector('#stickerTabs .yt-tab[data-stab="emoji"]')?.classList.add("active");
+  $("stickerEmojiTab")?.classList.remove("hidden"); $("stickerTextTab")?.classList.add("hidden");
+  document.querySelectorAll(".sticker-item").forEach(el=>{ el.style.background = ""; el.style.color = ""; });
+  if($("textStickerInput")) $("textStickerInput").value = "";
+  showModal("stickerPickerModal");
+}
+document.addEventListener("click", (e)=>{ const tab = e.target.closest("#stickerTabs .yt-tab"); if(!tab) return; e.preventDefault(); e.stopPropagation(); const stab = tab.dataset.stab; document.querySelectorAll("#stickerTabs .yt-tab").forEach(t => t.classList.remove("active")); tab.classList.add("active"); if(stab === "emoji"){ $("stickerEmojiTab")?.classList.remove("hidden"); $("stickerTextTab")?.classList.add("hidden"); } else { $("stickerEmojiTab")?.classList.add("hidden"); $("stickerTextTab")?.classList.remove("hidden"); } });
+document.addEventListener("click", (e)=>{ const item = e.target.closest(".sticker-item"); if(!item) return; e.preventDefault(); e.stopPropagation(); document.querySelectorAll(".sticker-item").forEach(el=>{ el.style.background = ""; el.style.color = ""; }); item.style.background = "var(--primary)"; item.style.color = "white"; selectedStickerEmoji = item.dataset.sticker; });
+document.addEventListener("click", (e)=>{ const colorEl = e.target.closest(".text-sticker-color"); if(!colorEl) return; e.preventDefault(); e.stopPropagation(); document.querySelectorAll(".text-sticker-color").forEach(el=>{ el.classList.remove("selected"); }); colorEl.classList.add("selected"); selectedStickerColor = colorEl.dataset.color; });
+$("confirmStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); let sticker = null; if(selectedStickerEmoji) sticker = { type: "emoji", icon: selectedStickerEmoji }; else { const text = $("textStickerInput")?.value.trim(); if(text) sticker = { type: "text", text: text, icon: text.slice(0, 3) || "✏️", color: selectedStickerColor }; } if(!sticker){ toast("Select emoji or enter text"); return; } if(stickerPickerContext === "story") applyStickerToStory(sticker); else if(stickerPickerContext === "video") applyStickerToVideo(sticker); else if(stickerPickerContext === "story_edit") applyStickerToStoryEdit(sticker); hideModal("stickerPickerModal"); });
+$("removeStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(stickerPickerContext === "story") removeStickerFromStory(); else if(stickerPickerContext === "video") removeStickerFromVideo(); else if(stickerPickerContext === "story_edit") removeStickerFromStoryEdit(); hideModal("stickerPickerModal"); });
+function applyStickerToStory(sticker){ pendingStorySticker = sticker; const btn = $("storyAddStickerBtn"); if(btn){ btn.innerHTML = `${sticker.icon || "😀"} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("😀 Sticker added"); }
+function removeStickerFromStory(){ pendingStorySticker = null; const btn = $("storyAddStickerBtn"); if(btn){ btn.innerHTML = "😀 Sticker"; btn.style.borderColor = ""; btn.style.color = ""; } toast("Sticker removed"); }
+function applyStickerToVideo(sticker){ pendingVideoSticker = sticker; const status = $("videoEditStatus"); if(status) status.textContent = `${sticker.icon || "😀"} Sticker selected`; const btn = $("editVideoStickerBtn"); if(btn){ btn.innerHTML = `${sticker.icon || "😀"} ✓`; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } toast("😀 Sticker selected"); }
+function removeStickerFromVideo(){ pendingVideoSticker = null; const btn = $("editVideoStickerBtn"); if(btn){ btn.innerHTML = "😀 Sticker"; btn.style.borderColor = ""; btn.style.color = ""; } toast("Sticker removed"); }
+function applyStickerToStoryEdit(sticker){ window.__editingStorySticker = sticker; updateEditStoryButtons(); hideModal("stickerPickerModal"); showModal("editStoryModal"); toast("😀 Sticker added"); }
+function removeStickerFromStoryEdit(){ window.__editingStorySticker = null; updateEditStoryButtons(); hideModal("stickerPickerModal"); showModal("editStoryModal"); toast("Sticker removed"); }
+$("storyAddSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("story"); });
+$("storyAddStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openStickerPicker("story"); });
+$("editVideoSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openSongPicker("video"); });
+$("editVideoStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); openStickerPicker("video"); });
+
+/* ---- STORY EDITOR ---- */
+function updateEditStoryButtons(){
+  const songBtn = $("editStoryChangeSongBtn");
+  if(songBtn){ if(window.__editingStorySong){ songBtn.innerHTML = `🎵 ${esc(window.__editingStorySong.name || "Song")} ✓`; songBtn.style.borderColor = "var(--primary)"; songBtn.style.color = "var(--primary)"; } else { songBtn.innerHTML = "🎵 Add Song"; songBtn.style.borderColor = ""; songBtn.style.color = ""; } }
+  const stickerBtn = $("editStoryChangeStickerBtn");
+  if(stickerBtn){ if(window.__editingStorySticker){ stickerBtn.innerHTML = `${window.__editingStorySticker.icon || "😀"} Sticker ✓`; stickerBtn.style.borderColor = "var(--primary)"; stickerBtn.style.color = "var(--primary)"; } else { stickerBtn.innerHTML = "😀 Add Sticker"; stickerBtn.style.borderColor = ""; stickerBtn.style.color = ""; } }
+}
+$("editStoryChangeSongBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); selectedSongForApply = window.__editingStorySong; hideModal("editStoryModal"); openSongPicker("story_edit"); });
+$("editStoryChangeStickerBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); hideModal("editStoryModal"); openStickerPicker("story_edit"); });
+$("saveStoryEditBtn")?.addEventListener("click", async ()=>{
+  if(!currentStoryId) return;
+  const caption = $("editStoryCaption").value.trim(); const status = $("editStoryStatus"); const btn = $("saveStoryEditBtn");
+  if(btn){ btn.disabled = true; btn.textContent = "Saving..."; }
+  status.textContent = "Saving..."; status.style.color = "#7c3aed";
+  try{
+    await updateDoc(doc(db, "stories", currentStoryId), { caption, song: window.__editingStorySong || null, sticker: window.__editingStorySticker || null, updatedAt: serverTimestamp() });
+    status.textContent = "✅ Saved!"; status.style.color = "#22c55e"; toast("✅ Story updated");
+    setTimeout(async ()=>{ hideModal("editStoryModal"); closeStoryViewer(); await new Promise(r => setTimeout(r, 300)); startStoriesListener(); }, 700);
+  }catch(err){ status.textContent = "Error: " + err.message; status.style.color = "#ed4956"; }
+  finally{ if(btn){ btn.disabled = false; btn.textContent = "✅ Save Changes"; } }
+});
+$("storyMenuEditBtn")?.addEventListener("click", async (e)=>{ e.preventDefault(); e.stopPropagation(); if(!currentStoryId) return; hideModal("storyMenuModal"); await openEditStoryModal(currentStoryId); });
+async function openEditStoryModal(storyId){
+  try{
+    const storySnap = await getDoc(doc(db, "stories", storyId)); if(!storySnap.exists()){ toast("Story not found"); return; }
+    const story = { id: storyId, ...storySnap.data() };
+    if(story.userId !== currentUser.uid && !isAdminUser()){ toast("Not your story"); return; }
+    if(story.mediaType === "video"){ $("editStoryPreview").classList.add("hidden"); $("editStoryVideoPreview").classList.remove("hidden"); $("editStoryVideoPreview").src = story.mediaURL; }
+    else { $("editStoryVideoPreview").classList.add("hidden"); $("editStoryPreview").classList.remove("hidden"); $("editStoryPreview").src = story.mediaURL; }
+    $("editStoryCaption").value = story.caption || "";
+    window.__editingStorySong = story.song || null; window.__editingStorySticker = story.sticker || null;
+    $("editStoryStatus").textContent = ""; updateEditStoryButtons(); showModal("editStoryModal");
+  }catch(e){ toast("Failed to open"); }
+}
+$("storyMenuDeleteBtn")?.addEventListener("click", async (e)=>{ e.preventDefault(); e.stopPropagation(); if(!currentStoryId) return; if(!confirm("Delete this story?")) return; try{ await deleteDoc(doc(db, "stories", currentStoryId)); hideModal("storyMenuModal"); closeStoryViewer(); toast("🗑️ Story deleted"); }catch(e){} });
+
+/* ---- VIDEO EDITOR ---- */
+$("editVideoRotateBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); const videoEl = $("uploadPreview"); if(!videoEl || !videoEl.src){ toast("Select a video first"); return; } pendingVideoRotation = (pendingVideoRotation + 90) % 360; videoEl.style.transform = `rotate(${pendingVideoRotation}deg)`; videoEl.style.transition = "transform 0.3s ease"; const btn = $("editVideoRotateBtn"); if(btn){ btn.innerHTML = `🔄 ${pendingVideoRotation}°`; if(pendingVideoRotation !== 0){ btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } else { btn.style.borderColor = ""; btn.style.color = ""; } } toast(`🔄 Rotated ${pendingVideoRotation}°`); });
+$("editVideoMuteBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); const videoEl = $("uploadPreview"); if(!videoEl || !videoEl.src){ toast("Select a video first"); return; } pendingVideoMuted = !pendingVideoMuted; videoEl.muted = pendingVideoMuted; const btn = $("editVideoMuteBtn"); if(btn){ if(pendingVideoMuted){ btn.innerHTML = "🔇 Muted"; btn.style.borderColor = "var(--primary)"; btn.style.color = "var(--primary)"; } else { btn.innerHTML = "🔊 Sound"; btn.style.borderColor = ""; btn.style.color = ""; } } toast(pendingVideoMuted ? "🔇 Muted" : "🔊 Sound on"); });
+$("editVideoPreviewBtn")?.addEventListener("click", (e)=>{
+  e.preventDefault(); e.stopPropagation();
+  const videoEl = $("uploadPreview"); if(!videoEl || !videoEl.src){ toast("Select a video first"); return; }
+  const playerVideo = $("videoPlayerVideo");
+  if(playerVideo){
+    playerVideo.src = videoEl.src; playerVideo.muted = pendingVideoMuted; playerVideo.style.transform = `rotate(${pendingVideoRotation}deg)`;
+    ["videoPlayerLikeBtn", "videoPlayerCommentBtn", "videoPlayerShareBtn", "videoPlayerDownloadBtn", "videoPlayerSaveBtn", "videoPlayerPlaylistBtn"].forEach(id => { const btn = $(id); if(btn) btn.style.display = "none"; });
+    if($("videoPlayerTitle")) $("videoPlayerTitle").textContent = "🎬 Preview";
+    setTimeout(()=>{ playerVideo.play().catch(()=>{}); }, 300);
+    showModal("videoPlayerModal");
+  }
+});
+function openVideoTrimModal(videoEl){ if(!videoEl || !videoEl.src){ toast("No video selected"); return; } trimVideoElement = videoEl; const trimPreview = $("trimPreviewVideo"); trimPreview.src = videoEl.src; trimPreview.load(); trimPreview.addEventListener("loadedmetadata", ()=>{ trimVideoDuration = trimPreview.duration || 0; $("trimStartRange").max = trimVideoDuration; $("trimEndRange").max = trimVideoDuration; $("trimStartRange").value = 0; $("trimEndRange").value = trimVideoDuration; updateTrimLabels(); }, { once: true }); showModal("videoTrimModal"); }
+function updateTrimLabels(){ const start = Number($("trimStartRange").value) || 0; const end = Number($("trimEndRange").value) || 0; $("trimStartLabel").textContent = formatDuration(start); $("trimEndLabel").textContent = formatDuration(end); $("trimDurationLabel").textContent = formatDuration(Math.max(0, end - start)); }
+$("trimStartRange")?.addEventListener("input", ()=>{ const start = Number($("trimStartRange").value); const end = Number($("trimEndRange").value); if(start > end) $("trimEndRange").value = start; updateTrimLabels(); });
+$("trimEndRange")?.addEventListener("input", ()=>{ const start = Number($("trimStartRange").value); const end = Number($("trimEndRange").value); if(end < start) $("trimStartRange").value = end; updateTrimLabels(); });
+$("trimCancelBtn")?.addEventListener("click", ()=>{ hideModal("videoTrimModal"); trimVideoElement = null; });
+$("trimSaveBtn")?.addEventListener("click", ()=>{ const start = Number($("trimStartRange").value) || 0; const end = Number($("trimEndRange").value) || 0; if(end - start < 1){ toast("Minimum 1 second required"); return; } const trimData = { start, end, applied: true, duration: end - start }; if(window.__trimContext === "story"){ pendingStoryTrim = trimData; toast("✂️ Trim applied to story"); } else if(window.__trimContext === "video"){ pendingVideoTrim = trimData; const status = $("videoEditStatus"); if(status) status.textContent = `✂️ Trimmed: ${formatDuration(start)} - ${formatDuration(end)}`; toast("✂️ Trim applied to video"); } hideModal("videoTrimModal"); trimVideoElement = null; });
+$("editVideoTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); window.__trimContext = "video"; openVideoTrimModal($("uploadPreview")); });
+$("storyTrimBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); if(storyMediaType !== "video"){ toast("Trim only for videos"); return; } window.__trimContext = "story"; openVideoTrimModal($("storyVideoPreview")); });
+
+/* ---- GLOBAL CLICK HANDLER ---- */
 document.addEventListener("click", async (e)=>{
   const t = e.target;
-
-  const acceptReq = t.closest("[data-accept-request]");
-  if(acceptReq){ e.preventDefault(); e.stopPropagation(); const uid = acceptReq.dataset.acceptRequest; if(uid) await acceptFollowRequest(uid); return; }
-
-  const rejectReq = t.closest("[data-reject-request]");
-  if(rejectReq){ e.preventDefault(); e.stopPropagation(); const uid = rejectReq.dataset.rejectRequest; if(uid) await rejectFollowRequest(uid); return; }
-
-  const openUser = t.closest(".post-open-user");
-  if(openUser){ e.preventDefault(); e.stopPropagation(); const uid = openUser.dataset.uid; if(uid) openPublicProfile(uid); return; }
-
-  const followBtn = t.closest('[data-action="follow"]');
-  if(followBtn){ e.preventDefault(); e.stopPropagation(); const uid = followBtn.dataset.followUid; if(uid) toggleFollow(uid, followBtn); return; }
-
-  const likeBtn = t.closest("[data-like-video]");
-  if(likeBtn){ e.preventDefault(); e.stopPropagation(); const vid = likeBtn.dataset.likeVideo; const isReel = likeBtn.dataset.reel === "true"; if(vid) toggleLike(vid, likeBtn, isReel); return; }
-
-  const commentBtn = t.closest("[data-comment-video]");
-  if(commentBtn){ e.preventDefault(); e.stopPropagation(); const vid = commentBtn.dataset.commentVideo; if(vid) openComments(vid); return; }
-
-  const shareBtn = t.closest("[data-share-video]");
-  if(shareBtn){ e.preventDefault(); e.stopPropagation(); const vid = shareBtn.dataset.shareVideo; if(vid) openShareSheet(vid); return; }
-
-  const saveBtn = t.closest("[data-save-video]");
-  if(saveBtn){ e.preventDefault(); e.stopPropagation(); const vid = saveBtn.dataset.saveVideo; if(vid) toggleSave(vid, saveBtn); return; }
-
-  const deleteBtn = t.closest("[data-delete-video]");
-  if(deleteBtn){ e.preventDefault(); e.stopPropagation(); const vid = deleteBtn.dataset.deleteVideo; if(vid) window.deleteVideo(vid); return; }
-
-  const editBtn = t.closest("[data-edit-video]");
-  if(editBtn){ e.preventDefault(); e.stopPropagation(); const vid = editBtn.dataset.editVideo; if(vid) openEditVideo(vid); return; }
-
-  const openVideoBtn = t.closest("[data-open-video]");
-  if(openVideoBtn){
-    const insideStop = t.closest("[data-stop-propagation]");
-    if(!insideStop){
-      e.preventDefault(); e.stopPropagation();
-      const vid = openVideoBtn.dataset.openVideo;
-      if(vid){ hideModal("playlistDetailModal"); hideModal("publicProfileModal"); hideModal("watchHistoryModal"); setTimeout(()=> window.openVideoPlayer(vid), 100); }
-    }
-    return;
-  }
-
-  const searchOpen = t.closest(".search-open-btn");
-  if(searchOpen){ e.preventDefault(); e.stopPropagation(); const uid = searchOpen.dataset.uid; if(uid){ hideModal("searchModal"); setTimeout(()=> openPublicProfile(uid), 150); } return; }
-
-  const peopleOpen = t.closest(".people-open-btn");
-  if(peopleOpen){ e.preventDefault(); e.stopPropagation(); const uid = peopleOpen.dataset.uid; if(uid){ hideModal("peopleModal"); hideModal("followRequestsModal"); hideModal("blockedUsersModal"); setTimeout(()=> openPublicProfile(uid), 150); } return; }
-
-  const delC = t.closest("[data-delete-comment]");
-  if(delC){ e.preventDefault(); e.stopPropagation(); const [vid, cid] = delC.dataset.deleteComment.split("|"); if(vid && cid) await deleteComment(vid, cid); return; }
-
-  const chatItem = t.closest("[data-open-chat]");
-  if(chatItem){ e.preventDefault(); e.stopPropagation(); const uid = chatItem.dataset.openChat; if(uid) openChat(uid); return; }
-
-  const sharedVid = t.closest("[data-open-shared]");
-  if(sharedVid){ e.preventDefault(); e.stopPropagation(); const vid = sharedVid.dataset.openShared; if(vid) window.openVideoPlayer(vid); return; }
-
-  const chatImage = t.closest("[data-open-image]");
-  if(chatImage){ e.preventDefault(); e.stopPropagation(); const url = chatImage.dataset.openImage; if(url){ if($("largeChatImage")) $("largeChatImage").src = url; showModal("imageViewerModal"); } return; }
-
-  const chatFile = t.closest("[data-open-file]");
-  if(chatFile){
-    e.preventDefault(); e.stopPropagation();
-    const url = chatFile.dataset.openFile;
-    const name = chatFile.dataset.fileName || "file";
-    if(url){ const a = document.createElement("a"); a.href = url; a.download = name; a.target = "_blank"; document.body.appendChild(a); a.click(); document.body.removeChild(a); toast("Opening..."); }
-    return;
-  }
-
-  const openP = t.closest("[data-open-playlist]");
-  if(openP){ e.preventDefault(); e.stopPropagation(); const pid = openP.dataset.openPlaylist; if(pid) await openPlaylistDetail(pid); return; }
-
-  const delP = t.closest("[data-delete-playlist]");
-  if(delP){
-    e.preventDefault(); e.stopPropagation();
-    const pid = delP.dataset.deletePlaylist;
-    if(pid && confirm("Delete playlist?")){
-      try{
-        const items = await getDocs(collection(db, "playlists", pid, "items"));
-        for(const item of items.docs) await deleteDoc(item.ref);
-        await deleteDoc(doc(db, "playlists", pid));
-        toast("🗑️ Deleted");
-        if(currentPlaylistView === pid){ hideModal("playlistDetailModal"); currentPlaylistView = null; }
-      }catch(err){ toast("Failed"); }
-    }
-    return;
-  }
-
-  const toggleP = t.closest("[data-toggle-playlist]");
-  if(toggleP){
-    e.preventDefault(); e.stopPropagation();
-    const pid = toggleP.dataset.togglePlaylist;
-    if(selectedPlaylists.has(pid)){ selectedPlaylists.delete(pid); toggleP.classList.remove("checked"); const check = toggleP.querySelector(".playlist-select-check"); if(check) check.textContent = ""; }
-    else { selectedPlaylists.add(pid); toggleP.classList.add("checked"); const check = toggleP.querySelector(".playlist-select-check"); if(check) check.textContent = "✓"; }
-    return;
-  }
-
-  const rmFromP = t.closest("[data-remove-from-playlist]");
-  if(rmFromP){
-    e.preventDefault(); e.stopPropagation();
-    const [vid, pid] = rmFromP.dataset.removeFromPlaylist.split("|");
-    if(vid && pid){
-      try{
-        await deleteDoc(doc(db, "playlists", pid, "items", pid + "_" + vid));
-        await syncAllPlaylistCounts();
-        toast("Removed");
-        if(currentPlaylistView === pid) await renderPlaylistDetail(pid);
-      }catch(err){ toast("Failed"); }
-    }
-    return;
-  }
-
-  const openPV = t.closest("[data-playlist-video]");
-  if(openPV){ e.preventDefault(); e.stopPropagation(); const vid = openPV.dataset.playlistVideo; if(vid){ hideModal("playlistDetailModal"); setTimeout(()=> window.openVideoPlayer(vid), 200); } return; }
-
-  const chip = t.closest("[data-share-user]");
-  if(chip){ e.preventDefault(); e.stopPropagation(); shareToUser(chip.dataset.shareUser); return; }
+  const acceptReq = t.closest("[data-accept-request]"); if(acceptReq){ e.preventDefault(); e.stopPropagation(); const uid = acceptReq.dataset.acceptRequest; if(uid) await acceptFollowRequest(uid); return; }
+  const rejectReq = t.closest("[data-reject-request]"); if(rejectReq){ e.preventDefault(); e.stopPropagation(); const uid = rejectReq.dataset.rejectRequest; if(uid) await rejectFollowRequest(uid); return; }
+  const openUser = t.closest(".post-open-user"); if(openUser){ e.preventDefault(); e.stopPropagation(); const uid = openUser.dataset.uid; if(uid) openPublicProfile(uid); return; }
+  const followBtn = t.closest('[data-action="follow"]'); if(followBtn){ e.preventDefault(); e.stopPropagation(); const uid = followBtn.dataset.followUid; if(uid) toggleFollow(uid, followBtn); return; }
+  const likeBtn = t.closest("[data-like-video]"); if(likeBtn){ e.preventDefault(); e.stopPropagation(); const vid = likeBtn.dataset.likeVideo; const isReel = likeBtn.dataset.reel === "true"; if(vid) toggleLike(vid, likeBtn, isReel); return; }
+  const commentBtn = t.closest("[data-comment-video]"); if(commentBtn){ e.preventDefault(); e.stopPropagation(); const vid = commentBtn.dataset.commentVideo; if(vid) openComments(vid); return; }
+  const shareBtn = t.closest("[data-share-video]"); if(shareBtn){ e.preventDefault(); e.stopPropagation(); const vid = shareBtn.dataset.shareVideo; if(vid) openShareSheet(vid); return; }
+  const saveBtn = t.closest("[data-save-video]"); if(saveBtn){ e.preventDefault(); e.stopPropagation(); const vid = saveBtn.dataset.saveVideo; if(vid) toggleSave(vid, saveBtn); return; }
+  const deleteBtn = t.closest("[data-delete-video]"); if(deleteBtn){ e.preventDefault(); e.stopPropagation(); const vid = deleteBtn.dataset.deleteVideo; if(vid) window.deleteVideo(vid); return; }
+  const editBtn = t.closest("[data-edit-video]"); if(editBtn){ e.preventDefault(); e.stopPropagation(); const vid = editBtn.dataset.editVideo; if(vid) openEditVideo(vid); return; }
+  const openVideoBtn = t.closest("[data-open-video]"); if(openVideoBtn){ const insideStop = t.closest("[data-stop-propagation]"); if(!insideStop){ e.preventDefault(); e.stopPropagation(); const vid = openVideoBtn.dataset.openVideo; if(vid){ hideModal("playlistDetailModal"); hideModal("publicProfileModal"); hideModal("watchHistoryModal"); setTimeout(()=> window.openVideoPlayer(vid), 100); } } return; }
+  const searchOpen = t.closest(".search-open-btn"); if(searchOpen){ e.preventDefault(); e.stopPropagation(); const uid = searchOpen.dataset.uid; if(uid){ hideModal("searchModal"); setTimeout(()=> openPublicProfile(uid), 150); } return; }
+  const peopleOpen = t.closest(".people-open-btn"); if(peopleOpen){ e.preventDefault(); e.stopPropagation(); const uid = peopleOpen.dataset.uid; if(uid){ hideModal("peopleModal"); hideModal("followRequestsModal"); hideModal("blockedUsersModal"); setTimeout(()=> openPublicProfile(uid), 150); } return; }
+  const delC = t.closest("[data-delete-comment]"); if(delC){ e.preventDefault(); e.stopPropagation(); const [vid, cid] = delC.dataset.deleteComment.split("|"); if(vid && cid) await deleteComment(vid, cid); return; }
+  const chatItem = t.closest("[data-open-chat]"); if(chatItem){ e.preventDefault(); e.stopPropagation(); const uid = chatItem.dataset.openChat; if(uid) openChat(uid); return; }
+  const sharedVid = t.closest("[data-open-shared]"); if(sharedVid){ e.preventDefault(); e.stopPropagation(); const vid = sharedVid.dataset.openShared; if(vid) window.openVideoPlayer(vid); return; }
+  const chatImage = t.closest("[data-open-image]"); if(chatImage){ e.preventDefault(); e.stopPropagation(); const url = chatImage.dataset.openImage; if(url){ if($("largeChatImage")) $("largeChatImage").src = url; showModal("imageViewerModal"); } return; }
+  const chatFile = t.closest("[data-open-file]"); if(chatFile){ e.preventDefault(); e.stopPropagation(); const url = chatFile.dataset.openFile; const name = chatFile.dataset.fileName || "file"; if(url){ const a = document.createElement("a"); a.href = url; a.download = name; a.target = "_blank"; document.body.appendChild(a); a.click(); document.body.removeChild(a); toast("Opening..."); } return; }
+  const openP = t.closest("[data-open-playlist]"); if(openP){ e.preventDefault(); e.stopPropagation(); const pid = openP.dataset.openPlaylist; if(pid) await openPlaylistDetail(pid); return; }
+  const delP = t.closest("[data-delete-playlist]"); if(delP){ e.preventDefault(); e.stopPropagation(); const pid = delP.dataset.deletePlaylist; if(pid && confirm("Delete playlist?")){ try{ const items = await getDocs(collection(db, "playlists", pid, "items")); for(const item of items.docs) await deleteDoc(item.ref); await deleteDoc(doc(db, "playlists", pid)); toast("🗑️ Deleted"); if(currentPlaylistView === pid){ hideModal("playlistDetailModal"); currentPlaylistView = null; } }catch(err){ toast("Failed"); } } return; }
+  const toggleP = t.closest("[data-toggle-playlist]"); if(toggleP){ e.preventDefault(); e.stopPropagation(); const pid = toggleP.dataset.togglePlaylist; if(selectedPlaylists.has(pid)){ selectedPlaylists.delete(pid); toggleP.classList.remove("checked"); const check = toggleP.querySelector(".playlist-select-check"); if(check) check.textContent = ""; } else { selectedPlaylists.add(pid); toggleP.classList.add("checked"); const check = toggleP.querySelector(".playlist-select-check"); if(check) check.textContent = "✓"; } return; }
+  const rmFromP = t.closest("[data-remove-from-playlist]"); if(rmFromP){ e.preventDefault(); e.stopPropagation(); const [vid, pid] = rmFromP.dataset.removeFromPlaylist.split("|"); if(vid && pid){ try{ await deleteDoc(doc(db, "playlists", pid, "items", pid + "_" + vid)); await syncAllPlaylistCounts(); toast("Removed"); if(currentPlaylistView === pid) await renderPlaylistDetail(pid); }catch(err){ toast("Failed"); } } return; }
+  const openPV = t.closest("[data-playlist-video]"); if(openPV){ e.preventDefault(); e.stopPropagation(); const vid = openPV.dataset.playlistVideo; if(vid){ hideModal("playlistDetailModal"); setTimeout(()=> window.openVideoPlayer(vid), 200); } return; }
+  const chip = t.closest("[data-share-user]"); if(chip){ e.preventDefault(); e.stopPropagation(); shareToUser(chip.dataset.shareUser); return; }
 });
 
-/* ============================================================
-   MODAL CLOSE / BACK
-============================================================ */
+/* ---- MODAL CLOSE ---- */
 document.querySelectorAll("[data-close]").forEach(btn=>{
   btn.addEventListener("click", (e)=>{
     e.stopPropagation();
@@ -5124,7 +3192,6 @@ document.querySelectorAll("[data-close]").forEach(btn=>{
     if(id === "groupChatModal"){ if(groupChatUnsubscribe){ groupChatUnsubscribe(); groupChatUnsubscribe = null; } currentGroupId = null; }
   });
 });
-
 document.querySelectorAll(".modal").forEach(modal=>{
   modal.addEventListener("click", e=>{
     if(e.target === modal){
@@ -5137,77 +3204,79 @@ document.querySelectorAll(".modal").forEach(modal=>{
     }
   });
 });
-
 $("shareSheet")?.addEventListener("click", e=>{ if(e.target === $("shareSheet")) $("shareSheet").classList.remove("show"); });
 
 /* ============================================================
-   NAVIGATION — Bottom Nav (Home, Shorts, Upload, Messages, Profile)
+   ✅ NAVIGATION — Bottom Nav Buttons (Home, Shorts, Upload, Messages, Profile)
 ============================================================ */
 function showTopbarForPanel(panelId){
   const topbar = $("mainTopbar");
   if(!topbar) return;
-  if(panelId === "shortsPanel"){ topbar.classList.add("hidden"); }
-  else { topbar.classList.remove("hidden"); }
+  if(panelId === "shortsPanel") topbar.classList.add("hidden");
+  else topbar.classList.remove("hidden");
 }
 
-function switchToPanel(panelId, btnEl){
-  document.querySelectorAll(".panel").forEach(p => p.classList.add("hidden"));
-  const target = $(panelId);
-  if(target) target.classList.remove("hidden");
+window.switchToPanel = function(panelId, btnEl){
+  try{
+    console.log("🔄 Switching to panel:", panelId);
+    if(!panelId) return;
 
-  document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
-  if(btnEl){ btnEl.classList.add("active"); }
-  else {
-    const btn = document.querySelector(`.nav-btn[data-panel="${panelId}"]`);
-    if(btn) btn.classList.add("active");
-  }
+    document.querySelectorAll(".panel").forEach(p => p.classList.add("hidden"));
+    const target = document.getElementById(panelId);
+    if(target) target.classList.remove("hidden");
 
-  showTopbarForPanel(panelId);
+    document.querySelectorAll(".nav-btn").forEach(x => x.classList.remove("active"));
+    if(btnEl) btnEl.classList.add("active");
+    else { const btn = document.querySelector('.nav-btn[data-panel="' + panelId + '"]'); if(btn) btn.classList.add("active"); }
 
-  if(panelId === "shortsPanel"){ setTimeout(() => { if(typeof setupReelsObserver === "function") setupReelsObserver(); }, 150); }
-  if(panelId === "uploadPanel"){ if(typeof loadDraftIfExists === "function") loadDraftIfExists(); }
-  if(panelId === "messagesPanel"){
-    const inbox = $("dmInboxView");
-    const chat = $("dmChatView");
-    if(inbox){ inbox.classList.remove("hidden"); inbox.style.display = "flex"; }
-    if(chat){ chat.classList.add("hidden"); chat.style.display = "none"; }
-    if(typeof chatUnsubscribe === "function" && chatUnsubscribe){ chatUnsubscribe(); chatUnsubscribe = null; }
-    currentChatId = null; currentChatUser = null;
-    if(typeof showDMInbox === "function") showDMInbox();
-  }
-  if(panelId === "profilePanel"){
-    if(typeof loadProfile === "function") loadProfile();
-    if(typeof loadMyVideos === "function") loadMyVideos();
-    if(typeof loadMyPlaylists === "function") loadMyPlaylists();
-  }
-  if(panelId === "homePanel"){
-    if(typeof renderFeed === "function") renderFeed();
-  }
-}
+    showTopbarForPanel(panelId);
 
-document.querySelectorAll(".nav-btn").forEach(btn => {
-  btn.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const panelId = btn.dataset.panel;
-    if(!panelId){ console.error("❌ Nav btn has no data-panel"); return; }
-    console.log("📱 Nav clicked:", panelId);
-    switchToPanel(panelId, btn);
+    if(panelId === "shortsPanel"){ setTimeout(()=>{ if(typeof setupReelsObserver === "function") setupReelsObserver(); }, 150); }
+    if(panelId === "uploadPanel"){ if(typeof loadDraftIfExists === "function") loadDraftIfExists(); }
+    if(panelId === "messagesPanel"){
+      const inbox = $("dmInboxView"); const chat = $("dmChatView");
+      if(inbox){ inbox.classList.remove("hidden"); inbox.style.display = "flex"; }
+      if(chat){ chat.classList.add("hidden"); chat.style.display = "none"; }
+      if(chatUnsubscribe){ try{ chatUnsubscribe(); }catch(e){} chatUnsubscribe = null; }
+      currentChatId = null; currentChatUser = null;
+      if(typeof showDMInbox === "function") showDMInbox();
+    }
+    if(panelId === "profilePanel"){
+      if(typeof loadProfile === "function") loadProfile();
+      if(typeof loadMyVideos === "function") loadMyVideos();
+      if(typeof loadMyPlaylists === "function") loadMyPlaylists();
+    }
+    if(panelId === "homePanel"){ if(typeof renderFeed === "function") renderFeed(); }
+  }catch(err){ console.error("❌ switchToPanel error:", err); }
+};
+
+window.openPanel = function(id){ window.switchToPanel(id, null); };
+
+function attachNavListeners(){
+  const buttons = document.querySelectorAll(".nav-btn");
+  console.log("📎 Attaching nav listeners to", buttons.length, "buttons");
+  buttons.forEach(btn => {
+    if(btn.dataset.navAttached === "1") return;
+    btn.dataset.navAttached = "1";
+    btn.addEventListener("click", function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const panelId = this.dataset.panel;
+      console.log("📱 Nav clicked:", panelId);
+      if(panelId) window.switchToPanel(panelId, this);
+    });
   });
-});
-
-function openPanel(id){
-  switchToPanel(id, null);
 }
+if(document.readyState === "loading"){ document.addEventListener("DOMContentLoaded", attachNavListeners); }
+else { attachNavListeners(); }
+setTimeout(attachNavListeners, 500);
+setTimeout(attachNavListeners, 1500);
 
-/* ============================================================
-   START / INIT
-============================================================ */
+/* ---- START / INIT ---- */
 prepareInitialState();
-openPanel("homePanel");
+window.openPanel("homePanel");
 
 setTimeout(() => { if(!splashHidden) hideSplash(); }, 1000);
-
 setTimeout(() => {
   if(!authResolved){
     hideSplash();
@@ -5215,7 +3284,7 @@ setTimeout(() => {
   }
 }, 3000);
 
-window.addEventListener("popstate", (e) => {
+window.addEventListener("popstate", () => {
   const storyViewer = $("storyViewer");
   if(storyViewer && storyViewer.classList.contains("show")){
     closeStoryViewer();
@@ -5235,24 +3304,9 @@ window.addEventListener("popstate", (e) => {
   }
 }, { passive: true });
 
-/* ERROR CATCHER */
 window.addEventListener("error", (e) => { console.error("🚨 RUNTIME ERROR:", e.message, e.filename, e.lineno); });
 window.addEventListener("unhandledrejection", (e) => { console.error("🚨 PROMISE ERROR:", e.reason); });
 
-/* AD SYSTEM AUTO INIT */
-window.addEventListener("load", function(){
-  setTimeout(function(){
-    if(typeof window.showMyAd === "function" && typeof window.reloadAds === "function"){
-      window.reloadAds();
-      console.log("✅ Ads reloaded after page load");
-    }
-  }, 2000);
-});
-
-/* FINAL LOG */
 console.log("✅ ReelHub app.js FULL loaded!");
-console.log("🎉 All features active:");
-console.log("  ✅ Video Feed + Shorts + Upload");
-console.log("  ✅ Stories + DM Chat");
-console.log("  ✅ Groups + Comments + Share");
-console.log("  ✅ Vault + Monetization + Song Library");
+console.log("  ✅ Part 1/3 + Part 2/3 + Part 3/3");
+console.log("  ✅ Navigation buttons ready");
