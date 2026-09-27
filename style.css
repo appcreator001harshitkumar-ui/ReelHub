@@ -1,973 +1,1560 @@
-/* ============================================================
-   ReelHub - style.css (Full Clean Version)
-============================================================ */
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>ReelHub</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7c3aed">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ReelHub">
+<link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=RH&size=192&background=7c3aed&color=fff">
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-  -webkit-tap-highlight-color: transparent;
-}
+<!-- ✅ FORCE HIDDEN CSS — Ye login page aur app ko alag-alag rakhega -->
+<style>
+  #loginPage[class*="hidden"],
+  #app[class*="hidden"],
+  #suspensionScreen[class*="hidden"],
+  #splashScreen[class*="hidden"],
+  .panel[class*="hidden"],
+  .modal[class*="hidden"],
+  .hidden { display: none !important; }
 
-:root {
-  --bg: #fafafa;
-  --card: #fff;
-  --text: #171717;
-  --muted: #8e8e8e;
-  --border: #dbdbdb;
-  --primary: #7c3aed;
-  --primary2: #ec4899;
-  --danger: #ed4956;
-  --blue: #0095f6;
-}
+  #loginPage:not(.hidden) { display: flex !important; }
+  #app:not(.hidden) { display: block !important; }
+  #suspensionScreen:not(.hidden) { display: flex !important; }
+  .modal.show { display: flex !important; }
+  #storyViewer.show { display: flex !important; }
+</style>
 
-body.dark {
-  --bg: #000;
-  --card: #121212;
-  --text: #f5f5f5;
-  --muted: #a8a8a8;
-  --border: #262626;
-}
+<link rel="stylesheet" href="style.css">
+</head>
 
-html {
-  background: linear-gradient(135deg, #6d28d9, #ec4899);
-  min-height: 100vh;
-}
+<body>
 
-body {
-  background: linear-gradient(135deg, #6d28d9, #ec4899);
-  color: var(--text);
-  min-height: 100vh;
-  overscroll-behavior-y: none;
-  transition: background 0.3s ease;
-}
+<!-- SPLASH SCREEN -->
+<div id="splashScreen">
+  <div class="splash-icon">🎬</div>
+  <div class="splash-title">ReelHub</div>
+  <div class="splash-tagline">Watch · Upload · Share</div>
+  <div class="splash-footer">Powered by ReelHub</div>
+</div>
 
-body.app-ready { background: var(--bg) !important; }
-body.dark.app-ready { background: var(--bg) !important; }
+<!-- SUSPENSION SCREEN -->
+<div id="suspensionScreen" class="hidden">
+  <div class="suspension-card">
+    <div class="suspension-icon">🚫</div>
+    <div class="suspension-title">Account Suspended</div>
+    <div class="suspension-subtitle">
+      Your account has been temporarily suspended for violating our Terms of Service.
+    </div>
+    <div class="suspension-info">
+      <div class="suspension-info-row">
+        <span class="label">Reason:</span>
+        <span class="value danger" id="suspensionReason">—</span>
+      </div>
+      <div class="suspension-info-row">
+        <span class="label">Duration:</span>
+        <span class="value" id="suspensionDuration">—</span>
+      </div>
+      <div class="suspension-info-row">
+        <span class="label">Until:</span>
+        <span class="value" id="suspensionUntil">—</span>
+      </div>
+      <div class="suspension-info-row">
+        <span class="label">Suspended on:</span>
+        <span class="value" id="suspensionDate">—</span>
+      </div>
+    </div>
+    <div class="suspension-appeal">
+      <p>If you believe this was a mistake, you can appeal:</p>
+      <a href="mailto:appcreator001.harshitkumar@gmail.com?subject=Account%20Suspension%20Appeal">
+        📧 appcreator001.harshitkumar@gmail.com
+      </a>
+    </div>
+    <button class="suspension-logout" id="suspensionLogoutBtn">🚪 Logout</button>
+  </div>
+</div>
 
-button, input, textarea, select { font: inherit; }
-button { border: 0; cursor: pointer; background: none; color: inherit; }
-input, textarea { outline: none; }
-.hidden { display: none !important; }
+<!-- LOGIN -->
+<div id="loginPage" class="hidden">
+  <div class="login-card">
+    <div class="logo">ReelHub</div>
+    <p>Watch · Upload · Share</p>
 
-/* ============================================================
-   SPLASH SCREEN
-============================================================ */
-#splashScreen {
-  position: fixed;
-  inset: 0;
-  background: linear-gradient(135deg, #7c3aed, #ec4899);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  transition: opacity 0.5s ease-out;
-}
+    <div class="auth-tabs">
+      <button class="auth-tab active" data-tab="login" type="button">Login</button>
+      <button class="auth-tab" data-tab="signup" type="button">Sign Up</button>
+    </div>
 
-#splashScreen.fade-out { opacity: 0; pointer-events: none; }
-.splash-icon { font-size: 120px; margin-bottom: 24px; animation: splashPulse 1.5s ease-in-out infinite; }
-.splash-title { font-size: 46px; font-weight: 900; color: white; margin-bottom: 12px; letter-spacing: 1px; }
-.splash-tagline { font-size: 15px; color: rgba(255,255,255,0.9); letter-spacing: 3px; text-transform: uppercase; font-weight: 500; }
-.splash-footer { position: absolute; bottom: 50px; font-size: 13px; color: rgba(255,255,255,0.7); letter-spacing: 1px; }
+    <form id="loginForm" class="auth-form">
+      <input type="email" id="loginEmail" class="yt-input" placeholder="Email" style="margin-bottom:10px" required autocomplete="email">
+      <input type="password" id="loginPassword" class="yt-input" placeholder="Password" style="margin-bottom:14px" required autocomplete="current-password">
+      <button type="submit" class="google-btn" style="background:linear-gradient(90deg,#7c3aed,#ec4899)">Login</button>
+      <button type="button" id="forgotPasswordBtn" style="background:none;color:#7c3aed;font-size:13px;margin-top:12px;font-weight:600;padding:8px">Forgot Password?</button>
+    </form>
 
-@keyframes splashPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+    <form id="signupForm" class="auth-form hidden">
+      <input type="text" id="signupName" class="yt-input" placeholder="Full Name" style="margin-bottom:10px" required autocomplete="name">
+      <input type="email" id="signupEmail" class="yt-input" placeholder="Email" style="margin-bottom:10px" required autocomplete="email">
+      <input type="password" id="signupPassword" class="yt-input" placeholder="Password (min 6 characters)" style="margin-bottom:14px" minlength="6" required autocomplete="new-password">
+      <button type="submit" class="google-btn" style="background:linear-gradient(90deg,#7c3aed,#ec4899)">Create Account</button>
+    </form>
 
-/* ============================================================
-   LOGIN
-============================================================ */
-#loginPage { min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; background: transparent; }
-.login-card { width: 100%; max-width: 400px; background: white; padding: 40px 25px; border-radius: 25px; text-align: center; box-shadow: 0 20px 60px #0004; }
-.logo { font-size: 36px; font-weight: 900; background: linear-gradient(90deg,#7c3aed,#ec4899); color: transparent; background-clip: text; -webkit-background-clip: text; margin-bottom: 8px; }
-.login-card p { color: #666; margin-bottom: 25px; font-size: 14px; }
-.google-btn { width: 100%; padding: 14px; border-radius: 12px; background: #111; color: white; font-weight: bold; font-size: 15px; transition: opacity .2s; }
-.google-btn:active { opacity: 0.85; }
-.auth-tabs { display: flex; background: #f0f0f0; border-radius: 12px; padding: 4px; margin-bottom: 22px; gap: 4px; }
-.auth-tab { flex: 1; padding: 11px; border-radius: 9px; font-size: 14px; font-weight: 600; color: #666; background: transparent; border: 0; cursor: pointer; transition: all .2s; }
-.auth-tab.active { background: white; color: #7c3aed; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-.auth-form { display: flex; flex-direction: column; }
-.auth-form input { width: 100%; padding: 13px 16px; border: 1.5px solid #dbdbdb; border-radius: 10px; font-size: 14px; background: white; color: #171717; transition: border .2s; font-family: inherit; }
-.auth-form input:focus { border-color: #7c3aed; outline: none; }
-.auth-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: #999; font-size: 12px; font-weight: 500; }
-.auth-divider::before, .auth-divider::after { content: ""; flex: 1; height: 1px; background: #dbdbdb; }
+    <div class="auth-divider"><span>OR</span></div>
 
-/* ============================================================
-   APP SHELL
-============================================================ */
-#app { min-height: 100vh; padding-bottom: 60px; max-width: 640px; margin: 0 auto; background: var(--card); }
-.topbar { position: sticky; top: 0; z-index: 50; background: var(--card); border-bottom: 1px solid var(--border); padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.topbar-brand { font-size: 24px; font-weight: 900; font-style: italic; background: linear-gradient(90deg,#7c3aed,#ec4899); color: transparent; background-clip: text; -webkit-background-clip: text; }
-.topbar-actions { display: flex; gap: 15px; align-items: center; font-size: 22px; }
-.topbar-actions button { padding: 5px; position: relative; }
-.topbar-actions .badge { position: absolute; top: 0; right: 0; background: var(--danger); color: white; font-size: 9px; padding: 2px 5px; border-radius: 10px; font-weight: bold; min-width: 16px; text-align: center; }
+    <button class="google-btn" id="googleLogin" type="button">
+      <span style="margin-right:8px">🔵</span> Continue with Google
+    </button>
 
-/* ============================================================
-   BOTTOM NAV
-============================================================ */
-.bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; height: 56px; background: var(--card); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; z-index: 100; max-width: 640px; margin: 0 auto; }
-.nav-btn { flex: 1; height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--text); font-size: 10px; position: relative; }
-.nav-btn .nav-icon { font-size: 23px; line-height: 1; display: flex; align-items: center; justify-content: center; height: 26px; }
-.nav-btn .nav-label { font-size: 9.5px; font-weight: 500; }
-.nav-btn.active { color: var(--text); font-weight: bold; }
-.nav-btn:not(.active) { color: var(--muted); }
-.nav-btn .avatar-mini { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; }
-.nav-btn.active .avatar-mini { border: 2px solid var(--text); }
-.nav-btn .plus-icon { font-size: 26px; font-weight: 300; }
-.nav-btn .nav-badge { position: absolute; top: 6px; right: calc(50% - 18px); background: var(--danger); color: white; font-size: 9px; padding: 2px 5px; border-radius: 10px; font-weight: bold; min-width: 16px; text-align: center; }
+    <p id="loginStatus" style="margin-top:15px;font-size:13px;color:#ed4956;min-height:18px"></p>
 
-.panel { padding-bottom: 60px; }
-.panel.hidden { display: none; }
+    <p style="margin-top:20px;font-size:11px;color:#888;line-height:1.5">
+      By continuing, you agree to our
+      <a href="/ReelHub/terms.html" style="color:#7c3aed">Terms of Service</a>
+      and
+      <a href="/ReelHub/privacy.html" style="color:#7c3aed">Privacy Policy</a>
+    </p>
+  </div>
+</div>
 
-/* ============================================================
-   CATEGORY CHIPS
-============================================================ */
-.category-chips { display: flex; gap: 8px; padding: 10px 14px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; border-bottom: 1px solid var(--border); background: var(--card); position: sticky; top: 54px; z-index: 40; }
-.category-chips::-webkit-scrollbar { display: none; }
-.chip { flex-shrink: 0; padding: 7px 14px; border-radius: 20px; background: var(--bg); color: var(--text); font-size: 13px; font-weight: 500; border: 1px solid var(--border); cursor: pointer; transition: all .2s; white-space: nowrap; }
-.chip:hover { background: var(--border); }
-.chip.active { background: var(--text); color: var(--card); border-color: var(--text); font-weight: 600; }
+<!-- APP -->
+<div id="app" class="hidden">
 
-/* ============================================================
-   VIDEO GRID
-============================================================ */
-.video-grid { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 14px 12px 90px 12px; }
-.video-card { cursor: pointer; transition: transform .2s ease; background: var(--card); }
-.video-card:active { transform: scale(0.99); }
-.video-card .thumbnail { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; background: #1a1a1a; }
-.video-card .thumbnail img, .video-card .thumbnail video { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s ease; }
-.video-card:hover .thumbnail img { transform: scale(1.03); }
-.video-card .duration { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.85); color: #fff; font-size: 11.5px; font-weight: 600; padding: 3px 6px; border-radius: 4px; letter-spacing: 0.3px; }
-.video-card .video-info { display: flex; gap: 12px; margin-top: 12px; padding: 0 2px; }
-.video-card .channel-avatar { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; object-fit: cover; background: var(--border); }
-.video-card .video-details { flex: 1; min-width: 0; }
-.video-card .video-title { font-size: 14.5px; font-weight: 600; color: var(--text); line-height: 1.35; margin-bottom: 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
-.video-card .channel-name { font-size: 12.5px; color: var(--muted); margin-bottom: 3px; display: flex; align-items: center; gap: 4px; }
-.video-card .channel-name .verified { color: var(--primary); font-size: 11px; }
-.video-card .video-meta { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
-.video-card .video-meta .dot { font-size: 8px; }
-.video-card .video-more { background: none; border: 0; color: var(--muted); font-size: 18px; padding: 4px 8px; cursor: pointer; border-radius: 50%; align-self: flex-start; line-height: 1; flex-shrink: 0; }
-.video-card .video-more:active { background: var(--border); }
-.video-grid .empty-state { grid-column: 1/-1; padding: 60px 20px; text-align: center; color: var(--muted); }
-.video-grid .empty-state .icon { font-size: 64px; display: block; margin-bottom: 14px; opacity: 0.5; }
-.video-grid .empty-state h3 { font-size: 16px; color: var(--text); margin-bottom: 6px; font-weight: 600; }
-.video-grid .empty-state p { font-size: 13px; line-height: 1.5; }
+  <header class="topbar" id="mainTopbar">
+    <div class="topbar-brand">ReelHub</div>
+    <div class="topbar-actions">
+      <button id="topSearchBtn">🔍</button>
+      <button id="topAlertsBtn">
+        🔔
+        <span class="badge hidden" id="alertsBadge">0</span>
+      </button>
+    </div>
+  </header>
 
-@media (min-width: 600px) { .video-grid { grid-template-columns: repeat(2, 1fr); gap: 18px; padding: 16px 14px 90px 14px; } }
-@media (min-width: 900px) { .video-grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1200px) { .video-grid { grid-template-columns: repeat(4, 1fr); max-width: 1400px; margin: 0 auto; } }
+  <section id="homePanel" class="panel">
+    <div class="stories-bar" id="storiesBar">
+      <div class="stories-loading">Loading stories...</div>
+    </div>
+    <div class="category-chips" id="categoryChips">
+      <button class="chip active" data-cat="all">All</button>
+      <button class="chip" data-cat="trending">🔥 Trending</button>
+      <button class="chip" data-cat="music">Music</button>
+      <button class="chip" data-cat="gaming">Gaming</button>
+      <button class="chip" data-cat="news">News</button>
+      <button class="chip" data-cat="live">Live</button>
+      <button class="chip" data-cat="movies">Movies</button>
+      <button class="chip" data-cat="comedy">Comedy</button>
+      <button class="chip" data-cat="sports">Sports</button>
+      <button class="chip" data-cat="learning">Learning</button>
+    </div>
 
-/* ============================================================
-   STORIES BAR
-============================================================ */
-.stories-bar { display: flex; gap: 14px; padding: 12px 14px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; border-bottom: 1px solid var(--border); background: var(--card); }
-.stories-bar::-webkit-scrollbar { display: none; }
-.story-item { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; width: 72px; user-select: none; -webkit-user-select: none; transition: transform .15s ease; }
-.story-item:active { transform: scale(0.95); }
-.story-ring { position: relative; width: 66px; height: 66px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 3px; background: var(--border); transition: background .2s; }
-.story-ring.active { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
-.story-ring.watched { background: var(--border); opacity: 0.65; }
-.story-ring.yours { background: transparent; border: 2px dashed var(--primary); padding: 2px; }
-.story-ring img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 3px solid var(--card); background: #eee; display: block; }
-.story-ring .add-icon { position: absolute; bottom: -2px; right: -2px; width: 22px; height: 22px; border-radius: 50%; background: var(--blue); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: bold; border: 2.5px solid var(--card); z-index: 2; }
-.story-name { font-size: 11px; color: var(--text); max-width: 72px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; line-height: 1.2; }
-.stories-loading, .stories-empty { display: flex; align-items: center; justify-content: center; padding: 20px; color: var(--muted); font-size: 13px; width: 100%; }
+    <div id="continueWatchingSection" style="display:none;margin-bottom:16px">
+      <div style="padding:10px 16px;font-size:14px;font-weight:700;color:var(--text)">▶️ Continue Watching</div>
+      <div id="continueWatchingList" style="display:flex;gap:10px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none"></div>
+    </div>
 
-/* ============================================================
-   STORY VIEWER
-============================================================ */
-#storyViewer { position: fixed; inset: 0; background: #000; z-index: 9999; display: none; flex-direction: column; overscroll-behavior: contain; touch-action: pan-y; }
-#storyViewer.show { display: flex; animation: storyFadeIn .2s ease-out; }
-@keyframes storyFadeIn { from { opacity: 0; } to { opacity: 1; } }
-.story-progress-bar { position: absolute; top: calc(12px + env(safe-area-inset-top, 0px)); left: 12px; right: 12px; height: 3px; display: flex; gap: 3px; z-index: 20; pointer-events: none; }
-.story-progress-segment { flex: 1; height: 100%; background: rgba(255,255,255,0.35); border-radius: 3px; overflow: hidden; }
-.story-progress-fill { height: 100%; width: 0; background: #fff; border-radius: 3px; transition: width .1s linear; }
-.story-progress-fill.complete { width: 100%; transition: none; }
-.story-header { position: absolute; top: calc(25px + env(safe-area-inset-top, 0px)); left: 12px; right: 12px; display: flex; align-items: center; gap: 10px; z-index: 20; padding: 8px 4px; }
-.story-header img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid white; flex-shrink: 0; }
-.story-header .info { flex: 1; min-width: 0; }
-.story-header .info strong { display: block; font-size: 14px; color: white; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.story-header .info small { display: block; font-size: 11.5px; color: rgba(255,255,255,0.75); }
-.story-header .close-btn { background: none; color: white; font-size: 26px; padding: 4px 8px; line-height: 1; flex-shrink: 0; cursor: pointer; }
-.story-more-btn { background: none; color: white; font-size: 22px; padding: 4px 6px; cursor: pointer; flex-shrink: 0; }
-.story-media { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; background: #000; }
-.story-media img, .story-media video { max-width: 100%; max-height: 100%; width: 100%; height: 100%; object-fit: contain; display: block; user-select: none; -webkit-user-drag: none; }
-.story-nav-left, .story-nav-right { position: absolute; top: 0; bottom: 100px; width: 35%; z-index: 5; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.story-nav-left { left: 0; }
-.story-nav-right { right: 0; }
-.story-footer { position: absolute; bottom: 0; left: 0; right: 0; padding: 14px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)); display: flex; gap: 10px; align-items: center; background: linear-gradient(transparent, rgba(0,0,0,0.75)); z-index: 20; }
-.story-footer .story-reply { flex: 1; padding: 12px 18px; border-radius: 25px; border: 1.5px solid rgba(255,255,255,0.55); background: rgba(0,0,0,0.25); color: white; font-size: 14px; outline: none; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-.story-footer .story-reply::placeholder { color: rgba(255,255,255,0.75); }
-.story-footer .story-send { background: transparent; color: white; font-weight: 600; font-size: 14px; padding: 8px 12px; cursor: pointer; }
-.story-views { position: absolute; bottom: calc(78px + env(safe-area-inset-bottom, 0px)); left: 14px; color: white; font-size: 12.5px; display: flex; align-items: center; gap: 6px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); z-index: 15; pointer-events: none; }
+    <div id="feed" class="video-grid"></div>
+  </section>
 
-/* STORY SONG OVERLAY */
-#storySongOverlay {
-  animation: fadeIn 0.3s ease-out;
-}
-#storySongOverlay.hidden { display: none !important; }
+  <section id="shortsPanel" class="panel hidden">
+    <div class="reels-container" id="reelsContainer"></div>
+  </section>
 
-/* STORY STICKER */
-#storyStickerOverlay {
-  font-size: 80px;
-  line-height: 1;
-  animation: stickerPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
-}
+  <section id="uploadPanel" class="panel hidden">
+    <div class="upload-wrap">
+      <div class="upload-header"><h2>Upload</h2></div>
 
-@keyframes stickerPop {
-  0% { transform: translate(-50%, -50%) scale(0.3); opacity: 0; }
-  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-}
+      <div class="yt-card">
+        <div class="yt-card-title">📤 Content Type</div>
+        <div class="yt-radio-group" id="contentTypeGroup" style="grid-template-columns:1fr 1fr">
+          <div class="yt-radio selected" data-value="video">
+            <span class="r-icon">🎬</span>
+            <div class="r-title">Video</div>
+            <div class="r-sub">MP4, WebM, MOV</div>
+          </div>
+          <div class="yt-radio" data-value="photo">
+            <span class="r-icon">📷</span>
+            <div class="r-title">Photo</div>
+            <div class="r-sub">JPG, PNG</div>
+          </div>
+        </div>
+      </div>
 
-/* ============================================================
-   CREATE STORY MODAL
-============================================================ */
-#createStoryModal .modal-box { max-width: 440px; }
-.story-upload-zone { border: 2px dashed var(--border); border-radius: 16px; padding: 40px 20px; text-align: center; cursor: pointer; background: var(--bg); transition: all .2s; margin-bottom: 14px; }
-.story-upload-zone:hover, .story-upload-zone:active { border-color: var(--primary); background: rgba(124,58,237,0.05); }
-.story-upload-zone .up-icon { font-size: 52px; margin-bottom: 10px; display: block; }
-.story-upload-zone .up-text { font-size: 15px; font-weight: 600; margin-bottom: 4px; color: var(--text); }
-.story-upload-zone .up-sub { font-size: 12.5px; color: var(--muted); }
-.story-preview { width: 100%; max-height: 320px; border-radius: 12px; background: #000; margin-bottom: 14px; display: block; object-fit: contain; }
-.story-upload-btn { width: 100%; padding: 14px; border-radius: 12px; background: linear-gradient(90deg,#7c3aed,#ec4899); color: white; font-weight: 600; font-size: 15px; margin-top: 8px; cursor: pointer; }
-.story-upload-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.story-upload-progress { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 12px; display: none; }
-.story-upload-progress.active { display: block; }
-.story-upload-progress-bar { height: 100%; width: 0; background: linear-gradient(90deg,#7c3aed,#ec4899); transition: width .3s; }
+      <div class="yt-card">
+        <div class="yt-card-title" id="selectMediaTitle">📹 Select Video</div>
+        <div class="yt-dropzone" id="dropzone">
+          <span class="icon">⬆️</span>
+          <div class="main-text">Click to select video</div>
+          <div class="sub-text">MP4, WebM, MOV · Max 100MB</div>
+        </div>
+        <video id="uploadPreview" class="yt-preview hidden" controls></video>
+        <img id="photoPreview" class="yt-preview hidden" alt="" style="max-width:100%;border-radius:12px">
+        <input type="file" id="videoFile" accept="video/*" class="hidden">
+        <input type="file" id="photoFile" accept="image/*" class="hidden">
+      </div>
 
-/* STORY EDITOR TOOLS */
-#storyEditorTools {
-  background: var(--bg);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 14px;
-}
-#storyEditorTools .yt-mini-btn {
-  padding: 8px 14px;
-  font-size: 13px;
-}
+      <div class="yt-card" id="thumbnailCard" style="display:none">
+        <div class="yt-card-title">🖼️ Custom Thumbnail (optional)</div>
+        <div class="yt-dropzone" id="thumbnailZone" style="padding:20px">
+          <span class="icon" style="font-size:28px">🖼️</span>
+          <div class="main-text" style="font-size:13px">Tap to select thumbnail</div>
+          <div class="sub-text">JPG, PNG · 1280×720 recommended</div>
+        </div>
+        <img id="thumbnailPreview" class="yt-preview hidden" alt="" style="max-width:100%;border-radius:12px">
+        <input type="file" id="thumbnailFile" accept="image/*" class="hidden">
+        <button class="yt-mini-btn danger" id="removeThumbnailBtn" style="display:none;margin-top:10px;width:100%">❌ Remove Thumbnail</button>
+      </div>
 
-/* ============================================================
-   VIDEO EDIT BAR
-============================================================ */
-#videoEditBar .yt-mini-btn {
-  padding: 8px 14px;
-  font-size: 13px;
-  flex: 1;
-  min-width: 90px;
-  text-align: center;
-  justify-content: center;
-}
+      <div class="yt-card">
+        <div class="yt-card-title">📂 Category</div>
+        <select id="videoCategory" class="yt-input">
+          <option value="all">All</option>
+          <option value="music">Music</option>
+          <option value="gaming">Gaming</option>
+          <option value="news">News</option>
+          <option value="live">Live</option>
+          <option value="movies">Movies</option>
+          <option value="comedy">Comedy</option>
+          <option value="sports">Sports</option>
+          <option value="learning">Learning</option>
+        </select>
+      </div>
 
-/* ============================================================
-   SHORTS
-============================================================ */
-#shortsPanel { padding: 0; margin: 0; background: #000; position: relative; }
-.reels-container { height: calc(100vh - 56px); overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.reels-container::-webkit-scrollbar { display: none; }
-.reel-item { height: calc(100vh - 56px); scroll-snap-align: start; scroll-snap-stop: always; position: relative; display: flex; align-items: center; justify-content: center; background: #000; }
-.reel-item video { width: 100%; height: 100%; object-fit: contain; background: #000; }
-.reel-overlay { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: flex-end; padding: 20px 15px; background: linear-gradient(transparent 60%, rgba(0,0,0,0.7)); }
-.reel-info { color: white; pointer-events: auto; max-width: 75%; }
-.reel-user { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-.reel-user img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid white; cursor: pointer; }
-.reel-user strong { font-size: 14px; color: white; }
-.reel-user .follow-btn-sm { font-size: 12px; border: 1px solid white; color: white; padding: 3px 10px; border-radius: 6px; margin-left: 8px; background: rgba(255,255,255,0.15); }
-.reel-title { font-size: 13px; color: white; margin-bottom: 4px; font-weight: 500; word-wrap: break-word; }
-.reel-desc { font-size: 12px; color: rgba(255,255,255,0.85); margin-bottom: 8px; word-wrap: break-word; }
-.reel-actions { position: absolute; right: 12px; bottom: 90px; display: flex; flex-direction: column; gap: 20px; align-items: center; pointer-events: auto; }
-.reel-action { display: flex; flex-direction: column; align-items: center; color: white; gap: 3px; cursor: pointer; }
-.reel-action .icon { font-size: 28px; line-height: 1; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6)); }
-.reel-action.liked .icon { color: #ed4956; }
-.reel-action small { font-size: 11px; color: white; font-weight: 600; text-shadow: 0 1px 3px rgba(0,0,0,0.6); }
-.reel-empty { height: calc(100vh - 56px); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--muted); background: var(--card); }
-.reel-views { font-size: 10px; color: rgba(255,255,255,0.75); margin-top: 2px; text-align: center; position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.5); padding: 2px 6px; border-radius: 10px; }
+      <div class="yt-card" id="videoEditBar" style="display:none">
+        <div class="yt-card-title">🎬 Video Tools</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <button class="yt-mini-btn" id="editVideoTrimBtn">✂️ Trim</button>
+          <button class="yt-mini-btn" id="editVideoRotateBtn">🔄 Rotate</button>
+          <button class="yt-mini-btn" id="editVideoMuteBtn">🔇 Mute</button>
+          <button class="yt-mini-btn" id="editVideoSongBtn">🎵 Song</button>
+          <button class="yt-mini-btn" id="editVideoStickerBtn">😀 Sticker</button>
+          <button class="yt-mini-btn" id="editVideoPreviewBtn">👁️ Preview</button>
+        </div>
 
-/* ============================================================
-   UPLOAD
-============================================================ */
-.upload-wrap { padding: 16px; max-width: 640px; margin: 0 auto; }
-.upload-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-.upload-header h2 { font-size: 20px; font-weight: 600; }
-.yt-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
-.yt-card-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-.yt-dropzone { border: 2px dashed var(--border); border-radius: 12px; padding: 36px 20px; text-align: center; cursor: pointer; transition: all .2s; background: var(--bg); }
-.yt-dropzone:hover { border-color: var(--primary); background: rgba(124,58,237,0.03); }
-.yt-dropzone .icon { font-size: 48px; margin-bottom: 10px; display: block; }
-.yt-dropzone .main-text { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
-.yt-dropzone .sub-text { font-size: 12px; color: var(--muted); }
-.yt-preview { width: 100%; max-height: 280px; border-radius: 8px; background: #000; margin-top: 12px; }
-.yt-input { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 14px; transition: border .2s; }
-.yt-input:focus { border-color: var(--primary); }
-.yt-textarea { width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); min-height: 90px; resize: vertical; font-size: 14px; }
-.yt-textarea:focus { border-color: var(--primary); }
-.yt-label { font-size: 13px; font-weight: 500; color: var(--muted); margin-bottom: 6px; display: block; }
-.yt-radio-group { display: flex; gap: 8px; flex-wrap: wrap; }
-.yt-radio { flex: 1; min-width: 120px; padding: 12px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; text-align: center; transition: all .2s; background: var(--card); }
-.yt-radio.selected { border-color: var(--primary); background: rgba(124,58,237,0.05); }
-.yt-radio .r-icon { font-size: 22px; display: block; margin-bottom: 4px; }
-.yt-radio .r-title { font-size: 13px; font-weight: 600; }
-.yt-radio .r-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
-.yt-progress { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; margin: 12px 0; display: none; }
-.yt-progress.active { display: block; }
-.yt-progress-bar { height: 100%; width: 0; background: linear-gradient(90deg,#7c3aed,#ec4899); transition: width .3s; }
-.yt-publish-btn { width: 100%; padding: 14px; border-radius: 8px; background: linear-gradient(90deg,#7c3aed,#ec4899); color: white; font-weight: 600; font-size: 15px; margin-top: 14px; }
-.yt-publish-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        <div style="margin-top:12px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">🎨 Filters</div>
+          <div style="display:flex;gap:8px;overflow-x:auto;padding:4px 0;scrollbar-width:none" id="filterBar">
+            <button class="filter-btn active" data-filter="none" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--primary);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">None</button>
+            <button class="filter-btn" data-filter="grayscale(1)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">B&W</button>
+            <button class="filter-btn" data-filter="sepia(0.8)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Sepia</button>
+            <button class="filter-btn" data-filter="contrast(1.3) saturate(1.2)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Vivid</button>
+            <button class="filter-btn" data-filter="brightness(1.2)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Bright</button>
+            <button class="filter-btn" data-filter="brightness(0.8) contrast(1.2)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Dark</button>
+            <button class="filter-btn" data-filter="hue-rotate(180deg)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Cool</button>
+            <button class="filter-btn" data-filter="hue-rotate(-30deg) saturate(1.3)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Warm</button>
+            <button class="filter-btn" data-filter="blur(1px) saturate(1.5)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Dreamy</button>
+            <button class="filter-btn" data-filter="invert(1)" style="min-width:60px;padding:6px;border-radius:8px;border:2px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px;font-weight:600">Invert</button>
+          </div>
+        </div>
 
-/* ============================================================
-   MESSAGES
-============================================================ */
-#messagesPanel { padding: 0; margin: 0; height: calc(100vh - 56px); height: calc(100dvh - 56px); overflow: hidden; position: relative; display: flex; flex-direction: column; }
-#messagesPanel .dm-container { width: 100%; max-width: 640px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; background: var(--card); overflow: hidden; position: relative; }
-#dmInboxView { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--card); z-index: 2; }
-#dmInboxView.hidden { display: none !important; }
-#dmChatView { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--card); z-index: 3; }
-#dmChatView.hidden { display: none !important; }
-.dm-header { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--border); background: var(--card); flex-shrink: 0; }
-.dm-header h2 { font-size: 17px; font-weight: 600; flex: 1; }
-.dm-header .icon-btn { font-size: 22px; padding: 5px; }
-.dm-search { padding: 10px 16px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
-.dm-search input { width: 100%; padding: 10px 14px; border-radius: 20px; border: 0; background: var(--bg); color: var(--text); font-size: 14px; }
-#dmInboxList { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-.dm-unread-dot { display: inline-block; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; margin-right: 6px; vertical-align: middle; }
-.dm-inbox-item { display: flex; align-items: center; gap: 12px; padding: 10px 16px; cursor: pointer; }
-.dm-inbox-item:hover { background: var(--bg); }
-.dm-inbox-item img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: #eee; flex-shrink: 0; }
-.dm-inbox-info { flex: 1; min-width: 0; }
-.dm-inbox-info strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dm-inbox-info small { font-size: 12.5px; color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.dm-inbox-item.unread .dm-inbox-info strong { font-weight: 700; }
-.dm-inbox-item.unread .dm-inbox-info small { font-weight: 600; color: var(--text); }
-.dm-inbox-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
-.dm-chat-header { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--card); flex-shrink: 0; position: relative; z-index: 10; }
-.dm-chat-header img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
-.dm-chat-header .info { flex: 1; min-width: 0; }
-.dm-chat-header strong { display: block; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dm-chat-header small { font-size: 11.5px; color: var(--muted); }
-.dm-messages { flex: 1; overflow-y: auto; padding: 14px 12px 20px; display: flex; flex-direction: column; gap: 6px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
-.dm-msg { max-width: 70%; padding: 8px 14px; border-radius: 20px; font-size: 14px; line-height: 1.35; word-wrap: break-word; position: relative; flex-shrink: 0; }
-.dm-msg.them { background: var(--bg); color: var(--text); align-self: flex-start; border-bottom-left-radius: 4px; }
-.dm-msg.me { background: linear-gradient(135deg,#7c3aed,#ec4899); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-.dm-msg small { display: block; font-size: 10px; margin-top: 3px; opacity: .7; }
-.dm-msg-actions { display: flex; gap: 8px; margin-top: 4px; }
-.dm-msg-actions button { font-size: 10px; color: inherit; opacity: .75; text-decoration: underline; }
-.dm-shared-video { background: var(--card); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-top: 6px; max-width: 220px; cursor: pointer; }
-.dm-shared-video video { width: 100%; display: block; max-height: 200px; background: #000; pointer-events: none; }
-.dm-shared-video .info { padding: 8px 10px; font-size: 12px; }
-.dm-msg-image { max-width: 220px; border-radius: 12px; overflow: hidden; margin-top: 4px; cursor: pointer; }
-.dm-msg-image img { width: 100%; display: block; max-height: 280px; object-fit: cover; }
-.dm-attach-btn { font-size: 22px; padding: 6px; color: var(--text); flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; }
-.dm-attach-btn:active { background: var(--bg); }
-.dm-attach-menu { position: absolute; bottom: 70px; left: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 8px; display: none; flex-direction: column; gap: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 20; min-width: 180px; }
-.dm-attach-menu.show { display: flex; }
-.dm-attach-option { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text); }
-.dm-attach-option:hover { background: var(--bg); }
-.dm-attach-option:active { background: var(--border); }
-.dm-attach-option .icon { font-size: 20px; width: 24px; text-align: center; }
-.dm-input-bar { display: flex; gap: 8px; padding: 10px 12px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--border); background: var(--card); align-items: center; flex-shrink: 0; position: relative; z-index: 10; }
-.dm-input-bar input { flex: 1; padding: 11px 16px; border-radius: 22px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; min-width: 0; }
-.dm-input-bar button { font-size: 15px; font-weight: 600; color: var(--blue); padding: 6px 10px; flex-shrink: 0; }
-.dm-empty { padding: 60px 30px; text-align: center; color: var(--muted); }
-.dm-empty .icon { font-size: 56px; display: block; margin-bottom: 14px; opacity: .5; }
-.dm-empty h3 { font-size: 18px; color: var(--text); margin-bottom: 6px; font-weight: 600; }
-.dm-empty p { font-size: 14px; }
+        <div style="margin-top:12px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">⚡ Speed: <span id="speedValue">1x</span></div>
+          <input type="range" id="speedSlider" min="0.5" max="2" step="0.5" value="1" style="width:100%">
+        </div>
 
-/* ============================================================
-   PROFILE
-============================================================ */
-.yt-profile { max-width: 640px; margin: 0 auto; }
-.yt-banner { height: 120px; background: linear-gradient(135deg,#7c3aed,#ec4899); background-size: cover; background-position: center; position: relative; }
-.yt-banner.banner-image { background-color: #000; }
-.banner-edit-btn { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.6); color: white; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; backdrop-filter: blur(8px); z-index: 5; }
-.banner-edit-btn:active { background: rgba(0,0,0,0.85); }
-.yt-profile-head { padding: 0 16px; margin-top: -50px; display: flex; align-items: flex-end; gap: 14px; position: relative; z-index: 2; }
-.yt-profile-avatar { width: 100px; height: 100px; border-radius: 50%; border: 4px solid var(--card); object-fit: cover; background: #eee; cursor: pointer; flex-shrink: 0; position: relative; z-index: 3; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-.yt-profile-info { flex: 1; padding-top: 50px; padding-bottom: 10px; min-width: 0; text-align: left; overflow: hidden; }
-.yt-profile-info h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.yt-profile-info .handle { font-size: 13px; color: var(--muted); margin-bottom: 4px; display: block; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.yt-profile-info .meta { font-size: 12.5px; color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.yt-profile-bio { padding: 12px 16px 14px; font-size: 14px; color: var(--text); line-height: 1.4; }
-.yt-profile-stats { display: flex; gap: 22px; padding: 0 16px 14px; border-bottom: 1px solid var(--border); }
-.yt-stat { cursor: pointer; text-align: center; }
-.yt-stat strong { display: block; font-size: 16px; font-weight: 700; }
-.yt-stat span { font-size: 12px; color: var(--muted); }
-.yt-profile-actions { display: flex; gap: 8px; padding: 14px 16px; flex-wrap: wrap; }
-.yt-btn { padding: 10px 18px; border-radius: 20px; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-.yt-btn-primary { background: linear-gradient(90deg,#7c3aed,#ec4899); color: white; }
-.yt-btn-gray { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
-.yt-tabs { display: flex; border-bottom: 1px solid var(--border); padding: 0 16px; overflow-x: auto; scrollbar-width: none; }
-.yt-tabs::-webkit-scrollbar { display: none; }
-.yt-tab { padding: 12px 16px; font-size: 14px; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; cursor: pointer; transition: color .2s; }
-.yt-tab:hover { color: var(--text); }
-.yt-tab.active { color: var(--text); border-bottom-color: var(--text); }
-.yt-tabs .tab-count { font-size: 11px; color: var(--muted); margin-left: 4px; font-weight: 500; }
-.yt-videos-grid { padding: 12px 0; }
-.yt-video-item { display: flex; gap: 12px; padding: 8px 16px; cursor: pointer; align-items: flex-start; }
-.yt-video-item:hover { background: var(--bg); }
-.yt-video-thumb { width: 150px; height: 84px; border-radius: 8px; background: #000; flex-shrink: 0; overflow: hidden; position: relative; }
-.yt-video-thumb video { width: 100%; height: 100%; object-fit: cover; }
-.yt-video-meta { flex: 1; min-width: 0; }
-.yt-video-meta h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-wrap: break-word; }
-.yt-video-meta .stats { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-.yt-video-meta .views { font-size: 11.5px; color: var(--muted); margin-bottom: 2px; }
-.yt-video-meta .btns { display: flex; gap: 6px; flex-wrap: wrap; }
-.yt-mini-btn { padding: 5px 10px; border-radius: 6px; font-size: 11.5px; background: var(--bg); color: var(--text); border: 1px solid var(--border); font-weight: 500; }
-.yt-mini-btn.danger { color: var(--danger); border-color: var(--danger); }
-.yt-mini-btn.primary { color: var(--primary); border-color: var(--primary); }
-.yt-empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+        <div style="margin-top:12px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:600">✍️ Text on Video</div>
+          <input type="text" id="textOverlayInput" class="yt-input" placeholder="Type text to show on video..." maxlength="50" style="padding:8px 12px;font-size:13px;margin-bottom:8px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+            <button class="text-pos-btn active" data-pos="top" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px">Top</button>
+            <button class="text-pos-btn" data-pos="center" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px">Center</button>
+            <button class="text-pos-btn" data-pos="bottom" style="padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;font-size:11px">Bottom</button>
+          </div>
+        </div>
 
-/* ============================================================
-   SAVE / PLAYLIST
-============================================================ */
-.ig-action-btn.saved { color: var(--primary); }
-.save-btn.saved .icon { filter: drop-shadow(0 0 4px var(--primary)); }
-.saved-empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-.saved-empty .icon { font-size: 56px; margin-bottom: 14px; display: block; opacity: 0.5; }
-.saved-empty h3 { font-size: 16px; color: var(--text); margin-bottom: 6px; font-weight: 600; }
-.saved-empty p { font-size: 13px; }
-.view-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; background: rgba(0,0,0,0.6); color: white; border-radius: 12px; font-size: 11px; font-weight: 500; position: absolute; bottom: 8px; left: 8px; z-index: 5; }
-.playlist-tab-content { padding: 12px 16px; }
-.playlist-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg); border-radius: 12px; margin-bottom: 10px; cursor: pointer; transition: background .2s; }
-.playlist-card:hover { background: var(--border); }
-.playlist-cover { width: 100px; height: 60px; border-radius: 8px; background: #000; flex-shrink: 0; overflow: hidden; position: relative; display: flex; align-items: center; justify-content: center; }
-.playlist-cover video { width: 100%; height: 100%; object-fit: cover; }
-.playlist-cover .cover-icon { font-size: 28px; color: white; position: absolute; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
-.playlist-info { flex: 1; min-width: 0; }
-.playlist-info h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.playlist-info .meta { font-size: 12px; color: var(--muted); }
-.playlist-info .desc { font-size: 12px; color: var(--muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.playlist-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.playlist-delete-btn { padding: 6px 10px; border-radius: 6px; font-size: 11.5px; color: var(--danger); border: 1px solid var(--danger); background: transparent; }
-.playlist-empty { text-align: center; padding: 50px 20px; color: var(--muted); }
-.playlist-empty .icon { font-size: 56px; margin-bottom: 14px; display: block; opacity: 0.5; }
-.playlist-empty h3 { font-size: 16px; color: var(--text); margin-bottom: 6px; font-weight: 600; }
-.playlist-empty p { font-size: 13px; margin-bottom: 16px; }
-.playlist-create-btn { padding: 10px 20px; border-radius: 20px; background: linear-gradient(90deg,#7c3aed,#ec4899); color: white; font-weight: 600; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; }
-.playlist-select-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; margin-bottom: 8px; cursor: pointer; border: 1px solid var(--border); transition: background .2s; }
-.playlist-select-item:hover { background: var(--bg); }
-.playlist-select-item.checked { border-color: var(--primary); background: rgba(124,58,237,0.05); }
-.playlist-select-check { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-.playlist-select-item.checked .playlist-select-check { background: var(--primary); border-color: var(--primary); color: white; }
-.playlist-detail-header { display: flex; gap: 14px; padding: 16px; background: var(--bg); border-radius: 12px; margin-bottom: 16px; align-items: center; }
-.playlist-detail-cover { width: 110px; height: 70px; border-radius: 8px; background: #000; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; }
-.playlist-detail-cover video { width: 100%; height: 100%; object-fit: cover; }
-.playlist-detail-info { flex: 1; min-width: 0; }
-.playlist-detail-info h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-.playlist-detail-info .meta { font-size: 12.5px; color: var(--muted); }
-.playlist-detail-info .desc { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
-.playlist-video-item { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); align-items: flex-start; cursor: pointer; }
-.playlist-video-item:hover { background: var(--bg); }
-.playlist-video-item:last-child { border-bottom: 0; }
-.playlist-video-item .thumb { width: 110px; height: 64px; border-radius: 8px; background: #000; overflow: hidden; flex-shrink: 0; }
-.playlist-video-item .thumb video { width: 100%; height: 100%; object-fit: cover; }
-.playlist-video-item .info { flex: 1; min-width: 0; }
-.playlist-video-item .info h4 { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.playlist-video-item .info .stats { font-size: 11.5px; color: var(--muted); }
-.playlist-video-item .remove-btn { padding: 6px 10px; border-radius: 6px; font-size: 11px; color: var(--danger); border: 1px solid var(--danger); background: transparent; flex-shrink: 0; }
+        <div id="videoEditStatus" style="font-size:12px;color:var(--muted);margin-top:10px;text-align:center"></div>
+      </div>
 
-/* ============================================================
-   DEEP LINK
-============================================================ */
-.deep-link-banner { background: linear-gradient(90deg,#7c3aed,#ec4899); color: white; padding: 10px 16px; font-size: 13px; text-align: center; cursor: pointer; display: none; align-items: center; justify-content: center; gap: 8px; }
-.deep-link-banner.show { display: flex; }
+      <div class="yt-card">
+        <div class="yt-card-title">📝 Details</div>
+        <label class="yt-label">Title *</label>
+        <input id="videoTitle" class="yt-input" maxlength="100" placeholder="Enter an engaging title" style="margin-bottom:14px">
+        <label class="yt-label">Description</label>
+        <textarea id="videoDescription" class="yt-textarea" placeholder="Tell viewers about your video"></textarea>
+      </div>
 
-/* ============================================================
-   MODALS
-============================================================ */
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 200; display: none; justify-content: center; align-items: center; padding: 15px; }
-.modal.show { display: flex; }
-.modal-box { width: 100%; max-width: 520px; max-height: 88vh; overflow: auto; background: var(--card); color: var(--text); border-radius: 16px; padding: 20px; position: relative; scrollbar-width: none; }
-.modal-box::-webkit-scrollbar { display: none; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-.modal-header h2 { font-size: 18px; font-weight: 600; }
-.close { width: 32px; height: 32px; border-radius: 50%; background: var(--bg); color: var(--text); font-size: 20px; display: flex; align-items: center; justify-content: center; }
+      <div class="yt-card">
+        <div class="yt-card-title">👁️ Visibility</div>
+        <div class="yt-radio-group" id="visibilityGroup">
+          <div class="yt-radio selected" data-value="public">
+            <span class="r-icon">🌍</span>
+            <div class="r-title">Public</div>
+            <div class="r-sub">Everyone can watch</div>
+          </div>
+          <div class="yt-radio" data-value="private">
+            <span class="r-icon">🔒</span>
+            <div class="r-title">Private</div>
+            <div class="r-sub">Only you</div>
+          </div>
+        </div>
+      </div>
 
-/* ============================================================
-   VIDEO PLAYER
-============================================================ */
-#videoPlayerModal .modal-box { padding: 0; overflow: hidden; }
-#videoPlayerVideo { width: 100%; max-height: 70vh; background: #000; display: block; border-radius: 16px 16px 0 0; }
-.action-btn { transition: all .15s ease; }
-.action-btn:active { background: var(--bg) !important; transform: scale(0.95); }
-.action-btn.liked { color: #ed4956; }
-.action-btn.liked .icon { color: #ed4956; filter: drop-shadow(0 0 4px rgba(237,73,86,0.5)); }
-.speed-btn { transition: all .15s ease; }
-.speed-btn:active { transform: scale(0.9); }
-.speed-btn.active { background: #7c3aed !important; box-shadow: 0 0 8px rgba(124,58,237,0.5); }
-#speedControl { animation: fadeIn .2s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+      <div class="yt-card">
+        <div class="yt-card-title">🎬 Video Type</div>
+        <div class="yt-radio-group" id="typeGroup">
+          <div class="yt-radio selected" data-value="long">
+            <span class="r-icon">🎥</span>
+            <div class="r-title">Long Video</div>
+            <div class="r-sub">Horizontal · Feed</div>
+          </div>
+          <div class="yt-radio" data-value="short">
+            <span class="r-icon">📱</span>
+            <div class="r-title">Short</div>
+            <div class="r-sub">Vertical · 9:16</div>
+          </div>
+        </div>
+      </div>
 
-/* ============================================================
-   COMMENTS
-============================================================ */
-.comment-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-.comment-item img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
-.comment-content { flex: 1; min-width: 0; }
-.comment-content .name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
-.comment-content .text { font-size: 13.5px; line-height: 1.4; word-wrap: break-word; }
-.comment-content .actions { display: flex; gap: 12px; margin-top: 5px; align-items: center; }
-.comment-content .actions button { font-size: 11.5px; color: var(--muted); font-weight: 600; }
-.comment-form-inline { display: flex; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
-.comment-form-inline input { flex: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; }
-.comment-form-inline button { color: var(--blue); font-weight: 600; font-size: 14px; padding: 0 6px; }
+      <div class="yt-progress" id="uploadProgressWrap">
+        <div class="yt-progress-bar" id="uploadProgressBar"></div>
+      </div>
 
-/* ============================================================
-   PEOPLE / SHARE
-============================================================ */
-.person-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
-.person-item img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; cursor: pointer; }
-.person-item .info { flex: 1; min-width: 0; cursor: pointer; }
-.person-item .info strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.person-item .info small { font-size: 12px; color: var(--muted); }
-.follow-btn { padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; background: var(--blue); color: white; transition: all .15s; flex-shrink: 0; cursor: pointer; }
-.follow-btn.following { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
-.follow-btn:disabled { opacity: .6; }
-.share-sheet { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300; display: none; align-items: flex-end; justify-content: center; }
-.share-sheet.show { display: flex; }
-.share-sheet-box { width: 100%; max-width: 520px; background: var(--card); border-radius: 20px 20px 0 0; padding: 20px; max-height: 70vh; overflow-y: auto; }
-.share-sheet-box h3 { font-size: 16px; font-weight: 600; margin-bottom: 14px; text-align: center; }
-.share-user-list { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 14px; margin-bottom: 14px; border-bottom: 1px solid var(--border); scrollbar-width: none; }
-.share-user-list::-webkit-scrollbar { display: none; }
-.share-user-chip { flex-shrink: 0; width: 72px; text-align: center; cursor: pointer; }
-.share-user-chip img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; margin-bottom: 4px; }
-.share-user-chip span { font-size: 11px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.share-actions { display: flex; gap: 10px; }
-.share-action-btn { flex: 1; padding: 12px; background: var(--bg); border-radius: 12px; text-align: center; font-size: 13px; font-weight: 500; cursor: pointer; }
-.share-action-btn .icon { font-size: 22px; display: block; margin-bottom: 4px; }
+      <p id="uploadStatus" style="font-size:13px;color:var(--muted);margin-top:10px;text-align:center"></p>
 
-/* ============================================================
-   TOAST
-============================================================ */
-.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; padding: 12px 22px; border-radius: 25px; z-index: 999; font-size: 13.5px; opacity: 0; transition: opacity .3s; pointer-events: none; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
-.toast.show { opacity: 1; }
+      <div style="display:flex;gap:8px">
+        <button class="yt-mini-btn" id="saveDraftBtn" style="flex:1;padding:14px;font-size:14px">💾 Save Draft</button>
+        <button class="yt-publish-btn" id="publishBtn" style="flex:2;margin-top:0">🚀 Publish</button>
+      </div>
+    </div>
+  </section>
 
-/* ============================================================
-   ONLINE STATUS
-============================================================ */
-.online-indicator { position: absolute; bottom: 2px; right: 2px; width: 14px; height: 14px; border-radius: 50%; border: 2.5px solid var(--card); background: #22c55e; z-index: 5; }
-.online-indicator.offline { background: #9ca3af; }
-.avatar-wrapper { position: relative; display: inline-flex; flex-shrink: 0; }
-.dm-chat-status { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 4px; min-height: 0; }
-.dm-chat-status.online { color: #22c55e; font-weight: 500; }
-.dm-chat-status.offline { display: none; }
+  <section id="messagesPanel" class="panel hidden">
+    <div class="dm-container">
+      <div id="dmInboxView">
+        <div class="dm-header">
+          <h2>Messages</h2>
+          <div style="display:flex;gap:8px">
+            <button class="icon-btn" id="newGroupBtn" title="New Group">👥</button>
+            <button class="icon-btn" id="newMsgBtn">✏️</button>
+          </div>
+        </div>
+        <div class="dm-tabs" id="dmTabs">
+          <button class="dm-tab active" data-dmtab="chats">💬 Chats</button>
+          <button class="dm-tab" data-dmtab="groups">👥 Groups</button>
+        </div>
+        <div class="dm-search">
+          <input id="dmSearchInput" placeholder="Search...">
+        </div>
+        <div id="dmInboxList"></div>
+        <div id="dmGroupsList" class="hidden"></div>
+      </div>
 
-/* ============================================================
-   BANNER OPTIONS
-============================================================ */
-.banner-options-grid { display: flex; flex-direction: column; gap: 10px; }
-.banner-option { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 12px; background: var(--bg); cursor: pointer; transition: background .2s; }
-.banner-option:active { background: var(--border); }
-.banner-option .opt-icon { font-size: 24px; width: 40px; text-align: center; flex-shrink: 0; }
-.banner-option .opt-info { flex: 1; }
-.banner-option .opt-info strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 2px; }
-.banner-option .opt-info small { font-size: 12px; color: var(--muted); }
-.banner-gradients { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 14px; }
-.banner-gradient-item { height: 50px; border-radius: 8px; cursor: pointer; border: 3px solid transparent; transition: border .2s; }
-.banner-gradient-item.selected { border-color: var(--primary); }
+      <div id="dmChatView" class="hidden">
+        <div class="dm-chat-header">
+          <button class="icon-btn" id="dmBackBtn" style="font-size:22px">←</button>
+          <img id="dmChatAvatar" src="" alt="">
+          <div class="info">
+            <strong id="dmChatName">User</strong>
+            <small>Active now</small>
+          </div>
+          <button class="icon-btn" id="dmChatProfileBtn">ℹ️</button>
+        </div>
+        <div class="dm-messages" id="dmMessages"></div>
+        <div class="dm-input-bar" style="position:relative">
+          <button class="dm-attach-btn" id="dmAttachBtn" type="button">📎</button>
+          <input id="dmInput" placeholder="Message...">
+          <button id="dmSendBtn">Send</button>
+        </div>
+        <div class="dm-attach-menu" id="dmAttachMenu">
+          <div class="dm-attach-option" id="attachPhotoBtn"><span class="icon">📷</span><span>Photo</span></div>
+          <div class="dm-attach-option" id="attachVideoBtn"><span class="icon">🎥</span><span>Video</span></div>
+          <div class="dm-attach-option" id="attachPdfBtn"><span class="icon">📄</span><span>PDF / Document</span></div>
+        </div>
+        <input type="file" id="dmPhotoFile" accept="image/*" class="hidden">
+        <input type="file" id="dmVideoFile" accept="video/*" class="hidden">
+        <input type="file" id="dmPdfFile" accept=".pdf,.doc,.docx,.txt,.zip,.ppt,.pptx,.xls,.xlsx" class="hidden">
+      </div>
+    </div>
+  </section>
 
-/* ============================================================
-   SUSPENSION
-============================================================ */
-#suspensionScreen { position: fixed; inset: 0; background: linear-gradient(135deg,#1a1a22,#0a0a0f); display: flex; align-items: center; justify-content: center; z-index: 99999; padding: 20px; overflow-y: auto; }
-.suspension-card { width: 100%; max-width: 440px; background: #1a1a22; border: 2px solid #ef4444; border-radius: 20px; padding: 40px 28px; text-align: center; box-shadow: 0 20px 60px rgba(239,68,68,0.3); }
-.suspension-icon { font-size: 80px; margin-bottom: 20px; animation: suspendPulse 2s ease-in-out infinite; }
-@keyframes suspendPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.1); opacity: 0.8; } }
-.suspension-title { font-size: 26px; font-weight: 900; color: #ef4444; margin-bottom: 10px; }
-.suspension-subtitle { font-size: 14px; color: #888; margin-bottom: 24px; line-height: 1.6; }
-.suspension-info { background: rgba(239,68,68,0.1); border-radius: 12px; padding: 16px; margin-bottom: 20px; text-align: left; }
-.suspension-info-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-size: 14px; }
-.suspension-info-row:not(:last-child) { border-bottom: 1px solid rgba(239,68,68,0.2); }
-.suspension-info-row .label { color: #888; font-weight: 500; }
-.suspension-info-row .value { color: #fff; font-weight: 700; text-align: right; max-width: 60%; word-wrap: break-word; }
-.suspension-info-row .value.danger { color: #ef4444; }
-.suspension-appeal { background: rgba(124,58,237,0.1); border-left: 4px solid #7c3aed; border-radius: 8px; padding: 14px 16px; margin-bottom: 20px; text-align: left; }
-.suspension-appeal p { font-size: 13px; color: #aaa; line-height: 1.5; margin-bottom: 6px; }
-.suspension-appeal a { color: #a78bfa; font-weight: 700; text-decoration: none; font-size: 13px; }
-.suspension-logout { width: 100%; padding: 14px; background: #ef4444; color: white; border: 0; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all .2s; }
-.suspension-logout:active { background: #dc2626; transform: scale(0.98); }
+  <section id="profilePanel" class="panel hidden">
+    <div class="yt-profile">
+      <div class="yt-banner"></div>
+      <div class="yt-profile-head">
+        <img id="profilePhoto" class="yt-profile-avatar" src="" alt="">
+        <div class="yt-profile-info">
+          <h1 id="profileName">User</h1>
+          <div class="handle" id="profileUsername">@user</div>
+          <div class="meta" id="profileExtra"></div>
+        </div>
+      </div>
+      <div class="yt-profile-bio" id="profileBio"></div>
+      <div class="yt-profile-stats">
+        <div class="yt-stat" id="myFollowersBtn">
+          <strong id="followersCount">0</strong>
+          <span>Followers</span>
+        </div>
+        <div class="yt-stat" id="myFollowingBtn">
+          <strong id="followingCount">0</strong>
+          <span>Following</span>
+        </div>
+        <div class="yt-stat">
+          <strong id="videosCount">0</strong>
+          <span>Videos</span>
+        </div>
+      </div>
+      <div class="yt-profile-actions">
+        <button class="yt-btn yt-btn-primary" id="editProfileBtn">✏️ Edit Profile</button>
+        <button class="yt-btn yt-btn-gray" id="shareAppBtn">📤 Share</button>
+        <button class="yt-btn yt-btn-gray" id="settingsBtn">⚙️</button>
+      </div>
+      <div class="yt-tabs" id="profileTabs">
+        <div class="yt-tab active" data-tab="videos">Videos <span class="tab-count" id="tabVideosCount">0</span></div>
+        <div class="yt-tab" data-tab="playlists">Playlists <span class="tab-count" id="tabPlaylistsCount">0</span></div>
+        <div class="yt-tab" data-tab="saved">Saved <span class="tab-count" id="tabSavedCount">0</span></div>
+        <div class="yt-tab" data-tab="monetization">💰 Monetization</div>
+        <div class="yt-tab" data-tab="about">About</div>
+      </div>
+      <div class="yt-videos-grid" id="myVideos"></div>
+      <div class="playlist-tab-content hidden" id="playlistsTab"></div>
+      <div class="yt-videos-grid hidden" id="savedVideos"></div>
+      <div class="yt-videos-grid hidden" id="monetizationTab"></div>
+      <div class="yt-videos-grid hidden" id="aboutTab"></div>
+    </div>
+  </section>
 
-/* ============================================================
-   VAULT
-============================================================ */
-#newPinInput, #confirmPinInput, #vaultPinInput { font-family: -apple-system, BlinkMacSystemFont, "Courier New", monospace; font-weight: 700; color: var(--text); background: var(--bg); border: 2px solid var(--border); }
-#newPinInput:focus, #confirmPinInput:focus, #vaultPinInput:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(124,58,237,0.15); }
-.vault-add-btn { padding: 8px 16px; border-radius: 20px; background: linear-gradient(90deg,#7c3aed,#ec4899); color: white; font-weight: 600; font-size: 13px; cursor: pointer; border: 0; display: inline-flex; align-items: center; gap: 6px; }
-.vault-add-btn:active { opacity: 0.85; transform: scale(0.97); }
-.vault-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.vault-item { position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; background: #000; cursor: pointer; transition: transform .15s; }
-.vault-item:active { transform: scale(0.96); }
-.vault-item img, .vault-item video { width: 100%; height: 100%; object-fit: cover; display: block; }
-.vault-item-type { position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.7); color: white; font-size: 10px; padding: 2px 6px; border-radius: 8px; backdrop-filter: blur(4px); }
-.vault-empty { text-align: center; padding: 60px 20px; color: var(--muted); }
-.vault-empty .icon { font-size: 64px; display: block; margin-bottom: 16px; opacity: 0.4; }
-.vault-empty h3 { font-size: 16px; color: var(--text); margin-bottom: 8px; font-weight: 600; }
-.vault-empty p { font-size: 13px; line-height: 1.5; }
-@keyframes pinShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 75% { transform: translateX(8px); } }
-.pin-error { animation: pinShake .3s ease-in-out; }
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-panel="homePanel">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Home</span>
+    </button>
+    <button class="nav-btn" data-panel="shortsPanel">
+      <span class="nav-icon">🎞️</span>
+      <span class="nav-label">Shorts</span>
+    </button>
+    <button class="nav-btn" data-panel="uploadPanel">
+      <span class="nav-icon plus-icon">➕</span>
+      <span class="nav-label">Upload</span>
+    </button>
+    <button class="nav-btn" data-panel="messagesPanel">
+      <span class="nav-icon">💬</span>
+      <span class="nav-label">Messages</span>
+      <span class="nav-badge hidden" id="msgBadge">0</span>
+    </button>
+    <button class="nav-btn" data-panel="profilePanel">
+      <span class="nav-icon">
+        <img id="navProfileAvatar" class="avatar-mini" src="https://ui-avatars.com/api/?name=U&background=7c3aed&color=fff" alt="">
+      </span>
+      <span class="nav-label">Profile</span>
+    </button>
+  </nav>
 
-/* ============================================================
-   MONETIZATION
-============================================================ */
-.req-card { background: var(--bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
-.req-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); transition: background .2s; }
-.req-row:last-child { border-bottom: 0; }
-.req-row .req-icon { font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
-.req-row .req-text { flex: 1; font-size: 14px; font-weight: 600; color: var(--text); }
-.req-row .req-count { font-size: 12.5px; color: var(--muted); font-weight: 500; margin-right: 8px; white-space: nowrap; }
-.req-row .req-status { font-size: 18px; width: 24px; text-align: center; flex-shrink: 0; transition: all .3s; }
-.req-row.completed .req-text { color: #22c55e; }
-.req-row.completed .req-count { color: #22c55e; font-weight: 700; }
-.req-row.completed .req-status { color: #22c55e; }
-.monetization-tab { padding: 16px; }
-.monetization-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 14px; text-align: center; }
-.monetization-card .icon { font-size: 56px; display: block; margin-bottom: 12px; }
-.monetization-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
-.monetization-card p { font-size: 13.5px; color: var(--muted); line-height: 1.5; margin-bottom: 16px; }
-.monetization-status-badge { display: inline-block; padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 700; margin-bottom: 14px; }
-.monetization-status-badge.none { background: rgba(142,142,142,0.15); color: var(--muted); border: 1px solid var(--muted); }
-.monetization-status-badge.pending { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid #f59e0b; }
-.monetization-status-badge.approved { background: rgba(34,197,94,0.15); color: #22c55e; border: 1px solid #22c55e; }
-.monetization-status-badge.rejected { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid #ef4444; }
-.monetization-apply-btn { width: 100%; padding: 14px; border-radius: 12px; background: linear-gradient(90deg,#7c3aed,#ec4899); color: white; font-weight: 700; font-size: 15px; border: 0; cursor: pointer; margin-top: 14px; transition: all .2s; }
-.monetization-apply-btn:active { transform: scale(0.98); opacity: 0.9; }
-.monetization-apply-btn:disabled { opacity: 0.5; cursor: not-allowed; background: var(--muted); }
-.req-list-tab { background: var(--bg); border-radius: 12px; padding: 14px; margin-top: 14px; text-align: left; }
-.req-list-tab .title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 12px; }
+</div>
 
-/* ============================================================
-   GROUP SYSTEM
-============================================================ */
-.dm-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--card); flex-shrink: 0; }
-.dm-tab { flex: 1; padding: 12px; font-size: 14px; font-weight: 600; color: var(--muted); background: none; border: 0; border-bottom: 2px solid transparent; cursor: pointer; transition: all .2s; }
-.dm-tab:hover { color: var(--text); }
-.dm-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
-#dmGroupsList { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-.group-inbox-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; transition: background .15s; }
-.group-inbox-item:hover { background: var(--bg); }
-.group-inbox-item:active { background: var(--border); }
-.group-inbox-item img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; background: #eee; flex-shrink: 0; border: 2px solid var(--border); }
-.group-inbox-info { flex: 1; min-width: 0; }
-.group-inbox-info strong { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; margin-bottom: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.group-inbox-info .group-type-badge { font-size: 10px; padding: 1px 6px; border-radius: 8px; background: var(--bg); color: var(--muted); font-weight: 600; border: 1px solid var(--border); flex-shrink: 0; }
-.group-inbox-info .group-type-badge.public { color: #22c55e; border-color: rgba(34,197,94,0.3); background: rgba(34,197,94,0.1); }
-.group-inbox-info .group-type-badge.private { color: #f59e0b; border-color: rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); }
-.group-inbox-info small { font-size: 12.5px; color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.group-inbox-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
-.group-inbox-item.unread .group-inbox-info strong { font-weight: 700; }
-.group-inbox-item.unread .group-inbox-info small { font-weight: 600; color: var(--text); }
-.group-empty { padding: 60px 30px; text-align: center; color: var(--muted); }
-.group-empty .icon { font-size: 56px; display: block; margin-bottom: 14px; opacity: 0.5; }
-.group-empty h3 { font-size: 18px; color: var(--text); margin-bottom: 6px; font-weight: 600; }
-.group-empty p { font-size: 14px; margin-bottom: 16px; }
-.group-empty .create-btn { padding: 10px 20px; border-radius: 20px; background: linear-gradient(90deg,#7c3aed,#ec4899); color: white; font-weight: 600; font-size: 13px; border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
-#groupPhotoPreview { background: linear-gradient(135deg,#7c3aed,#ec4899); }
-#groupPhotoPick:active { transform: scale(0.9); opacity: 0.85; }
-#groupViewModal .modal-box { max-height: 92vh; }
-#groupViewPhoto { background: linear-gradient(135deg,#7c3aed,#ec4899); }
-.group-member-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-.group-member-item:last-child { border-bottom: 0; }
-.group-member-item img { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; cursor: pointer; flex-shrink: 0; }
-.group-member-item .info { flex: 1; min-width: 0; cursor: pointer; }
-.group-member-item .info strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.group-member-item .info small { font-size: 12px; color: var(--muted); }
-.group-member-item .admin-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; background: linear-gradient(90deg,#7c3aed,#ec4899); color: white; font-weight: 600; flex-shrink: 0; }
-.group-member-item .remove-btn { padding: 5px 10px; border-radius: 6px; font-size: 11.5px; color: var(--danger); border: 1px solid var(--danger); background: transparent; cursor: pointer; flex-shrink: 0; font-weight: 600; }
-.group-request-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
-.group-request-item:last-child { border-bottom: 0; }
-.group-request-item img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; cursor: pointer; flex-shrink: 0; }
-.group-request-item .info { flex: 1; min-width: 0; cursor: pointer; }
-.group-request-item .info strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.group-request-item .info small { font-size: 12px; color: var(--muted); }
-.group-request-actions { display: flex; gap: 6px; flex-shrink: 0; }
-.group-request-actions button { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; border: 0; }
-.group-request-actions .accept-btn { background: #22c55e; color: white; }
-.group-request-actions .reject-btn { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
-#groupChatMessages .dm-msg .sender-name { font-size: 11px; font-weight: 700; color: var(--primary); margin-bottom: 4px; display: block; }
-#groupChatMessages .dm-msg.me .sender-name { display: none; }
-#groupChatMessages .dm-msg.them { max-width: 78%; }
-.group-msg-image { max-width: 240px; border-radius: 12px; overflow: hidden; margin-top: 4px; cursor: pointer; background: #000; }
-.group-msg-image img { width: 100%; display: block; max-height: 300px; object-fit: cover; }
-.group-msg-video { max-width: 260px; border-radius: 12px; overflow: hidden; margin-top: 4px; background: #000; }
-.group-msg-video video { width: 100%; display: block; max-height: 320px; border-radius: 12px; background: #000; }
-.group-msg-file { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; margin-top: 6px; max-width: 260px; cursor: pointer; transition: all .15s; }
-.group-msg-file:hover { border-color: var(--primary); }
-.group-msg-file:active { transform: scale(0.98); }
-.group-msg-file .file-icon { width: 44px; height: 44px; border-radius: 10px; background: linear-gradient(135deg,#dc2626,#ef4444); display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; color: white; }
-.group-msg-file .file-icon.doc { background: linear-gradient(135deg,#2563eb,#3b82f6); }
-.group-msg-file .file-icon.zip { background: linear-gradient(135deg,#f59e0b,#f97316); }
-.group-msg-file .file-icon.other { background: linear-gradient(135deg,#6b7280,#9ca3af); }
-.group-msg-file .file-info { flex: 1; min-width: 0; }
-.group-msg-file .file-info strong { display: block; font-size: 13px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 2px; }
-.group-msg-file .file-info small { font-size: 11px; color: var(--muted); }
-.group-msg-file .file-download { font-size: 20px; flex-shrink: 0; color: var(--primary); }
-.group-chat-empty { padding: 40px 20px; text-align: center; color: var(--muted); }
-.group-chat-empty .icon { font-size: 48px; margin-bottom: 12px; display: block; opacity: 0.5; }
-.group-chat-empty p { font-size: 13px; line-height: 1.5; }
-.join-status { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-.join-status.pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
-.join-status.joined { background: rgba(34,197,94,0.15); color: #22c55e; }
-.join-status.admin { background: linear-gradient(90deg, rgba(124,58,237,0.15), rgba(236,72,153,0.15)); color: var(--primary); }
+<!-- VIDEO OPTIONS MENU MODAL -->
+<div id="videoMenuModal" class="modal">
+  <div class="modal-box" style="max-width:340px">
+    <div class="modal-header">
+      <h2>Video Options</h2>
+      <button class="close" data-close="videoMenuModal">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:none" id="videoMenuEditBtn">✏️ Edit Video</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="videoMenuPinBtn">📌 Pin to Profile</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:none" id="videoMenuDownloadBtn">📥 Download</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:none" id="videoMenuDeleteBtn">🗑️ Delete Video</button>
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left" id="videoMenuBlockBtn">🚫 Block User</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;color:#f59e0b" id="videoMenuReportBtn">⚠️ Report Video</button>
+    </div>
+  </div>
+</div>
 
-/* ============================================================
-   SONG LIBRARY / SONG PICKER
-============================================================ */
-.song-library-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
-}
-.song-library-item:last-child { border-bottom: 0; }
-.song-library-item .song-thumb {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  background: linear-gradient(135deg,#7c3aed,#ec4899);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  color: white;
-  flex-shrink: 0;
-}
-.song-library-item .song-info { flex: 1; min-width: 0; }
-.song-library-item .song-info strong {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  margin-bottom: 3px;
-}
-.song-library-item .song-info small {
-  font-size: 12px;
-  color: var(--muted);
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.song-library-item .song-actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-.song-library-item .song-actions button {
-  padding: 6px 10px;
-  border-radius: 6px;
-  font-size: 11.5px;
-  font-weight: 600;
-  cursor: pointer;
-  border: 0;
-}
-.song-library-item .song-actions .play-btn {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-.song-library-item .song-actions .edit-btn {
-  background: rgba(124,58,237,0.1);
-  color: var(--primary);
-  border: 1px solid var(--primary);
-}
-.song-library-item .song-actions .delete-btn {
-  background: transparent;
-  color: var(--danger);
-  border: 1px solid var(--danger);
-}
-.song-library-empty {
-  text-align: center;
-  padding: 50px 20px;
-  color: var(--muted);
-}
-.song-library-empty .icon { font-size: 56px; display: block; margin-bottom: 12px; opacity: 0.5; }
-.song-library-empty h3 { font-size: 15px; color: var(--text); margin-bottom: 6px; font-weight: 600; }
-.song-library-empty p { font-size: 13px; }
+<!-- REPORT MODAL -->
+<div id="reportModal" class="modal">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-header">
+      <h2>⚠️ Report</h2>
+      <button class="close" data-close="reportModal">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px" id="reportTargetLabel">What's the issue?</p>
+    <label class="yt-label">Reason</label>
+    <select id="reportReason" class="yt-input" style="margin-bottom:14px">
+      <option value="spam">🚫 Spam / Misleading</option>
+      <option value="violence">💢 Violence / Dangerous</option>
+      <option value="nudity">🔞 Nudity / Sexual content</option>
+      <option value="hate">😠 Hate speech / Harassment</option>
+      <option value="copyright">©️ Copyright violation</option>
+      <option value="child">👶 Child safety</option>
+      <option value="other">📌 Other</option>
+    </select>
+    <label class="yt-label">Details (optional)</label>
+    <textarea id="reportDetails" class="yt-textarea" maxlength="300" placeholder="Describe the issue..." style="margin-bottom:14px"></textarea>
+    <p id="reportStatus" style="text-align:center;font-size:13px;color:var(--muted);min-height:18px;margin-bottom:10px"></p>
+    <button class="yt-publish-btn" id="submitReportBtn">Submit Report</button>
+  </div>
+</div>
 
-.song-picker-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background .15s;
-  border: 1px solid transparent;
-}
-.song-picker-item:hover { background: var(--bg); }
-.song-picker-item.selected {
-  border-color: var(--primary);
-  background: rgba(124,58,237,0.08);
-}
-.song-picker-item .song-thumb {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: linear-gradient(135deg,#7c3aed,#ec4899);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  color: white;
-  flex-shrink: 0;
-}
-.song-picker-item .song-info { flex: 1; min-width: 0; }
-.song-picker-item .song-info strong {
-  display: block;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.song-picker-item .song-info small { font-size: 11.5px; color: var(--muted); }
-.song-picker-item .check-icon {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-.song-picker-item.selected .check-icon {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: white;
-}
+<!-- BLOCKED USERS MODAL -->
+<div id="blockedUsersModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>🚫 Blocked Users</h2>
+      <button class="close" data-close="blockedUsersModal">×</button>
+    </div>
+    <div id="blockedUsersList"></div>
+  </div>
+</div>
 
-/* ============================================================
-   STICKER PICKER
-============================================================ */
-.sticker-item {
-  transition: all .15s;
-  user-select: none;
-  -webkit-user-select: none;
-}
-.sticker-item:hover {
-  background: var(--bg);
-  transform: scale(1.15);
-}
-.sticker-item:active {
-  transform: scale(0.9);
-}
-.text-sticker-color {
-  transition: all .15s;
-  position: relative;
-}
-.text-sticker-color.selected {
-  transform: scale(1.15);
-  box-shadow: 0 0 0 3px var(--primary);
-}
-.text-sticker-color:hover {
-  transform: scale(1.1);
-}
+<!-- WATCH HISTORY MODAL -->
+<div id="watchHistoryModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>📺 Watch History</h2>
+      <button class="close" data-close="watchHistoryModal">×</button>
+    </div>
+    <div id="watchHistoryList"></div>
+  </div>
+</div>
 
-/* ============================================================
-   VIDEO TRIM MODAL
-============================================================ */
-#videoTrimModal .modal-box { max-width: 480px; }
-#trimPreviewVideo { background: #000; border-radius: 12px; }
-#trimStartRange, #trimEndRange {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 6px;
-  background: var(--border);
-  border-radius: 3px;
-  outline: none;
-}
-#trimStartRange::-webkit-slider-thumb,
-#trimEndRange::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: linear-gradient(135deg,#7c3aed,#ec4899);
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  border: 2px solid white;
-}
-#trimStartRange::-moz-range-thumb,
-#trimEndRange::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: linear-gradient(135deg,#7c3aed,#ec4899);
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  border: 2px solid white;
-}
+<!-- SEARCH -->
+<div id="searchModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Search</h2>
+      <button class="close" data-close="searchModal">×</button>
+    </div>
+    <input id="searchInput" class="yt-input" placeholder="Search users & videos..." style="margin-bottom:14px">
+    <div class="yt-tabs" id="searchTabs" style="margin:0 -20px 14px;padding:0 20px">
+      <div class="yt-tab active" data-stab="users">👤 Users</div>
+      <div class="yt-tab" data-stab="videos">🎬 Videos</div>
+    </div>
+    <div id="searchResults"></div>
+  </div>
+</div>
 
-/* ============================================================
-   STORY MENU / EDIT STORY
-============================================================ */
-#storyMenuModal .modal-box { max-width: 340px; }
-#editStoryModal .modal-box { max-width: 440px; }
+<div id="alertsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Notifications</h2>
+      <button class="close" data-close="alertsModal">×</button>
+    </div>
+    <div id="notificationsList"></div>
+  </div>
+</div>
 
-/* ============================================================
-   RESPONSIVE
-============================================================ */
-@media (max-width: 500px) {
-  .modal-box { padding: 16px; }
-  .yt-video-thumb { width: 120px; height: 68px; }
-  .playlist-cover { width: 80px; height: 50px; }
-  .yt-profile-avatar { width: 90px; height: 90px; }
-  .yt-profile-head { margin-top: -45px; }
-  .yt-profile-info { padding-top: 45px; }
-  .yt-profile-info h1 { font-size: 18px; }
-  #videoPlayerVideo { max-height: 60vh; }
-  .splash-title { font-size: 36px; }
-  .splash-icon { font-size: 90px; }
-  .suspension-card { padding: 30px 20px; }
-  .suspension-title { font-size: 22px; }
-  .suspension-icon { font-size: 60px; }
-  .story-ring { width: 62px; height: 62px; }
-  .story-item { width: 68px; }
-  .story-name { font-size: 10.5px; max-width: 68px; }
-  .story-header img { width: 32px; height: 32px; }
-  .story-header .info strong { font-size: 13px; }
-  .story-nav-left, .story-nav-right { bottom: 90px; }
-  .req-row .req-text { font-size: 13px; }
-  .req-row .req-count { font-size: 11.5px; }
-  .group-member-item img { width: 38px; height: 38px; }
-  .group-request-item img { width: 40px; height: 40px; }
-  .group-inbox-item img { width: 50px; height: 50px; }
-  .group-msg-image { max-width: 200px; }
-  .group-msg-video { max-width: 220px; }
-  .group-msg-file { max-width: 220px; }
-  #groupChatModal .modal-box { height: 95vh; max-height: 95vh; }
-  #storyStickerOverlay { font-size: 60px; }
-  .sticker-item { font-size: 26px !important; }
-  #songPickerList, #songLibraryList { padding: 10px; }
-  .song-library-item .song-thumb { width: 42px; height: 42px; font-size: 18px; }
-  .song-picker-item .song-thumb { width: 40px; height: 40px; font-size: 18px; }
-}
+<div id="editProfileModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Edit Profile</h2>
+      <button class="close" data-close="editProfileModal">×</button>
+    </div>
+    <div style="text-align:center;margin-bottom:20px">
+      <img id="editPhotoPreview" class="yt-profile-avatar" style="margin:0 auto" src="" alt="">
+      <div style="margin-top:10px">
+        <input id="profilePhotoFile" type="file" accept="image/*">
+      </div>
+    </div>
+    <label class="yt-label">Name</label>
+    <input id="editName" class="yt-input" style="margin-bottom:14px">
+    <label class="yt-label">User ID</label>
+    <input id="editUsername" class="yt-input" placeholder="example: harshit" style="margin-bottom:14px">
+    <label class="yt-label">Age</label>
+    <input id="editAge" class="yt-input" type="number" min="1" max="120" style="margin-bottom:14px">
+    <label class="yt-label">Gender</label>
+    <select id="editGender" class="yt-input" style="margin-bottom:14px">
+      <option value="">Prefer not to say</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+      <option value="Other">Other</option>
+    </select>
+    <label class="yt-label">Bio</label>
+    <textarea id="editBio" class="yt-textarea" placeholder="Tell about yourself..." style="margin-bottom:14px"></textarea>
+    <button class="yt-publish-btn" id="saveProfileBtn">Save Profile</button>
+    <p id="profileSaveStatus" style="margin-top:10px;color:var(--muted);text-align:center;font-size:13px"></p>
+  </div>
+</div>
 
-@media (max-height: 500px) and (orientation: landscape) {
-  .story-header { top: calc(10px + env(safe-area-inset-top, 0px)); }
-  .story-progress-bar { top: calc(4px + env(safe-area-inset-top, 0px)); }
-  .story-footer { padding: 8px 12px; }
-  .story-views { bottom: 60px; }
-}
+<div id="settingsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Settings</h2>
+      <button class="close" data-close="settingsModal">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="darkModeBtn">🌙 Dark Mode</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="changeBannerBtn">🎨 Change Banner</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="privateAccountBtn">
+        <span>🔒 Private Account</span>
+        <span id="privateAccountToggle" style="font-size:13px;font-weight:bold;color:var(--muted)">OFF</span>
+      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="advancedSettingsBtn">
+        <span>⚙️ Advanced Settings</span>
+        <span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="followRequestsBtn">
+        <span>📬 Follow Requests</span>
+        <span id="followRequestsBadge" style="background:var(--danger);color:white;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:bold;display:none">0</span>
+      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="watchHistoryBtn">📺 Watch History</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="blockedUsersBtn">
+        <span>🚫 Blocked Users</span>
+        <span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="privacyPolicyBtn">📄 Privacy Policy</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="termsOfServiceBtn">📋 Terms of Service</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="deleteAccountBtn">🗑️ Delete Account</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="contactUsBtn">📧 Contact Us</button>
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left;margin-top:12px" id="logoutBtn">🚪 Logout</button>
+    </div>
+  </div>
+</div>
 
-@media (prefers-reduced-motion: reduce) {
-  .story-item,
-  .story-progress-fill,
-  .story-upload-btn,
-  .splash-icon,
-  .vault-item,
-  .vault-add-btn {
-    transition: none !important;
-    animation: none !important;
+<div id="publicProfileModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden">
+    <div style="position:relative">
+      <div class="yt-banner"></div>
+      <button class="close" data-close="publicProfileModal" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:white">×</button>
+    </div>
+    <div style="padding:0 16px">
+      <div class="yt-profile-head" style="margin-top:-45px">
+        <img id="publicPhoto" class="yt-profile-avatar" src="" alt="">
+        <div class="yt-profile-info">
+          <h1 id="publicName">User</h1>
+          <div class="handle" id="publicUsername">@user</div>
+          <div class="meta" id="publicExtra"></div>
+        </div>
+      </div>
+      <div class="yt-profile-stats" style="margin-top:10px">
+        <div class="yt-stat" id="publicFollowersBtn"><strong id="publicFollowers">0</strong><span>Followers</span></div>
+        <div class="yt-stat" id="publicFollowingBtn"><strong id="publicFollowing">0</strong><span>Following</span></div>
+        <div class="yt-stat"><strong id="publicVideos">0</strong><span>Videos</span></div>
+      </div>
+      <div class="yt-profile-actions">
+        <button class="yt-btn yt-btn-primary" id="publicFollowBtn">Follow</button>
+        <button class="yt-btn yt-btn-gray" id="publicMessageBtn">💬 Message</button>
+      </div>
+      <div id="privateAccountNotice" class="hidden" style="padding:20px 16px;text-align:center;border-top:1px solid var(--border)">
+        <div style="font-size:40px;margin-bottom:10px">🔒</div>
+        <div style="font-weight:600;margin-bottom:6px">This account is private</div>
+        <div style="font-size:13px;color:var(--muted)">Follow this account to see their videos</div>
+      </div>
+      <div class="yt-tabs" style="margin:0 -16px;padding:0 16px" id="publicTabs">
+        <div class="yt-tab active">Videos</div>
+      </div>
+      <div class="yt-videos-grid" id="publicVideosList" style="padding-bottom:20px"></div>
+    </div>
+  </div>
+</div>
+
+<div id="peopleModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="peopleTitle">Followers</h2>
+      <button class="close" data-close="peopleModal">×</button>
+    </div>
+    <div id="peopleList"></div>
+  </div>
+</div>
+
+<div id="commentsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Comments</h2>
+      <button class="close" data-close="commentsModal">×</button>
+    </div>
+    <div id="commentsList"></div>
+    <div class="comment-form-inline">
+      <input id="commentInput" placeholder="Add a comment...">
+      <button id="sendCommentBtn">Post</button>
+    </div>
+  </div>
+</div>
+
+<div id="editVideoModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Edit Video</h2>
+      <button class="close" data-close="editVideoModal">×</button>
+    </div>
+    <input type="hidden" id="editVideoId">
+    <label class="yt-label">Title</label>
+    <input id="editVideoTitle" class="yt-input" style="margin-bottom:14px">
+    <label class="yt-label">Description</label>
+    <textarea id="editVideoDescription" class="yt-textarea" style="margin-bottom:14px"></textarea>
+    <label class="yt-label">Visibility</label>
+    <select id="editVideoVisibility" class="yt-input" style="margin-bottom:14px">
+      <option value="public">Public</option>
+      <option value="private">Private</option>
+    </select>
+    <label class="yt-label">Type</label>
+    <select id="editVideoType" class="yt-input" style="margin-bottom:14px">
+      <option value="long">Long Video</option>
+      <option value="short">Short</option>
+    </select>
+    <button class="yt-publish-btn" id="saveVideoEditBtn">Save Changes</button>
+  </div>
+</div>
+
+<div id="createPlaylistModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Create Playlist</h2>
+      <button class="close" data-close="createPlaylistModal">×</button>
+    </div>
+    <label class="yt-label">Playlist Name *</label>
+    <input id="playlistName" class="yt-input" placeholder="e.g. My Favorites" maxlength="60" style="margin-bottom:14px">
+    <label class="yt-label">Description (optional)</label>
+    <textarea id="playlistDesc" class="yt-textarea" placeholder="What's this playlist about?" maxlength="200" style="margin-bottom:14px"></textarea>
+    <button class="yt-publish-btn" id="createPlaylistBtn">Create Playlist</button>
+  </div>
+</div>
+
+<div id="addToPlaylistModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Save to Playlist</h2>
+      <button class="close" data-close="addToPlaylistModal">×</button>
+    </div>
+    <button class="playlist-create-btn" id="newPlaylistFromAddBtn" style="margin-bottom:14px;width:100%;justify-content:center">
+      ➕ Create New Playlist
+    </button>
+    <div id="playlistSelectList"></div>
+    <button class="yt-publish-btn" id="saveToPlaylistBtn" style="margin-top:14px">Done</button>
+  </div>
+</div>
+
+<div id="playlistDetailModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="playlistDetailTitle">Playlist</h2>
+      <button class="close" data-close="playlistDetailModal">×</button>
+    </div>
+    <div id="playlistDetailContent"></div>
+  </div>
+</div>
+
+<!-- VIDEO PLAYER MODAL -->
+<div id="videoPlayerModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden;max-width:560px">
+    <button class="close" data-close="videoPlayerModal" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.5);color:white;z-index:10">×</button>
+
+    <div style="position:relative;background:#000">
+      <video id="videoPlayerVideo" controls playsinline webkit-playsinline style="width:100%;max-height:70vh;background:#000;display:block"></video>
+      
+      <div id="speedControl" style="position:absolute;top:10px;left:10px;z-index:11;display:none">
+        <div style="background:rgba(0,0,0,0.8);border-radius:20px;padding:6px 12px;display:flex;gap:6px;align-items:center">
+          <span style="color:white;font-size:11px;font-weight:600">Speed:</span>
+          <button class="speed-btn" data-speed="0.5" style="background:rgba(255,255,255,0.15);border:0;color:white;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer">0.5x</button>
+          <button class="speed-btn active" data-speed="1" style="background:#7c3aed;border:0;color:white;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer">1x</button>
+          <button class="speed-btn" data-speed="1.5" style="background:rgba(255,255,255,0.15);border:0;color:white;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer">1.5x</button>
+          <button class="speed-btn" data-speed="2" style="background:rgba(255,255,255,0.15);border:0;color:white;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:600;cursor:pointer">2x</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="padding:14px 16px">
+      <h3 id="videoPlayerTitle" style="font-size:16px;font-weight:600;margin-bottom:8px"></h3>
+      <div id="videoPlayerMeta" style="font-size:12.5px;color:var(--muted);margin-bottom:10px"></div>
+      <div id="videoPlayerDesc" style="font-size:13.5px;line-height:1.4;color:var(--text)"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;padding:10px 16px;border-top:1px solid var(--border);align-items:center;overflow-x:auto">
+      <button class="action-btn" id="videoPlayerLikeBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">🤍</span>
+        <small id="videoPlayerLikes" style="font-size:10px;color:var(--muted);font-weight:600">0</small>
+      </button>
+      <button class="action-btn" id="videoPlayerCommentBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">💬</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Comment</small>
+      </button>
+      <button class="action-btn" id="videoPlayerShareBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">📤</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Share</small>
+      </button>
+      <button class="action-btn" id="videoPlayerDownloadBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">📥</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Download</small>
+      </button>
+      <button class="action-btn" id="videoPlayerSaveBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">📑</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Save</small>
+      </button>
+      <button class="action-btn" id="videoPlayerPlaylistBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">➕</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Playlist</small>
+      </button>
+      <button class="action-btn" id="videoPlayerSpeedBtn" style="display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;min-width:56px">
+        <span class="icon" style="font-size:22px">⚡</span>
+        <small style="font-size:10px;color:var(--muted);font-weight:600">Speed</small>
+      </button>
+    </div>
+
+    <div id="adSlotVideoPlayer" class="ad-slot-video" style="display:none;margin:10px 16px 14px;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;position:relative;min-height:270px;text-align:center;overflow:hidden">
+      <div style="position:absolute;top:6px;right:10px;font-size:9px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:0.5px;background:rgba(0,0,0,0.3);padding:2px 6px;border-radius:4px;z-index:2">Sponsored</div>
+      <div id="adContainerVideoPlayer" style="min-height:250px;width:100%;display:flex;align-items:center;justify-content:center;overflow:hidden"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE SHEET -->
+<div id="shareSheet" class="share-sheet">
+  <div class="share-sheet-box">
+    <h3>Share with</h3>
+    <div class="share-user-list" id="shareUserList"></div>
+    <div class="share-actions">
+      <div class="share-action-btn" id="shareCopyLink"><span class="icon">🔗</span>Copy Link</div>
+      <div class="share-action-btn" id="shareNative"><span class="icon">📤</span>More</div>
+      <div class="share-action-btn" id="shareWhatsApp"><span class="icon">💬</span>WhatsApp</div>
+      <div class="share-action-btn" id="shareInstagram"><span class="icon">📸</span>Instagram</div>
+      <div class="share-action-btn" id="shareFacebook"><span class="icon">📘</span>Facebook</div>
+      <div class="share-action-btn" id="shareTwitter"><span class="icon">🐦</span>Twitter</div>
+    </div>
+  </div>
+</div>
+
+<div id="followRequestsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Follow Requests</h2>
+      <button class="close" data-close="followRequestsModal">×</button>
+    </div>
+    <div id="followRequestsList"></div>
+  </div>
+</div>
+
+<div id="imageViewerModal" class="modal">
+  <div class="modal-box" style="padding:0;background:#000;max-width:100%;text-align:center">
+    <button class="close" data-close="imageViewerModal" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);color:white;z-index:10">×</button>
+    <img id="largeChatImage" src="" alt="" style="width:100%;max-height:85vh;object-fit:contain;display:block">
+  </div>
+</div>
+
+<div id="bannerOptionsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Change Banner</h2>
+      <button class="close" data-close="bannerOptionsModal">×</button>
+    </div>
+    <div class="banner-options-grid">
+      <div class="banner-option" id="uploadBannerBtn">
+        <span class="opt-icon">📷</span>
+        <div class="opt-info"><strong>Upload Photo</strong><small>Choose from gallery</small></div>
+      </div>
+      <div class="banner-option" id="chooseGradientBtn">
+        <span class="opt-icon">🎨</span>
+        <div class="opt-info"><strong>Choose Gradient</strong><small>Pick a color theme</small></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="bannerGradientModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Choose Gradient</h2>
+      <button class="close" data-close="bannerGradientModal">×</button>
+    </div>
+    <div class="banner-gradients" id="bannerGradientsList">
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #7c3aed, #ec4899)" style="background:linear-gradient(135deg, #7c3aed, #ec4899)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #6d28d9, #db2777)" style="background:linear-gradient(135deg, #6d28d9, #db2777)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #2563eb, #7c3aed)" style="background:linear-gradient(135deg, #2563eb, #7c3aed)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #dc2626, #ec4899)" style="background:linear-gradient(135deg, #dc2626, #ec4899)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #ea580c, #facc15)" style="background:linear-gradient(135deg, #ea580c, #facc15)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #059669, #06b6d4)" style="background:linear-gradient(135deg, #059669, #06b6d4)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #1e293b, #334155)" style="background:linear-gradient(135deg, #1e293b, #334155)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #f59e0b, #ef4444)" style="background:linear-gradient(135deg, #f59e0b, #ef4444)"></div>
+      <div class="banner-gradient-item" data-gradient="linear-gradient(135deg, #8b5cf6, #06b6d4)" style="background:linear-gradient(135deg, #8b5cf6, #06b6d4)"></div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="bannerFile" accept="image/*" class="hidden">
+
+<div id="createStoryModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>Add to Story</h2>
+      <button class="close" data-close="createStoryModal">×</button>
+    </div>
+    <div class="story-upload-zone" id="storyUploadZone">
+      <span class="up-icon">📷</span>
+      <div class="up-text">Tap to select photo or video</div>
+      <div class="up-sub">JPG, PNG, MP4 · Max 30MB</div>
+    </div>
+    <img id="storyImagePreview" class="story-preview hidden" alt="">
+    <video id="storyVideoPreview" class="story-preview hidden" controls playsinline muted></video>
+
+    <div id="storyEditorTools" class="hidden" style="margin-bottom:14px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="yt-mini-btn" id="storyAddSongBtn">🎵 Song</button>
+        <button class="yt-mini-btn" id="storyAddStickerBtn">😀 Sticker</button>
+        <button class="yt-mini-btn" id="storyTrimBtn">✂️ Trim</button>
+      </div>
+      <div id="storySelectedMedia" style="font-size:12px;color:var(--muted);text-align:center"></div>
+    </div>
+
+    <div class="story-upload-progress" id="storyUploadProgress">
+      <div class="story-upload-progress-bar" id="storyUploadProgressBar"></div>
+    </div>
+
+    <p id="storyUploadStatus" style="font-size:13px;color:var(--muted);margin-top:10px;text-align:center"></p>
+
+    <button class="story-upload-btn" id="storyUploadBtn" disabled>Share to Story</button>
+  </div>
+</div>
+
+<input type="file" id="storyFile" accept="image/*,video/*" class="hidden">
+
+<div id="storyViewer">
+  <div class="story-progress-bar" id="storyProgressBar"></div>
+  <div class="story-header">
+    <img id="storyViewerAvatar" src="" alt="">
+    <div class="info">
+      <strong id="storyViewerName">User</strong>
+      <small id="storyViewerTime">Just now</small>
+    </div>
+    <button class="story-more-btn" id="storyMoreBtn" type="button">⋮</button>
+    <button class="close-btn" id="storyCloseBtn" type="button">✕</button>
+  </div>
+  <div class="story-media" id="storyMedia"></div>
+
+  <div id="storySongOverlay" class="hidden" style="position:absolute;bottom:80px;left:12px;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.6);padding:8px 14px;border-radius:20px;backdrop-filter:blur(8px);z-index:15;max-width:60%">
+    <span style="font-size:16px">🎵</span>
+    <div style="flex:1;min-width:0">
+      <div id="storySongTitle" style="color:white;font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Song</div>
+      <div id="storySongArtist" style="color:rgba(255,255,255,0.75);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Artist</div>
+    </div>
+  </div>
+
+  <div id="storyStickerOverlay" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:80px;pointer-events:none;z-index:16;display:none"></div>
+
+  <div class="story-nav-left" id="storyPrevZone"></div>
+  <div class="story-nav-right" id="storyNextZone"></div>
+
+  <div class="story-views hidden" id="storyViewsCounter">
+    <span>👁️</span><span id="storyViewsCount">0</span><span>views</span>
+  </div>
+
+  <div class="story-footer" id="storyFooter">
+    <input type="text" class="story-reply" id="storyReplyInput" placeholder="Send message..." maxlength="200">
+    <button class="story-send" id="storySendBtn" type="button">Send</button>
+  </div>
+</div>
+
+<div id="advancedSettingsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>⚙️ Advanced Settings</h2>
+      <button class="close" data-close="advancedSettingsModal">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="openVaultBtn">
+        <span>🔐 Private Vault</span><span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="changePinBtn">
+        <span>🔑 Change PIN</span><span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="vaultSettingsBtn">
+        <span>⚡ Vault Settings</span><span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="createGroupFromSettingsBtn">
+        <span>👥 Create Group</span><span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="myGroupsBtn">
+        <span>📋 My Groups</span><span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:none;justify-content:space-between;align-items:center" id="adminSongLibraryBtn">
+        <span>🎵 Song Library (Admin)</span><span style="font-size:13px;color:var(--muted)">›</span>
+      </button>
+      <p style="font-size:12px;color:var(--muted);padding:10px;line-height:1.5;text-align:center;margin-top:10px">
+        Hidden files only visible in Private Vault.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div id="adminSongLibraryModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden">
+    <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
+      <h2>🎵 Song Library</h2>
+      <button class="close" data-close="adminSongLibraryModal">×</button>
+    </div>
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
+      <button class="yt-publish-btn" id="addSongBtn" style="margin:0;flex:1;padding:10px;font-size:14px">➕ Add New Song</button>
+      <span id="songCount" style="font-size:12px;color:var(--muted)">0 songs</span>
+    </div>
+    <div id="songLibraryList" style="padding:10px 14px;max-height:60vh;overflow-y:auto"></div>
+  </div>
+</div>
+
+<div id="addSongModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="addSongTitle">➕ Add Song</h2>
+      <button class="close" data-close="addSongModal">×</button>
+    </div>
+    <input type="hidden" id="editingSongId">
+    <label class="yt-label">Song Name *</label>
+    <input id="songName" class="yt-input" maxlength="100" placeholder="e.g. Kesariya" style="margin-bottom:14px">
+    <label class="yt-label">Artist</label>
+    <input id="songArtist" class="yt-input" maxlength="100" placeholder="e.g. Arijit Singh" style="margin-bottom:14px">
+    <label class="yt-label">Category</label>
+    <select id="songCategory" class="yt-input" style="margin-bottom:14px">
+      <option value="Bollywood">Bollywood</option>
+      <option value="English">English</option>
+      <option value="Punjabi">Punjabi</option>
+      <option value="Instrumental">Instrumental</option>
+      <option value="Trending">Trending</option>
+      <option value="Other">Other</option>
+    </select>
+    <label class="yt-label">Song File (MP3, WAV, M4A) *</label>
+    <div class="story-upload-zone" id="songUploadZone" style="padding:24px 20px">
+      <span class="up-icon">🎵</span>
+      <div class="up-text">Tap to select audio file</div>
+      <div class="up-sub">Max 100MB · MP3, WAV, M4A, AAC</div>
+    </div>
+    <input type="file" id="songFile" accept="audio/*" class="hidden">
+    <div id="songFileSelected" class="hidden" style="padding:10px;background:var(--bg);border-radius:10px;margin-bottom:14px;font-size:13px;display:flex;align-items:center;gap:8px">
+      <span>🎵</span>
+      <span id="songFileName" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      <button id="songFileRemoveBtn" style="color:var(--danger);font-size:16px;cursor:pointer">✕</button>
+    </div>
+    <div class="yt-progress" id="songUploadProgress">
+      <div class="yt-progress-bar" id="songUploadProgressBar"></div>
+    </div>
+    <p id="songUploadStatus" style="text-align:center;font-size:13px;color:var(--muted);min-height:18px;margin-bottom:10px"></p>
+    <button class="yt-publish-btn" id="saveSongBtn">✅ Save Song</button>
+  </div>
+</div>
+
+<div id="songPickerModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden">
+    <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
+      <h2>🎵 Choose Song</h2>
+      <button class="close" data-close="songPickerModal">×</button>
+    </div>
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+      <input id="songSearchInput" class="yt-input" placeholder="Search songs..." style="padding:8px 12px;font-size:13px">
+    </div>
+    <div id="songPickerList" style="padding:10px 14px;max-height:60vh;overflow-y:auto"></div>
+    <div style="padding:10px 14px;border-top:1px solid var(--border);display:flex;gap:8px">
+      <button class="yt-btn yt-btn-gray" id="removeSongBtn" style="flex:1;justify-content:center">🔇 Remove Song</button>
+      <button class="yt-btn yt-btn-primary" id="confirmSongBtn" style="flex:1;justify-content:center">✅ Use Song</button>
+    </div>
+  </div>
+</div>
+
+<div id="stickerPickerModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>😀 Choose Sticker</h2>
+      <button class="close" data-close="stickerPickerModal">×</button>
+    </div>
+    <div class="yt-tabs" id="stickerTabs" style="margin:0 -20px 14px;padding:0 20px">
+      <div class="yt-tab active" data-stab="emoji">😀 Emoji</div>
+      <div class="yt-tab" data-stab="text">📝 Text</div>
+    </div>
+    <div id="stickerEmojiTab" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;max-height:50vh;overflow-y:auto;padding:4px">
+      <div class="sticker-item" data-sticker="❤️" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">❤️</div>
+      <div class="sticker-item" data-sticker="😂" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😂</div>
+      <div class="sticker-item" data-sticker="🔥" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🔥</div>
+      <div class="sticker-item" data-sticker="💯" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💯</div>
+      <div class="sticker-item" data-sticker="🎉" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🎉</div>
+      <div class="sticker-item" data-sticker="😍" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😍</div>
+      <div class="sticker-item" data-sticker="😎" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">😎</div>
+      <div class="sticker-item" data-sticker="🤩" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🤩</div>
+      <div class="sticker-item" data-sticker="🥰" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🥰</div>
+      <div class="sticker-item" data-sticker="💪" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">💪</div>
+      <div class="sticker-item" data-sticker="🙏" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">🙏</div>
+      <div class="sticker-item" data-sticker="✨" style="font-size:32px;text-align:center;padding:8px;cursor:pointer;border-radius:8px">✨</div>
+    </div>
+    <div id="stickerTextTab" class="hidden">
+      <label class="yt-label">Enter text (max 20 chars)</label>
+      <input id="textStickerInput" class="yt-input" maxlength="20" placeholder="e.g. WOW..." style="margin-bottom:14px">
+      <label class="yt-label">Text Color</label>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <div class="text-sticker-color selected" data-color="#ffffff" style="width:36px;height:36px;border-radius:50%;background:#ffffff;border:2px solid #ccc;cursor:pointer"></div>
+        <div class="text-sticker-color" data-color="#000000" style="width:36px;height:36px;border-radius:50%;background:#000000;border:2px solid #ccc;cursor:pointer"></div>
+        <div class="text-sticker-color" data-color="#ed4956" style="width:36px;height:36px;border-radius:50%;background:#ed4956;cursor:pointer"></div>
+        <div class="text-sticker-color" data-color="#7c3aed" style="width:36px;height:36px;border-radius:50%;background:#7c3aed;cursor:pointer"></div>
+        <div class="text-sticker-color" data-color="#0095f6" style="width:36px;height:36px;border-radius:50%;background:#0095f6;cursor:pointer"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="yt-btn yt-btn-gray" id="removeStickerBtn" style="flex:1;justify-content:center">🗑️ Remove</button>
+      <button class="yt-btn yt-btn-primary" id="confirmStickerBtn" style="flex:1;justify-content:center">✅ Apply</button>
+    </div>
+  </div>
+</div>
+
+<div id="videoTrimModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>✂️ Trim Video</h2>
+      <button class="close" data-close="videoTrimModal">×</button>
+    </div>
+    <video id="trimPreviewVideo" controls playsinline style="width:100%;max-height:300px;background:#000;border-radius:12px;margin-bottom:14px"></video>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px">
+      <span>Start: <span id="trimStartLabel">0:00</span></span>
+      <span>End: <span id="trimEndLabel">0:00</span></span>
+    </div>
+    <label class="yt-label">Start Time</label>
+    <input type="range" id="trimStartRange" min="0" max="100" value="0" step="0.1" style="width:100%;margin-bottom:14px">
+    <label class="yt-label">End Time</label>
+    <input type="range" id="trimEndRange" min="0" max="100" value="100" step="0.1" style="width:100%;margin-bottom:14px">
+    <p style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:14px">
+      Selected: <span id="trimDurationLabel">0:00</span>
+    </p>
+    <div style="display:flex;gap:8px">
+      <button class="yt-btn yt-btn-gray" id="trimCancelBtn" style="flex:1;justify-content:center">Cancel</button>
+      <button class="yt-btn yt-btn-primary" id="trimSaveBtn" style="flex:1;justify-content:center">✅ Apply</button>
+    </div>
+  </div>
+</div>
+
+<div id="storyMenuModal" class="modal">
+  <div class="modal-box" style="max-width:340px">
+    <div class="modal-header">
+      <h2>Story Options</h2>
+      <button class="close" data-close="storyMenuModal">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="storyMenuEditBtn">✏️ Edit Story</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="storyMenuDeleteBtn">🗑️ Delete Story</button>
+    </div>
+  </div>
+</div>
+
+<div id="editStoryModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>✏️ Edit Story</h2>
+      <button class="close" data-close="editStoryModal">×</button>
+    </div>
+    <img id="editStoryPreview" class="story-preview" alt="">
+    <video id="editStoryVideoPreview" class="story-preview hidden" controls playsinline muted></video>
+    <label class="yt-label">Caption / Text</label>
+    <textarea id="editStoryCaption" class="yt-textarea" maxlength="200" placeholder="Add caption..." style="margin-bottom:14px"></textarea>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="yt-mini-btn" id="editStoryChangeSongBtn" style="flex:1">🎵 Song</button>
+      <button class="yt-mini-btn" id="editStoryChangeStickerBtn" style="flex:1">😀 Sticker</button>
+    </div>
+    <p id="editStoryStatus" style="text-align:center;font-size:13px;color:var(--muted);min-height:18px;margin-bottom:10px"></p>
+    <button class="yt-publish-btn" id="saveStoryEditBtn">✅ Save Changes</button>
+  </div>
+</div>
+
+<div id="pinSetupModal" class="modal">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-header">
+      <h2>🔐 Set Vault PIN</h2>
+      <button class="close" data-close="pinSetupModal">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px">
+      Create a 4-digit PIN.<br><strong style="color:var(--danger)">Don't forget it!</strong>
+    </p>
+    <label class="yt-label">Enter 4-digit PIN</label>
+    <input type="password" id="newPinInput" class="yt-input" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="••••" style="text-align:center;font-size:24px;letter-spacing:12px;margin-bottom:14px">
+    <label class="yt-label">Confirm PIN</label>
+    <input type="password" id="confirmPinInput" class="yt-input" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="••••" style="text-align:center;font-size:24px;letter-spacing:12px;margin-bottom:14px">
+    <p id="pinSetupStatus" style="text-align:center;font-size:13px;color:var(--danger);min-height:18px;margin-bottom:10px"></p>
+    <button class="yt-publish-btn" id="savePinBtn">Save PIN</button>
+  </div>
+</div>
+
+<div id="pinEntryModal" class="modal">
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-header">
+      <h2>🔐 Enter Vault PIN</h2>
+      <button class="close" data-close="pinEntryModal">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:20px">
+      Enter your 4-digit PIN.
+    </p>
+    <input type="password" id="vaultPinInput" class="yt-input" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="••••" autofocus style="text-align:center;font-size:32px;letter-spacing:16px;margin-bottom:14px">
+    <p id="pinEntryStatus" style="text-align:center;font-size:13px;color:var(--danger);min-height:18px;margin-bottom:10px"></p>
+    <button class="yt-publish-btn" id="unlockVaultBtn">Unlock</button>
+  </div>
+</div>
+
+<div id="vaultViewerModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden">
+    <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
+      <h2>🔐 Private Vault</h2>
+      <button class="close" data-close="vaultViewerModal">×</button>
+    </div>
+    <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center">
+      <button class="vault-add-btn" id="vaultAddFilesBtn">➕ Add Files</button>
+      <span id="vaultFileCount" style="font-size:12px;color:var(--muted);margin-left:auto">0 files</span>
+    </div>
+    <input type="file" id="vaultFileInput" accept="image/*,video/*" multiple class="hidden">
+    <div id="vaultUploadProgress" style="display:none;padding:12px 14px;border-bottom:1px solid var(--border)">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px" id="vaultUploadLabel">Uploading...</div>
+      <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">
+        <div id="vaultUploadBar" style="height:100%;width:0;background:linear-gradient(90deg,#7c3aed,#ec4899);transition:width 0.3s"></div>
+      </div>
+    </div>
+    <div id="vaultContent" style="padding:14px;max-height:60vh;overflow-y:auto"></div>
+  </div>
+</div>
+
+<div id="vaultSettingsModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>⚡ Vault Settings</h2>
+      <button class="close" data-close="vaultSettingsModal">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="yt-mini-btn" style="padding:14px;text-align:left;display:flex;justify-content:space-between;align-items:center" id="vaultAutoLockBtn">
+        <span>⏱️ Auto-lock after 5 min</span>
+        <span id="vaultAutoLockToggle" style="font-size:13px;font-weight:bold;color:var(--muted)">ON</span>
+      </button>
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left;margin-top:12px" id="clearVaultBtn">🗑️ Clear all vault content</button>
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left" id="removeVaultBtn">🔓 Remove Vault</button>
+    </div>
+  </div>
+</div>
+
+<div id="monetizationModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>💰 Apply for Monetization</h2>
+      <button class="close" data-close="monetizationModal">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:16px">
+      Complete all requirements to apply.
+    </p>
+    <div class="req-card">
+      <div class="req-row" id="reqFollowers">
+        <span class="req-icon">👥</span><span class="req-text">Followers</span>
+        <span class="req-count"><span id="reqFollowersCount">0</span> / 10</span>
+        <span class="req-status" id="reqFollowersStatus">⏳</span>
+      </div>
+      <div class="req-row" id="reqWatchTime">
+        <span class="req-icon">⏱️</span><span class="req-text">Watch Time</span>
+        <span class="req-count"><span id="reqWatchTimeCount">0</span> / 3600 sec</span>
+        <span class="req-status" id="reqWatchTimeStatus">⏳</span>
+      </div>
+      <div class="req-row" id="reqViews">
+        <span class="req-icon">👁️</span><span class="req-text">Total Views</span>
+        <span class="req-count"><span id="reqViewsCount">0</span> / 50</span>
+        <span class="req-status" id="reqViewsStatus">⏳</span>
+      </div>
+    </div>
+    <div style="margin:16px 0">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:6px">
+        <span>Overall Progress</span><span id="reqProgressPercent">0%</span>
+      </div>
+      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+        <div id="reqProgressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#7c3aed,#ec4899);transition:width 0.5s"></div>
+      </div>
+    </div>
+    <label class="yt-label">UPI ID</label>
+    <input type="text" id="monetizationUpiId" class="yt-input" placeholder="yourname@paytm" maxlength="50" style="margin-bottom:14px">
+    <button class="yt-publish-btn" id="submitMonetizationBtn" disabled>Submit Application</button>
+    <p id="monetizationStatus" style="text-align:center;font-size:13px;color:var(--muted);margin-top:10px;min-height:18px"></p>
+  </div>
+</div>
+
+<div id="createGroupModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>👥 Create Group</h2>
+      <button class="close" data-close="createGroupModal">×</button>
+    </div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="position:relative;display:inline-block">
+        <img id="groupPhotoPreview" src="https://ui-avatars.com/api/?name=G&size=200&background=7c3aed&color=fff" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--border)">
+        <button id="groupPhotoPick" style="position:absolute;bottom:0;right:0;width:32px;height:32px;border-radius:50%;background:#7c3aed;color:white;border:3px solid var(--card);font-size:16px;cursor:pointer">📷</button>
+      </div>
+      <input type="file" id="groupPhotoFile" accept="image/*" class="hidden">
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Group Photo (optional)</p>
+    </div>
+    <label class="yt-label">Group Name *</label>
+    <input id="groupName" class="yt-input" maxlength="50" placeholder="e.g. College Friends" style="margin-bottom:14px">
+    <label class="yt-label">Description</label>
+    <textarea id="groupDescription" class="yt-textarea" maxlength="200" placeholder="What's this group about?" style="margin-bottom:14px"></textarea>
+    <label class="yt-label">Group Type *</label>
+    <div class="yt-radio-group" id="groupTypeGroup" style="margin-bottom:16px">
+      <div class="yt-radio selected" data-value="public"><span class="r-icon">🌍</span><div class="r-title">Public</div><div class="r-sub">Anyone can join</div></div>
+      <div class="yt-radio" data-value="private"><span class="r-icon">🔒</span><div class="r-title">Private</div><div class="r-sub">Admin approval needed</div></div>
+    </div>
+    <p id="createGroupStatus" style="text-align:center;font-size:13px;color:var(--danger);min-height:18px;margin-bottom:10px"></p>
+    <button class="yt-publish-btn" id="createGroupBtn">✅ Create Group</button>
+  </div>
+</div>
+
+<div id="groupViewModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden">
+    <div class="modal-header" style="padding:14px 16px;border-bottom:1px solid var(--border);margin-bottom:0">
+      <h2 id="groupViewTitle">Group</h2>
+      <button class="close" data-close="groupViewModal">×</button>
+    </div>
+    <div style="padding:14px 16px">
+      <div style="display:flex;gap:12px;align-items:center;margin-bottom:16px">
+        <img id="groupViewPhoto" src="https://ui-avatars.com/api/?name=G&size=100&background=7c3aed&color=fff" style="width:64px;height:64px;border-radius:50%;object-fit:cover">
+        <div style="flex:1;min-width:0">
+          <h3 id="groupViewName" style="font-size:16px;font-weight:600;margin-bottom:4px">Group Name</h3>
+          <div id="groupViewMeta" style="font-size:12px;color:var(--muted)">0 members</div>
+          <div id="groupViewType" style="font-size:11px;color:var(--muted);margin-top:2px">🌍 Public</div>
+        </div>
+      </div>
+      <div id="groupViewDesc" style="font-size:13px;color:var(--text);line-height:1.5;padding:10px;background:var(--bg);border-radius:8px;margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="yt-btn yt-btn-primary" id="groupJoinBtn" style="flex:1">Join Group</button>
+        <button class="yt-btn yt-btn-gray" id="groupOpenChatBtn" style="flex:1;display:none">💬 Open Chat</button>
+        <button class="yt-btn yt-btn-gray" id="groupLeaveBtn" style="flex:1;display:none;color:var(--danger)">🚪 Leave</button>
+      </div>
+      <div class="yt-tabs" id="groupTabs" style="margin:0 -16px;padding:0 16px">
+        <div class="yt-tab active" data-gtab="members">Members</div>
+        <div class="yt-tab" data-gtab="requests" id="groupRequestsTab" style="display:none">Requests <span id="groupRequestsCount" style="color:var(--danger);font-size:11px"></span></div>
+        <div class="yt-tab" data-gtab="info">Info</div>
+      </div>
+      <div id="groupMembersTab" style="padding-top:12px;max-height:300px;overflow-y:auto"></div>
+      <div id="groupRequestsTabContent" class="hidden" style="padding-top:12px;max-height:300px;overflow-y:auto"></div>
+      <div id="groupInfoTab" class="hidden" style="padding-top:12px">
+        <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--muted)">Created by</div>
+          <div id="groupInfoCreator" style="font-size:14px;font-weight:600;margin-top:2px">-</div>
+        </div>
+        <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--muted)">Created on</div>
+          <div id="groupInfoDate" style="font-size:14px;margin-top:2px">-</div>
+        </div>
+        <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--muted)">Group ID</div>
+          <div id="groupInfoId" style="font-size:12px;font-family:monospace;margin-top:2px;word-break:break-all">-</div>
+        </div>
+        <button id="editGroupBtn" class="yt-btn yt-btn-primary" style="width:100%;margin-top:16px;justify-content:center;display:none">✏️ Edit Group</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="groupChatModal" class="modal">
+  <div class="modal-box" style="padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:90vh;height:90vh">
+    <div class="dm-chat-header" style="border-radius:16px 16px 0 0;flex-shrink:0">
+      <button class="icon-btn" data-close="groupChatModal" style="font-size:22px">←</button>
+      <img id="groupChatAvatar" src="" alt="" style="width:36px;height:36px;border-radius:50%">
+      <div class="info" style="flex:1;min-width:0">
+        <strong id="groupChatName">Group Name</strong>
+        <small id="groupChatMeta">0 members</small>
+      </div>
+      <button class="icon-btn" id="groupChatInfoBtn">ℹ️</button>
+    </div>
+    <div class="dm-messages" id="groupChatMessages" style="flex:1;overflow-y:auto;padding:14px 12px 20px"></div>
+    <div class="dm-input-bar" style="flex-shrink:0;position:relative">
+      <button class="dm-attach-btn" id="groupAttachBtn" type="button">📎</button>
+      <input id="groupChatInput" placeholder="Message group...">
+      <button id="groupChatSendBtn">Send</button>
+    </div>
+    <div class="dm-attach-menu" id="groupAttachMenu">
+      <div class="dm-attach-option" id="groupAttachPhotoBtn"><span class="icon">📷</span><span>Photo</span></div>
+      <div class="dm-attach-option" id="groupAttachVideoBtn"><span class="icon">🎥</span><span>Video</span></div>
+      <div class="dm-attach-option" id="groupAttachPdfBtn"><span class="icon">📄</span><span>PDF / Document</span></div>
+    </div>
+    <input type="file" id="groupPhotoFile2" accept="image/*" class="hidden">
+    <input type="file" id="groupVideoFile2" accept="video/*" class="hidden">
+    <input type="file" id="groupPdfFile" accept=".pdf,.doc,.docx,.txt,.zip,.ppt,.pptx,.xls,.xlsx" class="hidden">
+  </div>
+</div>
+
+<div id="groupMenuModal" class="modal">
+  <div class="modal-box" style="max-width:340px">
+    <div class="modal-header">
+      <h2 id="groupMenuTitle">Group Options</h2>
+      <button class="close" data-close="groupMenuModal">×</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="groupMenuOpenBtn">💬 Open Chat</button>
+      <button class="yt-mini-btn" style="padding:14px;text-align:left" id="groupMenuInfoBtn">ℹ️ View Info</button>
+      <button class="yt-mini-btn danger" style="padding:14px;text-align:left" id="groupMenuDeleteBtn">🗑️ Delete Group</button>
+    </div>
+  </div>
+</div>
+
+<div id="groupPhotoViewerModal" class="modal">
+  <div class="modal-box" style="padding:0;background:#000;max-width:100%;text-align:center">
+    <button class="close" data-close="groupPhotoViewerModal" style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.7);color:white;z-index:10">×</button>
+    <img id="largeGroupPhoto" src="" alt="" style="width:100%;max-height:85vh;object-fit:contain;display:block">
+  </div>
+</div>
+
+<div id="editGroupModal" class="modal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2>✏️ Edit Group</h2>
+      <button class="close" data-close="editGroupModal">×</button>
+    </div>
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="position:relative;display:inline-block">
+        <img id="editGroupPhotoPreview" src="https://ui-avatars.com/api/?name=G&size=200&background=7c3aed&color=fff" style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid var(--border)">
+        <button id="editGroupPhotoPick" style="position:absolute;bottom:0;right:0;width:32px;height:32px;border-radius:50%;background:#7c3aed;color:white;border:3px solid var(--card);font-size:16px;cursor:pointer">📷</button>
+      </div>
+      <input type="file" id="editGroupPhotoFile" accept="image/*" class="hidden">
+      <p style="font-size:12px;color:var(--muted);margin-top:8px">Change Group Photo</p>
+    </div>
+    <label class="yt-label">Group Name *</label>
+    <input id="editGroupName" class="yt-input" maxlength="50" style="margin-bottom:14px">
+    <label class="yt-label">Description</label>
+    <textarea id="editGroupDescription" class="yt-textarea" maxlength="200" style="margin-bottom:14px"></textarea>
+    <label class="yt-label">Group Type</label>
+    <div class="yt-radio-group" id="editGroupTypeGroup" style="margin-bottom:16px">
+      <div class="yt-radio" data-value="public"><span class="r-icon">🌍</span><div class="r-title">Public</div><div class="r-sub">Anyone can join</div></div>
+      <div class="yt-radio" data-value="private"><span class="r-icon">🔒</span><div class="r-title">Private</div><div class="r-sub">Approval needed</div></div>
+    </div>
+    <p id="editGroupStatus" style="text-align:center;font-size:13px;color:var(--danger);min-height:18px;margin-bottom:10px"></p>
+    <button class="yt-publish-btn" id="saveGroupEditBtn">✅ Save Changes</button>
+  </div>
+</div>
+
+<div class="deep-link-banner" id="deepLinkBanner">
+  <span>📹</span>
+  <span>Opening shared video...</span>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- ============================================================
+     ✅ APP SCRIPT — Firebase + App Logic
+============================================================ -->
+<script type="module" src="app.js"></script>
+
+<!-- ============================================================
+   🎛️ AD SYSTEM — SANDBOX IFRAME
+============================================================ -->
+<script>
+(function(){
+  "use strict";
+
+  const VIDEO_AD_SCRIPT = "https://pl31503868.profitableratecpmnetwork.com/cf/d0/ed/cfd0edbe231c0f6240271057001d998c.js";
+  const AD_CONTAINER_ID = "container-1fe6d8ff04cda98725422466b9ea6b14";
+
+  function renderVideoAd(){
+    const slot = document.getElementById("adSlotVideoPlayer");
+    const container = document.getElementById("adContainerVideoPlayer");
+    if(!slot || !container) return;
+
+    container.innerHTML = "";
+    container.style.minHeight = "250px";
+    container.style.width = "100%";
+
+    const iframe = document.createElement("iframe");
+    iframe.style.width = "100%";
+    iframe.style.height = "250px";
+    iframe.style.border = "0";
+    iframe.style.borderRadius = "8px";
+    iframe.style.background = "#ffffff";
+    iframe.style.display = "block";
+    iframe.setAttribute("scrolling", "no");
+    iframe.setAttribute("frameborder", "0");
+    iframe.setAttribute("allowtransparency", "true");
+    iframe.setAttribute("referrerpolicy", "no-referrer");
+    iframe.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms");
+
+    container.appendChild(iframe);
+
+    try {
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      doc.open();
+      doc.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <style>
+            html, body { margin:0; padding:0; overflow:hidden; background:#fff; width:100%; height:100%; }
+            * { max-width:100%; }
+            iframe { border:0 !important; }
+            img, video { max-width:100%; height:auto; }
+            #${AD_CONTAINER_ID} { width:100%; min-height:250px; }
+          </style>
+        </head>
+        <body>
+          <div id="${AD_CONTAINER_ID}"></div>
+          <script type="text/javascript" async data-cfasync="false" src="${VIDEO_AD_SCRIPT}"><\/script>
+        </body>
+        </html>
+      `);
+      doc.close();
+    } catch(e){ console.error("Ad iframe inject error:", e); }
+
+    slot.style.display = "block";
+    console.log("✅ Video ad rendered in SANDBOX IFRAME");
   }
-  #storyViewer.show { animation: none; }
-}
+
+  function clearVideoAd(){
+    const slot = document.getElementById("adSlotVideoPlayer");
+    const container = document.getElementById("adContainerVideoPlayer");
+    if(slot) slot.style.display = "none";
+    if(container) container.innerHTML = "";
+  }
+
+  function waitForAdSystem(callback, maxTries){
+    maxTries = maxTries || 50;
+    let tries = 0;
+    const interval = setInterval(function(){
+      tries++;
+      if(typeof window.showMyAd === "function"){
+        clearInterval(interval);
+        callback();
+      } else if(tries >= maxTries){
+        clearInterval(interval);
+      }
+    }, 100);
+  }
+
+  window.addEventListener("videoPlayerOpened", function(){
+    clearVideoAd();
+    waitForAdSystem(function(){
+      window.showMyAd("video", null, function(){
+        renderVideoAd();
+      });
+    });
+  });
+
+  document.addEventListener("click", function(e){
+    const closeBtn = e.target.closest('[data-close="videoPlayerModal"]');
+    if(closeBtn){ setTimeout(clearVideoAd, 300); }
+  });
+
+  const playerModal = document.getElementById("videoPlayerModal");
+  if(playerModal){
+    playerModal.addEventListener("click", function(e){
+      if(e.target === playerModal){ setTimeout(clearVideoAd, 300); }
+    });
+  }
+
+  window.addEventListener("load", function(){
+    waitForAdSystem(function(){
+      console.log("✅ Ad Control Loader initialized (Video-only + Sandbox mode)");
+    });
+  });
+
+  window.reloadAds = function(){ clearVideoAd(); };
+
+  console.log("✅ Ad System: Video-player only mode with SANDBOX IFRAME");
+})();
+</script>
+
+<script>
+  setTimeout(function() {
+    var splash = document.getElementById("splashScreen");
+    if (splash && splash.style.display !== "none" && !splash.classList.contains("fade-out")) {
+      splash.style.display = "none";
+    }
+    var login = document.getElementById("loginPage");
+    var app = document.getElementById("app");
+    if (login && app) {
+      if (login.classList.contains("hidden") && app.classList.contains("hidden")) {
+        login.classList.remove("hidden");
+      }
+    }
+  }, 3500);
+
+  window.addEventListener("error", function(e) {
+    console.error("🚨 ERROR:", e.message, "at", (e.filename || "").split("/").pop(), ":", e.lineno);
+  });
+
+  window.addEventListener("unhandledrejection", function(e) {
+    console.error("🚨 PROMISE ERROR:", e.reason);
+  });
+
+  console.log("✅ index.html loaded");
+</script>
+
+</body>
+</html>
