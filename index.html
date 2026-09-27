@@ -10,6 +10,24 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="ReelHub">
 <link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=RH&size=192&background=7c3aed&color=fff">
+
+<!-- ✅ FORCE HIDDEN CSS — Ye login page aur app ko alag-alag rakhega -->
+<style>
+  #loginPage[class*="hidden"],
+  #app[class*="hidden"],
+  #suspensionScreen[class*="hidden"],
+  #splashScreen[class*="hidden"],
+  .panel[class*="hidden"],
+  .modal[class*="hidden"],
+  .hidden { display: none !important; }
+
+  #loginPage:not(.hidden) { display: flex !important; }
+  #app:not(.hidden) { display: block !important; }
+  #suspensionScreen:not(.hidden) { display: flex !important; }
+  .modal.show { display: flex !important; }
+  #storyViewer.show { display: flex !important; }
+</style>
+
 <link rel="stylesheet" href="style.css">
 </head>
 
