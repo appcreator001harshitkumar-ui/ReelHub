@@ -4,7 +4,7 @@
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail, updateProfile, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc, updateDoc, deleteDoc, query, where, serverTimestamp, onSnapshot, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -519,12 +519,13 @@ function getAuthError(code){
 }
 
 /* ============================================================
-   ✅ GOOGLE LOGIN — FIXED VERSION
+   ✅ GOOGLE LOGIN — SIMPLE VERSION (Admin panel jaisa)
 ============================================================ */
 function attachGoogleLogin(){
   const btn = document.getElementById("googleLogin");
   if(!btn){
-    console.error("❌ googleLogin button HTML mein nahi mila!");
+    console.error("❌ googleLogin button HTML me nahi mila!");
+    alert("ERROR: Google login button HTML me nahi mila!");
     return false;
   }
   if(btn.dataset.listenerAttached === "1"){
@@ -536,56 +537,24 @@ function attachGoogleLogin(){
   btn.addEventListener("click", async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("🔵 Google button clicked — START");
+    console.log("🔵 Google button clicked");
 
     const status = document.getElementById("loginStatus");
     if(status){ status.textContent = "Opening Google..."; status.style.color = "#7c3aed"; }
 
-    try{
-      // ✅ Fresh provider every click (stale state avoid karne ke liye)
+    try {
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-
-      console.log("🔵 Calling signInWithPopup...");
       const result = await signInWithPopup(auth, provider);
-
-      console.log("✅✅✅ Google login SUCCESS:", result.user.email);
+      console.log("✅ Google login success:", result.user.email);
       if(status){ status.textContent = "✅ Login successful!"; status.style.color = "#22c55e"; }
-
-    }catch(error){
-      console.error("❌❌❌ Google error:", error.code, error.message);
-      if(status){ 
-        status.textContent = "❌ " + (error.code || "error"); 
-        status.style.color = "#ed4956"; 
-      }
-
-      if(error.code === "auth/operation-not-allowed"){
-        alert("Admin action: Firebase Console → Authentication → Sign-in method → Google → Enable karo");
-        return;
-      }
-      if(error.code === "auth/unauthorized-domain"){
-        alert("Admin action: Firebase Console → Authentication → Settings → Authorized domains → apna domain add karo");
-        return;
-      }
-      if(error.code === "auth/internal-error"){
-        alert("Firebase Console → Authentication → Settings me OAuth redirect domain check karo");
-        return;
-      }
-
-      // ✅ Sirf popup-blocked pe redirect (cancel/close pe nahi)
-      if(error.code === "auth/popup-blocked"){
-        console.log("🔄 Popup blocked — trying redirect fallback...");
-        try{
-          const provider = new GoogleAuthProvider();
-          provider.setCustomParameters({ prompt: "select_account" });
-          await signInWithRedirect(auth, provider);
-        }catch(e){
-          console.error("Redirect error:", e);
-          if(status){ status.textContent = "Redirect failed: " + e.message; status.style.color = "#ed4956"; }
-        }
-      }
+    } catch(error) {
+      console.error("❌ Google error:", error);
+      // ⚠️ ALERT — phone me bhi dikhega
+      alert("❌ Google Login Error\n\nCode: " + (error.code || "unknown") + "\n\nMessage: " + (error.message || "no message"));
+      if(status){ status.textContent = "❌ " + (error.code || "error"); status.style.color = "#ed4956"; }
     }
   });
+
   console.log("✅ Google login listener attached");
   return true;
 }
@@ -604,12 +573,6 @@ if(document.readyState === "loading"){
     setTimeout(attachGoogleLogin, 1500);
   }
 }
-
-getRedirectResult(auth)
-  .then(result => { 
-    if(result && result.user) console.log("✅ Redirect login success:", result.user.email); 
-  })
-  .catch(err => console.error("Redirect result error:", err));
 
 /* ============================================================
    PROFILE
