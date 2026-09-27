@@ -1,6 +1,5 @@
 /* ============================================================
-   ReelHub - app.js PART 1/3
-   Config + Auth + Profile + Feed + Stories
+   ReelHub - app.js PART 1/3 (FIXED)
 ============================================================ */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -149,6 +148,22 @@ let userAdsUnsubscribe = null;
 
 const $ = id => document.getElementById(id);
 
+/* ============ ✅ FORCE SHOW LOGIN ON LOAD ============ */
+function forceShowLogin(){
+  const login = $("loginPage");
+  const appEl = $("app");
+  const splash = $("splashScreen");
+  if(splash) splash.style.display = "none";
+  if(appEl) appEl.classList.add("hidden");
+  if(login){
+    login.classList.remove("hidden");
+    login.style.display = "flex";
+  }
+  console.log("✅ Login page forced visible");
+}
+window.forceShowLogin = forceShowLogin;
+
+/* ============ HELPERS ============ */
 function esc(v){
   return String(v ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
@@ -255,9 +270,7 @@ function getFileIcon(fileName, fileType){
   if(name.endsWith(".txt")) return { icon: "📃", cls: "other" };
   return { icon: "📎", cls: "other" };
 }
-function isAdminUser(){
-  return currentUser && ADMIN_EMAILS.includes(currentUser.email);
-}
+function isAdminUser(){ return currentUser && ADMIN_EMAILS.includes(currentUser.email); }
 function isUserBlocked(uid){ return blockedUsersCache.has(uid); }
 
 function canShowAd(adType, userId){
@@ -315,11 +328,6 @@ function hideSplash(){
   const splash = $("splashScreen");
   if(splash){ splash.classList.add("fade-out"); setTimeout(()=> splash.remove(), 500); }
 }
-function prepareInitialState(){
-  $("loginPage")?.classList.add("hidden");
-  $("app")?.classList.add("hidden");
-  document.body.classList.remove("app-ready");
-}
 
 function showSuspensionScreen(profile){
   const screen = $("suspensionScreen");
@@ -348,7 +356,6 @@ async function checkSuspension(uid){
       const untilTime = timeValue(profileData.suspendUntil);
       if(Date.now() > untilTime){
         await updateDoc(doc(db, "profiles", snap.docs[0].id), { suspended: false, suspendReason: "", suspendDuration: "", suspendUntil: null, autoUnsuspendedAt: serverTimestamp() });
-        toast("✅ Suspension ended");
         return false;
       }
     }
@@ -424,6 +431,7 @@ function uploadAudioToCloudinary(file, onProgress){
   });
 }
 
+/* ============ AUTH TABS ============ */
 document.querySelectorAll(".auth-tab").forEach(tab => {
   tab.addEventListener("click", () => {
     const tabName = tab.dataset.tab;
@@ -500,6 +508,7 @@ function getAuthError(code){
   return errors[code] || "Something went wrong. Please try again";
 }
 
+/* ============ GOOGLE LOGIN ============ */
 function attachGoogleLogin(){
   const btn = document.getElementById("googleLogin");
   if(!btn){ console.error("❌ googleLogin button not found"); return false; }
@@ -525,6 +534,7 @@ function attachGoogleLogin(){
 if(document.readyState === "loading"){ document.addEventListener("DOMContentLoaded", () => { if(!attachGoogleLogin()){ setTimeout(attachGoogleLogin, 500); setTimeout(attachGoogleLogin, 1500); } }); }
 else { if(!attachGoogleLogin()){ setTimeout(attachGoogleLogin, 500); setTimeout(attachGoogleLogin, 1500); } }
 
+/* ============ PROFILE ============ */
 async function createProfile(){
   const ref = doc(db, "profiles", currentUser.uid);
   const snap = await getDoc(ref);
@@ -572,7 +582,6 @@ async function loadProfile(){
   if(currentProfile.gender) extra.push(currentProfile.gender);
   if($("profileExtra")) $("profileExtra").textContent = extra.join(" · ");
   if($("profileBio")) $("profileBio").textContent = currentProfile.bio || "";
-  if(typeof updateProfileTabCounts === "function") updateProfileTabCounts();
   if(typeof updatePrivateToggleUI === "function") updatePrivateToggleUI();
 }
 function updatePrivateToggleUI(){
@@ -601,17 +610,6 @@ async function loadBlockedUsers(){
   blockedUsersCache = new Set();
   try{ const snap = await getDocs(query(collection(db, "blocked_users"), where("blockerId", "==", currentUser.uid))); snap.forEach(d => blockedUsersCache.add(d.data().blockedId)); }catch(e){}
 }
-function startBlockedUsersListener(){
-  if(blockedUsersUnsubscribe){ blockedUsersUnsubscribe(); blockedUsersUnsubscribe = null; }
-  if(!currentUser) return;
-  blockedUsersUnsubscribe = onSnapshot(query(collection(db, "blocked_users"), where("blockerId", "==", currentUser.uid)),
-    snapshot=>{
-      blockedUsersCache = new Set();
-      snapshot.forEach(d => blockedUsersCache.add(d.data().blockedId));
-      if(typeof renderFeed === "function") renderFeed();
-      if(typeof renderShorts === "function") renderShorts();
-    }, error=>console.error("Blocked listener error:", error));
-}
 async function loadWatchHistory(){
   if(!currentUser) return;
   watchHistoryCache = [];
@@ -628,456 +626,70 @@ function stopAllPresenceListeners(){
   presenceListenersMap.forEach(unsub => { try{ unsub(); }catch(e){} });
   presenceListenersMap.clear();
 }
-function startPresenceHeartbeat(){
-  if(!currentUser) return;
-  if(heartbeatInterval) clearInterval(heartbeatInterval);
-  updatePresence();
-  heartbeatInterval = setInterval(updatePresence, 30000);
-  if(!window.__presenceVisibilityBound){
-    window.__presenceVisibilityBound = true;
-    document.addEventListener("visibilitychange", ()=>{
-      if(document.visibilityState === "hidden") markOffline();
-      else updatePresence();
-    });
-    window.addEventListener("beforeunload", markOffline);
-  }
-}
 
+/* ============ AUTH STATE — MAIN SWITCH ============ */
 onAuthStateChanged(auth, async user => {
+  console.log("🔐 Auth state changed:", user ? "user found" : "no user");
   if(user){
     currentUser = user;
-    $("loginPage")?.classList.add("hidden");
-
     const isSuspended = await checkSuspension(user.uid);
     if(isSuspended){ hideSplash(); authResolved = true; return; }
-
-    $("app")?.classList.remove("hidden");
+    
+    $("loginPage")?.classList.add("hidden");
+    const appEl = $("app");
+    if(appEl){ appEl.classList.remove("hidden"); appEl.style.display = "block"; }
     hideSplash();
 
-    await createProfile();
-    await loadProfile();
-    await loadMyFollows();
-    await loadMySaves();
-    await loadMySentRequests();
-    await loadBlockedUsers();
-    await loadWatchHistory();
+    try{
+      await createProfile();
+      await loadProfile();
+      await loadMyFollows();
+      await loadMySaves();
+      await loadMySentRequests();
+      await loadBlockedUsers();
+      await loadWatchHistory();
+    }catch(e){ console.error("Data load error:", e); }
 
     if(typeof startRealtimeVideos === "function") startRealtimeVideos();
-    if(typeof startNotifications === "function") startNotifications();
-    if(typeof startChatsListListener === "function") startChatsListListener();
-    if(typeof startPlaylistsListener === "function") startPlaylistsListener();
-    if(typeof startPresenceHeartbeat === "function") startPresenceHeartbeat();
-    if(typeof startFollowRequestsListener === "function") startFollowRequestsListener();
     if(typeof startStoriesListener === "function") startStoriesListener();
-    if(typeof startVaultListener === "function") startVaultListener();
-    if(typeof startMyGroupsListener === "function") startMyGroupsListener();
-    if(typeof startSongLibraryListener === "function") startSongLibraryListener();
-    if(typeof updateAdminVisibility === "function") updateAdminVisibility();
     if(typeof startAdSettingsListener === "function") startAdSettingsListener();
     if(typeof startBlockedUsersListener === "function") startBlockedUsersListener();
-    if(typeof startWatchHistoryListener === "function") startWatchHistoryListener();
 
-    try{ window.history.replaceState({ reelhubHome: true }, "", window.location.href); }catch(e){}
-    try{ window.history.pushState({ reelhubApp: true }, "", window.location.href); }catch(e){}
-    setTimeout(() => { if(typeof checkDeepLink === "function") checkDeepLink(); }, 1500);
     authResolved = true;
+    console.log("✅ User logged in, app visible");
   } else {
     if(currentUser && typeof markOffline === "function") await markOffline();
     currentUser = null; currentProfile = null;
-    videosCache = []; storiesCache = []; groupedStories = []; vaultFilesCache = [];
-    myGroupsCache = []; songLibraryCache = []; watchHistoryCache = []; continueWatchingCache = [];
+    videosCache = []; storiesCache = []; groupedStories = [];
     myFollowsCache.clear(); mySavesCache.clear(); mySentRequestsCache.clear(); blockedUsersCache.clear();
-    onlineUsersCache = {}; unreadChatsCache = {}; chatLastReadCache = {}; modalHistoryStack = []; vaultPinVerified = false;
     if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
-    if(notificationsUnsubscribe){ notificationsUnsubscribe(); notificationsUnsubscribe = null; }
-    if(chatsListUnsubscribe){ chatsListUnsubscribe(); chatsListUnsubscribe = null; }
-    if(playlistsUnsubscribe){ playlistsUnsubscribe(); playlistsUnsubscribe = null; }
-    if(presenceUnsubscribe){ presenceUnsubscribe(); presenceUnsubscribe = null; }
-    if(followRequestsUnsubscribe){ followRequestsUnsubscribe(); followRequestsUnsubscribe = null; }
     if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
-    if(vaultUnsubscribe){ vaultUnsubscribe(); vaultUnsubscribe = null; }
-    if(myGroupsUnsubscribe){ myGroupsUnsubscribe(); myGroupsUnsubscribe = null; }
-    if(groupRequestsUnsubscribe){ groupRequestsUnsubscribe(); groupRequestsUnsubscribe = null; }
-    if(groupChatUnsubscribe){ groupChatUnsubscribe(); groupChatUnsubscribe = null; }
-    if(songLibraryUnsubscribe){ songLibraryUnsubscribe(); songLibraryUnsubscribe = null; }
-    if(heartbeatInterval){ clearInterval(heartbeatInterval); heartbeatInterval = null; }
     if(adSettingsUnsubscribe){ adSettingsUnsubscribe(); adSettingsUnsubscribe = null; }
     if(userAdsUnsubscribe){ userAdsUnsubscribe(); userAdsUnsubscribe = null; }
     if(blockedUsersUnsubscribe){ blockedUsersUnsubscribe(); blockedUsersUnsubscribe = null; }
-    if(watchHistoryUnsubscribe){ watchHistoryUnsubscribe(); watchHistoryUnsubscribe = null; }
-    adSettings = { masterDisabled: false, typeDisabled: { banner: false, popup: false, video: false }, userDisabled: {} };
     stopAllPresenceListeners();
-    processingLikes.clear(); processingSaves.clear(); processingViews.clear(); processingMessages.clear();
-    $("app")?.classList.add("hidden"); $("loginPage")?.classList.remove("hidden"); $("suspensionScreen")?.classList.add("hidden");
+    
+    const appEl = $("app");
+    if(appEl){ appEl.classList.add("hidden"); appEl.style.display = "none"; }
+    forceShowLogin();
     hideSplash();
     authResolved = true;
-  }
-});
-console.log("✅ Part 1/3 loaded");
-
-/* ========== FEED + SHORTS + STORIES ========== */
-function createVideoCard(v){
-  const views = Number(v.views || 0);
-  const mine = currentUser && v.userId === currentUser.uid;
-  const isAdmin = isAdminUser();
-  const isPhoto = v.isPhoto === true;
-  let songBadge = "";
-  if(v.song && v.song.name){ songBadge = `<span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:rgba(124,58,237,0.15);color:var(--primary);font-size:10px;font-weight:600;border-radius:8px;margin-top:4px">🎵 ${esc(v.song.name)}</span>`; }
-  const filterStyle = v.filter && v.filter !== "none" ? `filter: ${v.filter};` : "";
-  let thumbnailHTML;
-  if(isPhoto){ thumbnailHTML = `<img src="${esc(v.videoURL)}" alt="" style="width:100%;height:100%;object-fit:cover;${filterStyle}" loading="lazy">`; }
-  else if(v.thumbnail){ thumbnailHTML = `<img src="${esc(v.thumbnail)}" alt="" style="width:100%;height:100%;object-fit:cover;${filterStyle}">`; }
-  else { thumbnailHTML = `<video src="${esc(v.videoURL)}#t=0.5" preload="metadata" muted playsinline style="${filterStyle}"></video>`; }
-  return `
-  <div class="video-card" data-id="${esc(v.id)}" data-open-video="${esc(v.id)}">
-    <div class="thumbnail" style="position:relative">
-      ${thumbnailHTML}
-      ${!isPhoto ? `<span class="duration" data-duration-for="${esc(v.id)}">0:00</span>` : `<span class="duration" style="background:rgba(124,58,237,0.9)">📷</span>`}
-    </div>
-    <div class="video-info">
-      <img class="channel-avatar post-open-user" data-uid="${esc(v.userId)}" src="${avatar(v.userPhoto, v.userName)}" alt="${esc(v.userName)}">
-      <div class="video-details">
-        <h3 class="video-title">${esc(v.title || "Untitled")}</h3>
-        <p class="channel-name">${esc(v.username || v.userName || "User")}</p>
-        <p class="video-meta">${formatViewsShort(views)} views <span class="dot">•</span> ${timeAgoYouTube(v.createdAt)}</p>
-        ${songBadge}
-      </div>
-      ${mine || isAdmin ? `<button class="video-more" onclick="event.stopPropagation();event.preventDefault();window.openVideoMenuModal('${esc(v.id)}')">⋮</button>` : ""}
-    </div>
-  </div>`;
-}
-
-function renderFeed(){
-  const feed = $("feed");
-  if(!feed) return;
-  let list = videosCache.filter(v => v.type !== "short" && (v.visibility !== "private" || v.userId === currentUser?.uid) && !isUserBlocked(v.userId));
-  if(currentCategory === "trending"){
-    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
-    list = list.filter(v => timeValue(v.createdAt) > sevenDaysAgo);
-    list.sort((a,b)=> (b.views || 0) - (a.views || 0));
-    list = list.slice(0, 50);
-  } else if(currentCategory !== "all"){ list = list.filter(v => v.category === currentCategory); }
-  if(!list.length){
-    feed.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><span class="icon">📹</span><h3>No videos yet</h3><p>Upload your first video</p></div>`;
-    return;
-  }
-  feed.innerHTML = list.map(v => createVideoCard(v)).join("");
-}
-
-document.querySelectorAll("#categoryChips .chip").forEach(chip => {
-  chip.addEventListener("click", ()=>{
-    document.querySelectorAll("#categoryChips .chip").forEach(c => c.classList.remove("active"));
-    chip.classList.add("active");
-    currentCategory = chip.dataset.cat || "all";
-    renderFeed();
-  });
-});
-
-function startRealtimeVideos(){
-  if(videosUnsubscribe){ videosUnsubscribe(); videosUnsubscribe = null; }
-  videosUnsubscribe = onSnapshot(collection(db,"videos"),
-    snapshot=>{
-      videosCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      videosCache.sort((a,b)=> timeValue(b.createdAt) - timeValue(a.createdAt));
-      renderFeed();
-      renderShorts();
-    }, error => console.error("Videos listener error:", error));
-}
-
-function renderShorts(){
-  const container = $("reelsContainer");
-  if(!container) return;
-  const list = videosCache.filter(v => v.type === "short" && (v.visibility !== "private" || v.userId === currentUser?.uid) && !isUserBlocked(v.userId));
-  if(!list.length){
-    container.innerHTML = `<div class="reel-empty"><div style="font-size:56px;margin-bottom:14px">🎞️</div><h3 style="font-size:17px;margin-bottom:6px">No Shorts yet</h3><p>Upload your first Short</p></div>`;
-    return;
-  }
-  container.innerHTML = list.map(v => `
-  <div class="reel-item" data-id="${esc(v.id)}">
-    <video src="${esc(v.videoURL)}" loop playsinline webkit-playsinline preload="metadata" muted data-video-id="${esc(v.id)}"></video>
-    <div class="reel-overlay">
-      <div class="reel-info">
-        <div class="reel-user">
-          <img class="post-open-user" data-uid="${esc(v.userId)}" src="${avatar(v.userPhoto, v.userName)}">
-          <strong>@${esc(v.username || v.userName)}</strong>
-        </div>
-        ${v.title ? `<div class="reel-title">${esc(v.title)}</div>` : ""}
-      </div>
-    </div>
-    <div class="reel-actions">
-      <div class="reel-action like-btn" data-like-video="${esc(v.id)}" data-reel="true"><span class="icon">🤍</span><small class="like-count">${v.likes || 0}</small></div>
-      <div class="reel-action" data-comment-video="${esc(v.id)}"><span class="icon">💬</span><small>Comment</small></div>
-      <div class="reel-action" data-share-video="${esc(v.id)}"><span class="icon">📤</span><small>Share</small></div>
-      <div class="reel-action save-btn" data-save-video="${esc(v.id)}"><span class="icon">📑</span><small>Save</small></div>
-    </div>
-  </div>`).join("");
-  setTimeout(setupReelsObserver, 100);
-}
-
-let reelObserver = null;
-function setupReelsObserver(){
-  if(reelObserver) reelObserver.disconnect();
-  const container = $("reelsContainer");
-  if(!container) return;
-  const videos = container.querySelectorAll("video");
-  reelObserver = new IntersectionObserver(entries=>{
-    entries.forEach(entry=>{
-      const vid = entry.target;
-      if(entry.isIntersecting) vid.play().catch(()=>{});
-      else vid.pause();
-    });
-  }, { threshold: 0.6, root: container });
-  videos.forEach(v => reelObserver.observe(v));
-}
-
-function startStoriesListener(){
-  if(storiesUnsubscribe){ storiesUnsubscribe(); storiesUnsubscribe = null; }
-  if(!currentUser) return;
-  storiesUnsubscribe = onSnapshot(collection(db, "stories"),
-    snapshot=>{
-      const now = Date.now();
-      storiesCache = snapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => (now - timeValue(s.createdAt)) < STORY_LIFETIME_MS && !isUserBlocked(s.userId));
-      storiesCache.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt));
-      groupStories();
-      renderStoriesBar();
-    }, error=>console.error("Stories listener error:", error));
-}
-function groupStories(){
-  const map = {};
-  storiesCache.forEach(s=>{
-    if(!map[s.userId]){ map[s.userId] = { userId: s.userId, userName: s.userName || "User", userPhoto: s.userPhoto || "", stories: [], latestAt: 0 }; }
-    map[s.userId].stories.push(s);
-    const t = timeValue(s.createdAt);
-    if(t > map[s.userId].latestAt) map[s.userId].latestAt = t;
-  });
-  groupedStories = Object.values(map);
-  groupedStories.forEach(g=>{ g.stories.sort((a,b)=> timeValue(a.createdAt) - timeValue(b.createdAt)); });
-  groupedStories.sort((a,b)=>{
-    if(a.userId === currentUser?.uid) return -1;
-    if(b.userId === currentUser?.uid) return 1;
-    return b.latestAt - a.latestAt;
-  });
-}
-function renderStoriesBar(){
-  const bar = $("storiesBar");
-  if(!bar) return;
-  if(!currentUser){ bar.innerHTML = ""; return; }
-  const myGroup = groupedStories.find(g => g.userId === currentUser.uid);
-  const otherGroups = groupedStories.filter(g => g.userId !== currentUser.uid);
-  let html = "";
-  const myPhoto = currentProfile?.photo || "";
-  const myName = currentProfile?.name || "You";
-  const myHasStory = myGroup && myGroup.stories.length > 0;
-  html += `<div class="story-item" data-my-story="true"><div class="story-ring ${myHasStory ? 'active' : 'yours'}"><img src="${avatar(myPhoto, myName)}" alt="You">${!myHasStory ? `<span class="add-icon">+</span>` : ""}</div><div class="story-name">Your Story</div></div>`;
-  otherGroups.forEach((g)=>{
-    html += `<div class="story-item" data-story-user="${esc(g.userId)}"><div class="story-ring active"><img src="${avatar(g.userPhoto, g.userName)}" alt="${esc(g.userName)}"></div><div class="story-name">${esc(g.userName.split(" ")[0])}</div></div>`;
-  });
-  bar.innerHTML = html;
-}
-document.addEventListener("click", (e)=>{
-  const myStory = e.target.closest("[data-my-story]");
-  if(myStory){
-    e.preventDefault(); e.stopPropagation();
-    const myGroup = groupedStories.find(g => g.userId === currentUser?.uid);
-    if(myGroup && myGroup.stories.length > 0){
-      const idx = groupedStories.findIndex(g => g.userId === currentUser.uid);
-      openStoryViewer(idx, 0);
-    } else openCreateStoryModal();
-    return;
-  }
-  const storyUser = e.target.closest("[data-story-user]");
-  if(storyUser){
-    e.preventDefault(); e.stopPropagation();
-    const uid = storyUser.dataset.storyUser;
-    const idx = groupedStories.findIndex(g => g.userId === uid);
-    if(idx >= 0) openStoryViewer(idx, 0);
-    return;
+    console.log("✅ No user, login page visible");
   }
 });
 
-function openCreateStoryModal(){
-  storyUploadFile = null; storyMediaType = null;
-  const imgPrev = $("storyImagePreview"); const vidPrev = $("storyVideoPreview"); const zone = $("storyUploadZone"); const btn = $("storyUploadBtn"); const prog = $("storyUploadProgress"); const status = $("storyUploadStatus"); const tools = $("storyEditorTools");
-  if(imgPrev){ imgPrev.src = ""; imgPrev.classList.add("hidden"); }
-  if(vidPrev){ vidPrev.src = ""; vidPrev.classList.add("hidden"); }
-  if(zone) zone.classList.remove("hidden");
-  if(btn) btn.disabled = true;
-  if(prog) prog.classList.remove("active");
-  if(status) status.textContent = "";
-  if(tools) tools.classList.add("hidden");
-  const progressBar = $("storyUploadProgressBar");
-  if(progressBar) progressBar.style.width = "0%";
-  showModal("createStoryModal");
-}
-$("storyUploadZone")?.addEventListener("click", ()=>{ $("storyFile")?.click(); });
-$("storyFile")?.addEventListener("change", (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  if(file.size > 30 * 1024 * 1024){ toast("File too large (max 30MB)"); e.target.value = ""; return; }
-  storyUploadFile = file;
-  storyMediaType = file.type.startsWith("video/") ? "video" : "image";
-  const imgPrev = $("storyImagePreview"); const vidPrev = $("storyVideoPreview"); const zone = $("storyUploadZone"); const btn = $("storyUploadBtn"); const tools = $("storyEditorTools");
-  if(zone) zone.classList.add("hidden");
-  if(tools) tools.classList.remove("hidden");
-  const url = URL.createObjectURL(file);
-  if(storyMediaType === "image"){ if(imgPrev){ imgPrev.src = url; imgPrev.classList.remove("hidden"); } if(vidPrev){ vidPrev.src = ""; vidPrev.classList.add("hidden"); } }
-  else { if(vidPrev){ vidPrev.src = url; vidPrev.classList.remove("hidden"); } if(imgPrev){ imgPrev.src = ""; imgPrev.classList.add("hidden"); } }
-  if(btn) btn.disabled = false;
-});
-$("storyUploadBtn")?.addEventListener("click", async ()=>{
-  if(!storyUploadFile || !currentUser){ toast("Select a file first"); return; }
-  const btn = $("storyUploadBtn"); const prog = $("storyUploadProgress"); const progBar = $("storyUploadProgressBar"); const status = $("storyUploadStatus");
-  if(btn) btn.disabled = true;
-  if(prog) prog.classList.add("active");
-  if(status) status.textContent = "Uploading...";
-  try{
-    const url = await uploadToCloudinary(storyUploadFile, (pct)=>{
-      if(progBar) progBar.style.width = pct + "%";
-      if(status) status.textContent = "Uploading " + pct + "%";
-    });
-    const expiresAt = new Date(Date.now() + STORY_LIFETIME_MS);
-    const storyData = { userId: currentUser.uid, userName: currentProfile?.name || currentUser.displayName || "User", userPhoto: currentProfile?.photo || currentUser.photoURL || "", username: currentProfile?.username || "", mediaURL: url, mediaType: storyMediaType, createdAt: serverTimestamp(), expiresAt: expiresAt };
-    await addDoc(collection(db, "stories"), storyData);
-    if(status) status.textContent = "✅ Story shared!";
-    toast("✅ Story added");
-    setTimeout(()=>{ hideModal("createStoryModal"); }, 500);
-  }catch(err){ if(status) status.textContent = "Error: " + err.message; toast("Story upload failed"); }
-  finally{ if(btn) btn.disabled = false; }
-});
-
-function openStoryViewer(userIndex, storyIndex){
-  if(!groupedStories.length) return;
-  currentStoryUserIndex = userIndex;
-  currentStoryIndex = storyIndex || 0;
-  const viewer = $("storyViewer");
-  if(viewer){ viewer.classList.add("show"); try{ window.history.pushState({ storyViewer: true }, "", window.location.href); }catch(e){} }
-  loadCurrentStory();
-}
-function closeStoryViewer(){
-  const viewer = $("storyViewer");
-  if(viewer) viewer.classList.remove("show");
-  stopStoryTimer();
-  const media = $("storyMedia");
-  if(media) media.innerHTML = "";
-}
-function loadCurrentStory(){
-  stopStoryTimer();
-  const group = groupedStories[currentStoryUserIndex];
-  if(!group || !group.stories.length){ closeStoryViewer(); return; }
-  const story = group.stories[currentStoryIndex];
-  if(!story){
-    if(currentStoryUserIndex < groupedStories.length - 1){ currentStoryUserIndex++; currentStoryIndex = 0; loadCurrentStory(); }
-    else closeStoryViewer();
-    return;
-  }
-  const avatarEl = $("storyViewerAvatar"); const nameEl = $("storyViewerName"); const timeEl = $("storyViewerTime");
-  if(avatarEl) avatarEl.src = avatar(group.userPhoto, group.userName);
-  if(nameEl) nameEl.textContent = group.userName;
-  if(timeEl) timeEl.textContent = timeAgoShort(story.createdAt) + " ago";
-  renderStoryProgress(group.stories.length, currentStoryIndex);
-  const mediaContainer = $("storyMedia");
-  if(mediaContainer){
-    mediaContainer.innerHTML = "";
-    if(story.mediaType === "video"){
-      const vid = document.createElement("video");
-      vid.src = story.mediaURL;
-      vid.autoplay = true; vid.playsInline = true; vid.muted = false; vid.preload = "auto";
-      vid.addEventListener("loadedmetadata", ()=>{ const dur = Math.min((vid.duration || 5) * 1000, STORY_DURATION_VIDEO_MAX); startStoryTimer(dur); });
-      vid.addEventListener("ended", ()=>{ nextStory(); });
-      vid.addEventListener("error", ()=>{ nextStory(); });
-      mediaContainer.appendChild(vid);
-      vid.play().catch(()=>{});
-    } else {
-      const img = document.createElement("img");
-      img.src = story.mediaURL; img.alt = "";
-      img.addEventListener("load", ()=>{ startStoryTimer(STORY_DURATION_IMAGE); });
-      img.addEventListener("error", ()=>{ nextStory(); });
-      mediaContainer.appendChild(img);
-    }
-  }
-  if(story.userId !== currentUser?.uid) markStoryViewed(story.id);
-  const footer = $("storyFooter");
-  if(footer){
-    if(story.userId === currentUser?.uid) footer.style.display = "none";
-    else { footer.style.display = "flex"; const input = $("storyReplyInput"); if(input) input.value = ""; }
-  }
-}
-function renderStoryProgress(total, current){
-  const bar = $("storyProgressBar");
-  if(!bar) return;
-  let html = "";
-  for(let i = 0; i < total; i++){
-    let fillClass = i < current ? "complete" : "";
-    html += `<div class="story-progress-segment"><div class="story-progress-fill ${fillClass}" data-seg="${i}"></div></div>`;
-  }
-  bar.innerHTML = html;
-}
-function startStoryTimer(duration){ stopStoryTimer(); storyDuration = duration; storyStartTime = Date.now(); storyElapsed = 0; storyPaused = false; updateStoryProgressLoop(); }
-function updateStoryProgressLoop(){
-  if(storyPaused) return;
-  const elapsed = Date.now() - storyStartTime;
-  storyElapsed = elapsed;
-  const pct = Math.min((elapsed / storyDuration) * 100, 100);
-  const fill = document.querySelector(`[data-seg="${currentStoryIndex}"]`);
-  if(fill) fill.style.width = pct + "%";
-  if(elapsed >= storyDuration){ nextStory(); return; }
-  storyProgressRAF = requestAnimationFrame(updateStoryProgressLoop);
-}
-function stopStoryTimer(){ if(storyProgressRAF){ cancelAnimationFrame(storyProgressRAF); storyProgressRAF = null; } }
-function nextStory(){
-  stopStoryTimer();
-  const group = groupedStories[currentStoryUserIndex];
-  if(!group){ closeStoryViewer(); return; }
-  if(currentStoryIndex < group.stories.length - 1){ currentStoryIndex++; loadCurrentStory(); }
-  else { if(currentStoryUserIndex < groupedStories.length - 1){ currentStoryUserIndex++; currentStoryIndex = 0; loadCurrentStory(); } else closeStoryViewer(); }
-}
-function prevStory(){
-  stopStoryTimer();
-  if(currentStoryIndex > 0){ currentStoryIndex--; loadCurrentStory(); }
-  else { if(currentStoryUserIndex > 0){ currentStoryUserIndex--; const group = groupedStories[currentStoryUserIndex]; currentStoryIndex = group ? group.stories.length - 1 : 0; loadCurrentStory(); } }
-}
-async function markStoryViewed(storyId){
-  if(!currentUser || !storyId) return;
-  try{ const viewRef = doc(db, "stories", storyId, "views", currentUser.uid); const snap = await getDoc(viewRef); if(!snap.exists()) await setDoc(viewRef, { userId: currentUser.uid, viewedAt: serverTimestamp() }); }catch(e){}
-}
-$("storyNextZone")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); nextStory(); });
-$("storyPrevZone")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); prevStory(); });
-$("storyCloseBtn")?.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); closeStoryViewer(); });
-$("storySendBtn")?.addEventListener("click", async (e)=>{ e.preventDefault(); e.stopPropagation(); await sendStoryReply(); });
-$("storyReplyInput")?.addEventListener("keydown", (e)=>{ if(e.key === "Enter"){ e.preventDefault(); sendStoryReply(); } });
-async function sendStoryReply(){
-  const input = $("storyReplyInput");
-  if(!input) return;
-  const text = input.value.trim();
-  if(!text) return;
-  const group = groupedStories[currentStoryUserIndex];
-  if(!group || group.userId === currentUser?.uid) return;
-  const targetUid = group.userId;
-  const chatId = [currentUser.uid, targetUid].sort().join("_");
-  try{
-    await setDoc(doc(db, "chats", chatId), { members: [currentUser.uid, targetUid], updatedAt: serverTimestamp() }, { merge: true });
-    await addDoc(collection(db, "chats", chatId, "messages"), { userId: currentUser.uid, userName: currentProfile?.name || "User", text: "📸 Replied to story: " + text, type: "text", createdAt: serverTimestamp() });
-    await updateDoc(doc(db, "chats", chatId), { lastMessage: "📸 Replied to story", updatedAt: serverTimestamp() });
-    input.value = "";
-    toast("✅ Reply sent");
-  }catch(err){ toast("Reply failed"); }
-}
-
-/* ========== INIT ========== */
-prepareInitialState();
-const firstPanel = $("homePanel");
-if(firstPanel) firstPanel.classList.remove("hidden");
-
-setTimeout(() => { if(!splashHidden) hideSplash(); }, 1000);
+/* ============ FALLBACK ============ */
 setTimeout(() => {
+  const login = $("loginPage");
+  const appEl = $("app");
   if(!authResolved){
+    console.log("⚠️ Auth not resolved in 4s, forcing login page");
+    forceShowLogin();
     hideSplash();
-    if(!currentUser){ $("loginPage")?.classList.remove("hidden"); $("app")?.classList.add("hidden"); }
   }
-}, 3000);
+}, 4000);
 
+setTimeout(() => { if(!splashHidden) hideSplash(); }, 2000);
+
+console.log("✅ Part 1/3 loaded");
 console.log("✅ Part 1/3 COMPLETE");
-
-/* ========== GLOBAL ERROR HANDLERS ========== */
-window.addEventListener("error", (e) => { console.error("🚨 ERROR:", e.message, e.filename, e.lineno); });
-window.addEventListener("unhandledrejection", (e) => { console.error("🚨 PROMISE:", e.reason); });
