@@ -1,25 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>ReelHub</title>
-<link rel="manifest" href="manifest.json">
+
+<meta name="viewport"
+      content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+
+<title>ReelHub - Google Login</title>
+
 <meta name="theme-color" content="#7c3aed">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="ReelHub">
-<link rel="apple-touch-icon" href="https://ui-avatars.com/api/?name=RH&size=192&background=7c3aed&color=fff">
 
-<!-- ✅ YE STYLE BLOCK YAHAN DAALO -->
 <style>
-  .hidden { display: none !important; }
-  #loginPage.hidden { display: none !important; }
-  #app.hidden { display: none !important; }
-  #splashScreen.hidden { display: none !important; }
-  #suspensionScreen.hidden { display: none !important; }
-  .panel.hidden { display: none !important; }
-  .modal:not(.show) { display: none !important; }
-</style>
-<!-- ✅ STYLE BLOCK YAHAN TAK -->
 
-<link rel="stylesheet" href="style.css">
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+  min-height:100vh;
+  background:#f5f3ff;
+  color:#171717;
+}
+
+.hidden{
+  display:none !important;
+}
+
+button{
+  cursor:pointer;
+}
+
+/* =========================
+   LOADING
+========================= */
+
+#loading{
+  position:fixed;
+  inset:0;
+  background:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+.loaderBox{
+  text-align:center;
+}
+
+.loader{
+  width:45px;
+  height:45px;
+  border:4px solid #e5e7eb;
+  border-top-color:#7c3aed;
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+  margin:auto auto 15px;
+}
+
+@keyframes spin{
+  to{
+    transform:rotate(360deg);
+  }
+}
+
+
+/* =========================
+   LOGIN
+========================= */
+
+#loginPage{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      #c084fc,
+      transparent 35%
+    ),
+    linear-gradient(
+      135deg,
+      #4c1d95,
+      #7c3aed,
+      #db2777
+    );
+}
+
+.loginCard{
+  width:100%;
+  max-width:400px;
+  background:white;
+  border-radius:28px;
+  padding:35px 25px;
+  text-align:center;
+  box-shadow:
+    0 25px 70px rgba(0,0,0,.25);
+}
+
+.logo{
+  width:80px;
+  height:80px;
+  margin:0 auto 18px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  border-radius:24px;
+
+  color:white;
+  font-size:30px;
+  font-weight:900;
+
+  background:
+    linear-gradient(
+      135deg,
+      #7c3aed,
+      #ec4899
+    );
+
+  box-shadow:
+    0 10px 30px rgba(124,58,237,.35);
+}
+
+.loginCard h1{
+  font-size:30px;
+  margin-bottom:8px;
+}
+
+.loginCard .subtitle{
+  color:#737373;
+  margin-bottom:28px;
+}
+
+.googleBtn{
+  width:100%;
+  height:54px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+
+  background:white;
+  border:1px solid #dadce0;
+  border-radius:14px;
+
+  color:#202124;
+  font-size:16px;
+  font-weight:600;
+
+  transition:.2s;
+}
+
+.googleBtn:hover{
+  background:#f8f9fa;
+  box-shadow:0 3px 10px rgba(0,0,0,.08);
+}
+
+.googleBtn:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
+.googleIcon{
+  width:22px;
+  height:22px;
+}
+
+
+/* =========================
+   APP
+========================= */
+
+#app{
+  min-height:100vh;
+  background:#f7f7fb;
+}
+
+.topbar{
+  height:65px;
+
+  position:sticky;
+  top:0;
+  z-index:100;
+
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:0 16px;
+
+  background:white;
+  border-bottom:1px solid #eeeeee;
+}
+
+.brand{
+  font-size:22px;
+  font-weight:900;
+
+  background:
+    linear-gradient(
+      90deg,
+      #7c3aed,
+      #ec4899
+    );
+
+  -webkit-background-clip:text;
+  background-clip:text;
+
+  color:transparent;
+}
+
+.topPhoto{
+  width:40px;
+  height:40px;
+
+  border-radius:50%;
+
+  object-fit:cover;
+
+  border:2px solid #7c3aed;
+}
+
+.container{
+  width:100%;
+  max-width:650px;
+
+  margin:auto;
+
+  padding:25px 16px 50px;
+}
+
+
+/* =========================
+   WELCOME
+========================= */
+
+.welcome{
+  padding:25px;
+
+  color:white;
+
+  border-radius:24px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #7c3aed,
+      #ec4899
+    );
+
+  margin-bottom:20px;
+
+  box-shadow:
+    0 10px 30px rgba(124,58,237,.20);
+}
+
+.welcome h2{
+  margin-bottom:7px;
+}
+
+.welcome p{
+  opacity:.9;
+}
+
+
+/* =========================
+   PROFILE
+========================= */
+
+.profileCard{
+  background:white;
+
+  border-radius:25px;
+
+  padding:25px;
+
+  box-shadow:
+    0 8px 30px rgba(0,0,0,.07);
+}
+
+.profileTop{
+  display:flex;
+  align-items:center;
+
+  gap:18px;
+
+  margin-bottom:22px;
+}
+
+.profilePhoto{
+  width:90px;
+  height:90px;
+
+  border-radius:50%;
+
+  object-fit:cover;
+
+  border:4px solid #ede9fe;
+}
+
+.profileInfo{
+  min-width:0;
+}
+
+.profileInfo h2{
+  font-size:21px;
+
+  margin-bottom:6px;
+}
+
+.profileInfo p{
+  color:#737373;
+
+  word-break:break-word;
+
+  font-size:14px;
+}
+
+
+/* =========================
+   STATS
+========================= */
+
+.stats{
+  display:flex;
+
+  justify-content:space-around;
+
+  text-align:center;
+
+  padding:18px 0;
+
+  border-top:1px solid #eeeeee;
+  border-bottom:1px solid #eeeeee;
+}
+
+.stat strong{
+  display:block;
+
+  font-size:20px;
+}
+
+.stat span{
+  color:#777;
+
+  font-size:13px;
+}
+
+
+/* =========================
+   INFO
+========================= */
+
+.info{
+  margin-top:10px;
+}
+
+.infoRow{
+  padding:15px 0;
+
+  border-bottom:1px solid #eeeeee;
+}
+
+.infoRow:last-child{
+  border-bottom:0;
+}
+
+.label{
+  display:block;
+
+  color:#777;
+
+  font-size:12px;
+
+  margin-bottom:5px;
+}
+
+.value{
+  display:block;
+
+  font-size:15px;
+
+  word-break:break-word;
+}
+
+
+/* =========================
+   LOGOUT
+========================= */
+
+.logoutBtn{
+  width:100%;
+
+  height:50px;
+
+  margin-top:20px;
+
+  border:0;
+
+  border-radius:14px;
+
+  background:#ef4444;
+
+  color:white;
+
+  font-size:16px;
+
+  font-weight:bold;
+
+  transition:.2s;
+}
+
+.logoutBtn:hover{
+  background:#dc2626;
+}
+
+
+/* =========================
+   MESSAGE
+========================= */
+
+#message{
+  position:fixed;
+
+  left:50%;
+  bottom:25px;
+
+  transform:translateX(-50%);
+
+  max-width:90%;
+
+  padding:13px 18px;
+
+  background:#171717;
+
+  color:white;
+
+  border-radius:12px;
+
+  font-size:14px;
+
+  text-align:center;
+
+  display:none;
+
+  z-index:99999;
+}
+
+</style>
 </head>
+
+
+<body>
+
+
+<!-- =========================
+     LOADING
+========================= -->
+
+<div id="loading">
+
+  <div class="loaderBox">
+
+    <div class="loader"></div>
+
+    <p>Loading ReelHub...</p>
+
+  </div>
+
+</div>
+
+
+
+<!-- =========================
+     LOGIN PAGE
+========================= -->
+
+<section id="loginPage" class="hidden">
+
+  <div class="loginCard">
+
+    <div class="logo">
+      RH
+    </div>
+
+    <h1>
+      Welcome to ReelHub
+    </h1>
+
+    <p class="subtitle">
+      Watch • Share • Create
+    </p>
+
+
+    <button
+      id="googleBtn"
+      class="googleBtn">
+
+      <img
+        class="googleIcon"
+        src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+        alt="Google">
+
+      <span>
+        Continue with Google
+      </span>
+
+    </button>
+
+  </div>
+
+</section>
+
+
+
+<!-- =========================
+     MAIN APP
+========================= -->
+
+<section id="app" class="hidden">
+
+
+  <!-- TOP BAR -->
+
+  <header class="topbar">
+
+    <div class="brand">
+      🎬 ReelHub
+    </div>
+
+    <img
+      id="topPhoto"
+      class="topPhoto"
+      src=""
+      alt="Profile">
+
+  </header>
+
+
+
+  <!-- CONTENT -->
+
+  <main class="container">
+
+
+    <!-- WELCOME -->
+
+    <div class="welcome">
+
+      <h2 id="welcomeTitle">
+        Welcome 👋
+      </h2>
+
+      <p>
+        You are successfully logged in with Google.
+      </p>
+
+    </div>
+
+
+
+    <!-- PROFILE CARD -->
+
+    <div class="profileCard">
+
+
+      <div class="profileTop">
+
+        <img
+          id="profilePhoto"
+          class="profilePhoto"
+          src=""
+          alt="Profile Photo">
+
+
+        <div class="profileInfo">
+
+          <h2 id="profileName">
+            User
+          </h2>
+
+          <p id="profileEmail">
+            email@example.com
+          </p>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- STATS -->
+
+      <div class="stats">
+
+        <div class="stat">
+
+          <strong>
+            0
+          </strong>
+
+          <span>
+            Posts
+          </span>
+
+        </div>
+
+
+        <div class="stat">
+
+          <strong>
+            0
+          </strong>
+
+          <span>
+            Followers
+          </span>
+
+        </div>
+
+
+        <div class="stat">
+
+          <strong>
+            0
+          </strong>
+
+          <span>
+            Following
+          </span>
+
+        </div>
+
+      </div>
+
+
+
+      <!-- USER INFO -->
+
+      <div class="info">
+
+
+        <div class="infoRow">
+
+          <span class="label">
+            Name
+          </span>
+
+          <span
+            id="displayName"
+            class="value">
+            -
+          </span>
+
+        </div>
+
+
+        <div class="infoRow">
+
+          <span class="label">
+            Email
+          </span>
+
+          <span
+            id="displayEmail"
+            class="value">
+            -
+          </span>
+
+        </div>
+
+
+        <div class="infoRow">
+
+          <span class="label">
+            Firebase User ID
+          </span>
+
+          <span
+            id="userUid"
+            class="value">
+            -
+          </span>
+
+        </div>
+
+
+        <div class="infoRow">
+
+          <span class="label">
+            Login Method
+          </span>
+
+          <span class="value">
+            Google
+          </span>
+
+        </div>
+
+
+      </div>
+
+
+
+      <!-- LOGOUT -->
+
+      <button
+        id="logoutBtn"
+        class="logoutBtn">
+
+        Logout
+
+      </button>
+
+
+    </div>
+
+  </main>
+
+</section>
+
+
+
+<!-- MESSAGE -->
+
+<div id="message"></div>
+
+
+
+<!-- =========================
+     FIREBASE
+========================= -->
+
+<script type="module">
+
+
+/*
+=========================================================
+FIREBASE IMPORTS
+=========================================================
+*/
+
+import {
+  initializeApp
+}
+from
+"https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+
+
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
+  onAuthStateChanged,
+  signOut
+}
+from
+"https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+
+
+/*
+=========================================================
+YOUR FIREBASE CONFIG
+=========================================================
+*/
+
+const firebaseConfig = {
+
+  apiKey:
+    "AIzaSyCAiAXZjIFcbmueefZpx1SXc-_ELa57-rE",
+
+  authDomain:
+    "reelhu.firebaseapp.com",
+
+  projectId:
+    "reelhu",
+
+  storageBucket:
+    "reelhu.firebasestorage.app",
+
+  messagingSenderId:
+    "883255506643",
+
+  appId:
+    "1:883255506643:web:600256ed9bb47a4f828626",
+
+  measurementId:
+    "G-FY9N5XNF6Z"
+
+};
+
+
+
+/*
+=========================================================
+INITIALIZE FIREBASE
+=========================================================
+*/
+
+const firebaseApp =
+  initializeApp(firebaseConfig);
+
+
+const auth =
+  getAuth(firebaseApp);
+
+
+const googleProvider =
+  new GoogleAuthProvider();
+
+
+/*
+=========================================================
+ELEMENTS
+=========================================================
+*/
+
+const loading =
+  document.getElementById("loading");
+
+const loginPage =
+  document.getElementById("loginPage");
+
+const appPage =
+  document.getElementById("app");
+
+const googleBtn =
+  document.getElementById("googleBtn");
+
+const logoutBtn =
+  document.getElementById("logoutBtn");
+
+const profilePhoto =
+  document.getElementById("profilePhoto");
+
+const topPhoto =
+  document.getElementById("topPhoto");
+
+const profileName =
+  document.getElementById("profileName");
+
+const profileEmail =
+  document.getElementById("profileEmail");
+
+const displayName =
+  document.getElementById("displayName");
+
+const displayEmail =
+  document.getElementById("displayEmail");
+
+const userUid =
+  document.getElementById("userUid");
+
+const welcomeTitle =
+  document.getElementById("welcomeTitle");
+
+const message =
+  document.getElementById("message");
+
+
+
+/*
+=========================================================
+MESSAGE
+=========================================================
+*/
+
+function showMessage(text){
+
+  message.textContent =
+    text;
+
+  message.style.display =
+    "block";
+
+
+  setTimeout(() => {
+
+    message.style.display =
+      "none";
+
+  },3000);
+
+}
+
+
+
+/*
+=========================================================
+SHOW LOGIN
+=========================================================
+*/
+
+function showLogin(){
+
+  loginPage.classList.remove(
+    "hidden"
+  );
+
+  appPage.classList.add(
+    "hidden"
+  );
+
+}
+
+
+
+/*
+=========================================================
+SHOW APP
+=========================================================
+*/
+
+function showApp(user){
+
+  loginPage.classList.add(
+    "hidden"
+  );
+
+  appPage.classList.remove(
+    "hidden"
+  );
+
+
+  const name =
+    user.displayName ||
+    "ReelHub User";
+
+
+  const email =
+    user.email ||
+    "No email";
+
+
+  const photo =
+    user.photoURL ||
+    "https://ui-avatars.com/api/?name=RH&background=7c3aed&color=fff";
+
+
+  profileName.textContent =
+    name;
+
+
+  profileEmail.textContent =
+    email;
+
+
+  displayName.textContent =
+    name;
+
+
+  displayEmail.textContent =
+    email;
+
+
+  userUid.textContent =
+    user.uid;
+
+
+  profilePhoto.src =
+    photo;
+
+
+  topPhoto.src =
+    photo;
+
+
+  welcomeTitle.textContent =
+    "Welcome " + name + " 👋";
+
+}
+
+
+
+/*
+=========================================================
+GOOGLE LOGIN
+=========================================================
+*/
+
+googleBtn.addEventListener(
+  "click",
+  async () => {
+
+    try{
+
+      googleBtn.disabled =
+        true;
+
+
+      googleBtn.innerHTML =
+        "Signing in...";
+
+
+      try{
+
+        await signInWithPopup(
+          auth,
+          googleProvider
+        );
+
+
+      }catch(error){
+
+        /*
+        If popup is blocked,
+        use redirect.
+        */
+
+        if(
+          error.code ===
+          "auth/popup-blocked"
+        ){
+
+          await signInWithRedirect(
+            auth,
+            googleProvider
+          );
+
+          return;
+
+        }
+
+
+        if(
+          error.code ===
+          "auth/cancelled-popup-request"
+        ){
+
+          throw error;
+
+        }
+
+
+        throw error;
+
+      }
+
+
+    }catch(error){
+
+      console.error(
+        error
+      );
+
+
+      showMessage(
+        firebaseError(error)
+      );
+
+
+      googleBtn.disabled =
+        false;
+
+
+      googleBtn.innerHTML = `
+
+        <img
+          class="googleIcon"
+          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+          alt="Google">
+
+        <span>
+          Continue with Google
+        </span>
+
+      `;
+
+    }
+
+  }
+);
+
+
+
+/*
+=========================================================
+REDIRECT RESULT
+=========================================================
+*/
+
+try{
+
+  await getRedirectResult(
+    auth
+  );
+
+}catch(error){
+
+  console.error(
+    "Redirect error:",
+    error
+  );
+
+}
+
+
+
+/*
+=========================================================
+AUTH STATE
+=========================================================
+*/
+
+onAuthStateChanged(
+  auth,
+  (user) => {
+
+    loading.classList.add(
+      "hidden"
+    );
+
+
+    if(user){
+
+      showApp(
+        user
+      );
+
+    }else{
+
+      showLogin();
+
+    }
+
+  }
+);
+
+
+
+/*
+=========================================================
+LOGOUT
+=========================================================
+*/
+
+logoutBtn.addEventListener(
+  "click",
+  async () => {
+
+    try{
+
+      await signOut(
+        auth
+      );
+
+
+      showMessage(
+        "Logged out successfully."
+      );
+
+
+    }catch(error){
+
+      console.error(
+        error
+      );
+
+
+      showMessage(
+        firebaseError(error)
+      );
+
+    }
+
+  }
+);
+
+
+
+/*
+=========================================================
+FIREBASE ERROR
+=========================================================
+*/
+
+function firebaseError(error){
+
+  const code =
+    error?.code || "";
+
+
+  switch(code){
+
+    case "auth/popup-closed-by-user":
+
+      return "Google login window closed.";
+
+
+    case "auth/popup-blocked":
+
+      return "Popup blocked. Please allow popups.";
+
+
+    case "auth/unauthorized-domain":
+
+      return "This website is not added to Firebase Authorized Domains.";
+
+
+    case "auth/operation-not-allowed":
+
+      return "Google Sign-In is not enabled in Firebase.";
+
+
+    case "auth/network-request-failed":
+
+      return "Internet connection problem.";
+
+
+    case "auth/cancelled-popup-request":
+
+      return "Login request was cancelled.";
+
+
+    default:
+
+      return (
+        error?.message ||
+        "Google login failed."
+      );
+
+  }
+
+}
+
+</script>
+
+</body>
+  </html>
